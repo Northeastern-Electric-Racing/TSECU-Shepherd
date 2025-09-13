@@ -1,4 +1,5 @@
-name: TSECU-Shepherd
+
+name: tsecu-shepherd
 
 services:
     ner-gcc-arm:
