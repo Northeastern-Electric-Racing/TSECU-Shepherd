@@ -23,7 +23,7 @@
 
 //#define USE_DYNAMIC_MEMORY_ALLOCATION
 
-#if defined (__clang__)
+#if defined(__ARMCC_VERSION)  /* For arm compiler 5 & 6 */
 /**************************************************************************/
 /*                                                                        */
 /*       Copyright (c) Microsoft Corporation. All rights reserved.        */
@@ -45,7 +45,7 @@
 /**************************************************************************/
 /**************************************************************************/
 
-SYSTEM_CLOCK      =   64000000
+SYSTEM_CLOCK      =   68750000
 SYSTICK_CYCLES    =   ((SYSTEM_CLOCK / 100) -1)
 
 /**************************************************************************/
@@ -262,7 +262,7 @@ __tx_DBGHandler:
     EXTERN  __vector_table
 ;
 ;
-SYSTEM_CLOCK      EQU   64000000
+SYSTEM_CLOCK      EQU   68750000
 SYSTICK_CYCLES    EQU   ((SYSTEM_CLOCK / 100) -1)
 ;
 ;
@@ -435,7 +435,7 @@ __tx_DBGHandler:
     END
 #endif
 
-#if (defined(__GNUC__) && !defined(__clang__))
+#if (defined(__GNUC__) && !defined(__ARMCC_VERSION))
 /**************************************************************************/
 /*                                                                        */
 /*       Copyright (c) Microsoft Corporation. All rights reserved.        */
@@ -457,7 +457,7 @@ __tx_DBGHandler:
 /**************************************************************************/
 /**************************************************************************/
 
-SYSTEM_CLOCK      =   64000000
+SYSTEM_CLOCK      =   68750000
 SYSTICK_CYCLES    =   ((SYSTEM_CLOCK / 100) -1)
 
 /**************************************************************************/
