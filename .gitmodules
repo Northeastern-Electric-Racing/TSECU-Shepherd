@@ -1,0 +1,6 @@
+[submodule "Embedded-Base"]
+	path = Embedded-Base
+	url = git@github.com:Northeastern-Electric-Racing/Embedded-Base.git
+[submodule "adbms"]
+	path = adbms
+	url = git@github.com:Northeastern-Electric-Racing/adbms.git
