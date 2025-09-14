@@ -55,19 +55,29 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     "Drivers/Embedded-Base/middleware/src/bitstream.c"
-    "Drivers/adbms/program/src/adBms_Application.c"
-    "Drivers/adbms/program/src/mcuWrapper.c"
-    "Drivers/adbms/program/src/serialPrintResult.c"
+    "Drivers/adbms/adbms6830/program/src/adBms_Application.c"
+    "Drivers/adbms/adbms6830/program/src/mcuWrapper.c"
+    "Drivers/adbms/adbms6830/program/src/serialPrintResult.c"
+    "Drivers/adbms/adbms2950/lib/src/adBms2950TestHelper.c"
+    "Drivers/adbms/adbms2950/lib/src/adi_bms_2950cmdlist.c"
+    "Drivers/adbms/adbms2950/lib/src/adi_bms_2950data.c"
+    "Drivers/adbms/adbms2950/lib/src/adi_bms_utility.c"
+    "Drivers/adbms/adbms2950/program/src/adbms_2950.c"
+    "Drivers/adbms/adbms2950/program/src/application.c"
+    "Drivers/adbms/adbms2950/program/src/pal.c"
+    "Drivers/adbms/adbms2950/program/src/print_result.c"
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
-    "Drivers/adbms/lib/inc"
-    "Drivers/adbms/program/inc"
+    "Drivers/adbms/adbms6830/lib/inc"
+    "Drivers/adbms/adbms6830/program/inc"
     "Drivers/Embedded-Base/general/include"
     "Drivers/Embedded-Base/middleware/include"
     "Drivers/Embedded-Base/platforms/stm32h563/include"
+    "Drivers/adbms/adbms2950/lib/inc"
+    "Drivers/adbms/adbms2950/program/inc"
     "Core/Inc"
 
 )
