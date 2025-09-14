@@ -1,5 +1,6 @@
 name: Build
 on: [push]
+
 jobs:
   run-build:
     runs-on: ubuntu-latest
@@ -8,9 +9,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-            submodules: recursive
-            token: ${{ secrets.TSECU_PAT }}
-            fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.TSECU_PAT }}
+          fetch-depth: 0
       - name: Clean and Build Project
         run: |
           docker compose run --rm ner-gcc-arm sh -c '
@@ -21,4 +22,3 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Release .. &&
           cmake --build .
           '
-        
