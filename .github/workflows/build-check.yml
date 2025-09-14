@@ -13,7 +13,6 @@ jobs:
             fetch-depth: 0
       - name: Clean and Build Project
         run: |
-          run: |
           docker compose run --rm ner-gcc-arm sh -c '
           cmake --build build --target clean ;
           find . -type d -name "build" -exec rm -rf {} + ;
@@ -21,3 +20,5 @@ jobs:
           cd build &&
           cmake -DCMAKE_BUILD_TYPE=Release .. &&
           cmake --build .
+          '
+        
