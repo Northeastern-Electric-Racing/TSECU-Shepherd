@@ -47,7 +47,7 @@ const bool THERM_FAIL_MAP[NUM_CHIPS][NUM_THERMS] =    {
 };
 
 
-const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS] = {
+const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -59,7 +59,7 @@ const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
-// const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS] = {
+// const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
 //     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 //     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 //     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -75,7 +75,7 @@ const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS] = {
 
 uint8_t get_num_cells(chipdata_t *chip_data)
 {
-	return NUM_CELLS;
+	return NUM_CELLS_PER_CHIP;
 }
 
 /**
