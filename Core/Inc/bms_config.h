@@ -10,7 +10,7 @@
 #define NUM_CELLS_PER_CHIP 14
 #define NUM_CELLS	NUM_CELLS_PER_CHIP * NUM_CHIPS
 // only actual flexPCB therms counted
-#define NUM_THERMS 7
+#define NUM_THERMS NUM_CELLS / 2
 
 
 // Firmware limits

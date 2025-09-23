@@ -51,6 +51,14 @@ typedef struct {
 	uint8_t cellNum;
 } crit_cellval_t;
 
+typedef enum {
+    BOOT,
+    READY,
+    CHARGING,
+    FAULTED,
+    NUM_STATES,
+} state_t;
+
 /**
  * @brief stores all data related to the bms
  */
@@ -120,6 +128,8 @@ typedef struct {
 	bool is_charging_enabled;
 
 	mutex_t mutex; // TODO: INIT MUTEX
+
+    state_t current_state;
 } bms_t;
 
 #endif

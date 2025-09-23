@@ -9,14 +9,6 @@
 typedef void (*InitFunc_t)(bms_t *bms);   
 typedef void (*HandlerFunc_t)(bms_t *bms);   
 
-typedef enum {
-    BOOT,
-    READY,
-    CHARGING,
-    FAULTED,
-    NUM_STATES,
-} state_t;
-
 const InitFunc_t init_LUT[NUM_STATES] = { &init_boot, &init_ready,
 					      &init_charging, &init_faulted };
 
@@ -24,7 +16,6 @@ const HandlerFunc_t handler_LUT[NUM_STATES] = { &handle_boot, &handle_ready,
 						    &handle_charging,
 						    &handle_faulted };
 
-static state_t current_state = BOOT;
 
 void init_boot(bms_t *bmsdata)
 {
@@ -79,13 +70,13 @@ void handle_faulted(bms_t *bmsdata)
 
 void request_transition(bms_t *bmsdata, state_t next_state)
 {
-	if (current_state == next_state)
+	if (bmsdata->current_state == next_state)
 		return;
 	//if (!valid_transition_from_to[current_state][next_state])
 	//	return;
 
 	init_LUT[next_state](bmsdata);
-	current_state = next_state;
+	bmsdata->current_state = next_state;
 }
 
 
