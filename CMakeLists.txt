@@ -66,6 +66,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/adbms/adbms2950/program/src/application.c"
     "Drivers/adbms/adbms2950/program/src/pal.c"
     "Drivers/adbms/adbms2950/program/src/print_result.c"
+    "Drivers/Embedded-Base/threadX/src/u_debug.c"
+    "Drivers/Embedded-Base/threadX/src/u_queues.c"
+    "Drivers/Embedded-Base/threadX/src/u_threads.c"
 )
 
 # Add include paths
@@ -79,7 +82,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/adbms/adbms2950/lib/inc"
     "Drivers/adbms/adbms2950/program/inc"
     "Core/Inc"
-
+    "Drivers/Embedded-Base/threadX/inc"
 )
 
 # Add project symbols (macros)
