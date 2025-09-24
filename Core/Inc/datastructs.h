@@ -66,10 +66,10 @@ typedef struct {
 	/* chip_data and chips are parallel arrays. */
 
 	/* Array of data from all chips in the system */
-	chipdata_t chip_data[NUM_CELLS];
+	chipdata_t chip_data[NUM_CHIPS];
 
 	/* Array of structs containing raw data from and configurations for the ADBMS6830 chips */
-	cell_asic chips[NUM_CELLS];
+	cell_asic chips[NUM_CHIPS];
 
 	float pack_current;
 	float pack_voltage;
@@ -83,6 +83,8 @@ typedef struct {
 	float segment_average_temps[NUM_SEGMENTS];
 	/* OCV average voltages */
 	float segment_average_volts[NUM_SEGMENTS];
+	/* Total voltages for each segment */
+	float segment_total_volts[NUM_SEGMENTS];
 
 	// the board temperature
 	float internal_temp;
@@ -118,7 +120,7 @@ typedef struct {
 	float delt_ocv;
 
 	// the current discharge configuration the state machine wants
-	bool discharge_config[NUM_CHIPS][NUM_CELLS];
+	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
 	// whether balancing should be on, or muted
 	bool should_balance;
 

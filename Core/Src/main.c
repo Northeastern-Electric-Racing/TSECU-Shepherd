@@ -19,11 +19,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "app_threadx.h"
 #include "main.h"
+#include "u_can.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdint.h>
 #include <stdio.h>
+#include <assert.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -132,7 +134,10 @@ int main(void)
   MX_FDCAN2_Init();
   MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
-
+  can_t can1;
+  uint16_t standard_ids[] = {0x00, 0x00}; // define CAN standard IDs here
+  uint32_t exteneded_ids[] = {0x00, 0x00}; // define CAN extended IDs here
+  assert(!can_filter_init(&hfdcan2, &can1, standard_ids, exteneded_ids));
   /* USER CODE END 2 */
 
   MX_ThreadX_Init();
