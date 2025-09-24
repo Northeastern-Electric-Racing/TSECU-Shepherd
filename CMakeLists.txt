@@ -69,6 +69,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/threadX/src/u_debug.c"
     "Drivers/Embedded-Base/threadX/src/u_queues.c"
     "Drivers/Embedded-Base/threadX/src/u_threads.c"
+    "Drivers/Embedded-Base/threadX/src/u_can.c"
+    "Drivers/Embedded-Base/platforms/stm32h563/src/fdcan.c"
 )
 
 # Add include paths
