@@ -5,6 +5,7 @@
 #include "u_can.h"
 #include "shep_queues.h"
 #include "can_messages.h"
+<<<<<<< HEAD
 #include "shep_mutexes.h"
 #include "shep_tasks.h"
 
@@ -19,6 +20,11 @@ uint8_t shep_flags_init() {
 
 extern bms_t bms;
 
+=======
+
+// TODO: Fill in threads
+
+>>>>>>> 61f77d2 (can setup)
 static thread_t _state_machine_thread = {
         .name       = "State Machine Thread", /* Name */
         .size       = 2048,             /* Stack Size (in bytes) */
@@ -85,7 +91,11 @@ static thread_t _can_dispatch_thread = {
         .function   = vCanDispatch    /* Thread Function */
     };
 
+<<<<<<< HEAD
 extern can_t can1; // TODO: pass can1 directly into thread
+=======
+extern can_t can1; // TODO pass can1 directly into thread
+>>>>>>> 61f77d2 (can setup)
 void vCanDispatch(ULONG thread_input) {
 
     can_msg_t message;
@@ -119,6 +129,7 @@ static thread_t _analyzer_thread = {
 
 void vAnalyzer(ULONG thread_input)
 {
+<<<<<<< HEAD
     for (int i = 0; i < NUM_CHIPS; i++) {
 		bms.chip_data[i].alpha = i % 2 == 0;
 	}
@@ -154,6 +165,9 @@ void vAnalyzer(ULONG thread_input)
 
 		mutex_put(&bms_mutex);
 	}
+=======
+
+>>>>>>> 61f77d2 (can setup)
 }
 
 static thread_t _segment_data_thread = {
