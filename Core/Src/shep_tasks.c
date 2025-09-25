@@ -74,7 +74,7 @@ static thread_t _can_dispatch_thread = {
         .function   = vCanDispatch    /* Thread Function */
     };
 
-extern can_t can1; // TODO pass can1 directly into thread
+extern can_t can1; // TODO: pass can1 directly into thread
 void vCanDispatch(ULONG thread_input) {
 
     can_msg_t message;
