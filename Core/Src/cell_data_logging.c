@@ -146,13 +146,13 @@ int cell_data_logger_timestamp_therms(struct BMSLogger *logger)
  * @param bms_data Pointer to the BMS data structure containing cell voltages and temperatures.
  * @return 0 on success, -1 on failure.
  */
-int cell_data_log_measurement(struct BMSLogger *logger, acc_data_t *bms_data)
+int cell_data_log_measurement(struct BMSLogger *logger, bms_t *bms_data)
 {
 	int status = -1;
 	assert(logger);
 	assert(bms_data);
 
-	if (osMutexAcquire(logger->mutex, osWaitForever) != osOK) {
+	if (mutex_get(&logger_mutex) != U_SUCCESS) {
 		printf("ERROR: Failed to acquire data logging mutex!\r\n");
 		goto exit;
 	}
@@ -179,7 +179,7 @@ int cell_data_log_measurement(struct BMSLogger *logger, acc_data_t *bms_data)
 
 	status = 0;
 
-	osMutexRelease(logger->mutex);
+	mutex_put(&logger_mutex);
 
 	return status;
 
@@ -197,27 +197,23 @@ exit:
 int cell_data_log_get_last_n(const struct BMSLogger *logger, size_t n,
 			     CellDataEntry_t *out_buffer)
 {
-	int status = -1;
 	assert(logger);
 
 	if (n > logger->ring_buff.curr_elements) {
 		printf("ERROR: Not enough logs available!\r\n");
-		goto exit;
-	}
+        return -1;	
+    }
 
-	if (osMutexAcquire(logger->mutex, osWaitForever) != osOK) {
+	if (mutex_get(&logger_mutex) != U_SUCCESS) {
 		printf("ERROR: Failed to acquire data logging mutex!\r\n");
-		goto exit;
+		return -1;
 	}
 
 	rb_get_last_n(&logger->ring_buff, out_buffer, n);
 
-	status = 0;
+	mutex_put(&logger_mutex);
 
-	osMutexRelease(logger->mutex);
-
-exit:
-	return status;
+    return 0;
 }
 
 /**
@@ -228,14 +224,13 @@ exit:
  */
 int print_last_n_cell_data_logs(const struct BMSLogger *logger, size_t n)
 {
-	int status = -1;
 	assert(logger);
 
 	CellDataEntry_t log_entries[n];
 
 	if (cell_data_log_get_last_n(logger, n, log_entries)) {
 		printf("Error retrieving log entries!\r\n");
-		goto exit;
+		return -1;
 	}
 
 	printf("\r\nPrinting Last %u Cell Data Logs:\r\n", n);
@@ -243,8 +238,5 @@ int print_last_n_cell_data_logs(const struct BMSLogger *logger, size_t n)
 		print_cell_data(&log_entries[entry_idx], entry_idx);
 	}
 
-	status = 0;
-
-exit:
-	return status;
+	return 0;
 }

@@ -10,4 +10,11 @@
 */
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool);
 
+/**
+ * Initializes thread flags
+ */
+uint8_t shep_flags_init();
+
+#define ANALYZER_FLAG 0x1
+
 #endif

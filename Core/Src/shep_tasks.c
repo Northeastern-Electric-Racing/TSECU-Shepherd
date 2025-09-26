@@ -5,8 +5,19 @@
 #include "u_can.h"
 #include "shep_queues.h"
 #include "can_messages.h"
+#include "shep_mutexes.h"
+#include "shep_tasks.h"
 
 // TODO: Fill in threads
+
+TX_EVENT_FLAGS_GROUP analyzer_event;
+
+uint8_t shep_flags_init() {
+    tx_event_flags_create(&analyzer_event, "Analyzer Event");
+}
+
+
+extern bms_t bms;
 
 static thread_t _state_machine_thread = {
         .name       = "State Machine Thread", /* Name */
@@ -108,7 +119,41 @@ static thread_t _analyzer_thread = {
 
 void vAnalyzer(ULONG thread_input)
 {
+    for (int i = 0; i < NUM_CHIPS; i++) {
+		bms.chip_data[i].alpha = i % 2 == 0;
+	}
 
+	for (;;) {
+        tx_event_flags_set(&analyzer_event, ANALYZER_FLAG, TX_OR);
+
+        mutex_get(&bms_mutex);
+
+		// calculate base values for later safety calcs
+		calc_cell_temps(bms);
+		calc_pack_temps(bms);
+		calc_cell_voltages(bms);
+		calc_open_cell_voltage(bms);
+		calc_pack_voltage_stats(bms);
+		calc_cell_resistances(bms);
+
+		// these are dependent on above calculations
+		calc_cont_dcl(bms);
+		calc_cont_ccl(bms);
+		calc_state_of_charge(bms);
+
+		// send out telemetry data sourced from the above functions
+		send_acc_status_message(bms.pack_ocv,
+					bms.pack_current, bms.soc);
+		send_cell_voltage_message(bms.max_ocv, bms.min_ocv,
+					  bms.avg_ocv);
+		send_segment_average_volt_message(&bms);
+		send_segment_total_volt_message(&bms);
+		send_cell_temp_message(bms.max_temp, bms.min_temp,
+				       bms.avg_temp);
+		send_segment_temp_message(&bms);
+
+		mutex_put(&bms_mutex);
+	}
 }
 
 static thread_t _segment_data_thread = {

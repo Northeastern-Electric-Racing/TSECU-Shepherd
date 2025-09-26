@@ -129,8 +129,6 @@ typedef struct {
 	/// whether the state machine has determined its time to charge
 	bool is_charging_enabled;
 
-	mutex_t mutex; // TODO: INIT MUTEX
-
     state_t current_state;
 } bms_t;
 
