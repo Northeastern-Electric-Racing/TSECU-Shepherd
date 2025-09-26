@@ -19,10 +19,14 @@
 /* Includes ------------------------------------------------------------------*/
 #include "app_threadx.h"
 #include "main.h"
+#include "u_can.h"
+#include "datastructs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdint.h>
+#include <stdio.h>
+#include <assert.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -82,6 +86,13 @@ static void MX_SPI3_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/* Make printf() use LPUART1 */
+int _write(int file, char *ptr, int len)
+{
+    HAL_UART_Transmit(&hlpuart1, (uint8_t*)ptr, len, HAL_MAX_DELAY);
+    return len;
+}
+
 
 /* USER CODE END 0 */
 
@@ -124,6 +135,12 @@ int main(void)
   MX_FDCAN2_Init();
   MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
+  can_t can1;
+  uint16_t standard_ids[] = {0x00, 0x00}; // define CAN standard IDs here
+  uint32_t exteneded_ids[] = {0x00, 0x00}; // define CAN extended IDs here
+  assert(!can_filter_init(&hfdcan2, &can1, standard_ids, exteneded_ids));
+
+  bms_t bms;
 
   /* USER CODE END 2 */
 

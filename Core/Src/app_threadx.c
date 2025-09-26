@@ -23,7 +23,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "u_threads.h"
+#include "u_debug.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +61,10 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 {
   UINT ret = TX_SUCCESS;
   /* USER CODE BEGIN App_ThreadX_MEM_POOL */
+  TX_BYTE_POOL *byte_pool = (TX_BYTE_POOL*)memory_ptr;
+
+  (void)byte_pool;
+  //CATCH_ERROR(threads_init(byte_pool), TX_SUCCESS);
 
   /* USER CODE END App_ThreadX_MEM_POOL */
   /* USER CODE BEGIN App_ThreadX_Init */
