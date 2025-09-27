@@ -331,5 +331,4 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool) {
     CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
     CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
     CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
-
-}
+}	

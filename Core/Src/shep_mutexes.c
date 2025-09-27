@@ -1,8 +1,17 @@
 #include "cell_data_logging.h"s
 #include "u_debug.h"
 
-mutex_t logger_mutex;
-mutex_t bms_mutex;
+/* Logger Mutex */
+mutex_t logger_mutex = {
+    .name = "Logger Mutex",
+    .priority_inherit = TX_INHERIT
+};
+
+/* BMS Mutex */
+mutex_t bms_mutex = {
+    .name = "BMS Mutex",           
+    .priority_inherit = TX_INHERIT 
+};
 
 /* Initializes all ThreadX mutexes. */
 uint8_t mutexes_init() {
