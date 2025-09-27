@@ -55,7 +55,6 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     "Drivers/Embedded-Base/middleware/src/bitstream.c"
-    "Drivers/adbms/adbms6830/program/src/adBms_Application.c"
     "Drivers/adbms/adbms6830/program/src/mcuWrapper.c"
     "Drivers/adbms/adbms6830/program/src/serialPrintResult.c"
     "Drivers/adbms/adbms2950/lib/src/adBms2950TestHelper.c"
@@ -71,6 +70,13 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/threadX/src/u_tx_threads.c"
     "Drivers/Embedded-Base/threadX/src/u_tx_can.c"
     "Drivers/Embedded-Base/platforms/stm32h563/src/fdcan.c"
+    "Core/Src/adi6830_interaction.c"
+    "Core/Src/can_messages.c"
+    "Core/Src/cell_data_logging.c"
+    "Core/Src/segment.c"
+    "Core/Src/shep_mutexes.c"
+    "Core/Src/shep_queues.c"
+    "Core/Src/state_machine.c"
 )
 
 # Add include paths

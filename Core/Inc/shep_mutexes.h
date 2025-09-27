@@ -2,7 +2,7 @@
 #define _H_SHEP_MUTEXES
 
 #include <stdint.h>
-#include "u_mutex.h"
+#include "u_tx_mutex.h"
 
 extern mutex_t logger_mutex;
 extern mutex_t bms_mutex;

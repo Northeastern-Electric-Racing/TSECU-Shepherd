@@ -4,9 +4,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "bms_config.h"s
-#include "u_mutex.h"
+#include "bms_config.h"
+#include "u_tx_mutex.h"
 #include "adBms6830Data.h"
+#include "timer.h"
 
 /**
  * @brief Stores critical values for the pack (across all chips), and where that critical value can be found
@@ -131,5 +132,68 @@ typedef struct {
 
     state_t current_state;
 } bms_t;
+
+enum {
+	FAULTS_CLEAR = 0x0,
+
+	/* Shepherd BMS faults */
+	CELLS_NOT_BALANCING		            = 0x1,
+	CELL_VOLTAGE_TOO_HIGH	            = 0x2,
+	CELL_VOLTAGE_TOO_LOW	            = 0x4,
+	PACK_TOO_HOT			            = 0x8,
+	OPEN_WIRING_FAULT		            = 0x10, /* cell tap wire is either weakly connected or not connected */
+	INTERNAL_SOFTWARE_FAULT             = 0x20, /* general software fault */
+	INTERNAL_THERMAL_ERROR              = 0x40, /* internal hardware fault reulting from too hot of onboard temps */
+	INTERNAL_CELL_COMM_FAULT            = 0x80, /* this is due to an invalid CRC from retrieving values */
+	CURRENT_SENSOR_FAULT	            = 0x100,
+	CHARGE_READING_MISMATCH             = 0x200, /* charge voltage when not supposed to be charging*/
+	LOW_CELL_VOLTAGE				    = 0x400, /* voltage of a cell falls below 90 mV */
+	WEAK_PACK_FAULT					    = 0x800,
+	EXTERNAL_CAN_FAULT				    = 0x1000,
+	DISCHARGE_LIMIT_ENFORCEMENT_FAULT   = 0x2000,
+	CHARGER_SAFETY_RELAY			    = 0x4000,
+	BATTERY_THERMISTOR				    = 0x8000,
+	CHARGER_CAN_FAULT				    = 0x10000,
+	CHARGE_LIMIT_ENFORCEMENT_FAULT	    = 0x20000,
+	DIE_TEMP_MAXIMUM_FAULT       	    = 0x40000,
+
+	MAX_FAULTS = 0x80000000 /* Maximum allowable fault code */
+};
+
+/**
+ * @brief Represents fault evaluation operators
+ */
+typedef enum {
+	GT, /* fault if {data} greater than {threshold}             */
+	LT, /* fault if {data} less than {threshold}                */
+	GE, /* fault if {data} greater than or equal to {threshold} */
+	LE, /* fault if {data} less than or equal to {threshold}    */
+	EQ, /* fault if {data} equal to {threshold}                 */
+	NEQ, /* fault if {data} not equal to {threshold}             */
+	NOP /* no operation, use for single threshold faults        */
+
+} fault_evalop_t;
+
+/**
+ * @brief Represents data to be packaged into a fault evaluation
+ */
+typedef struct {
+	char id[100];
+	nertimer_t timer;
+
+	float data_1;
+	fault_evalop_t optype_1;
+	float lim_1;
+
+	int timeout;
+	int code;
+
+	fault_evalop_t optype_2;
+	float data_2;
+	float lim_2;
+
+	bool is_critical;
+	// bool is_faulted; /* note: unused field */
+} fault_eval_t;
 
 #endif

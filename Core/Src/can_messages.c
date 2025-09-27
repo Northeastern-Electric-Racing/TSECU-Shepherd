@@ -1,10 +1,9 @@
 #include "can_messages.h"
-
 #include <math.h>
-
-#include "can.h"
+#include "fdcan.h"
 #include "bitstream.h"
 #include "shep_queues.h"
+#include "c_utils.h"
 
 static uint8_t queue_can_msg(can_msg_t can_msg) {
     return queue_send(&can_outgoing, &can_msg);
