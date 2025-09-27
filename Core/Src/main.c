@@ -19,7 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "app_threadx.h"
 #include "main.h"
-#include "u_can.h"
+#include "u_tx_can.h"
 #include "datastructs.h"
 #include "stm32h5xx_hal.h"
 #include "shep_queues.h"

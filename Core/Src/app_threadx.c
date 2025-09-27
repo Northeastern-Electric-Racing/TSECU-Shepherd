@@ -23,8 +23,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "u_threads.h"
-#include "u_debug.h"
+#include "u_tx_threads.h"
+#include "u_tx_debug.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
