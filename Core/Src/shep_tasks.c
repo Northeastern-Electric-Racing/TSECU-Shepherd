@@ -1,8 +1,8 @@
 
-#include "u_threads.h"
-#include "u_debug.h"
-#include "u_general.h"
-#include "u_can.h"
+#include "u_tx_threads.h"
+#include "u_tx_debug.h"
+#include "u_tx_general.h"
+#include "u_tx_can.h"
 #include "shep_queues.h"
 #include "can_messages.h"
 <<<<<<< HEAD

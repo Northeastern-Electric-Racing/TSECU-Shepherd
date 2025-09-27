@@ -1,5 +1,5 @@
-#include "cell_data_logging.h"s
-#include "u_debug.h"
+#include "cell_data_logging.h"
+#include "u_tx_debug.h"
 
 /* Logger Mutex */
 mutex_t logger_mutex = {

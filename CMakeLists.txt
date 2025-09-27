@@ -66,10 +66,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/adbms/adbms2950/program/src/application.c"
     "Drivers/adbms/adbms2950/program/src/pal.c"
     "Drivers/adbms/adbms2950/program/src/print_result.c"
-    "Drivers/Embedded-Base/threadX/src/u_debug.c"
-    "Drivers/Embedded-Base/threadX/src/u_queues.c"
-    "Drivers/Embedded-Base/threadX/src/u_threads.c"
-    "Drivers/Embedded-Base/threadX/src/u_can.c"
+    "Drivers/Embedded-Base/threadX/src/u_tx_debug.c"
+    "Drivers/Embedded-Base/threadX/src/u_tx_queues.c"
+    "Drivers/Embedded-Base/threadX/src/u_tx_threads.c"
+    "Drivers/Embedded-Base/threadX/src/u_tx_can.c"
     "Drivers/Embedded-Base/platforms/stm32h563/src/fdcan.c"
 )
 

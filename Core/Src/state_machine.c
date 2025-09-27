@@ -1,6 +1,6 @@
 
-#include "u_threads.h"
-#include "u_debug.h"
+#include "u_tx_threads.h"
+#include "u_tx_debug.h"
 #include "state_machine.h"
 #include "datastructs.h"
 #include <stdbool.h>

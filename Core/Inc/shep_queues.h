@@ -3,7 +3,7 @@
 
 #include "tx_api.h"
 #include <stdint.h>
-#include "u_queues.h"
+#include "u_tx_queues.h"
 
 extern queue_t can_incoming; // Incoming CAN Queue
 extern queue_t can_outgoing; // Outgoing CAN Queue

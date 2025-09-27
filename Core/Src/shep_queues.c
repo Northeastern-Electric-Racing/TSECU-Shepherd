@@ -1,5 +1,5 @@
 #include "shep_queues.h"
-#include "u_debug.h"
+#include "u_tx_debug.h"
 #include "fdcan.h"
 
 /* Incoming CAN Queue */
