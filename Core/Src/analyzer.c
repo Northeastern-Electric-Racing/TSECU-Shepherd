@@ -73,11 +73,6 @@ const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
 // };
 // clang-format on
 
-uint8_t get_num_cells(chipdata_t *chip_data)
-{
-	return NUM_CELLS_PER_CHIP;
-}
-
 /**
  * @brief Calculate the cell temperature of a 10,000 ohm NTP resistor (model 103)
  * 
@@ -480,10 +475,7 @@ void calc_open_cell_voltage(bms_t *bmsdata)
 	if (is_first_reading) {
 		// sanity check the last cell that the reading is good, oftentimes the first readings are bad
 		float last_cell =
-			bmsdata->chip_data[NUM_CHIPS - 1].cell_voltages
-				[get_num_cells(
-					 &bmsdata->chip_data[NUM_CHIPS - 1]) -
-				 1];
+			bmsdata->chip_data[NUM_CHIPS - 1].cell_voltages[NUM_CELLS_PER_CHIP];
 		if (last_cell > 1 && last_cell < 5) {
 			is_first_reading = false;
 			start_timer(&ocvTimer, 750);
@@ -491,8 +483,7 @@ void calc_open_cell_voltage(bms_t *bmsdata)
 
 		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 			// Number of cells in the chip
-			uint8_t num_cells =
-				get_num_cells(&bmsdata->chip_data[chip]);
+			uint8_t num_cells = NUM_CELLS_PER_CHIP;
 			for (uint8_t cell = 0; cell < num_cells; cell++) {
 				bmsdata->chip_data[chip]
 					.open_cell_voltage[cell] =
@@ -509,10 +500,7 @@ void calc_open_cell_voltage(bms_t *bmsdata)
 		if (is_timer_expired(&ocvTimer) ||
 		    !is_timer_active(&ocvTimer)) {
 			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-				// Number of cells in the chip
-				uint8_t num_cells = get_num_cells(
-					&bmsdata->chip_data[chip]);
-				for (uint8_t cell = 0; cell < num_cells;
+				for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP;
 				     cell++) {
 					// Set current OCV value, ensure value is true OCV
 					if (bmsdata->chip_data[chip]

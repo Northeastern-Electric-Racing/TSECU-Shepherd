@@ -4,14 +4,6 @@
 #include "datastructs.h"
 
 /**
- * @brief Get the number of cells on a chip.
- * 
- * @param chip_data Pointer to struct containing chip data.
- * @return uint8_t The number of cells in the chip.
- */
-uint8_t get_num_cells(chipdata_t *chip_data);
-
-/**
  * @brief Calculate thermistor values and cell temps using thermistors.
  * 
  */
