@@ -5,6 +5,17 @@
 #include "adi6830_interation.h"
 
 /**
+ * @brief Get the num cells using the order of the chip, for functions without chipdata access.
+ * 
+ * @param chip_index 
+ * @return uint8_t the number of cells in the chip
+ */
+uint8_t get_num_cells_seg(uint8_t chip_index)
+{
+	return NUM_CELLS_PER_CHIP;
+}
+
+/**
  * @brief Initialize a chip with our default values.
  * 
  * @param chip Pointer to chip to initialize.
@@ -26,7 +37,7 @@ void init_chip(cell_asic *chip)
 
 	// Short soak on ADAX
 	set_soak_on(chip, SOAKON_SET);
-	set_aux_soak_range(chip, SHORT);
+	set_aux_soak_range(chip, SHORT_6830);
 
 	// No open wire detect soak
 	set_open_wire_soak_time(chip, OWA0);

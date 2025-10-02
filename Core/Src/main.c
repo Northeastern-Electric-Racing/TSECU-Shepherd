@@ -19,8 +19,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "app_threadx.h"
 #include "main.h"
-#include "u_can.h"
+#include "u_tx_can.h"
 #include "datastructs.h"
+#include "stm32h5xx_hal.h"
+#include "shep_queues.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -93,6 +95,36 @@ int _write(int file, char *ptr, int len)
     return len;
 }
 
+/* FDCAN FIFO0 Interrupt Callback */
+/* Callback for any FIFO0 interrupt stuff */
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
+{
+
+	/* If a message has just been recieved... */
+	if (RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE)
+	{
+		can_msg_t message;
+		FDCAN_RxHeaderTypeDef rx_header;
+
+		if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rx_header, message.data) == HAL_OK)
+		{
+			message.id = rx_header.Identifier;
+			message.id_is_extended = (rx_header.IdType == FDCAN_EXTENDED_ID);
+			message.len = (uint8_t)rx_header.DataLength;
+
+			/* Check size */
+			if (rx_header.DataLength > 8)
+			{
+				printf("[main.c/HAL_FDCAN_RxFifo0Callback()] ERROR: Recieved message is larger than 8 bytes.\n");
+				return;
+			}
+
+			/* Send message to incoming CAN queue */
+      queue_send(&can_incoming, &message);
+		}
+	}
+}
+
 
 /* USER CODE END 0 */
 
@@ -140,7 +172,7 @@ int main(void)
   uint32_t exteneded_ids[] = {0x00, 0x00}; // define CAN extended IDs here
   assert(!can_filter_init(&hfdcan2, &can1, standard_ids, exteneded_ids));
 
-  bms_t bms;
+  bms_t bms; // TODO init bms interface
 
   /* USER CODE END 2 */
 

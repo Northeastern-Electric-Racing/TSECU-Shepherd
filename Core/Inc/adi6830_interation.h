@@ -4,6 +4,7 @@
 #include "adBms6830Data.h"
 #include "stm32h5xx_hal.h"
 #include "bms_config.h"
+#include "can_messages.h"
 
 // --- BEGIN SET HELPERS ---
 
