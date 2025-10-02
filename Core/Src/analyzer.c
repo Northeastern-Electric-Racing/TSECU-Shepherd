@@ -61,7 +61,7 @@ const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
 };
 // const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
 //     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-//     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+//     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},git@github.com:Northeastern-Electric-Racing/TSECU-Shepherd.git
 //     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 //     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 //     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -72,11 +72,6 @@ const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
 //     {1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 // };
 // clang-format on
-
-uint8_t get_num_cells(chipdata_t *chip_data)
-{
-	return NUM_CELLS_PER_CHIP;
-}
 
 /**
  * @brief Calculate the cell temperature of a 10,000 ohm NTP resistor (model 103)
@@ -121,9 +116,8 @@ float calc_cell_temp_onboard(float voltage)
 void calc_cell_temps(bms_t *bmsdata)
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
-		uint8_t num_cells = get_num_cells(&bmsdata->chip_data[chip]);
 
-		for (int cell = 0; cell < num_cells; cell++) {
+		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			if (THERM_FAIL_MAP[chip][THERM_MAP[cell]]) {
 				static bool is_first = true;
 				if (is_first) {
@@ -153,23 +147,14 @@ void calc_cell_temps(bms_t *bmsdata)
 
 		// Calculate onboard therm temps and chip temp
 
-		if (!bmsdata->chip_data[chip].alpha) {
-			// Take average of both onboard therms
-			bmsdata->chip_data[chip].on_board_temp =
-				(calc_cell_temp_onboard(getVoltage(
-					 bmsdata->chips[chip].raux.ra_codes[6])) +
-				 calc_cell_temp_onboard(getVoltage(
-					 bmsdata->chips[chip]
-						 .raux.ra_codes[7]))) /
-				2;
-		} else {
-			//printf("\nONBOARD alpha %f\n\n",
-			//       getVoltage(
-			//	       bmsdata->chips[chip].raux.ra_codes[7]));
-			bmsdata->chip_data[chip].on_board_temp =
+		// Take average of both onboard therms
+		bmsdata->chip_data[chip].on_board_temp =
+			(calc_cell_temp_onboard(getVoltage(
+					bmsdata->chips[chip].raux.ra_codes[6])) +
 				calc_cell_temp_onboard(getVoltage(
-					bmsdata->chips[chip].raux.ra_codes[7]));
-		}
+					bmsdata->chips[chip]
+						.raux.ra_codes[7]))) /
+			2;
 
 		/* set the die temp */
 		// conversion rate from datasheet, Table 105.  also in driver src
@@ -195,9 +180,8 @@ void calc_pack_temps(bms_t *bmsdata)
 	float total_seg_temp = 0;
 
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		uint8_t num_cells = get_num_cells(&bmsdata->chip_data[c]);
 
-		for (uint8_t cell = 0; cell < num_cells; cell++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			if (bmsdata->chip_data[c].cell_temp[cell] >
 			    bmsdata->max_temp.val) {
 				bmsdata->max_temp.val =
@@ -242,9 +226,8 @@ void calc_pack_temps(bms_t *bmsdata)
 void calc_cell_voltages(bms_t *bmsdata)
 {
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-		uint8_t num_cells = get_num_cells(&bmsdata->chip_data[chip]);
 
-		for (uint8_t cell = 0; cell < num_cells; cell++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			if (VOLTS_FAIL_MAP[chip][cell]) {
 				static bool is_first = true;
 				if (is_first) {
@@ -298,8 +281,7 @@ void calc_pack_voltage_stats(bms_t *bmsdata)
 	float total_seg_volt = 0;
 
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		uint8_t num_cells = get_num_cells(&bmsdata->chip_data[c]);
-		for (uint8_t cell = 0; cell < num_cells; cell++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			/* fings out the maximum cell voltage and location */
 			if (bmsdata->chip_data[c].cell_voltages[cell] >
 			    bmsdata->max_voltage.val) {
@@ -370,9 +352,7 @@ void calc_pack_voltage_stats(bms_t *bmsdata)
 void calc_cell_resistances(bms_t *bmsdata)
 {
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		uint8_t num_cells = get_num_cells(&bmsdata->chip_data[c]);
-
-		for (uint8_t cell = 0; cell < num_cells; cell++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			if (fabs(bmsdata->pack_current) >= 0.001) {
 				bmsdata->chip_data[c].cell_resistance[cell] =
 					(bmsdata->chip_data[c]
@@ -495,10 +475,7 @@ void calc_open_cell_voltage(bms_t *bmsdata)
 	if (is_first_reading) {
 		// sanity check the last cell that the reading is good, oftentimes the first readings are bad
 		float last_cell =
-			bmsdata->chip_data[NUM_CHIPS - 1].cell_voltages
-				[get_num_cells(
-					 &bmsdata->chip_data[NUM_CHIPS - 1]) -
-				 1];
+			bmsdata->chip_data[NUM_CHIPS - 1].cell_voltages[NUM_CELLS_PER_CHIP];
 		if (last_cell > 1 && last_cell < 5) {
 			is_first_reading = false;
 			start_timer(&ocvTimer, 750);
@@ -506,8 +483,7 @@ void calc_open_cell_voltage(bms_t *bmsdata)
 
 		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 			// Number of cells in the chip
-			uint8_t num_cells =
-				get_num_cells(&bmsdata->chip_data[chip]);
+			uint8_t num_cells = NUM_CELLS_PER_CHIP;
 			for (uint8_t cell = 0; cell < num_cells; cell++) {
 				bmsdata->chip_data[chip]
 					.open_cell_voltage[cell] =
@@ -524,10 +500,7 @@ void calc_open_cell_voltage(bms_t *bmsdata)
 		if (is_timer_expired(&ocvTimer) ||
 		    !is_timer_active(&ocvTimer)) {
 			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-				// Number of cells in the chip
-				uint8_t num_cells = get_num_cells(
-					&bmsdata->chip_data[chip]);
-				for (uint8_t cell = 0; cell < num_cells;
+				for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP;
 				     cell++) {
 					// Set current OCV value, ensure value is true OCV
 					if (bmsdata->chip_data[chip]
