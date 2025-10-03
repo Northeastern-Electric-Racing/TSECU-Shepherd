@@ -1,27 +1,25 @@
-
-#include "analyzer.h"
-
 #include "analyzer.h"
 
 #include <math.h>
 #include <float.h>
 
+#include "can_messages.h"
 #include "serialPrintResult.h"
-#include "timer.h"
 
 // the OCV timer
 nertimer_t ocvTimer;
 
-// TODO adjust for alpha and beta having same number of cells
+extern BMSState_t current_state;
 
 /**
- * @brief Map cells to therms (ra codes).  Note beta has only 6 therms. 
+ * @brief Map cells to therms (ra codes).  Note beta has only 6 therms.
+ * 
  */
-const int THERM_MAP[NUM_CELLS] = { 0, 0, 1, 1, 2, 2, 3,
+const int THERM_MAP[NUM_CELLS_ALPHA] = { 0, 0, 1, 1, 2, 2, 3,
 					 3, 4, 4, 5, 5, 6, 6 };
 
 // clang-format off
-// const bool THERM_FAIL_MAP[NUM_CHIPS][NUM_THERMS] =    { 
+// const bool THERM_FAIL_MAP[NUM_CHIPS][NUM_THERMS_ALPHA] =    { 
 // 	{0, 0, 0, 0, 0, 0, 0}, // Seg 1
 // 	{0, 0, 1, 0, 0, 0, 0},
 // 	{0, 0, 0, 0, 0, 1, 1}, // Seg 2
@@ -33,21 +31,21 @@ const int THERM_MAP[NUM_CELLS] = { 0, 0, 1, 1, 2, 2, 3,
 // 	{0, 0, 0, 0, 0, 0, 0}, // Seg 5
 // 	{0, 1, 0, 1, 0, 0, 0}
 // 	};
-const bool THERM_FAIL_MAP[NUM_CHIPS][NUM_THERMS] =    { 
+const bool THERM_FAIL_MAP[NUM_CHIPS][NUM_THERMS_ALPHA] =    { 
 	{0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 1, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 1, 1},
 	{0, 0, 0, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0, 0},
-	{1, 0, 0, 0, 0, 0, 0},
+	{1, 1, 0, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 1, 0, 1, 0},
 	{0, 0, 0, 0, 0, 0, 0}
 };
 
 
-const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
+const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS_ALPHA] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -59,7 +57,7 @@ const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
-// const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
+// const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS_ALPHA] = {
 //     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 //     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 //     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -75,7 +73,11 @@ const bool VOLTS_FAIL_MAP[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
 
 uint8_t get_num_cells(chipdata_t *chip_data)
 {
-	return NUM_CELLS_PER_CHIP;
+	if (chip_data->alpha) {
+		return NUM_CELLS_ALPHA;
+	} else {
+		return NUM_CELLS_BETA;
+	}
 }
 
 /**
@@ -118,7 +120,7 @@ float calc_cell_temp_onboard(float voltage)
 	return calc_temp(res);
 }
 
-void calc_cell_temps(bms_t *bmsdata)
+void calc_cell_temps(acc_data_t *bmsdata)
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		uint8_t num_cells = get_num_cells(&bmsdata->chip_data[chip]);
@@ -143,8 +145,17 @@ void calc_cell_temps(bms_t *bmsdata)
 					bmsdata->chips[chip]
 						.raux.ra_codes[THERM_MAP[cell]];
 
-				bmsdata->chip_data[chip].cell_temp[cell] =
-					calc_cell_temp(getVoltage(x));
+				float temp = calc_cell_temp(getVoltage(x));
+				// sanity check bad values
+				if (temp < 81) {
+					bmsdata->chip_data[chip]
+						.cell_temp[cell] = temp;
+				} else {
+					bmsdata->chip_data[chip]
+						.cell_temp[cell] =
+						bmsdata->segment_average_temps
+							[chip % 2];
+				}
 				// if (cell == 2 && chip == 5)
 				// 	bmsdata->chip_data[chip]
 				// 		.cell_temp[cell] = 61.5;
@@ -179,7 +190,7 @@ void calc_cell_temps(bms_t *bmsdata)
 	}
 }
 
-void calc_pack_temps(bms_t *bmsdata)
+void calc_pack_temps(acc_data_t *bmsdata)
 {
 	bmsdata->max_temp.val = FLT_MIN;
 	bmsdata->max_temp.cellNum = 0;
@@ -222,7 +233,7 @@ void calc_pack_temps(bms_t *bmsdata)
 		if (c % 2 == 1) {
 			bmsdata->segment_average_temps[c / 2] =
 				total_seg_temp /
-				((float)(NUM_CELLS * 2));
+				((float)(NUM_CELLS_ALPHA + NUM_CELLS_BETA));
 			total_seg_temp = 0;
 		}
 
@@ -239,7 +250,7 @@ void calc_pack_temps(bms_t *bmsdata)
 	bmsdata->avg_temp = total_temp / NUM_CELLS;
 }
 
-void calc_cell_voltages(bms_t *bmsdata)
+void calc_cell_voltages(acc_data_t *bmsdata)
 {
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		uint8_t num_cells = get_num_cells(&bmsdata->chip_data[chip]);
@@ -257,7 +268,7 @@ void calc_cell_voltages(bms_t *bmsdata)
 						bmsdata->segment_average_volts
 							[chip / 2];
 				}
-			} else if (bmsdata->current_state == CHARGING) {
+			} else if (current_state == CHARGING_STATE) {
 				// in charging state, we read single shot c codes ONLY
 				bmsdata->chip_data[chip].cell_voltages[cell] =
 					getVoltage(bmsdata->chips[chip]
@@ -275,7 +286,7 @@ void calc_cell_voltages(bms_t *bmsdata)
 	}
 }
 
-void calc_pack_voltage_stats(bms_t *bmsdata)
+void calc_pack_voltage_stats(acc_data_t *bmsdata)
 {
 	bmsdata->max_voltage.val = FLT_MIN;
 	bmsdata->max_voltage.cellNum = 0;
@@ -348,7 +359,8 @@ void calc_pack_voltage_stats(bms_t *bmsdata)
 		if (c % 2 == 1) {
 			bmsdata->segment_average_volts[c / 2] =
 				total_seg_volt /
-				((float)(NUM_CELLS * 2));
+				((float)(NUM_CELLS_ALPHA + NUM_CELLS_BETA));
+			bmsdata->segment_total_volts[c / 2] = total_seg_volt;
 			total_seg_volt = 0;
 		}
 	}
@@ -367,7 +379,7 @@ void calc_pack_voltage_stats(bms_t *bmsdata)
 	bmsdata->delt_ocv = bmsdata->max_ocv.val - bmsdata->min_ocv.val;
 }
 
-void calc_cell_resistances(bms_t *bmsdata)
+void calc_cell_resistances(acc_data_t *bmsdata)
 {
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
 		uint8_t num_cells = get_num_cells(&bmsdata->chip_data[c]);
@@ -388,7 +400,7 @@ void calc_cell_resistances(bms_t *bmsdata)
 	}
 }
 
-void calc_cont_dcl(bms_t *bmsdata)
+void calc_cont_dcl(acc_data_t *bmsdata)
 {
 	float max_temp = bmsdata->max_temp.val;
 	float min_temp = bmsdata->min_temp.val;
@@ -438,10 +450,10 @@ void calc_cont_dcl(bms_t *bmsdata)
 		scaled_dcl = MIN_DCL;
 	}
 
-	bmsdata->cont_DCL = 200;
+	bmsdata->cont_DCL = 145;
 }
 
-void calc_cont_ccl(bms_t *bmsdata)
+void calc_cont_ccl(acc_data_t *bmsdata)
 {
 	float max_temp = bmsdata->max_temp.val;
 	float min_temp = bmsdata->min_temp.val;
@@ -488,7 +500,7 @@ void calc_cont_ccl(bms_t *bmsdata)
 	bmsdata->cont_CCL = 40;
 }
 
-void calc_open_cell_voltage(bms_t *bmsdata)
+void calc_open_cell_voltage(acc_data_t *bmsdata)
 {
 	static bool is_first_reading = true;
 	/* if there is no previous data point, set inital open cell voltage to current reading */
@@ -555,7 +567,7 @@ void calc_open_cell_voltage(bms_t *bmsdata)
 	}
 }
 
-void calc_state_of_charge(bms_t *bmsdata)
+void calc_state_of_charge(acc_data_t *bmsdata)
 {
 	double volts = (double)bmsdata->min_ocv.val;
 

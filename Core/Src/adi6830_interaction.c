@@ -1,7 +1,7 @@
-#include "adi6830_interation.h"
+#include "adi6830_interaction.h"
 #include "adBms6830CmdList.h"
 #include "adBms6830GenericType.h"
-//#include "can_messages.h" // TODO set up can messages
+#include "can_messages.h"
 #include "compute.h"
 #include "mcuWrapper.h"
 
@@ -218,7 +218,8 @@ inline void delay_us(uint32_t us)
 	uint32_t tickstart = __HAL_TIM_GET_COUNTER(&htim2);
 	uint32_t wait = us;
 
-	while ((__HAL_TIM_GET_COUNTER(&htim2) - tickstart) < wait);
+	while ((__HAL_TIM_GET_COUNTER(&htim2) - tickstart) < wait)
+		;
 }
 
 /**
@@ -494,10 +495,11 @@ void get_avgd_cell_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 // 	read_adbms_data(chips, RDFCALL, Rdfcall, ALL_GRP);
 // }
 
-void get_s_adc_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
+void get_s_adc_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi,
+			OW_C_S open_wire_detect)
 {
 	adbms_wake_isospi(hspi);
-	adBms6830_Adsv(SINGLE, DCP_OFF, OW_OFF_ALL_CH);
+	adBms6830_Adsv(SINGLE, DCP_OFF, open_wire_detect);
 	adBmsPollAdc_indicator(PLSADC);
 
 	read_s_voltage_registers(chips, hspi);

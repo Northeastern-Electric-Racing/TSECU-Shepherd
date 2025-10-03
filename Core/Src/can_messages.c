@@ -1,13 +1,10 @@
 #include "can_messages.h"
-#include <math.h>
-#include "fdcan.h"
-#include "bitstream.h"
-#include "shep_queues.h"
-#include "c_utils.h"
 
-static uint8_t queue_can_msg(can_msg_t can_msg) {
-    return queue_send(&can_outgoing, &can_msg);
-}
+#include <math.h>
+
+#include "can.h"
+#include "can_handler.h"
+#include "bitstream.h"
 
 /// @brief A helper which sends appropriate error to stdout and CAN if a bistream overflows
 /// @param bitstream_res The bitstream to check for overflow
@@ -264,7 +261,7 @@ void send_cell_voltage_message(crit_cellval_t max_voltage,
 
 	queue_can_msg(msg);
 }
-void send_segment_average_volt_message(bms_t *bmsdata)
+void send_segment_average_volt_message(acc_data_t *bmsdata)
 {
 	bitstream_t segment_average_volt_msg;
 	uint8_t bitstream_data[8];
@@ -291,7 +288,7 @@ void send_segment_average_volt_message(bms_t *bmsdata)
 	queue_can_msg(msg);
 }
 
-void send_segment_total_volt_message(bms_t *bmsdata)
+void send_segment_total_volt_message(acc_data_t *bmsdata)
 {
 	// clang-format off
 	bitstream_t segment_total_volt_msg;
@@ -340,7 +337,7 @@ void send_cell_temp_message(crit_cellval_t max_temp, crit_cellval_t min_temp,
 	queue_can_msg(msg);
 }
 
-void send_segment_temp_message(bms_t *bmsdata)
+void send_segment_temp_message(acc_data_t *bmsdata)
 {
 	struct __attribute__((__packed__)) {
 		int8_t segment1_average_temp;

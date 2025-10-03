@@ -1,5 +1,5 @@
-#ifndef _CHARGING_H
-#define _CHARGING_H
+#ifndef CHARGING
+#define CHARGING
 
 #include "datastructs.h"
 
@@ -8,6 +8,6 @@
  * 
  * @param bmsdata general BMS data struct
  */
-void handle_balance_cells(bms_t *bmsdata);
+void handle_balance_cells(acc_data_t *bmsdata);
 
 #endif

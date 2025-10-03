@@ -1,8 +1,8 @@
-#ifndef _SEGMENT_H
-#define _SEGMENT_H
+#ifndef SEGMENT_H
+#define SEGMENT_H
 
-#include "bms_config.h"
-#include "stm32h5xx.h"
+#include "bmsConfig.h"
+#include "stm32f4xx_hal.h"
 #include "adBms6830Data.h"
 #include <stdbool.h>
 
@@ -19,7 +19,7 @@ void segment_init(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
 void segment_mute(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
 /**
  * @brief Start discharge again (inherits config)
- * s
+ * 
  * @param bmsdata 
  */
 void segment_unmute(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
@@ -82,7 +82,7 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
  */
 void segment_configure_balancing(
 	cell_asic chips[NUM_CHIPS],
-	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP],
+	bool discharge_config[NUM_CHIPS][NUM_CELLS_ALPHA],
 	SPI_HandleTypeDef *hspi);
 
 /**

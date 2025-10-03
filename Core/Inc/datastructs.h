@@ -1,21 +1,11 @@
+#ifndef DATASTRUCTS_H
+#define DATASTRUCTS_H
 
-#ifndef _DATA_STRUCTS_H
-#define _DATA_STRUCTS_H
-
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include "bms_config.h"
-#include "u_tx_mutex.h"
-#include "adBms6830Data.h"
 #include "timer.h"
-
-/**
- * @brief Stores critical values for the pack (across all chips), and where that critical value can be found
- */
-typedef struct {
-	float val;
-	uint8_t chipNum;
-} crit_chipval_t;
+#include "adBms6830Data.h"
 
 /**
  * @brief Individual chip data
@@ -27,11 +17,11 @@ typedef struct {
 	/* These are calculated during the analysis of data */
 
 	/* Cell temperature in celsius */
-	float cell_temp[NUM_CELLS];
-	float cell_resistance[NUM_CELLS];
-	float open_cell_voltage[NUM_CELLS];
+	float cell_temp[NUM_CELLS_ALPHA];
+	float cell_resistance[NUM_CELLS_ALPHA];
+	float open_cell_voltage[NUM_CELLS_ALPHA];
 
-	float cell_voltages[NUM_CELLS];
+	float cell_voltages[NUM_CELLS_ALPHA];
 
 	/* True if chip is alpha, False if Chip is Beta */
 	bool alpha;
@@ -44,7 +34,43 @@ typedef struct {
 } chipdata_t;
 
 /**
+ * @brief Enuemrated possible fault codes for the BMS
+ * @note  the values increase at powers of two to perform bitwise operations on a main fault code
+ *          to set or get the error codes
+ */
+// clang-format off
+enum {
+	FAULTS_CLEAR = 0x0,
+
+	/* Shepherd BMS faults */
+	CELLS_NOT_BALANCING		            = 0x1,
+	CELL_VOLTAGE_TOO_HIGH	            = 0x2,
+	CELL_VOLTAGE_TOO_LOW	            = 0x4,
+	PACK_TOO_HOT			            = 0x8,
+	OPEN_WIRING_FAULT		            = 0x10, /* cell tap wire is either weakly connected or not connected */
+	INTERNAL_SOFTWARE_FAULT             = 0x20, /* general software fault */
+	INTERNAL_THERMAL_ERROR              = 0x40, /* internal hardware fault reulting from too hot of onboard temps */
+	INTERNAL_CELL_COMM_FAULT            = 0x80, /* this is due to an invalid CRC from retrieving values */
+	CURRENT_SENSOR_FAULT	            = 0x100,
+	CHARGE_READING_MISMATCH             = 0x200, /* charge voltage when not supposed to be charging*/
+	LOW_CELL_VOLTAGE				    = 0x400, /* voltage of a cell falls below 90 mV */
+	WEAK_PACK_FAULT					    = 0x800,
+	EXTERNAL_CAN_FAULT				    = 0x1000,
+	DISCHARGE_LIMIT_ENFORCEMENT_FAULT   = 0x2000,
+	CHARGER_SAFETY_RELAY			    = 0x4000,
+	BATTERY_THERMISTOR				    = 0x8000,
+	CHARGER_CAN_FAULT				    = 0x10000,
+	CHARGE_LIMIT_ENFORCEMENT_FAULT	    = 0x20000,
+	DIE_TEMP_MAXIMUM_FAULT       	    = 0x40000,
+
+	MAX_FAULTS = 0x80000000 /* Maximum allowable fault code */
+};
+
+// clang-format on
+
+/**
  * @brief Stores critical values for the pack, and where that critical value can be found
+ *
  */
 typedef struct {
 	float val;
@@ -52,17 +78,21 @@ typedef struct {
 	uint8_t cellNum;
 } crit_cellval_t;
 
-typedef enum {
-    BOOT,
-    READY,
-    CHARGING,
-    FAULTED,
-    NUM_STATES,
-} state_t;
+/**
+ * @brief Stores critical values for the pack (across all chips), and where that critical value can be found
+ *
+ */
+typedef struct {
+	float val;
+	uint8_t chipNum;
+} crit_chipval_t;
 
 /**
- * @brief stores all data related to the bms
+ * @brief Represents one "frame" of BMS data
+ * @note the size of this structure is **9752 bits** (~1.3k bytes), as of October 22, 2022
  */
+#define ACCUMULATOR_FRAME_SIZE sizeof(acc_data_t);
+
 typedef struct {
 	/* chip_data and chips are parallel arrays. */
 
@@ -121,7 +151,7 @@ typedef struct {
 	float delt_ocv;
 
 	// the current discharge configuration the state machine wants
-	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+	bool discharge_config[NUM_CHIPS][NUM_CELLS_ALPHA];
 	// whether balancing should be on, or muted
 	bool should_balance;
 
@@ -129,36 +159,21 @@ typedef struct {
 	bool is_charger_connected;
 	/// whether the state machine has determined its time to charge
 	bool is_charging_enabled;
+} acc_data_t;
 
-    state_t current_state;
-} bms_t;
+/**
+ * @brief Represents individual BMS states
+ */
+typedef enum {
+	BOOT_STATE, /* State when BMS first starts up, used to initialize everything that needs
+					   configuring */
+	READY_STATE, /* State when car is not on/BMS is not really doing anything */
+	CHARGING_STATE, /* State when car is on and is charging (Filling battery) */
+	FAULTED_STATE, /* State when BMS has detected a catastrophic fault and we need to hault
+					   operations */
+	NUM_STATES
 
-enum {
-	FAULTS_CLEAR = 0x0,
-
-	/* Shepherd BMS faults */
-	CELLS_NOT_BALANCING		            = 0x1,
-	CELL_VOLTAGE_TOO_HIGH	            = 0x2,
-	CELL_VOLTAGE_TOO_LOW	            = 0x4,
-	PACK_TOO_HOT			            = 0x8,
-	OPEN_WIRING_FAULT		            = 0x10, /* cell tap wire is either weakly connected or not connected */
-	INTERNAL_SOFTWARE_FAULT             = 0x20, /* general software fault */
-	INTERNAL_THERMAL_ERROR              = 0x40, /* internal hardware fault reulting from too hot of onboard temps */
-	INTERNAL_CELL_COMM_FAULT            = 0x80, /* this is due to an invalid CRC from retrieving values */
-	CURRENT_SENSOR_FAULT	            = 0x100,
-	CHARGE_READING_MISMATCH             = 0x200, /* charge voltage when not supposed to be charging*/
-	LOW_CELL_VOLTAGE				    = 0x400, /* voltage of a cell falls below 90 mV */
-	WEAK_PACK_FAULT					    = 0x800,
-	EXTERNAL_CAN_FAULT				    = 0x1000,
-	DISCHARGE_LIMIT_ENFORCEMENT_FAULT   = 0x2000,
-	CHARGER_SAFETY_RELAY			    = 0x4000,
-	BATTERY_THERMISTOR				    = 0x8000,
-	CHARGER_CAN_FAULT				    = 0x10000,
-	CHARGE_LIMIT_ENFORCEMENT_FAULT	    = 0x20000,
-	DIE_TEMP_MAXIMUM_FAULT       	    = 0x40000,
-
-	MAX_FAULTS = 0x80000000 /* Maximum allowable fault code */
-};
+} BMSState_t;
 
 /**
  * @brief Represents fault evaluation operators

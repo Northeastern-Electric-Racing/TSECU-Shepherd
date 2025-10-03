@@ -56,7 +56,8 @@ static void print_cell_data(const CellDataEntry_t *entry, size_t entry_idx)
 	       entry->cell_temperature_timestamp);
 
 	for (int chip_num = 0; chip_num < NUM_CHIPS; chip_num++) {
-		int cell_count = NUM_CELLS_PER_CHIP;
+		int cell_count = (chip_num % 2 == 0) ? NUM_CELLS_ALPHA :
+						       NUM_CELLS_BETA;
 		printf("\r\nChip %d (%s):\r\n", chip_num,
 		       (chip_num % 2 == 0) ? "Alpha" : "Beta");
 
@@ -93,8 +94,8 @@ int cell_data_logger_init(struct BMSLogger *logger)
 int cell_data_logger_timestamp_voltage(struct BMSLogger *logger)
 {
 	assert(logger);
-    
-	if (mutex_get(&logger_mutex) != U_SUCCESS) { 
+
+	if (mutex_get(&logger_mutex) != U_SUCCESS) {
 		printf("ERROR: Failed to acquire data logging mutex!\r\n");
 		return -1;
 	}
@@ -132,7 +133,7 @@ int cell_data_logger_timestamp_therms(struct BMSLogger *logger)
 
 	entry->cell_temperature_timestamp = get_us_timestamp();
 
-    mutex_put(&logger_mutex);
+	mutex_put(&logger_mutex);
 
 	return 0;
 }
@@ -146,7 +147,7 @@ int cell_data_logger_timestamp_therms(struct BMSLogger *logger)
  * @param bms_data Pointer to the BMS data structure containing cell voltages and temperatures.
  * @return 0 on success, -1 on failure.
  */
-int cell_data_log_measurement(struct BMSLogger *logger, bms_t *bms_data)
+int cell_data_log_measurement(struct BMSLogger *logger, acc_data_t *bms_data)
 {
 	int status = -1;
 	assert(logger);
@@ -201,8 +202,8 @@ int cell_data_log_get_last_n(const struct BMSLogger *logger, size_t n,
 
 	if (n > logger->ring_buff.curr_elements) {
 		printf("ERROR: Not enough logs available!\r\n");
-        return -1;	
-    }
+		return -1;
+	}
 
 	if (mutex_get(&logger_mutex) != U_SUCCESS) {
 		printf("ERROR: Failed to acquire data logging mutex!\r\n");
@@ -213,7 +214,7 @@ int cell_data_log_get_last_n(const struct BMSLogger *logger, size_t n,
 
 	mutex_put(&logger_mutex);
 
-    return 0;
+	return 0;
 }
 
 /**

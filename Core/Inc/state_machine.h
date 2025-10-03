@@ -1,8 +1,13 @@
-
-#ifndef _STATE_MACHINE_H
-#define _STATE_MACHINE_H
+#ifndef BMS_STATES_H
+#define BMS_STATES_H
 
 #include "analyzer.h"
+
+/* global that can be read for debugging in main */
+extern BMSState_t current_state;
+
+/* global defined in segment.c that keeps an eye on the number of crc errors */
+extern uint16_t crc_error_check;
 
 #define NUM_FAULTS 8
 
@@ -17,7 +22,7 @@ typedef enum {
  * @param bmsdata
  * 
  */
-void charger_message_recieved(bms_t *bmsdata);
+void charger_message_recieved(acc_data_t *bmsdata);
 
 /**
  * @brief Returns if we want to balance cells during a particular frame
@@ -26,7 +31,7 @@ void charger_message_recieved(bms_t *bmsdata);
  * @return true
  * @return false
  */
-bool sm_balancing_check(bms_t *bmsdata);
+bool sm_balancing_check(acc_data_t *bmsdata);
 
 /**
  * @brief Returns if we want to charge cells during a particular frame
@@ -35,7 +40,7 @@ bool sm_balancing_check(bms_t *bmsdata);
  * @return true
  * @return false
  */
-bool sm_charging_check(bms_t *bmsdata);
+bool sm_charging_check(acc_data_t *bmsdata);
 
 /**
  * @brief Returns any new faults or current faults that have come up
@@ -43,7 +48,7 @@ bool sm_charging_check(bms_t *bmsdata);
  *
  * @param accData
  */
-void sm_fault_return(bms_t *accData);
+void sm_fault_return(acc_data_t *accData);
 
 /**
  * @brief Used in parellel to faultReturn(), calculates each fault to append the
@@ -60,7 +65,7 @@ fault_stat_t sm_fault_eval(fault_eval_t *fault_item);
  *
  * @param bmsdata
  */
-void sm_handle_state(bms_t *bmsdata);
+void sm_handle_state(acc_data_t *bmsdata);
 
 /**
  * @brief Algorithm behind determining which cells we want to balance
@@ -68,6 +73,6 @@ void sm_handle_state(bms_t *bmsdata);
  *
  * @param bms_data
  */
-void sm_balance_cells(bms_t *bms_data);
+void sm_balance_cells(acc_data_t *bms_data);
 
-#endif
+#endif // BMS_STATES_H

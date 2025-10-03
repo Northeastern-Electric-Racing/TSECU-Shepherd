@@ -1,9 +1,8 @@
-
 #include "charging.h"
-#include"state_machine.h"
+#include "state_machine.h"
+#include "segment.h"
 #include "compute.h"
 #include "bms_config.h"
-#include "c_utils.h"
 
 #include <math.h>
 
@@ -18,8 +17,8 @@ typedef struct {
  * @param arr 
  * @param n count
  */
-void chipsSelectionSort(bms_t *bmsdata,
-			val_idexed_t replaced_val[NUM_CHIPS][NUM_CELLS_PER_CHIP])
+void chipsSelectionSort(acc_data_t *bmsdata,
+			val_idexed_t replaced_val[NUM_CHIPS][NUM_CELLS_ALPHA])
 {
 	for (size_t chip = 0; chip < NUM_CHIPS; chip++) {
 		uint8_t cells = get_num_cells(bmsdata[chip].chip_data);
@@ -58,7 +57,7 @@ void chipsSelectionSort(bms_t *bmsdata,
 }
 
 /* Send cell balancing config to the segments */
-void handle_balance_cells(bms_t *bmsdata)
+void handle_balance_cells(acc_data_t *bmsdata)
 {
 	// the maximum number of cells to balance per chip, usually tuned for thermal reasons
 	static const int MAX_BAL_CHIP = 7;
@@ -68,7 +67,7 @@ void handle_balance_cells(bms_t *bmsdata)
 	// the margin above the low cell to ignore, which is usually X% of the delta
 	float min_thresh = bmsdata->delt_ocv * 0.4;
 
-	val_idexed_t new_ocv_map[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
+	val_idexed_t new_ocv_map[NUM_CHIPS][NUM_CELLS_ALPHA] = { 0 };
 
 	// first, sort and cleanup everything
 	chipsSelectionSort(bmsdata, new_ocv_map);

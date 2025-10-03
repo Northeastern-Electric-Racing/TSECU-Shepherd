@@ -11,14 +11,16 @@
  * its contents directly.
  */
 
-#ifndef _CELL_DATA_LOGGING_H
-#define _CELL_DATA_LOGGING_H
+#ifndef CELL_DATA_LOGGING_H
+#define CELL_DATA_LOGGING_H
 
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include "datastructs.h"
 #include "ringbuffer.h"
+#include "cmsis_os.h"
+#include "shep_mutexes.h"
 
 // Number of stored cell data readings in ring buffer.
 #define NUM_OF_READINGS 10
@@ -34,8 +36,8 @@
 typedef struct {
 	uint32_t cell_voltage_timestamp;
 	uint32_t cell_temperature_timestamp;
-	float cell_voltages[NUM_CHIPS][NUM_CELLS_PER_CHIP];
-	float cell_temperatures[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+	float cell_voltages[NUM_CHIPS][NUM_CELLS_ALPHA];
+	float cell_temperatures[NUM_CHIPS][NUM_CELLS_ALPHA];
 } CellDataEntry_t;
 
 /**
@@ -81,7 +83,7 @@ int cell_data_logger_timestamp_therms(struct BMSLogger *logger);
  * @param bms_data Pointer to the BMS data structure containing cell voltages and temperatures.
  * @return 0 on success, -1 on failure.
  */
-int cell_data_log_measurement(struct BMSLogger *logger, bms_t *bms_data);
+int cell_data_log_measurement(struct BMSLogger *logger, acc_data_t *bms_data);
 
 /**
  * @brief Retrieves the last n cell data logs from the buffer.

@@ -1,8 +1,8 @@
-
 #include "segment.h"
+
+#include "adi_interaction.h"
 #include "c_utils.h"
 #include "serialPrintResult.h"
-#include "adi6830_interation.h"
 
 /**
  * @brief Get the num cells using the order of the chip, for functions without chipdata access.
@@ -12,7 +12,12 @@
  */
 uint8_t get_num_cells_seg(uint8_t chip_index)
 {
-	return NUM_CELLS_PER_CHIP;
+	// TODO make less hardcoded
+	if (chip_index % 2 == 0) {
+		return NUM_CELLS_ALPHA;
+	} else {
+		return NUM_CELLS_BETA;
+	}
 }
 
 /**
@@ -37,7 +42,7 @@ void init_chip(cell_asic *chip)
 
 	// Short soak on ADAX
 	set_soak_on(chip, SOAKON_SET);
-	set_aux_soak_range(chip, SHORT_6830);
+	set_aux_soak_range(chip, SHORT);
 
 	// No open wire detect soak
 	set_open_wire_soak_time(chip, OWA0);
@@ -285,7 +290,7 @@ void segment_disable_balancing(cell_asic chips[NUM_CHIPS],
 			       SPI_HandleTypeDef *hspi)
 {
 	// Initializes all array elements to zero
-	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
+	bool discharge_config[NUM_CHIPS][NUM_CELLS_ALPHA] = { 0 };
 	segment_configure_balancing(chips, discharge_config, hspi);
 
 	// force balancing muted
@@ -302,7 +307,7 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 			      SPI_HandleTypeDef *hspi)
 {
 	// clang-format off
-	bool discharge_confg[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
+	bool discharge_confg[NUM_CHIPS][NUM_CELLS_ALPHA] = {
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1},
@@ -321,7 +326,7 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 
 void segment_configure_balancing(
 	cell_asic chips[NUM_CHIPS],
-	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP],
+	bool discharge_config[NUM_CHIPS][NUM_CELLS_ALPHA],
 	SPI_HandleTypeDef *hspi)
 {
 	// TODO: Test
@@ -332,5 +337,6 @@ void segment_configure_balancing(
 					   discharge_config[chip][cell]);
 		}
 	}
+
 	write_config_regs(chips, hspi);
 }

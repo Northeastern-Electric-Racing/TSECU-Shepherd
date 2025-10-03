@@ -1,9 +1,12 @@
 #include "state_machine.h"
+
 #include "can_messages.h"
 #include "compute.h"
 #include "segment.h"
 #include "charging.h"
-#include "c_utils.h"
+
+/// the current state of the BMS
+BMSState_t current_state = BOOT_STATE;
 
 // the countup timer for settling rest
 nertimer_t charger_settle_countup = { .active = false };
@@ -21,18 +24,18 @@ const bool valid_transition_from_to[NUM_STATES][NUM_STATES] = {
 };
 
 /* private function prototypes */
-void init_boot(bms_t *bmsdata);
-void init_ready(bms_t *bmsdata);
-void init_charging(bms_t *bmsdata);
-void init_faulted(bms_t *bmsdata);
-void handle_boot(bms_t *bmsdata);
-void handle_ready(bms_t *bmsdata);
-void handle_charging(bms_t *bmsdata);
-void handle_faulted(bms_t *bmsdata);
-void request_transition(bms_t *bmsdata, state_t next_state);
+void init_boot(acc_data_t *bmsdata);
+void init_ready(acc_data_t *bmsdata);
+void init_charging(acc_data_t *bmsdata);
+void init_faulted(acc_data_t *bmsdata);
+void handle_boot(acc_data_t *bmsdata);
+void handle_ready(acc_data_t *bmsdata);
+void handle_charging(acc_data_t *bmsdata);
+void handle_faulted(acc_data_t *bmsdata);
+void request_transition(acc_data_t *bmsdata, BMSState_t next_state);
 
-typedef void (*HandlerFunction_t)(bms_t *bmsdata);
-typedef void (*InitFunction_t)(bms_t *bmsdata);
+typedef void (*HandlerFunction_t)(acc_data_t *bmsdata);
+typedef void (*InitFunction_t)(acc_data_t *bmsdata);
 
 const InitFunction_t init_LUT[NUM_STATES] = { &init_boot, &init_ready,
 					      &init_charging, &init_faulted };
@@ -41,30 +44,30 @@ const HandlerFunction_t handler_LUT[NUM_STATES] = { &handle_boot, &handle_ready,
 						    &handle_charging,
 						    &handle_faulted };
 
-void init_boot(bms_t *bmsdata)
+void init_boot(acc_data_t *bmsdata)
 {
 	// useless, really since handle_boot always requests a transition anyways
 	return;
 }
 
-void handle_boot(bms_t *bmsdata)
+void handle_boot(acc_data_t *bmsdata)
 {
 	bmsdata->should_balance = false;
 	// the charger could be connected on state machine boot, so lets not re-enter ready!
 	if (bmsdata->is_charger_connected) {
-		request_transition(bmsdata, CHARGING);
+		request_transition(bmsdata, CHARGING_STATE);
 	} else {
-		request_transition(bmsdata, READY);
+		request_transition(bmsdata, READY_STATE);
 	}
 	return;
 }
 
-void init_ready(bms_t *bmsdata)
+void init_ready(acc_data_t *bmsdata)
 {
 	return;
 }
 
-void handle_ready(bms_t *bmsdata)
+void handle_ready(acc_data_t *bmsdata)
 {
 	// send our DCL and CCL to motors
 	send_mc_charge_message(bmsdata->cont_CCL);
@@ -72,13 +75,13 @@ void handle_ready(bms_t *bmsdata)
 	compute_set_fault(false);
 }
 
-void init_charging(bms_t *bmsdata)
+void init_charging(acc_data_t *bmsdata)
 {
 	cancel_timer(&charger_settle_countup);
 	return;
 }
 
-void handle_charging(bms_t *bmsdata)
+void handle_charging(acc_data_t *bmsdata)
 {
 	/* Check if we should charge */
 	if (sm_charging_check(bmsdata)) {
@@ -89,7 +92,7 @@ void handle_charging(bms_t *bmsdata)
 		    !is_timer_active(&charger_message_timer)) {
 			send_charging_message(
 				(MAX_CHARGE_VOLT *
-				 (NUM_CELLS_PER_CHIP * 2) *
+				 (NUM_CELLS_ALPHA + NUM_CELLS_BETA) *
 				 NUM_SEGMENTS),
 				CHARGING_CURRENT, true);
 			start_timer(&charger_message_timer, 1000);
@@ -110,15 +113,15 @@ void handle_charging(bms_t *bmsdata)
 	send_mc_charge_message(0);
 }
 
-void charger_message_recieved(bms_t *bmsdata)
+void charger_message_recieved(acc_data_t *bmsdata)
 {
 	// this is irreversible, a LV power cycle occurs before re-connection to car
 	bmsdata->is_charger_connected = true;
-	if (bmsdata->current_state != FAULTED)
-		request_transition(bmsdata, CHARGING);
+	if (current_state != FAULTED_STATE)
+		request_transition(bmsdata, CHARGING_STATE);
 }
 
-void init_faulted(bms_t *bmsdata)
+void init_faulted(acc_data_t *bmsdata)
 {
 	// never balance when faulted
 	bmsdata->should_balance = false;
@@ -130,12 +133,12 @@ void init_faulted(bms_t *bmsdata)
 	return;
 }
 
-void handle_faulted(bms_t *bmsdata)
+void handle_faulted(acc_data_t *bmsdata)
 {
 	// leave faulted if all is well
 	if (bmsdata->fault_code_crit == FAULTS_CLEAR) {
 		compute_set_fault(false);
-		request_transition(bmsdata, BOOT);
+		request_transition(bmsdata, BOOT_STATE);
 		return;
 	}
 
@@ -153,31 +156,31 @@ void handle_faulted(bms_t *bmsdata)
 	return;
 }
 
-void sm_handle_state(bms_t *bmsdata)
+void sm_handle_state(acc_data_t *bmsdata)
 {
-	printf("FAULT STATUS: %d\n", bmsdata->current_state);
+	printf("FAULT STATUS: %d\n", current_state);
 	// always check for faults no matter the current state
 	sm_fault_return(bmsdata);
 
 	if (bmsdata->fault_code_crit != FAULTS_CLEAR) {
-		request_transition(bmsdata, FAULTED);
+		request_transition(bmsdata, FAULTED_STATE);
 	}
 
-	handler_LUT[bmsdata->current_state](bmsdata);
+	handler_LUT[current_state](bmsdata);
 }
 
-void request_transition(bms_t *bmsdata, state_t next_state)
+void request_transition(acc_data_t *bmsdata, BMSState_t next_state)
 {
-	if (bmsdata->current_state == next_state)
+	if (current_state == next_state)
 		return;
-	if (!valid_transition_from_to[bmsdata->current_state][next_state])
+	if (!valid_transition_from_to[current_state][next_state])
 		return;
 
 	init_LUT[next_state](bmsdata);
-	bmsdata->current_state = next_state;
+	current_state = next_state;
 }
 
-void sm_fault_return(bms_t *bmsdata)
+void sm_fault_return(acc_data_t *bmsdata)
 {
 	/* FAULT CHECK (Check for fuckies) */
 
@@ -190,7 +193,7 @@ void sm_fault_return(bms_t *bmsdata)
 	static nertimer_t high_temp_timer = { 0 };
 	static nertimer_t die_overtemp_timer = { 0 };
 	static fault_eval_t *fault_table = NULL;
-	static bms_t *fault_data = NULL;
+	static acc_data_t *fault_data = NULL;
 
 	if (!fault_data)
 		fault_data = bmsdata;
@@ -332,7 +335,7 @@ fault_stat_t sm_fault_eval(fault_eval_t *item)
 /* charger settle countup =  1 minute pause to let readings settle and get good
  * OCV */
 /* charger settle countdown = 5 minute interval between 1 minute settle pauses */
-bool sm_charging_check(bms_t *bmsdata)
+bool sm_charging_check(acc_data_t *bmsdata)
 {
 	// samity check
 	if (!bmsdata->is_charger_connected) {
@@ -364,7 +367,7 @@ bool sm_charging_check(bms_t *bmsdata)
 }
 
 // check if balancing is allowed
-bool sm_balancing_check(bms_t *bmsdata)
+bool sm_balancing_check(acc_data_t *bmsdata)
 {
 	return false;
 
@@ -385,7 +388,7 @@ bool sm_balancing_check(bms_t *bmsdata)
 }
 
 // balances cells using algorithm in charger.c
-void sm_balance_cells(bms_t *bmsdata)
+void sm_balance_cells(acc_data_t *bmsdata)
 {
 	handle_balance_cells(bmsdata);
 	bmsdata->should_balance = true;
