@@ -95,6 +95,9 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 extern acc_data_t bmsdata;
+extern SPI_HandleTypeDef hspi1;
+extern SPI_HandleTypeDef hspi2;
+extern SPI_HandleTypeDef hspi3;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

@@ -7,19 +7,11 @@
 #include "can_messages.h"
 #include "shep_mutexes.h"
 #include "shep_tasks.h"
-#include "state_machine.h"
 #include "timer.h"
+#include "state_machine.h"
 #include "can_handler.h"
+#include "u_tx_flags.h"
 #include "main.h"
-
-// TODO: Fill in threads
-
-TX_EVENT_FLAGS_GROUP analyzer_event;
-
-uint8_t shep_flags_init()
-{
-	tx_event_flags_create(&analyzer_event, "Analyzer Event");
-}
 
 static thread_t _state_machine_thread = {
 	.name = "State Machine Thread", /* Name */
@@ -28,12 +20,14 @@ static thread_t _state_machine_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 2, /* Sleep (in ticks) */
+	.sleep = 100, /* Sleep (in ticks) */
 	.function = vStateMachine /* Thread Function */
 };
 
 void vStateMachine(ULONG thread_input)
 {
+	DEBUG_PRINTLN("Starting State Machine thread...");
+
 	nertimer_t telem_timer;
 	// sends unimportant telemetry messages every 500ms
 	start_timer(&telem_timer, 500);
@@ -44,15 +38,15 @@ void vStateMachine(ULONG thread_input)
 		if (is_timer_expired(&telem_timer)) {
 			// these are unimportant telemetry messages so they can be sent infrequently
 			send_bms_status_message(
-				bmsdata->avg_temp, bmsdata->internal_temp,
-				current_state,
-				segment_is_balancing(bmsdata->chips));
-			send_fault_status_message(bmsdata->fault_code_crit,
-						  bmsdata->fault_code_noncrit);
+				bms.avg_temp, bms.internal_temp,
+				bms.current_state,
+				segment_is_balancing(bms.chips));
+			send_fault_status_message(bms.fault_code_crit,
+						  bms.fault_code_noncrit);
 			start_timer(&telem_timer, 500);
 		}
 
-		tx_thread_sleeplay(_state_machine_thread.sleep);
+		tx_thread_sleep(_state_machine_thread.sleep);
 	}
 }
 
@@ -63,7 +57,8 @@ static thread_t _can_receive_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 2, /* Sleep (in ticks) */
+	.sleep = 50,
+	/* Sleep (in ticks) */ // TODO Change Can Receive to be triggered by thread flag
 	.function = vCanReceive /* Thread Function */
 };
 
@@ -74,15 +69,12 @@ void vCanReceive(ULONG thred_input)
 	for (;;) {
 		/* Process incoming messages */
 		while (queue_receive(&can_incoming, &message) == U_SUCCESS) {
-			switch (msg.id) {
+			switch (message.id) {
 			case CHARGERBOX_CANID:
-				charger_message_recieved(bmsdata);
-				bmsdata->pack_current =
-					parse_charger_current(message);
+				// TODO process charger can message
 				break;
 			case DTI_CURRENT_CANID:
-				bmsdata->pack_current =
-					parse_dti_current(message);
+				// TODO process charger can message
 				break;
 			default:
 				break;
@@ -100,7 +92,8 @@ static thread_t _can_dispatch_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 2, /* Sleep (in ticks) */
+	.sleep = 50,
+	/* Sleep (in ticks) */ // TODO: Change to trigger thread flag
 	.function = vCanDispatch /* Thread Function */
 };
 
@@ -139,16 +132,15 @@ static thread_t _analyzer_thread = {
 
 void vAnalyzer(ULONG thread_input)
 {
-	acc_data_t *bmsdata = (acc_data_t *)pv_params;
-
 	for (int i = 0; i < NUM_CHIPS; i++) {
-		bmsdata->chip_data[i].alpha = i % 2 == 0;
+		bms.chip_data[i].alpha = i % 2 == 0;
 	}
 
 	for (;;) {
-		//osThreadFlagsWait(ANALYZER_FLAG, osFlagsWaitAny, osWaitForever);
+		ULONG recevied_flags;
+		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
-		mutex_get(bms_mutex);
+		mutex_get(&bms_mutex);
 
 		// calculate base values for later safety calcs
 		calc_cell_temps(bmsdata);
@@ -164,15 +156,15 @@ void vAnalyzer(ULONG thread_input)
 		calc_state_of_charge(bmsdata);
 
 		// send out telemetry data sourced from the above functions
-		send_acc_status_message(bmsdata->pack_ocv,
-					bmsdata->pack_current, bmsdata->soc);
-		send_cell_voltage_message(bmsdata->max_ocv, bmsdata->min_ocv,
-					  bmsdata->avg_ocv);
-		send_segment_average_volt_message(bmsdata);
-		send_segment_total_volt_message(bmsdata);
-		send_cell_temp_message(bmsdata->max_temp, bmsdata->min_temp,
-				       bmsdata->avg_temp);
-		send_segment_temp_message(bmsdata);
+		send_acc_status_message(bmsdata.pack_ocv, bmsdata.pack_current,
+					bmsdata.soc);
+		send_cell_voltage_message(bmsdata.max_ocv, bmsdata.min_ocv,
+					  bmsdata.avg_ocv);
+		send_segment_average_volt_message(&bmsdata);
+		send_segment_total_volt_message(&bmsdata);
+		send_cell_temp_message(bmsdata.max_temp, bmsdata.min_temp,
+				       bmsdata.avg_temp);
+		send_segment_temp_message(&bmsdata);
 
 		mutex_put(&bms_mutex);
 	}
@@ -185,21 +177,14 @@ static thread_t _segment_data_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 1000 / SAMPLE_RATE, /* Sleep (in ticks) */
+	.sleep = 2, /* Sleep (in ticks) */
 	.function = vGetSegmentData, /* Thread Function */
 };
 
 void vGetSegmentData(ULONG thread_input)
 {
-	acc_data_t *bmsdata = args->bmsdata;
-	assert(bmsdata);
-	SPI_HandleTypeDef *hspi = args->hspi;
-	assert(hspi);
-
-	free(args);
-
 	HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
-	segment_init(bmsdata->chips, hspi);
+	segment_init(bmsdata->chips, hspi2);
 	HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
 	// must delay after init for some reason, or else ADC doesnt start up (-3.45 or something)
@@ -208,7 +193,7 @@ void vGetSegmentData(ULONG thread_input)
 	for (;;) {
 		HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
 
-		segment_mute(bmsdata->chips, hspi);
+		segment_mute(bmsdata->chips, hspi2);
 
 		if (current_state == CHARGING_STATE) {
 			tx_thread_sleep(75);
@@ -217,50 +202,33 @@ void vGetSegmentData(ULONG thread_input)
 
 		if (current_state == CHARGING_STATE) {
 			// in charging, debug data is required to get things like die temp
-			segment_retrieve_charging_data(bmsdata->chips, hspi);
+			segment_retrieve_charging_data(bmsdata->chips, hspi2);
 		} else {
 			// snap before getting data
-			segment_snap(bmsdata->chips, hspi);
-			segment_retrieve_active_data(bmsdata->chips, hspi);
+			segment_snap(bmsdata->chips, hspi2);
+			segment_retrieve_active_data(bmsdata->chips, hspi2);
 			// unsnap after getting data
-			segment_unsnap(bmsdata->chips, hspi);
+			segment_unsnap(bmsdata->chips, hspi2);
 			if (DEBUG_MODE_ENABLED) {
 				segment_retrieve_debug_data(bmsdata->chips,
-							    hspi);
+							    hspi2);
 			}
 		}
 
-		// if in normal drive mode, reboot the segment every 45 seconds in case the chips go out of sync
-		// if (current_state == READY_STATE) {
-		// 	if (++i % (45 * SAMPLE_RATE) == 0) {
-		// 		printf(" ***********  REBOOTING SEGMENT\n\n");
-		// 		segment_restart(bmsdata);
-		// 	}
-		// }
-
-		// if (current_state_2 == CHARGING_STATE) {
-		// 	//segment_disable_balancing(bmsdata);
-		// 	if (current_state != FAULTED_STATE) {
-		// 		segment_manual_balancing(bmsdata);
-		// 		segment_enable_balancing(bmsdata);
-		// 		//handle_balance_cells(bmsdata);
-		// 	}
-		// }
-
 		if (current_state == CHARGING_STATE) {
-			segment_unmute(bmsdata->chips, hspi);
+			segment_unmute(bmsdata->chips, hspi2);
 		}
 
 		if (bmsdata->should_balance) {
 			segment_configure_balancing(bmsdata->chips,
 						    bmsdata->discharge_config,
-						    hspi);
+						    hspi2);
 		}
 
 		HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
-		// osThreadFlagsSet(analyzer_thread, ANALYZER_FLAG); // TODO FIX FLAGS
-		tx_thread_sleep(_segment_data_thread.sleep);
+		set_flag(ANALYZER_FLAG);
+		tx_thread_sleep(1000 / SAMPLE_RATE);
 	}
 }
 
