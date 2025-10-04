@@ -26,7 +26,7 @@
 /*  APPLICATION INTERFACE DEFINITION                       RELEASE        */
 /*                                                                        */
 /*    tx_api.h                                            PORTABLE C      */
-/*                                                           6.4.0        */
+/*                                                           6.1.10       */
 /*  AUTHOR                                                                */
 /*                                                                        */
 /*    William E. Lamie, Microsoft Corporation                             */
@@ -82,28 +82,6 @@
 /*                                            add unused parameter macro, */
 /*                                            update patch number,        */
 /*                                            resulting in version 6.1.10 */
-/*  04-25-2022      Wenhui Xie              Modified comment(s),          */
-/*                                            optimized the definition of */
-/*                                            TX_TIMER_TICKS_PER_SECOND,  */
-/*                                            resulting in version 6.1.11 */
-/*  07-29-2022      Scott Larson            Modified comment(s),          */
-/*                                            update patch number,        */
-/*                                            resulting in version 6.1.12 */
-/*  10-31-2022      Scott Larson            Modified comment(s),          */
-/*                                            add extension macros,       */
-/*                                            update EPK typedef,         */
-/*                                            update version numbers,     */
-/*                                            resulting in version 6.2.0  */
-/*  03-08-2023      Tiejun Zhou             Modified comment(s),          */
-/*                                            update patch number,        */
-/*                                            resulting in version 6.2.1  */
-/*  10-31-2023      Xiuwen Cai              Modified comment(s),          */
-/*                                            added option for random     */
-/*                                            number stack filling,       */
-/*                                            resulting in version 6.3.0  */
-/*  12-31-2023      Tiejun Zhou             Modified comment(s),          */
-/*                                            update version number,      */
-/*                                            resulting in version 6.4.0  */
 /*                                                                        */
 /**************************************************************************/
 
@@ -130,9 +108,6 @@ extern   "C" {
 
 #include "tx_port.h"
 
-#if (defined(TX_EXECUTION_PROFILE_ENABLE) && !defined(TX_ENABLE_EXECUTION_CHANGE_NOTIFY))
-#include "tx_execution_profile.h"
-#endif
 
 /* Define basic constants for the ThreadX kernel.  */
 
@@ -142,8 +117,8 @@ extern   "C" {
 
 #define AZURE_RTOS_THREADX
 #define THREADX_MAJOR_VERSION           6
-#define THREADX_MINOR_VERSION           4
-#define THREADX_PATCH_VERSION           0
+#define THREADX_MINOR_VERSION           1
+#define THREADX_PATCH_VERSION           10
 
 /* Define the following symbol for backward compatibility */
 #define EL_PRODUCT_THREADX
@@ -178,11 +153,7 @@ extern   "C" {
 #define TX_NO_MESSAGES                  ((UINT)   0)
 #define TX_EMPTY                        ((ULONG)  0)
 #define TX_CLEAR_ID                     ((ULONG)  0)
-#if defined(TX_ENABLE_RANDOM_NUMBER_STACK_FILLING) && defined(TX_ENABLE_STACK_CHECKING)
-#define TX_STACK_FILL                   (thread_ptr -> tx_thread_stack_fill_value)
-#else
 #define TX_STACK_FILL                   ((ULONG)  0xEFEFEFEFUL)
-#endif
 
 
 /* Thread execution state values.  */
@@ -245,82 +216,12 @@ extern   "C" {
 #define TX_FEATURE_NOT_ENABLED          ((UINT) 0xFF)
 
 
-#ifdef TX_64_BIT
-
-#ifndef TX_THREAD_EXTENSION_PTR_SET
-#define TX_THREAD_EXTENSION_PTR_SET(a, b)                   { \
-                                                                TX_THREAD *thread_ptr; \
-                                                                thread_ptr = (TX_THREAD *) (a); \
-                                                                (thread_ptr -> tx_thread_extension_ptr) = (VOID *)(b); \
-                                                            }
-#endif /* TX_THREAD_EXTENSION_PTR_SET  */
-
-#ifndef TX_THREAD_EXTENSION_PTR_GET
-#define TX_THREAD_EXTENSION_PTR_GET(a, b, c)                { \
-                                                                TX_PARAMETER_NOT_USED(c); \
-                                                                TX_THREAD *thread_ptr; \
-                                                                thread_ptr = tx_thread_identify(); \
-                                                                while(1)\
-                                                                { \
-                                                                    if (thread_ptr -> tx_thread_extension_ptr) \
-                                                                    { \
-                                                                        (a) = (b *)(thread_ptr -> tx_thread_extension_ptr); \
-                                                                        break; \
-                                                                    } \
-                                                                    tx_thread_sleep(1); \
-                                                                } \
-                                                            }
-#endif /* TX_THREAD_EXTENSION_PTR_GET  */
-
-#ifndef TX_TIMER_EXTENSION_PTR_SET
-#define TX_TIMER_EXTENSION_PTR_SET(a, b)                    { \
-                                                                TX_TIMER *timer_ptr; \
-                                                                timer_ptr = (TX_TIMER *) (a);   \
-                                                                (timer_ptr -> tx_timer_internal.tx_timer_internal_extension_ptr) = (VOID *)(b); \
-                                                            }
-#endif /* TX_TIMER_EXTENSION_PTR_SET  */
-
-#ifndef TX_TIMER_EXTENSION_PTR_GET
-#define TX_TIMER_EXTENSION_PTR_GET(a, b, c)                 { \
-                                                                TX_PARAMETER_NOT_USED(c); \
-                                                                if (!_tx_timer_expired_timer_ptr -> tx_timer_internal_extension_ptr) \
-                                                                    return; \
-                                                                (a) = (b *)(_tx_timer_expired_timer_ptr -> tx_timer_internal_extension_ptr); \
-                                                            }
-#endif /* TX_TIMER_EXTENSION_PTR_GET  */
-
-#else   /* not 64 bit */
-
-#ifndef TX_THREAD_EXTENSION_PTR_SET
-#define TX_THREAD_EXTENSION_PTR_SET(a, b)
-#endif /* TX_THREAD_EXTENSION_PTR_SET  */
-
-#ifndef TX_THREAD_EXTENSION_PTR_GET
-#define TX_THREAD_EXTENSION_PTR_GET(a, b, c)                { \
-                                                                (a) = (b *)(c); \
-                                                            }
-#endif /* TX_THREAD_EXTENSION_PTR_GET  */
-
-#ifndef TX_TIMER_EXTENSION_PTR_SET
-#define TX_TIMER_EXTENSION_PTR_SET(a, b)
-#endif /* TX_TIMER_EXTENSION_PTR_SET  */
-
-#ifndef TX_TIMER_EXTENSION_PTR_GET
-#define TX_TIMER_EXTENSION_PTR_GET(a, b, c)                 { \
-                                                                (a) = (b *)(c); \
-                                                            }
-#endif /* TX_TIMER_EXTENSION_PTR_GET  */
-
-#endif  /* TX_64_BIT */
-
-
-
 /* Define the common timer tick reference for use by other middleware components. The default
    value is 10ms, but may be replaced by a port specific version in tx_port.h or by the user
    as a compilation option.  */
 
 #ifndef TX_TIMER_TICKS_PER_SECOND
-#define TX_TIMER_TICKS_PER_SECOND       (100UL)
+#define TX_TIMER_TICKS_PER_SECOND       ((ULONG) 100)
 #endif
 
 
@@ -621,19 +522,13 @@ typedef struct TX_THREAD_STRUCT
        For Azure RTOS 6, user shall use TX_EXECUTION_PROFILE_ENABLE instead of TX_ENABLE_EXECUTION_CHANGE_NOTIFY,
        and SHALL NOT add variables to TX_THREAD_EXTENSION_3. */
 #if (defined(TX_EXECUTION_PROFILE_ENABLE) && !defined(TX_ENABLE_EXECUTION_CHANGE_NOTIFY))
-    EXECUTION_TIME              tx_thread_execution_time_total;
-    EXECUTION_TIME_SOURCE_TYPE  tx_thread_execution_time_last_start;
+    unsigned long long  tx_thread_execution_time_total;
+    unsigned long long  tx_thread_execution_time_last_start;
 #endif
 
     /* Define suspension sequence number.  This is used to ensure suspension is still valid when
        cleanup routine executes.  */
     ULONG               tx_thread_suspension_sequence;
-
-#if defined(TX_ENABLE_RANDOM_NUMBER_STACK_FILLING) && defined(TX_ENABLE_STACK_CHECKING)
-
-    /* Define the random stack fill number. This can be used to detect stack overflow.  */
-    ULONG               tx_thread_stack_fill_value;
-#endif
 
     /* Define the user extension field.  This typically is defined
        to white space, but some ports of ThreadX may need to have
@@ -1906,21 +1801,6 @@ UINT        _tx_trace_interrupt_control(UINT new_posture);
 
 #ifndef TX_INITIALIZE_KERNEL_ENTER_EXTENSION
 #define TX_INITIALIZE_KERNEL_ENTER_EXTENSION
-#endif
-
-
-/* Add a default macro that can be re-defined in tx_port.h to add processing to the initialize random number generator.
-   By default, this is simply defined as whitespace.  */
-
-#ifndef TX_INITIALIZE_RANDOM_GENERATOR_INITIALIZATION
-#define TX_INITIALIZE_RANDOM_GENERATOR_INITIALIZATION
-#endif
-
-
-/* Define the TX_RAND macro to the standard library function, if not already defined.  */
-
-#ifndef TX_RAND
-#define TX_RAND()                                       rand()
 #endif
 
 

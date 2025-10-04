@@ -1,3 +1,4 @@
+
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
@@ -26,11 +27,9 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-
-#include "app_threadx.h"
-#include "stm32h5xx_hal.h"
 #include "app_azure_rtos_config.h"
 
+#include "app_threadx.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -52,7 +51,6 @@ extern "C" {
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
-
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */
@@ -65,4 +63,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
 #endif /* APP_AZURE_RTOS_H */

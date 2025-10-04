@@ -1,0 +1,4 @@
+#ifndef _ADI2950_INTERACTION_H
+#define _ADI2950_INTERACTION_H
+
+#endif

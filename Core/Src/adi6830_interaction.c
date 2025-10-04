@@ -5,7 +5,7 @@
 #include "compute.h"
 #include "mcuWrapper.h"
 
-/**
+/**s
  * @brief Count and reset PEC errors for all chips, then send a CAN message if needed.
  *
  * This function iterates through all chips, accumulates the PEC (Packet Error Code) 

@@ -30,9 +30,6 @@
 #include "tx_thread.h"
 #include "tx_timer.h"
 
-#if defined(TX_ENABLE_EXECUTION_CHANGE_NOTIFY) || defined(TX_EXECUTION_PROFILE_ENABLE)
-extern VOID _tx_execution_initialize(VOID);
-#endif
 
 /* Define any port-specific scheduling data structures.  */
 
@@ -49,7 +46,7 @@ TX_SAFETY_CRITICAL_EXCEPTION_HANDLER
 /*  FUNCTION                                               RELEASE        */
 /*                                                                        */
 /*    _tx_initialize_kernel_enter                         PORTABLE C      */
-/*                                                           6.3.0        */
+/*                                                           6.1          */
 /*  AUTHOR                                                                */
 /*                                                                        */
 /*    William E. Lamie, Microsoft Corporation                             */
@@ -87,16 +84,9 @@ TX_SAFETY_CRITICAL_EXCEPTION_HANDLER
 /*                                                                        */
 /*    DATE              NAME                      DESCRIPTION             */
 /*                                                                        */
-/*  05-19-2020      William E. Lamie        Initial Version 6.0           */
-/*  09-30-2020      Yuxin Zhou              Modified comment(s),          */
+/*  05-19-2020     William E. Lamie         Initial Version 6.0           */
+/*  09-30-2020     Yuxin Zhou               Modified comment(s),          */
 /*                                            resulting in version 6.1    */
-/*  04-25-2022      Scott Larson            Modified comment(s),          */
-/*                                            added EPK initialization,   */
-/*                                            resulting in version 6.1.11 */
-/*  10-31-2023      Xiuwen Cai              Modified comment(s),          */
-/*                                            added random generator      */
-/*                                            initialization,             */
-/*                                            resulting in version 6.3.0  */
 /*                                                                        */
 /**************************************************************************/
 VOID  _tx_initialize_kernel_enter(VOID)
@@ -137,9 +127,6 @@ VOID  _tx_initialize_kernel_enter(VOID)
        later used to represent interrupt nesting.  */
     _tx_thread_system_state =  TX_INITIALIZE_IN_PROGRESS;
 
-    /* Optional random number generator initialization.  */
-    TX_INITIALIZE_RANDOM_GENERATOR_INITIALIZATION
-
     /* Call the application provided initialization function.  Pass the
        first available memory address to it.  */
     tx_application_define(_tx_initialize_unused_memory);
@@ -150,11 +137,6 @@ VOID  _tx_initialize_kernel_enter(VOID)
 
     /* Call any port specific pre-scheduler processing.  */
     TX_PORT_SPECIFIC_PRE_SCHEDULER_INITIALIZATION
-
-#if defined(TX_ENABLE_EXECUTION_CHANGE_NOTIFY) || defined(TX_EXECUTION_PROFILE_ENABLE)
-    /* Initialize Execution Profile Kit.  */
-    _tx_execution_initialize();
-#endif
 
     /* Enter the scheduling loop to start executing threads!  */
     _tx_thread_schedule();

@@ -30,6 +30,8 @@ struct node_t {
 
 struct node_t *rl_bms_msgs = NULL;
 
+can_t can1;
+
 static uint16_t can1_id_list_standard[4] = {
 	//CANID_X,
 	DTI_CURRENT_CANID,
@@ -40,14 +42,6 @@ static uint32_t can1_id_list_extended[2] = {
 	CHARGERBOX_CANID
 };
 
-// static uint16_t can2_id_list_standard[4] = {
-// 	//CANID_X,
-// };
-
-// static uint32_t can2_id_list_extended[2] = {
-// 	//CANID_X,
-// 	CHARGERBOX_CANID
-// };
 /**
  * @brief Add a CAN message to the list of rate limited CAN messages.
  * 
@@ -80,14 +74,15 @@ void init_rl_can_msg(uint32_t id, uint32_t msg_rate)
 	curr->next = next;
 }
 
-/**
- * @brief Initialize any per message configurations.
- * 
- */
-void init_can_msg_config()
+void init_can(CAN_HandleTypeDef *hcan1)
 {
-	// EXAMPLE
-	// init_rl_can_msg(DISCHARGE_CANID, 4000);
+	can1 = malloc(sizeof(can_t));
+	assert(can1);
+
+	can1->hcan = hcan1;
+	assert(can_init(can1));
+	assert(!can_add_filter_extended(can1, can1_id_list_extended));
+	assert(!can_add_filter_standard(can1, can1_id_list_standard));
 }
 
 void can_receive_callback(CAN_HandleTypeDef *hcan)

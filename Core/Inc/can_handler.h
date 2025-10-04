@@ -102,26 +102,7 @@ int8_t queue_can_msg(can_msg_t msg);
 
 /**
  * @brief Initialize CAN lines.
- * 
  */
-void init_both_can(CAN_HandleTypeDef *hcan1, CAN_HandleTypeDef *hcan2);
-
-/**
- * @brief Task for sending CAN messages.
- * 
- * @param pv_params Pointer to acc_data_t struct containing BMS data
- */
-void vCanDispatch(void *pv_params);
-extern osThreadId_t can_dispatch_handle;
-extern const osThreadAttr_t can_dispatch_attributes;
-
-/**
- * @brief Task for processing received can messages.
- * 
- * @param pv_params A can_receive_args_t*.
- */
-void vCanReceive(void *pv_params);
-extern osThreadId_t can_receive_thread;
-extern const osThreadAttr_t can_receive_attributes;
+void init_can(CAN_HandleTypeDef *hcan1);
 
 #endif // CAN_HANDLER_H

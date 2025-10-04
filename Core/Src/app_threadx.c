@@ -60,35 +60,30 @@
 UINT App_ThreadX_Init(VOID *memory_ptr)
 {
   UINT ret = TX_SUCCESS;
-  /* USER CODE BEGIN App_ThreadX_MEM_POOL */
   TX_BYTE_POOL *byte_pool = (TX_BYTE_POOL*)memory_ptr;
 
-  (void)byte_pool;
-  //CATCH_ERROR(threads_init(byte_pool), TX_SUCCESS);
-
-  /* USER CODE END App_ThreadX_MEM_POOL */
   /* USER CODE BEGIN App_ThreadX_Init */
   /* USER CODE END App_ThreadX_Init */
 
   return ret;
 }
 
-  /**
-  * @brief  Function that implements the kernel's initialization.
+/**
+  * @brief  MX_ThreadX_Init
   * @param  None
   * @retval None
   */
 void MX_ThreadX_Init(void)
 {
-  /* USER CODE BEGIN Before_Kernel_Start */
+  /* USER CODE BEGIN  Before_Kernel_Start */
 
-  /* USER CODE END Before_Kernel_Start */
+  /* USER CODE END  Before_Kernel_Start */
 
   tx_kernel_enter();
 
-  /* USER CODE BEGIN Kernel_Start_Error */
+  /* USER CODE BEGIN  Kernel_Start_Error */
 
-  /* USER CODE END Kernel_Start_Error */
+  /* USER CODE END  Kernel_Start_Error */
 }
 
 /* USER CODE BEGIN 1 */
