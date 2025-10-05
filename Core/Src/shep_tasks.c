@@ -235,6 +235,12 @@ void vGetSegmentData(ULONG thread_input)
 	}
 }
 
+void vHvPlateData(ULONG thread_input) {
+	// TODO: init 2950 registers
+		tx_thread_sleep(500);
+
+}
+
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 {
 	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
