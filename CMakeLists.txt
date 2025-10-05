@@ -89,6 +89,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/general/src/sht30.c"
     "Core/Src/analyzer.c"
     "Drivers/Embedded-Base/middleware/src/c_utils.c"
+    "Core/Src/adi2950_interaction.c"
 )
 
 # Add include paths

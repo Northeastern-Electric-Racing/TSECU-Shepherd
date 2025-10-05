@@ -6,6 +6,7 @@
 #include "bms_config.h"
 #include "timer.h"
 #include "adBms6830Data.h"
+#include "adi_bms_2950data.h"
 
 /**
  * @brief Individual chip data
@@ -101,6 +102,7 @@ typedef struct {
 
 	/* Array of structs containing raw data from and configurations for the ADBMS6830 chips */
 	cell_asic chips[NUM_CHIPS];
+	cell_asic_2950 plate_chip;
 
 	float pack_current;
 	float pack_voltage;
