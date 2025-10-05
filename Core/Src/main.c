@@ -19,12 +19,12 @@
 /* Includes ------------------------------------------------------------------*/
 #include "app_threadx.h"
 #include "main.h"
-#include "tx_event_flags.h"
 #include "shep_tasks.h"
 #include "shep_queues.h"
 #include "shep_mutexes.h"
 #include "can_handler.h"
 #include "compute.h"
+#include "analyzer.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -352,12 +352,8 @@ int main(void)
 	/* USER CODE BEGIN 2 */
 	HAL_Delay(500);
 
-	acc_data_t bms; // TODO init bms interface
-	mutexes_init();
-	queues_init();
-	flags_init();
-	init_can(&hspi1);
-	init_compute();
+	init_can(&hcan1);
+	compute_init();
 	compute_set_fault(false);
 
 	/* USER CODE END 2 */

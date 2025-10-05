@@ -19,7 +19,6 @@
 #include <stdbool.h>
 #include "datastructs.h"
 #include "ringbuffer.h"
-#include "cmsis_os.h"
 #include "shep_mutexes.h"
 
 // Number of stored cell data readings in ring buffer.

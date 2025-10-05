@@ -6,6 +6,8 @@
 #include "datastructs.h"
 #include "state_machine.h"
 #include "shep_queues.h"
+#include "can.h"
+#include "u_tx_general.h"
 
 #define CAN_MSG_QUEUE_SIZE 50 /* messages */
 
@@ -30,7 +32,7 @@ struct node_t {
 
 struct node_t *rl_bms_msgs = NULL;
 
-can_t can1;
+can_t *can1;
 
 static uint16_t can1_id_list_standard[4] = {
 	//CANID_X,
@@ -119,7 +121,7 @@ int8_t queue_can_msg(can_msg_t msg)
 		if (curr->val.id == msg.id) {
 			if (HAL_GetTick() <=
 			    curr->val.prev_tick +
-				    pdMS_TO_TICKS(curr->val.msg_rate)) {
+				    MS_TO_TICKS(curr->val.msg_rate)) {
 				// block message
 				// printf("Blocked 0x%lX\t", msg.id);
 				return 0;

@@ -1,8 +1,9 @@
 #include "segment.h"
 
-#include "adi_interaction.h"
+#include "adi6830_interation.h"
 #include "c_utils.h"
 #include "serialPrintResult.h"
+#include "segment.h"
 
 /**
  * @brief Get the num cells using the order of the chip, for functions without chipdata access.
@@ -42,7 +43,7 @@ void init_chip(cell_asic *chip)
 
 	// Short soak on ADAX
 	set_soak_on(chip, SOAKON_SET);
-	set_aux_soak_range(chip, SHORT);
+	set_aux_soak_range(chip, SHORT_6830);
 
 	// No open wire detect soak
 	set_open_wire_soak_time(chip, OWA0);

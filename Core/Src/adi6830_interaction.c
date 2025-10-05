@@ -1,9 +1,31 @@
-#include "adi6830_interaction.h"
+#include "adi6830_interation.h"
 #include "adBms6830CmdList.h"
 #include "adBms6830GenericType.h"
 #include "can_messages.h"
 #include "compute.h"
 #include "mcuWrapper.h"
+
+extern TIM_HandleTypeDef htim2;
+
+/**
+ * @brief Delays a certain number of microseconds
+ * 
+ * Approximately +50% error as seen in logic analyzer
+ * 
+ * Make sure this TIM timer prescaler is set to (InternalClock)/(Prescaler) - 1
+ * 
+ * So a 64 MKhz clock would have a 63 Mhz prescaler to set a 1us tick
+ * 
+ * @param us the number of us to delay
+ */
+static void delay_us(uint32_t us)
+{
+	uint32_t tickstart = __HAL_TIM_GET_COUNTER(&htim2);
+	uint32_t wait = us;
+
+	while ((__HAL_TIM_GET_COUNTER(&htim2) - tickstart) < wait)
+		;
+}
 
 /**s
  * @brief Count and reset PEC errors for all chips, then send a CAN message if needed.
@@ -199,28 +221,6 @@ void set_discharge_timeout(cell_asic *chip, DCTO timeout)
 // }
 
 // --- BEGIN RW ---
-
-extern TIM_HandleTypeDef htim2;
-
-/**
- * @brief Delays a certain number of microseconds
- * 
- * Approximately +50% error as seen in logic analyzer
- * 
- * Make sure this TIM timer prescaler is set to (InternalClock)/(Prescaler) - 1
- * 
- * So a 64 MKhz clock would have a 63 Mhz prescaler to set a 1us tick
- * 
- * @param us the number of us to delay
- */
-inline void delay_us(uint32_t us)
-{
-	uint32_t tickstart = __HAL_TIM_GET_COUNTER(&htim2);
-	uint32_t wait = us;
-
-	while ((__HAL_TIM_GET_COUNTER(&htim2) - tickstart) < wait)
-		;
-}
 
 /**
  * @brief Wake the isoSPI of every ADBMS6830 IC in the daisy chain. Blocking critical section wait for around 30us * NUM_CHIPS.

@@ -10,6 +10,12 @@
 */
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool);
 
+void vStateMachine(ULONG thread_input);
+void vGetSegmentData(ULONG thread_input);
+void vAnalyzer(ULONG thread_input);
+void vCanDispatch(ULONG thread_input);
+void vCanReceive(ULONG thred_input);
+
 #define ANALYZER_FLAG 0x1
 
 #endif

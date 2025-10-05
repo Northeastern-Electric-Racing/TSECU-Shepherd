@@ -54,6 +54,11 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
+    "Drivers/Embedded-Base/threadX/src/u_tx_debug.c"
+    "Drivers/Embedded-Base/threadX/src/u_tx_queues.c"
+    "Drivers/Embedded-Base/threadX/src/u_tx_threads.c"
+    "Drivers/Embedded-Base/threadX/src/u_tx_flags.c" 
+    "Drivers/Embedded-Base/threadX/src/u_tx_mutex.c"
     "Drivers/Embedded-Base/middleware/src/bitstream.c"
     "Drivers/adbms/adbms6830/program/src/mcuWrapper.c"
     "Drivers/adbms/adbms6830/program/src/serialPrintResult.c"
@@ -65,10 +70,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/adbms/adbms2950/program/src/application.c"
     "Drivers/adbms/adbms2950/program/src/pal.c"
     "Drivers/adbms/adbms2950/program/src/print_result.c"
-    "Drivers/Embedded-Base/threadX/src/u_tx_debug.c"
-    "Drivers/Embedded-Base/threadX/src/u_tx_queues.c"
-    "Drivers/Embedded-Base/threadX/src/u_tx_threads.c"
-    "Drivers/Embedded-Base/threadX/src/u_tx_can.c"
+    "Drivers/adbms/adbms6830/lib/src/adBms6830GenericType.c"
+    "Drivers/adbms/adbms6830/lib/src/adBms6830ParseCreate.c"
+    "Drivers/adbms/adbms6830/program/src/mcuWrapper.c"
+    "Drivers/adbms/adbms6830/program/src/serialPrintResult.c"
     "Drivers/Embedded-Base/platforms/stm32f405/src/can.c"
     "Core/Src/can_handler.c"
     "Core/Src/adi6830_interaction.c"
@@ -77,7 +82,13 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/segment.c"
     "Core/Src/shep_mutexes.c"
     "Core/Src/shep_queues.c"
+    "Core/Src/shep_tasks.c"
     "Core/Src/state_machine.c"
+    "Core/Src/compute.c"
+    "Drivers/Embedded-Base/middleware/src/timer.c"
+    "Drivers/Embedded-Base/general/src/sht30.c"
+    "Core/Src/analyzer.c"
+    "Drivers/Embedded-Base/middleware/src/c_utils.c"
 )
 
 # Add include paths

@@ -11,7 +11,10 @@
 #include "state_machine.h"
 #include "can_handler.h"
 #include "u_tx_flags.h"
+#include "segment.h"
 #include "main.h"
+
+acc_data_t bmsdata;
 
 static thread_t _state_machine_thread = {
 	.name = "State Machine Thread", /* Name */
@@ -33,16 +36,16 @@ void vStateMachine(ULONG thread_input)
 	start_timer(&telem_timer, 500);
 
 	for (;;) {
-		sm_handle_state(bmsdata);
+		sm_handle_state(&bmsdata);
 
 		if (is_timer_expired(&telem_timer)) {
 			// these are unimportant telemetry messages so they can be sent infrequently
 			send_bms_status_message(
-				bms.avg_temp, bms.internal_temp,
-				bms.current_state,
-				segment_is_balancing(bms.chips));
-			send_fault_status_message(bms.fault_code_crit,
-						  bms.fault_code_noncrit);
+				bmsdata.avg_temp, bmsdata.internal_temp,
+				current_state,
+				segment_is_balancing(bmsdata.chips));
+			send_fault_status_message(bmsdata.fault_code_crit,
+						  bmsdata.fault_code_noncrit);
 			start_timer(&telem_timer, 500);
 		}
 
@@ -97,7 +100,7 @@ static thread_t _can_dispatch_thread = {
 	.function = vCanDispatch /* Thread Function */
 };
 
-extern can_t can1; // TODO: pass can1 directly into thread
+extern can_t *can1; // TODO: pass can1 directly into thread
 void vCanDispatch(ULONG thread_input)
 {
 	can_msg_t message;
@@ -106,7 +109,7 @@ void vCanDispatch(ULONG thread_input)
 	for (;;) {
 		/* Process incoming messages */
 		while (queue_receive(&can_outgoing, &message) == U_SUCCESS) {
-			status = can_send_msg(&can1, &message);
+			status = can_send_msg(can1, &message);
 			if (status != U_SUCCESS) {
 				DEBUG_PRINTLN(
 					"WARNING: Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld).",
@@ -133,7 +136,7 @@ static thread_t _analyzer_thread = {
 void vAnalyzer(ULONG thread_input)
 {
 	for (int i = 0; i < NUM_CHIPS; i++) {
-		bms.chip_data[i].alpha = i % 2 == 0;
+		bmsdata.chip_data[i].alpha = i % 2 == 0;
 	}
 
 	for (;;) {
@@ -143,17 +146,17 @@ void vAnalyzer(ULONG thread_input)
 		mutex_get(&bms_mutex);
 
 		// calculate base values for later safety calcs
-		calc_cell_temps(bmsdata);
-		calc_pack_temps(bmsdata);
-		calc_cell_voltages(bmsdata);
-		calc_open_cell_voltage(bmsdata);
-		calc_pack_voltage_stats(bmsdata);
-		calc_cell_resistances(bmsdata);
+		calc_cell_temps(&bmsdata);
+		calc_pack_temps(&bmsdata);
+		calc_cell_voltages(&bmsdata);
+		calc_open_cell_voltage(&bmsdata);
+		calc_pack_voltage_stats(&bmsdata);
+		calc_cell_resistances(&bmsdata);
 
 		// these are dependent on above calculations
-		calc_cont_dcl(bmsdata);
-		calc_cont_ccl(bmsdata);
-		calc_state_of_charge(bmsdata);
+		calc_cont_dcl(&bmsdata);
+		calc_cont_ccl(&bmsdata);
+		calc_state_of_charge(&bmsdata);
 
 		// send out telemetry data sourced from the above functions
 		send_acc_status_message(bmsdata.pack_ocv, bmsdata.pack_current,
@@ -184,7 +187,7 @@ static thread_t _segment_data_thread = {
 void vGetSegmentData(ULONG thread_input)
 {
 	HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
-	segment_init(bmsdata->chips, hspi2);
+	segment_init(bmsdata.chips, &hspi2);
 	HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
 	// must delay after init for some reason, or else ADC doesnt start up (-3.45 or something)
@@ -193,7 +196,7 @@ void vGetSegmentData(ULONG thread_input)
 	for (;;) {
 		HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
 
-		segment_mute(bmsdata->chips, hspi2);
+		segment_mute(bmsdata.chips, &hspi2);
 
 		if (current_state == CHARGING_STATE) {
 			tx_thread_sleep(75);
@@ -202,27 +205,27 @@ void vGetSegmentData(ULONG thread_input)
 
 		if (current_state == CHARGING_STATE) {
 			// in charging, debug data is required to get things like die temp
-			segment_retrieve_charging_data(bmsdata->chips, hspi2);
+			segment_retrieve_charging_data(bmsdata.chips, &hspi2);
 		} else {
 			// snap before getting data
-			segment_snap(bmsdata->chips, hspi2);
-			segment_retrieve_active_data(bmsdata->chips, hspi2);
+			segment_snap(bmsdata.chips, &hspi2);
+			segment_retrieve_active_data(bmsdata.chips, &hspi2);
 			// unsnap after getting data
-			segment_unsnap(bmsdata->chips, hspi2);
+			segment_unsnap(bmsdata.chips, &hspi2);
 			if (DEBUG_MODE_ENABLED) {
-				segment_retrieve_debug_data(bmsdata->chips,
-							    hspi2);
+				segment_retrieve_debug_data(bmsdata.chips,
+							    &hspi2);
 			}
 		}
 
 		if (current_state == CHARGING_STATE) {
-			segment_unmute(bmsdata->chips, hspi2);
+			segment_unmute(bmsdata.chips, &hspi2);
 		}
 
-		if (bmsdata->should_balance) {
-			segment_configure_balancing(bmsdata->chips,
-						    bmsdata->discharge_config,
-						    hspi2);
+		if (bmsdata.should_balance) {
+			segment_configure_balancing(bmsdata.chips,
+						    bmsdata.discharge_config,
+						    &hspi2);
 		}
 
 		HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
@@ -241,4 +244,5 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
+	return U_SUCCESS;
 }
