@@ -39,6 +39,23 @@ void read_ivbat_regsisters(cell_asic_2950 ic, SPI_HandleTypeDef *hspi)
 			  NONE2950); /* Battery Voltage Group*/
 }
 
+void read_vr_registers(cell_asic_2950 ic, SPI_HandleTypeDef *hspi) {
+    start_conversion(ic);
+
+	adBmsReadData2950(TOTAL_IC_2950, &ic, RDV1A, GPV1, A_2950);
+	adBmsReadData2950(TOTAL_IC_2950, &ic, RDV1B, GPV1, B_2950);
+	adBmsReadData2950(TOTAL_IC_2950, &ic, RDV1C, GPV1, C_2950);
+    adBmsReadData2950(TOTAL_IC_2950, &ic, RDV1C, GPV1, D_2950);
+    adBmsReadData2950(TOTAL_IC_2950, &ic, RDV1C, GPV1, E_2950);
+
+
+    adBmsReadData2950(TOTAL_IC_2950, &ic, RDV2A, GPV2, A_2950);
+	adBmsReadData2950(TOTAL_IC_2950, &ic, RDV2B, GPV2, B_2950);
+	adBmsReadData2950(TOTAL_IC_2950, &ic, RDV2C, GPV2, C_2950);
+    adBmsReadData2950(TOTAL_IC_2950, &ic, RDV2B, GPV2, D_2950);
+	adBmsReadData2950(TOTAL_IC_2950, &ic, RDV2C, GPV2, E_2950);
+}   
+
 void set_gpo(cell_asic_2950 ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo)
 {
 	switch (gpo) {
