@@ -120,7 +120,7 @@ int _write(int file, char *ptr, int len)
 	return len;
 }
 
-const void print_bms_stats(acc_data_t *acc_data)
+void print_bms_stats(acc_data_t *acc_data)
 {
 #ifdef DEBUG_OTHER
 	//TODO get this from eeprom once implemented

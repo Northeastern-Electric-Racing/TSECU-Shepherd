@@ -2,7 +2,7 @@
 #define SEGMENT_H
 
 #include "bms_config.h"
-#include "stm32f4xx_hal.h"
+#include "stm32xx_hal.h"
 #include "adBms6830Data.h"
 #include <stdbool.h>
 

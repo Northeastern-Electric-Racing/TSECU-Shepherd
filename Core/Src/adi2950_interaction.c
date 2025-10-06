@@ -80,7 +80,7 @@ void set_gpo(cell_asic_2950 ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo)
 		ic.tx_cfga.gpo5c = PULLED_UP_TRISTATED;
 		break;
 	case GPO6_2950:
-		ic.tx_cfga.gpo6od = PUSH_PULL;
+		ic.tx_cfga.gpo6ods = PUSH_PULL;
 		ic.tx_cfga.gpo6c = PULLED_UP_TRISTATED;
 		break;
 	default:

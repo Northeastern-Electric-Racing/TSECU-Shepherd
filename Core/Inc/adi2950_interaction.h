@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "adi_bms_2950data.h"
-#include "stm32f4xx_hal.h"
+#include "stm32xx_hal.h"
 
 // TODO: docs
 

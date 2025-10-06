@@ -2,7 +2,7 @@
 #define ADI6830_INTERACTION_H
 
 #include "adBms6830Data.h"
-#include "stm32f4xx_hal.h"
+#include "stm32xx_hal.h"
 #include "bms_config.h"
 
 // --- BEGIN SET HELPERS ---

@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx_hal.h"
+#include "stm32xx_hal.h"
 #include "datastructs.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -98,6 +98,9 @@ void Error_Handler(void);
 extern SPI_HandleTypeDef hspi1;
 extern SPI_HandleTypeDef hspi2;
 extern SPI_HandleTypeDef hspi3;
+extern IWDG_HandleTypeDef hiwdg;
+
+void print_bms_stats(acc_data_t *acc_data);
 
 /* USER CODE END Private defines */
 

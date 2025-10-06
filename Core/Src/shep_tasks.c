@@ -13,8 +13,53 @@
 #include "u_tx_flags.h"
 #include "segment.h"
 #include "main.h"
+#include "hv_plate.h"
+#include "compute.h"
 
 acc_data_t bmsdata;
+
+// TODO: default task
+
+static thread_t _default_thread = {
+	.name = "Default Task Thread", /* Name */
+	.size = 2048, /* Stack Size (in bytes) */
+	.priority = 4, /* Priority */
+	.threshold = 0, /* Preemption Threshold */
+	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+	.auto_start = TX_AUTO_START, /* Auto Start */
+	.sleep = 5000, /* Sleep (in ticks) */
+	.function = vDefaultTask /* Thread Function */
+};
+
+void vDefaultTask(ULONG thread_input) {
+	bool alt = true;
+
+  /* Infinite loop */
+  for(;;)
+  {
+    #ifdef DEBUG_STATS
+    print_bms_stats(&bmsdata);
+    #endif
+
+    if (alt) {
+      printf(".\n");
+    } else {
+      printf("..\n");
+    }
+
+    alt = !alt;
+
+    pet_watchdog();
+
+    send_git_version_message();
+  
+    HAL_IWDG_Refresh(&hiwdg);
+
+    toggle_debug_led_1();
+    tx_thread_sleep(_default_thread.sleep);
+
+  }
+}
 
 static thread_t _state_machine_thread = {
 	.name = "State Machine Thread", /* Name */
@@ -235,20 +280,39 @@ void vGetSegmentData(ULONG thread_input)
 	}
 }
 
-void vHvPlateData(ULONG thread_input) {
-	// TODO: init 2950 registers
-		tx_thread_sleep(500);
+static thread_t _hv_plate_data_thread = {
+	.name = "HV Plate Data Thread", /* Name */
+	.size = 2048, /* Stack Size (in bytes) */
+	.priority = 4, /* Priority */
+	.threshold = 0, /* Preemption Threshold */
+	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+	.auto_start = TX_AUTO_START, /* Auto Start */
+	.sleep = MS_TO_TICKS(5), /* Sleep (in ticks) */
+	.function = vHvPlateData, /* Thread Function */
+};
 
+void vHvPlateData(ULONG thread_input) {
+
+	init_hv_plate_chip(bmsdata.plate_chip);
+	tx_thread_sleep(TICKS_TO_MS(500));
+	float current = 0;
+	for (;;) {
+		current = get_pack_current(&bmsdata, &hspi2);
+		DEBUG_PRINTLN("PACK CURRENT: %f", current);
+		tx_thread_sleep(_hv_plate_data_thread.sleep);
+	}
 }
 
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 {
+	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
-		    U_SUCCESS); // Create Default thread.
+		    U_SUCCESS); 
 	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread),
-		    U_SUCCESS); // Create Analyzer thread.
+		    U_SUCCESS); 
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread), U_SUCCESS);
 	return U_SUCCESS;
 }
