@@ -49,10 +49,7 @@ void vDefaultTask(ULONG thread_input) {
 
     alt = !alt;
 
-    pet_watchdog();
-
-    send_git_version_message();
-  
+    pet_watchdog();  
     HAL_IWDG_Refresh(&hiwdg);
 
     toggle_debug_led_1();
