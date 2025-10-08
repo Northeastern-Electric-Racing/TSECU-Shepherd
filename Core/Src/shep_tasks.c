@@ -23,11 +23,11 @@ acc_data_t bmsdata;
 static thread_t _default_thread = {
 	.name = "Default Task Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 4, /* Priority */
+	.priority = 1, /* Priority */
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 5000, /* Sleep (in ticks) */
+	.sleep = 20, /* Sleep (in ticks) */
 	.function = vDefaultTask /* Thread Function */
 };
 
@@ -53,7 +53,7 @@ void vDefaultTask(ULONG thread_input) {
     HAL_IWDG_Refresh(&hiwdg);
 
     toggle_debug_led_1();
-    tx_thread_sleep(_default_thread.sleep);
+    tx_thread_sleep(TICKS_TO_MS(_default_thread.sleep));
 
   }
 }
@@ -91,7 +91,7 @@ void vStateMachine(ULONG thread_input)
 			start_timer(&telem_timer, 500);
 		}
 
-		tx_thread_sleep(_state_machine_thread.sleep);
+		tx_thread_sleep(TICKS_TO_MS(_state_machine_thread.sleep));
 	}
 }
 
@@ -126,14 +126,14 @@ void vCanReceive(ULONG thred_input)
 			}
 		}
 
-		tx_thread_sleep(_can_receive_thread.sleep);
+		tx_thread_sleep(MS_TO_TICKS(_can_receive_thread.sleep));
 	}
 }
 
 static thread_t _can_dispatch_thread = {
 	.name = "CAN Dispatch Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = TX_MAX_PRIORITIES, /* Priority */
+	.priority = 1, /* Priority */
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
@@ -162,14 +162,14 @@ void vCanDispatch(ULONG thread_input)
 			}
 		}
 
-		tx_thread_sleep(_can_dispatch_thread.sleep);
+		tx_thread_sleep(MS_TO_TICKS(_can_dispatch_thread.sleep));
 	}
 }
 
 static thread_t _analyzer_thread = {
 	.name = "Analyzer Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 4, /* Priority */
+	.priority = 6, /* Priority */
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
@@ -220,7 +220,7 @@ void vAnalyzer(ULONG thread_input)
 static thread_t _segment_data_thread = {
 	.name = "Segment Data Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 4, /* Priority */
+	.priority = 2, /* Priority */
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
@@ -275,14 +275,14 @@ void vGetSegmentData(ULONG thread_input)
 		HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
 		set_flag(ANALYZER_FLAG);
-		tx_thread_sleep(1000 / SAMPLE_RATE);
+		tx_thread_sleep(MS_TO_TICKS(1000 / SAMPLE_RATE));
 	}
 }
 
 static thread_t _hv_plate_data_thread = {
 	.name = "HV Plate Data Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 4, /* Priority */
+	.priority = 2, /* Priority */
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
@@ -298,7 +298,7 @@ void vHvPlateData(ULONG thread_input) {
 	for (;;) {
 		current = get_pack_current(&bmsdata, &hspi2);
 		DEBUG_PRINTLN("PACK CURRENT: %f", current);
-		tx_thread_sleep(_hv_plate_data_thread.sleep);
+		tx_thread_sleep(MS_TO_TICKS(_hv_plate_data_thread.sleep));
 	}
 }
 
@@ -307,11 +307,11 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
 		    U_SUCCESS); 
-	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread),
-		    U_SUCCESS); 
+	//CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread),
+	//	    U_SUCCESS); 
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread), U_SUCCESS);
 	return U_SUCCESS;
 }
