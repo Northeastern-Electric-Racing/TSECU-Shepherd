@@ -133,7 +133,7 @@ void vCanReceive(ULONG thred_input)
 static thread_t _can_dispatch_thread = {
 	.name = "CAN Dispatch Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 4, /* Priority */
+	.priority = TX_MAX_PRIORITIES, /* Priority */
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
@@ -149,8 +149,10 @@ void vCanDispatch(ULONG thread_input)
 	uint8_t status;
 
 	for (;;) {
+		DEBUG_PRINTLN("CAN DISPATCH-------------------");
 		/* Process incoming messages */
 		while (queue_receive(&can_outgoing, &message) == U_SUCCESS) {
+			DEBUG_PRINTLN("RECEIVED FROM QUEUE-------------------");
 			status = can_send_msg(can1, &message);
 			if (status != U_SUCCESS) {
 				DEBUG_PRINTLN(

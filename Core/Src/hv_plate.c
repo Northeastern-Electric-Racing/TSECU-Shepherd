@@ -109,5 +109,5 @@ float get_ts_voltage(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi)
 
 void trigger_precharge_relay(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi)
 {
-	return 0;
+	return;
 }

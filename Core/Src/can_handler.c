@@ -82,7 +82,7 @@ void init_can(CAN_HandleTypeDef *hcan1)
 	assert(can1);
 
 	can1->hcan = hcan1;
-	assert(can_init(can1));
+	assert(!can_init(can1));
 	assert(!can_add_filter_extended(can1, can1_id_list_extended));
 	assert(!can_add_filter_standard(can1, can1_id_list_standard));
 }
@@ -134,7 +134,7 @@ int8_t queue_can_msg(can_msg_t msg)
 		curr = curr->next;
 	}
 
-	return queue_send(&can_incoming, &msg);
+	return queue_send(&can_outgoing, &msg);
 }
 
 /**
