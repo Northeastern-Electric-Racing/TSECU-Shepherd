@@ -4,6 +4,7 @@
 #include "c_utils.h"
 #include "serialPrintResult.h"
 #include "segment.h"
+#include "u_tx_debug.h"
 
 /**
  * @brief Get the num cells using the order of the chip, for functions without chipdata access.
@@ -89,12 +90,14 @@ void init_chip(cell_asic *chip)
 
 void segment_init(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	printf("Initializing Segments...");
+	DEBUG_PRINTLN("Initializing Segments...");
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		init_chip(&chips[chip]);
 	}
+	DEBUG_PRINTLN("Passed init chips...");
 
 	write_config_regs(chips, hspi);
+	DEBUG_PRINTLN("Passed write...");
 
 	// disable balancing on init
 	mute_chips(chips, hspi);

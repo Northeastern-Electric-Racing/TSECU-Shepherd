@@ -4,6 +4,7 @@
 #include "can_messages.h"
 #include "compute.h"
 #include "mcuWrapper.h"
+#include "u_tx_debug.h"
 
 extern TIM_HandleTypeDef htim2;
 
@@ -263,7 +264,6 @@ void write_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 		      GRP group, SPI_HandleTypeDef *hspi)
 {
 	adbms_wake_isospi(hspi);
-
 	adBmsWriteData(NUM_CHIPS, chips, command, type, group);
 }
 
@@ -327,8 +327,13 @@ void unsnap_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 
 void write_config_regs(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
+
+	DEBUG_PRINTLN("CONFIG REGS");
 	write_adbms_data(chips, WRCFGA, Config, A, hspi);
+	DEBUG_PRINTLN("DONE 1");
 	write_adbms_data(chips, WRCFGB, Config, B, hspi);
+	DEBUG_PRINTLN("DONE 2");
+
 }
 
 void write_clear_flags(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)

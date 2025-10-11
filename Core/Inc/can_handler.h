@@ -81,7 +81,6 @@ typedef enum {
 	SEGMENT_TEMP,
 	FAULT,
 	NOISE,
-	DEBUG,
 	RL_MSG_COUNT
 } rate_lim_t;
 

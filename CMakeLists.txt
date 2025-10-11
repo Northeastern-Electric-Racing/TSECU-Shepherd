@@ -78,6 +78,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/can_handler.c"
     "Core/Src/adi6830_interaction.c"
     "Core/Src/can_messages.c"
+    "Core/Src/charging.c"
     "Core/Src/cell_data_logging.c"
     "Core/Src/segment.c"
     "Core/Src/shep_mutexes.c"

@@ -27,7 +27,7 @@ static thread_t _default_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 20, /* Sleep (in ticks) */
+	.sleep = 1000, /* Sleep (in ticks) */
 	.function = vDefaultTask /* Thread Function */
 };
 
@@ -38,7 +38,7 @@ void vDefaultTask(ULONG thread_input) {
   for(;;)
   {
     #ifdef DEBUG_STATS
-    print_bms_stats(&bmsdata);
+    //print_bms_stats(&bmsdata);
     #endif
 
     if (alt) {
@@ -53,7 +53,7 @@ void vDefaultTask(ULONG thread_input) {
     HAL_IWDG_Refresh(&hiwdg);
 
     toggle_debug_led_1();
-    tx_thread_sleep(TICKS_TO_MS(_default_thread.sleep));
+    tx_thread_sleep(MS_TO_TICKS(_default_thread.sleep));
 
   }
 }
@@ -79,7 +79,7 @@ void vStateMachine(ULONG thread_input)
 
 	for (;;) {
 		sm_handle_state(&bmsdata);
-
+		
 		if (is_timer_expired(&telem_timer)) {
 			// these are unimportant telemetry messages so they can be sent infrequently
 			send_bms_status_message(
@@ -91,7 +91,7 @@ void vStateMachine(ULONG thread_input)
 			start_timer(&telem_timer, 500);
 		}
 
-		tx_thread_sleep(TICKS_TO_MS(_state_machine_thread.sleep));
+		tx_thread_sleep(MS_TO_TICKS(_state_machine_thread.sleep));
 	}
 }
 
@@ -99,10 +99,10 @@ static thread_t _can_receive_thread = {
 	.name = "Can Receive Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
 	.priority = 4, /* Priority */
-	.threshold = 0, /* Preemption Threshold */
+	.threshold = 2, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 50,
+	.sleep = 500,
 	/* Sleep (in ticks) */ // TODO Change Can Receive to be triggered by thread flag
 	.function = vCanReceive /* Thread Function */
 };
@@ -110,7 +110,6 @@ static thread_t _can_receive_thread = {
 void vCanReceive(ULONG thred_input)
 {
 	can_msg_t message;
-
 	for (;;) {
 		/* Process incoming messages */
 		while (queue_receive(&can_incoming, &message) == U_SUCCESS) {
@@ -134,7 +133,7 @@ static thread_t _can_dispatch_thread = {
 	.name = "CAN Dispatch Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
 	.priority = 1, /* Priority */
-	.threshold = 0, /* Preemption Threshold */
+	.threshold = 1, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
 	.sleep = 50,
@@ -149,15 +148,13 @@ void vCanDispatch(ULONG thread_input)
 	uint8_t status;
 
 	for (;;) {
-		DEBUG_PRINTLN("CAN DISPATCH-------------------");
 		/* Process incoming messages */
 		while (queue_receive(&can_outgoing, &message) == U_SUCCESS) {
-			DEBUG_PRINTLN("RECEIVED FROM QUEUE-------------------");
 			status = can_send_msg(can1, &message);
 			if (status != U_SUCCESS) {
 				DEBUG_PRINTLN(
-					"WARNING: Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld).",
-					message.id);
+					"WARNING: Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld) - Status %d",
+					message.id, status);
 				// u_TODO - maybe add the message back into the queue if it fails to send? not sure if this is a good idea tho
 			}
 		}
@@ -173,7 +170,7 @@ static thread_t _analyzer_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 2, /* Sleep (in ticks) */
+	.sleep = 100, /* Sleep (in ticks) */
 	.function = vAnalyzer /* Thread Function */
 };
 
@@ -230,12 +227,14 @@ static thread_t _segment_data_thread = {
 
 void vGetSegmentData(ULONG thread_input)
 {
-	HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
+	//HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
+	DEBUG_PRINTLN("INITIALIZING");
 	segment_init(bmsdata.chips, &hspi2);
-	HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
+	DEBUG_PRINTLN("PASSED");
+	//HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
 	// must delay after init for some reason, or else ADC doesnt start up (-3.45 or something)
-	tx_thread_sleep(500);
+	tx_thread_sleep(MS_TO_TICKS(500));
 
 	for (;;) {
 		HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
@@ -271,7 +270,6 @@ void vGetSegmentData(ULONG thread_input)
 						    bmsdata.discharge_config,
 						    &hspi2);
 		}
-
 		HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
 		set_flag(ANALYZER_FLAG);
@@ -286,7 +284,7 @@ static thread_t _hv_plate_data_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = MS_TO_TICKS(5), /* Sleep (in ticks) */
+	.sleep = MS_TO_TICKS(100), /* Sleep (in ticks) */
 	.function = vHvPlateData, /* Thread Function */
 };
 
@@ -307,11 +305,13 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
 		    U_SUCCESS); 
-	//CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread),
-	//	    U_SUCCESS); 
+	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread),
+		    U_SUCCESS); 
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread), U_SUCCESS);
+
+	DEBUG_PRINTLN("Ran threads_init()");
 	return U_SUCCESS;
 }

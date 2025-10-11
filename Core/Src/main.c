@@ -734,7 +734,7 @@ static void MX_TIM1_Init(void)
 		Error_Handler();
 	}
 	/* USER CODE BEGIN TIM1_Init 2 */
-
+	HAL_TIM_Base_Start(&htim1);
 	/* USER CODE END TIM1_Init 2 */
 }
 
@@ -775,7 +775,7 @@ static void MX_TIM2_Init(void)
 		Error_Handler();
 	}
 	/* USER CODE BEGIN TIM2_Init 2 */
-
+	HAL_TIM_Base_Start(&htim2);
 	/* USER CODE END TIM2_Init 2 */
 }
 
@@ -816,7 +816,7 @@ static void MX_TIM5_Init(void)
 		Error_Handler();
 	}
 	/* USER CODE BEGIN TIM5_Init 2 */
-
+	HAL_TIM_Base_Start(&htim5);
 	/* USER CODE END TIM5_Init 2 */
 }
 
@@ -881,7 +881,7 @@ static void MX_TIM8_Init(void)
 		Error_Handler();
 	}
 	/* USER CODE BEGIN TIM8_Init 2 */
-
+  HAL_TIM_Base_Start(&htim8);
 	/* USER CODE END TIM8_Init 2 */
 	HAL_TIM_MspPostInit(&htim8);
 }

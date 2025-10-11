@@ -3,8 +3,16 @@
 #include "segment.h"
 #include "compute.h"
 #include "bms_config.h"
+#include "c_utils.h"
 
 #include <math.h>
+
+#define min(a, b)                       \
+	({                              \
+		__typeof__(a) _a = (a); \
+		__typeof__(b) _b = (b); \
+		_a < _b ? _a : _b;      \
+	})
 
 /// @brief A struct to hold the original float value and the index originally, as that holds meaning
 typedef struct {
