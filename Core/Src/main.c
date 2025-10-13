@@ -25,6 +25,7 @@
 #include "can_handler.h"
 #include "compute.h"
 #include "analyzer.h"
+#include "serialPrintResult.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */

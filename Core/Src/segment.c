@@ -154,7 +154,7 @@ void segment_monitor_flts(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		//printf("CHIP %d :", chip);
-		printf("MUTE: %d, %d\n", chip, chips[chip].rx_cfga.mute_st);
+		//printf("MUTE: %d, %d\n", chip, chips[chip].rx_cfga.mute_st);
 		if (chips[chip].statc.cs_flt > 0) {
 			//printf("C VS S MISMATCH on cells ");
 			for (int i = 0; i < 16; i++) {
@@ -211,6 +211,7 @@ void segment_retrieve_active_data(cell_asic chips[NUM_CHIPS],
 				  SPI_HandleTypeDef *hspi)
 
 {
+	printf("GETTING THERM DATA\n");
 	// read all therms using AUX 2
 	adc_and_read_aux2_registers(chips, hspi);
 

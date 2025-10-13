@@ -327,13 +327,8 @@ void unsnap_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 
 void write_config_regs(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-
-	DEBUG_PRINTLN("CONFIG REGS");
 	write_adbms_data(chips, WRCFGA, Config, A, hspi);
-	DEBUG_PRINTLN("DONE 1");
 	write_adbms_data(chips, WRCFGB, Config, B, hspi);
-	DEBUG_PRINTLN("DONE 2");
-
 }
 
 void write_clear_flags(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)

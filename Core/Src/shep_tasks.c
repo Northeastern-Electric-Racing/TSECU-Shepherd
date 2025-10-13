@@ -23,7 +23,7 @@ acc_data_t bmsdata;
 static thread_t _default_thread = {
 	.name = "Default Task Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 1, /* Priority */
+	.priority = 2, /* Priority */
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
@@ -38,7 +38,7 @@ void vDefaultTask(ULONG thread_input) {
   for(;;)
   {
     #ifdef DEBUG_STATS
-    //print_bms_stats(&bmsdata);
+    print_bms_stats(&bmsdata);
     #endif
 
     if (alt) {
@@ -65,7 +65,7 @@ static thread_t _state_machine_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 100, /* Sleep (in ticks) */
+	.sleep = 20, /* Sleep (in ticks) */
 	.function = vStateMachine /* Thread Function */
 };
 
@@ -98,8 +98,8 @@ void vStateMachine(ULONG thread_input)
 static thread_t _can_receive_thread = {
 	.name = "Can Receive Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 4, /* Priority */
-	.threshold = 2, /* Preemption Threshold */
+	.priority = 2, /* Priority */
+	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
 	.sleep = 500,
@@ -133,10 +133,10 @@ static thread_t _can_dispatch_thread = {
 	.name = "CAN Dispatch Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
 	.priority = 1, /* Priority */
-	.threshold = 1, /* Preemption Threshold */
+	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 50,
+	.sleep = 20,
 	/* Sleep (in ticks) */ // TODO: Change to trigger thread flag
 	.function = vCanDispatch /* Thread Function */
 };
@@ -150,13 +150,13 @@ void vCanDispatch(ULONG thread_input)
 	for (;;) {
 		/* Process incoming messages */
 		while (queue_receive(&can_outgoing, &message) == U_SUCCESS) {
-			status = can_send_msg(can1, &message);
-			if (status != U_SUCCESS) {
-				DEBUG_PRINTLN(
-					"WARNING: Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld) - Status %d",
-					message.id, status);
+			//status = can_send_msg(can1, &message);
+			//if (status != U_SUCCESS) {
+			//	DEBUG_PRINTLN(
+			//		"WARNING: Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld) - Status %d",
+			//		message.id, status);
 				// u_TODO - maybe add the message back into the queue if it fails to send? not sure if this is a good idea tho
-			}
+			//}
 		}
 
 		tx_thread_sleep(MS_TO_TICKS(_can_dispatch_thread.sleep));
@@ -217,7 +217,7 @@ void vAnalyzer(ULONG thread_input)
 static thread_t _segment_data_thread = {
 	.name = "Segment Data Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 2, /* Priority */
+	.priority = 1, /* Priority */
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
@@ -228,9 +228,7 @@ static thread_t _segment_data_thread = {
 void vGetSegmentData(ULONG thread_input)
 {
 	//HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
-	DEBUG_PRINTLN("INITIALIZING");
 	segment_init(bmsdata.chips, &hspi2);
-	DEBUG_PRINTLN("PASSED");
 	//HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
 	// must delay after init for some reason, or else ADC doesnt start up (-3.45 or something)
@@ -273,7 +271,7 @@ void vGetSegmentData(ULONG thread_input)
 		HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
 		set_flag(ANALYZER_FLAG);
-		tx_thread_sleep(MS_TO_TICKS(1000 / SAMPLE_RATE));
+		tx_thread_sleep(MS_TO_TICKS(100));
 	}
 }
 
