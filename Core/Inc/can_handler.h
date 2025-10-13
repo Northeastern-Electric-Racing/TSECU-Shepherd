@@ -75,7 +75,7 @@ void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs);
  * @param msg CAN message to be sent.
  * @return int8_t Error code.
  */
-int8_t queue_can_msg(can_msg_t msg);
+uint8_t queue_can_msg(can_msg_t can_msg);
 
 /**
  * @brief Initialize CAN lines.
@@ -83,6 +83,6 @@ int8_t queue_can_msg(can_msg_t msg);
  * 
  * @return error code
  */
-uint8_t init_can(FDCAN_HandleTypeDef *hcan)
+uint8_t init_can(FDCAN_HandleTypeDef *hcan);
 
 #endif // CAN_HANDLER_H

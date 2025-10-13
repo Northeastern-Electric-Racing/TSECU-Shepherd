@@ -38,7 +38,7 @@ void vDefaultTask(ULONG thread_input) {
   for(;;)
   {
     #ifdef DEBUG_STATS
-    print_bms_stats(&bmsdata);
+    //print_bms_stats(&bmsdata);
     #endif
 
     if (alt) {
@@ -181,7 +181,6 @@ void vAnalyzer(ULONG thread_input)
 	}
 
 	for (;;) {
-		ULONG recevied_flags;
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
 		mutex_get(&bms_mutex);

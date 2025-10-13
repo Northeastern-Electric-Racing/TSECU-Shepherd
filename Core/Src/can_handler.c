@@ -34,7 +34,7 @@ void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs)
 		can_msg_t message;
 		FDCAN_RxHeaderTypeDef rx_header;
 
-		if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rx_header,
+		if (HAL_FDCAN_GetRxMessage(hcan, FDCAN_RX_FIFO0, &rx_header,
 					   message.data) == HAL_OK) {
 			message.id = rx_header.Identifier;
 			message.id_is_extended =

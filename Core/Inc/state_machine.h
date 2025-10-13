@@ -3,6 +3,7 @@
 #define _STATE_MACHINE_H
 
 #include "analyzer.h"
+#include "datastructs.h"
 
 #define NUM_FAULTS 8
 

@@ -90,24 +90,24 @@ void init_hv_plate_chip(cell_asic_2950 ic)
 	ic.tx_cfgb.gpio2eoc = EOC_DISABLED2950;
 }
 
-float get_pack_current(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi)
+float get_pack_current(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
 {
 	read_current_registers(bmsdata->plate_chip, hspi);
 	return get_current_conversion(bmsdata->plate_chip.i.i1);
 }
 
 // TODO: finish API
-float get_batt_voltage(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi)
+float get_batt_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
 {
 	return 0;
 }
 
-float get_ts_voltage(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi)
+float get_ts_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
 {
 	return 0;
 }
 
-void trigger_precharge_relay(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi)
+void trigger_precharge_relay(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
 {
 	return;
 }
