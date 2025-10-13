@@ -36,7 +36,8 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+extern IWDG_HandleTypeDef hiwdg;
+extern SPI_HandleTypeDef hspi2;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -87,7 +88,7 @@ void Error_Handler(void);
 #define FAULT_MCU_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
-
+ 
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
