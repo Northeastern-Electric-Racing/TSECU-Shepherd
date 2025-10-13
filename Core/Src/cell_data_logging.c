@@ -164,9 +164,7 @@ int cell_data_log_measurement(struct BMSLogger *logger, bms_t *bms_data)
 	}
 
 	for (int chip_num = 0; chip_num < NUM_CHIPS; chip_num++) {
-		int cell_count = get_num_cells(&bms_data->chip_data[chip_num]);
-
-		for (int cell = 0; cell < cell_count; cell++) {
+		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			entry->cell_voltages[chip_num][cell] =
 				bms_data->chip_data[chip_num]
 					.cell_voltages[cell];

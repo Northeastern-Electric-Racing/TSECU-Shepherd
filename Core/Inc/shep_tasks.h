@@ -10,10 +10,13 @@
 */
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool);
 
-/**
- * Initializes thread flags
- */
-uint8_t shep_flags_init();
+void vDefaultTask(ULONG thread_input);
+void vStateMachine(ULONG thread_input);
+void vCanReceive(ULONG thred_input);
+void vCanDispatch(ULONG thread_input);
+void vAnalyzer(ULONG thread_input);
+void vGetSegmentData(ULONG thread_input);
+void vHvPlateData(ULONG thread_input);
 
 #define ANALYZER_FLAG 0x1
 
