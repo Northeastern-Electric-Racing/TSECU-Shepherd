@@ -213,7 +213,7 @@ extern TIM_HandleTypeDef htim2;
  * 
  * @param us the number of us to delay
  */
-inline void delay_us(uint32_t us)
+void delay_us(uint32_t us)
 {
 	uint32_t tickstart = __HAL_TIM_GET_COUNTER(&htim2);
 	uint32_t wait = us;
