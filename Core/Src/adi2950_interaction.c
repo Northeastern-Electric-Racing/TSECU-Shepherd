@@ -31,14 +31,6 @@ void read_vbat_regsisters(cell_asic_2950 ic, SPI_HandleTypeDef *hspi)
 			  NONE2950); /* Battery Voltage Group*/
 }
 
-void read_ivbat_regsisters(cell_asic_2950 ic, SPI_HandleTypeDef *hspi)
-{
-	start_conversion(ic);
-	adBmsWakeupIc2950(TOTAL_IC_2950);
-	adBmsReadData2950(TOTAL_IC_2950, &ic, RDIVB1, Ivbat,
-			  NONE2950); /* Battery Voltage Group*/
-}
-
 void read_vr_registers(cell_asic_2950 ic, SPI_HandleTypeDef *hspi)
 {
 	start_conversion(ic);
@@ -97,7 +89,6 @@ void reset_gpo(cell_asic_2950 ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo)
 	switch (gpo) {
 	case GPO1_2950:
         ic.tx_cfga.gpo1od = PUSH_PULL;
-
 		ic.tx_cfga.gpo1c = PULLED_DOWN;
 		break;
 	case GPO2_2950:

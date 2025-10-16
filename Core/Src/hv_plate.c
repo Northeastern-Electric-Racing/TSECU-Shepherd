@@ -1,6 +1,8 @@
 #include "adi2950_interaction.h"
 #include "hv_plate.h"
 
+#define HV_CTRL_GPO GPIO4_2950
+
 static float get_current_conversion(uint32_t data)
 {
 	float current;
@@ -17,7 +19,7 @@ static float get_voltage_conversion(int data)
 
 void init_hv_plate_chip(cell_asic_2950 ic)
 {
-    // TODO: iron out config (mostly taken from adi code)
+	// TODO: iron out config (mostly taken from adi code)
 	ic.tx_cfga.gpo1c = PULLED_UP_TRISTATED;
 	ic.tx_cfga.gpo2c = PULLED_UP_TRISTATED;
 	ic.tx_cfga.gpo3c = PULLED_UP_TRISTATED;
@@ -99,15 +101,32 @@ float get_pack_current(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
 // TODO: finish API
 float get_batt_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
 {
-	return 0;
+	read_vbat_regsisters(bmsdata->plate_chip, hspi);
+	float avg_volts =
+		(get_voltage_conversion(bmsdata->plate_chip.vbat.vbat1) +
+		 get_voltage_conversion(bmsdata->plate_chip.vbat.vbat2)) /
+		2;
+	return avg_volts;
 }
 
 float get_ts_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
 {
-	return 0;
+	read_vr_registers(bmsdata->plate_chip, hspi);
+	// TODO: validate reading V2 and V3
+	// NOTE: TS+ is output to both V2 and V3
+	float avg_volts =
+		(get_voltage_conversion(bmsdata->plate_chip.vr.v_codes[1]) +
+		 get_voltage_conversion(bmsdata->plate_chip.vr.v_codes[2])) /
+		2;
+	return avg_volts;
 }
 
-void trigger_precharge_relay(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
+void set_precharge_relay(bms_t *bmsdata, SPI_HandleTypeDef *hspi, bool state)
 {
-	return;
+	if (state) {	
+		set_gpo(bmsdata->plate_chip, hspi, HV_CTRL_GPO);
+	} else {
+		reset_gpo(bmsdata->plate_chip, hspi, HV_CTRL_GPO);
+	}
 }
+
