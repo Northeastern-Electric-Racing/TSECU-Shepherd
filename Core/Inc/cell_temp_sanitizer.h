@@ -1,7 +1,18 @@
 #include <stdbool.h>
 #include "timer.h"
+
 #ifndef CELL_TEMP_SANITIZER_H
 #define CELL_TEMP_SANITIZER_H
+
+#define TEMP_LOWER_BOUND   20.0f
+#define TEMP_UPPER_BOUND   80.0f
+#define DEBOUNCE_PERIOD_MS 5000
+
+/**
+ * @brief This enumeration represents the health state of a battery cell for its temperature
+ * readings.
+ */
+typedef enum { HEALTHY, IN_DEBOUNCE, UNHEALTHY } health_state;
 
 /**
  * @brief A therm_state_t is a struct of a (float, bool).
@@ -9,8 +20,8 @@
  * - Whether the cell temperature can be used (i.e. whether the measurement is bad).
  */
 typedef struct {
-	float temp;
-	bool is_valid;
+	float last_valid_temp;
+	health_state state;
 	nertimer_t debounce_timer;
 } therm_state_t;
 

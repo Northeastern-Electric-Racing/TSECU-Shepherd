@@ -3,20 +3,10 @@
 #include <float.h>
 #include <stdlib.h>
 
-#define TEMP_LOWER_BOUND   20.0f
-#define TEMP_UPPER_BOUND   80.0f
-#define DEBOUNCE_PERIOD_MS 5000
-
-typedef struct {
-	float last_good_temp;
-	bool is_valid;
-	nertimer_t debounce_timer;
-} therm_state_t;
-
 void mark_invalid(void *arg)
 {
 	if (arg != NULL) {
-		((therm_state_t *)arg)->is_valid = false;
+		((therm_state_t *)arg)->state = UNHEALTHY;
 	}
 }
 
@@ -25,9 +15,8 @@ void temp_sanitizer_init(int num_chips, int num_cells,
 {
 	for (int chip = 0; chip < num_chips; chip++) {
 		for (int cell = 0; cell < num_cells; cell++) {
-			sanitized_out[chip][cell].last_good_temp =
-				(TEMP_LOWER_BOUND + TEMP_UPPER_BOUND) / 2.0;
-			sanitized_out[chip][cell].is_valid = true;
+			sanitized_out[chip][cell].last_valid_temp = 0;
+			sanitized_out[chip][cell].state = HEALTHY;
 			sanitized_out[chip][cell].debounce_timer.active = false;
 			sanitized_out[chip][cell].debounce_timer.completed =
 				false;
@@ -53,8 +42,8 @@ void temp_sanitizer_run(int num_chips, int num_cells,
 				 DEBOUNCE_PERIOD_MS, mark_invalid, therm_state);
 			// If the cell temperature is good, update cell temp and cell validity.
 			if (!is_cell_temp_bad) {
-				therm_state->last_good_temp = cell_temp;
-				therm_state->is_valid = true;
+				therm_state->last_valid_temp = cell_temp;
+				therm_state->state = HEALTHY;
 			}
 		}
 	}
