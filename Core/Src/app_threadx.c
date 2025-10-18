@@ -29,6 +29,7 @@
 #include "shep_queues.h"
 #include "shep_tasks.h"
 #include "u_tx_flags.h"
+#include "tracex.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

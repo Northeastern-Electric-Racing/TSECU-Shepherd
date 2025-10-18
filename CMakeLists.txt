@@ -92,6 +92,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/middleware/src/c_utils.c"
     "Core/Src/hv_plate.c"
     "Core/Src/adi2950_interaction.c"
+    "Core/Src/tracex.c"
+    "Core/Src/traceout.c"
+    "Core/Src/traceout_app.c"
 )
 
 # Add include paths

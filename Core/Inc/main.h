@@ -50,8 +50,6 @@ extern "C" {
 
 /* USER CODE END EM */
 
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
-
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -88,10 +86,6 @@ void Error_Handler(void);
 #define WATCHDOG_GPIO_Port GPIOB
 #define EXT_GPIO_2_Pin GPIO_PIN_15
 #define EXT_GPIO_2_GPIO_Port GPIOB
-#define FAN_PWM_0_Pin GPIO_PIN_7
-#define FAN_PWM_0_GPIO_Port GPIOC
-#define FAN_PWM_1_Pin GPIO_PIN_8
-#define FAN_PWM_1_GPIO_Port GPIOC
 #define TRACE_TRIG_Pin GPIO_PIN_5
 #define TRACE_TRIG_GPIO_Port GPIOB
 #define TRACE_TRIG_EXTI_IRQn EXTI9_5_IRQn
