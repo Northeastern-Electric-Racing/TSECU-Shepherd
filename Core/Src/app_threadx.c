@@ -63,17 +63,17 @@
   */
 UINT App_ThreadX_Init(VOID *memory_ptr)
 {
-	UINT ret = TX_SUCCESS;
-	TX_BYTE_POOL *byte_pool = (TX_BYTE_POOL *)memory_ptr;
+  UINT ret = TX_SUCCESS;
+  TX_BYTE_POOL *byte_pool = (TX_BYTE_POOL*)memory_ptr;
 
-	/* USER CODE BEGIN App_ThreadX_Init */
+  /* USER CODE BEGIN App_ThreadX_Init */
 	CATCH_ERROR(queues_init(byte_pool), U_SUCCESS);
 	CATCH_ERROR(shep_threads_init(byte_pool), U_SUCCESS);
 	CATCH_ERROR(mutexes_init(), U_SUCCESS);
 	CATCH_ERROR(flags_init(), U_SUCCESS);
-	/* USER CODE END App_ThreadX_Init */
+  /* USER CODE END App_ThreadX_Init */
 
-	return ret;
+  return ret;
 }
 
 /**
@@ -83,15 +83,15 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
   */
 void MX_ThreadX_Init(void)
 {
-	/* USER CODE BEGIN  Before_Kernel_Start */
+  /* USER CODE BEGIN  Before_Kernel_Start */
 
-	/* USER CODE END  Before_Kernel_Start */
+  /* USER CODE END  Before_Kernel_Start */
 
-	tx_kernel_enter();
+  tx_kernel_enter();
 
-	/* USER CODE BEGIN  Kernel_Start_Error */
+  /* USER CODE BEGIN  Kernel_Start_Error */
 
-	/* USER CODE END  Kernel_Start_Error */
+  /* USER CODE END  Kernel_Start_Error */
 }
 
 /* USER CODE BEGIN 1 */

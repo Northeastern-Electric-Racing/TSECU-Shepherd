@@ -27,11 +27,12 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32xx_hal.h"
-#include "datastructs.h"
+#include "stm32f4xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include "datastructs.h"
 
 /* USER CODE END Includes */
 
@@ -59,40 +60,41 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define EXT_GPIO_1_Pin	      GPIO_PIN_13
-#define EXT_GPIO_1_GPIO_Port  GPIOC
-#define EXT_GPIO_5_Pin	      GPIO_PIN_14
-#define EXT_GPIO_5_GPIO_Port  GPIOC
-#define EXT_GPIO_4_Pin	      GPIO_PIN_15
-#define EXT_GPIO_4_GPIO_Port  GPIOC
-#define SPI3_CS_Pin	      GPIO_PIN_0
-#define SPI3_CS_GPIO_Port     GPIOC
-#define SPI2_CS_Pin	      GPIO_PIN_1
-#define SPI2_CS_GPIO_Port     GPIOC
-#define SHUTDOWN_Pin	      GPIO_PIN_2
-#define SHUTDOWN_GPIO_Port    GPIOA
-#define I_SENSE_0_Pin	      GPIO_PIN_3
-#define I_SENSE_0_GPIO_Port   GPIOA
-#define SPI1_CS_Pin	      GPIO_PIN_4
-#define SPI1_CS_GPIO_Port     GPIOA
-#define DEBUG_LED_2_Pin	      GPIO_PIN_4
+#define EXT_GPIO_1_Pin GPIO_PIN_13
+#define EXT_GPIO_1_GPIO_Port GPIOC
+#define EXT_GPIO_5_Pin GPIO_PIN_14
+#define EXT_GPIO_5_GPIO_Port GPIOC
+#define EXT_GPIO_4_Pin GPIO_PIN_15
+#define EXT_GPIO_4_GPIO_Port GPIOC
+#define SPI3_CS_Pin GPIO_PIN_0
+#define SPI3_CS_GPIO_Port GPIOC
+#define SPI2_CS_Pin GPIO_PIN_1
+#define SPI2_CS_GPIO_Port GPIOC
+#define SHUTDOWN_Pin GPIO_PIN_2
+#define SHUTDOWN_GPIO_Port GPIOA
+#define I_SENSE_0_Pin GPIO_PIN_3
+#define I_SENSE_0_GPIO_Port GPIOA
+#define SPI1_CS_Pin GPIO_PIN_4
+#define SPI1_CS_GPIO_Port GPIOA
+#define DEBUG_LED_2_Pin GPIO_PIN_4
 #define DEBUG_LED_2_GPIO_Port GPIOC
-#define I_SENSE_1_Pin	      GPIO_PIN_1
-#define I_SENSE_1_GPIO_Port   GPIOB
-#define FAULT_MCU_Pin	      GPIO_PIN_2
-#define FAULT_MCU_GPIO_Port   GPIOB
-#define DEBUG_LED_1_Pin	      GPIO_PIN_11
+#define I_SENSE_1_Pin GPIO_PIN_1
+#define I_SENSE_1_GPIO_Port GPIOB
+#define FAULT_MCU_Pin GPIO_PIN_2
+#define FAULT_MCU_GPIO_Port GPIOB
+#define DEBUG_LED_1_Pin GPIO_PIN_11
 #define DEBUG_LED_1_GPIO_Port GPIOB
-#define WATCHDOG_Pin	      GPIO_PIN_14
-#define WATCHDOG_GPIO_Port    GPIOB
-#define EXT_GPIO_2_Pin	      GPIO_PIN_15
-#define EXT_GPIO_2_GPIO_Port  GPIOB
-#define FAN_PWM_0_Pin	      GPIO_PIN_7
-#define FAN_PWM_0_GPIO_Port   GPIOC
-#define FAN_PWM_1_Pin	      GPIO_PIN_8
-#define FAN_PWM_1_GPIO_Port   GPIOC
-#define EXT_GPIO_0_Pin	      GPIO_PIN_5
-#define EXT_GPIO_0_GPIO_Port  GPIOB
+#define WATCHDOG_Pin GPIO_PIN_14
+#define WATCHDOG_GPIO_Port GPIOB
+#define EXT_GPIO_2_Pin GPIO_PIN_15
+#define EXT_GPIO_2_GPIO_Port GPIOB
+#define FAN_PWM_0_Pin GPIO_PIN_7
+#define FAN_PWM_0_GPIO_Port GPIOC
+#define FAN_PWM_1_Pin GPIO_PIN_8
+#define FAN_PWM_1_GPIO_Port GPIOC
+#define TRACE_TRIG_Pin GPIO_PIN_5
+#define TRACE_TRIG_GPIO_Port GPIOB
+#define TRACE_TRIG_EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 extern SPI_HandleTypeDef hspi1;
