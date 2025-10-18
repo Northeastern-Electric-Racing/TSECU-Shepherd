@@ -36,12 +36,19 @@ void temp_sanitizer_run(int num_chips, int num_cells,
 				isnan(cell_temp) ||
 				(cell_temp > TEMP_UPPER_BOUND) ||
 				(cell_temp < TEMP_LOWER_BOUND);
-			// Start debounce timer if bad, end debounce timer if good,
-			// mark invalid if debounce timer over and still bad.
+			// Start debounce timer if cell temp is bad, end debounce timer if cell temp is good,
+			// mark invalid if debounce timer over and cell temp is still bad.
 			debounce(is_cell_temp_bad, &therm_state->debounce_timer,
 				 DEBOUNCE_PERIOD_MS, mark_invalid, therm_state);
+			// If in cell temp is bad but in debounce state, set state to debounce state.
+			nertimer_t *debounce_timer =
+				&therm_state->debounce_timer;
+			if (is_timer_active(debounce_timer) &&
+			    is_cell_temp_bad) {
+				therm_state->state = IN_DEBOUNCE;
+			}
 			// If the cell temperature is good, update cell temp and cell validity.
-			if (!is_cell_temp_bad) {
+			else if (!is_cell_temp_bad) {
 				therm_state->last_valid_temp = cell_temp;
 				therm_state->state = HEALTHY;
 			}
