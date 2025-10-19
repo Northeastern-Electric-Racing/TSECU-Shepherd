@@ -64,6 +64,8 @@
   */
 UINT App_ThreadX_Init(VOID *memory_ptr)
 {
+  tracex_start();
+
   UINT ret = TX_SUCCESS;
   TX_BYTE_POOL *byte_pool = (TX_BYTE_POOL*)memory_ptr;
 
