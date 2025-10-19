@@ -6,7 +6,7 @@
 void mark_invalid(void *arg)
 {
 	if (arg != NULL) {
-		((therm_state_t *)arg)->state = UNHEALTHY;
+		((therm_state_t *)arg)->state = INVALID;
 	}
 }
 
@@ -44,8 +44,9 @@ void temp_sanitizer_run(int num_chips, int num_cells,
 			nertimer_t *debounce_timer =
 				&therm_state->debounce_timer;
 			if (is_timer_active(debounce_timer) &&
-			    is_cell_temp_bad) {
-				therm_state->state = IN_DEBOUNCE;
+			    is_cell_temp_bad &&
+			    !is_timer_expired(debounce_timer)) {
+				therm_state->state = UNHEALTHY;
 			}
 			// If the cell temperature is good, update cell temp and cell validity.
 			else if (!is_cell_temp_bad) {

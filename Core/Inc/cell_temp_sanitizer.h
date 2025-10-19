@@ -12,7 +12,7 @@
  * @brief This enumeration represents the health state of a battery cell for its temperature
  * readings.
  */
-typedef enum { HEALTHY, IN_DEBOUNCE, UNHEALTHY } health_state;
+typedef enum { HEALTHY, UNHEALTHY, INVALID } health_state;
 
 /**
  * @brief A therm_state_t is a struct of a (float, bool).
