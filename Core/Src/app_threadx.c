@@ -25,6 +25,9 @@
 /* USER CODE BEGIN Includes */
 #include "u_tx_threads.h"
 #include "u_tx_debug.h"
+#include "shep_mutexes.h"
+#include "shep_tasks.h"
+#include "u_tx_flags.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,12 +65,13 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
   UINT ret = TX_SUCCESS;
   /* USER CODE BEGIN App_ThreadX_MEM_POOL */
   TX_BYTE_POOL *byte_pool = (TX_BYTE_POOL*)memory_ptr;
-
   (void)byte_pool;
-  //CATCH_ERROR(threads_init(byte_pool), TX_SUCCESS);
-
   /* USER CODE END App_ThreadX_MEM_POOL */
   /* USER CODE BEGIN App_ThreadX_Init */
+  CATCH_ERROR(queues_init(byte_pool), U_SUCCESS);
+	CATCH_ERROR(shep_threads_init(byte_pool), U_SUCCESS);
+	CATCH_ERROR(mutexes_init(), U_SUCCESS);
+	CATCH_ERROR(flags_init(), U_SUCCESS);
   /* USER CODE END App_ThreadX_Init */
 
   return ret;

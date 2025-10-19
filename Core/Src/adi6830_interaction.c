@@ -213,7 +213,7 @@ extern TIM_HandleTypeDef htim2;
  * 
  * @param us the number of us to delay
  */
-inline void delay_us(uint32_t us)
+void delay_us(uint32_t us)
 {
 	uint32_t tickstart = __HAL_TIM_GET_COUNTER(&htim2);
 	uint32_t wait = us;
@@ -286,9 +286,7 @@ void read_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 
 uint32_t adBmsPollAdc_indicator(uint8_t poll_type[2])
 {
-	set_debug_led_2(1);
 	uint32_t result = adBmsPollAdc(poll_type);
-	set_debug_led_2(0);
 	return result;
 }
 

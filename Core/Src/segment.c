@@ -5,17 +5,6 @@
 #include "adi6830_interation.h"
 
 /**
- * @brief Get the num cells using the order of the chip, for functions without chipdata access.
- * 
- * @param chip_index 
- * @return uint8_t the number of cells in the chip
- */
-uint8_t get_num_cells_seg(uint8_t chip_index)
-{
-	return NUM_CELLS_PER_CHIP;
-}
-
-/**
  * @brief Initialize a chip with our default values.
  * 
  * @param chip Pointer to chip to initialize.
@@ -126,8 +115,7 @@ void segment_adc_comparison(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 	read_status_registers(chips, hspi);
 
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-		uint8_t cells = get_num_cells_seg(chip);
-		for (uint8_t cell = 0; cell < cells; cell++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			if (NER_GET_BIT(chips[chip].statc.cs_flt, cell)) {
 				printf("ADC VOLTAGE DISCREPANCY ERROR\nChip %d, Cell %d\nC-ADC: %f, S-ADC: %f\n",
 				       chip + 1, cell + 1,
@@ -303,16 +291,16 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 {
 	// clang-format off
 	bool discharge_confg[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 	};
 	// clang-format on
 
@@ -326,8 +314,7 @@ void segment_configure_balancing(
 {
 	// TODO: Test
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
-		uint8_t num_cells = get_num_cells_seg(chip);
-		for (int cell = 0; cell < num_cells; cell++) {
+		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			set_cell_discharge(&chips[chip], cell,
 					   discharge_config[chip][cell]);
 		}

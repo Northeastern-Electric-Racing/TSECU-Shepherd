@@ -7,6 +7,7 @@
 #include "bms_config.h"
 #include "u_tx_mutex.h"
 #include "adBms6830Data.h"
+#include "adi_bms_2950data.h"
 #include "timer.h"
 
 /**
@@ -30,11 +31,7 @@ typedef struct {
 	float cell_temp[NUM_CELLS];
 	float cell_resistance[NUM_CELLS];
 	float open_cell_voltage[NUM_CELLS];
-
 	float cell_voltages[NUM_CELLS];
-
-	/* True if chip is alpha, False if Chip is Beta */
-	bool alpha;
 
 	/* For temperatures of on-board therms. */
 	float on_board_temp;
@@ -71,6 +68,7 @@ typedef struct {
 
 	/* Array of structs containing raw data from and configurations for the ADBMS6830 chips */
 	cell_asic chips[NUM_CHIPS];
+	cell_asic_2950 plate_chip;
 
 	float pack_current;
 	float pack_voltage;

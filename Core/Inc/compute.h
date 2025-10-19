@@ -17,28 +17,6 @@
 #define MAX_ADC_RESOLUTION   4095 // 12 bit ADC
 
 /**
- * @brief Init all necessary peripherals on compute, minus CAN, see can_handler
- * 
- */
-void compute_init();
-
-/**
- * @brief Measure the onboard temperature
- * 
- * @param temp the temperature
- * @param humidity the humidity
- * @return int8_t the error status
- */
-int8_t compute_measure_temp(float *temp, float *humidity);
-
-/**
- * @brief Returns the pack current sensor reading
- *
- * @return float
- */
-float compute_get_pack_current();
-
-/**
  * @brief updates fault relay
  *
  * @param fault_state
@@ -46,27 +24,7 @@ float compute_get_pack_current();
 void compute_set_fault(bool fault_state);
 
 /**
- * @brief blinks LED 1.
- */
-void toggle_debug_led_1();
-
-/**
- * @brief turns LED 2 on or off,
- * 
- * @param mode
- */
-void set_debug_led_2(int mode);
-
-/**
- * @brief Pets the external watchdog
- * 
- */
-void pet_watchdog();
-
-/**
  * @brief Checks if the shutdown circuit is open.
- * 
- * @return If the shutdown circuit is open, return true. If it is closed, return false.
  */
 bool read_shutdown();
 
