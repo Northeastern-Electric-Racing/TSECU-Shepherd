@@ -357,8 +357,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	HAL_Delay(500);
 
-  TraceOut_AppInit();
-
 	init_can(&hcan1);
 	compute_init();
 	compute_set_fault(false);
@@ -966,11 +964,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, EXT_GPIO_1_Pin|EXT_GPIO_5_Pin|EXT_GPIO_4_Pin|SPI3_CS_Pin
-                          |SPI2_CS_Pin|DEBUG_LED_2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, EXT_GPIO_1_Pin|EXT_GPIO_5_Pin|EXT_GPIO_4_Pin|DEBUG_LED_2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, I_SENSE_0_Pin|SPI1_CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, SPI3_CS_Pin|SPI2_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(I_SENSE_0_GPIO_Port, I_SENSE_0_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, FAULT_MCU_Pin|DEBUG_LED_1_Pin|WATCHDOG_Pin|EXT_GPIO_2_Pin, GPIO_PIN_RESET);

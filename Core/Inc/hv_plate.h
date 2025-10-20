@@ -10,7 +10,7 @@
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 
-void init_hv_plate_chip(cell_asic_2950 ic);
+void init_hv_plate_chip(cell_asic_2950 *ic);
 float get_pack_current(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi);
 float get_batt_voltage(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi);
 float get_ts_voltage(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi);  

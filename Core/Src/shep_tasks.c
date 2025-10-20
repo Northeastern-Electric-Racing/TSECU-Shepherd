@@ -288,8 +288,9 @@ static thread_t _hv_plate_data_thread = {
 
 void vHvPlateData(ULONG thread_input) {
 
-	init_hv_plate_chip(bmsdata.plate_chip);
-	tx_thread_sleep(TICKS_TO_MS(500));
+	init_hv_plate_chip(&bmsdata.plate_chip);
+	adi2950_write_read_config(1, &bmsdata.plate_chip);
+	tx_thread_sleep(MS_TO_TICKS(100));
 	float current = 0;
 	for (;;) {
 		current = get_pack_current(&bmsdata, &hspi2);
