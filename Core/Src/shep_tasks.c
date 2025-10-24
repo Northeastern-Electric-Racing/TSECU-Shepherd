@@ -171,7 +171,7 @@ void vCanDispatch(ULONG thread_input)
 static thread_t _analyzer_thread = {
 	.name = "Analyzer Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 6, /* Priority */
+	.priority = 4, /* Priority */
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */

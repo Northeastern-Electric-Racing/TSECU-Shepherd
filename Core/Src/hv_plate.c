@@ -1,5 +1,6 @@
 #include "adi2950_interaction.h"
 #include "hv_plate.h"
+#include "print_result.h"
 
 static float get_current_conversion(uint32_t data)
 {
@@ -93,6 +94,7 @@ void init_hv_plate_chip(cell_asic_2950 *ic)
 float get_pack_current(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi)
 {
 	read_current_registers(&bmsdata->plate_chip, hspi);
+	printCr(1, &bmsdata->plate_chip);
 	return get_current_conversion(bmsdata->plate_chip.i.i1);
 }
 
