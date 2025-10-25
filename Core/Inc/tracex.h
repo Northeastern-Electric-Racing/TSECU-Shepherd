@@ -6,7 +6,7 @@
 #include "tx_api.h"
 #include <stdint.h>
 
-#define TRACEX_BUFFER_SIZE (60u * 1024u)
+#define TRACEX_BUFFER_SIZE (60U * 1024U)
 
 /** Get pointer to the TraceX buffer. */
 UCHAR *tracex_get_buffer(void);

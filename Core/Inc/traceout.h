@@ -6,7 +6,7 @@
 #include "main.h"
 #include "tracex.h"
 
-#define TRACEOUT_CHUNK_BYTES (2048u)
+#define TRACEOUT_CHUNK_BYTES (1024U)
 
 /**
  * @brief Initialize the UART used for trace output.
