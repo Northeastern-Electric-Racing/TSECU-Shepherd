@@ -1,14 +1,12 @@
-#include "main.h"
-#include "tracex.h"
-
 /**
  * @file traceout.h
  * @brief UART-based TraceX output interface.
  */
 
-#ifndef TRACEOUT_CHUNK_BYTES
+#include "main.h"
+#include "tracex.h"
+
 #define TRACEOUT_CHUNK_BYTES (2048u)
-#endif
 
 /**
  * @brief Initialize the UART used for trace output.
