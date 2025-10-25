@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#if (ENABLE_TRACEX)
+
 /* 32-byte alignment for cache line safety. */
 __attribute__((aligned(32))) static UCHAR tx_trace_buffer[TRACEX_BUFFER_SIZE];
 
@@ -47,3 +49,5 @@ void tracex_stop(void)
 	tx_trace_disable();
 	tracex_started = false;
 }
+
+#endif

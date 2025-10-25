@@ -9,6 +9,7 @@ static void start_next_chunk(void)
 {
 	if (s_remaining == 0U) {
 		s_output_active = 0U;
+		tracex_start();
 		return;
 	}
 

@@ -33,7 +33,6 @@
 #include "compute.h"
 #include "analyzer.h"
 #include "serialPrintResult.h"
-#include "traceout_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

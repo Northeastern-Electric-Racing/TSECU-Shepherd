@@ -6,6 +6,8 @@
 #include "tx_api.h"
 #include <stdint.h>
 
+#define ENABLE_TRACEX 0
+
 #define TRACEX_BUFFER_SIZE (60U * 1024U)
 
 /** Get pointer to the TraceX buffer. */
