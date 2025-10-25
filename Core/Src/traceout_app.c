@@ -12,18 +12,18 @@ void TraceOut_AppInit(void)
 	traceout_init(&huart6);
 }
 
+#if (ENABLE_TRACEX)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-#if (ENABLE_TRACEX)
 	if (GPIO_Pin == TRACEOUT_TRIGGER_PIN) {
 		traceout_start_from_isr();
 	}
-#endif
 }
+#endif
 
+#if (ENABLE_TRACEX)
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-#if (ENABLE_TRACEX)
 	traceout_on_uart_tx_complete_from_isr(huart);
-#endif
 }
+#endif
