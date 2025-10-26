@@ -15,6 +15,7 @@
 #include "main.h"
 #include "hv_plate.h"
 #include "compute.h"
+#include "adi_2950.h"
 
 acc_data_t bmsdata;
 
@@ -186,7 +187,7 @@ void vAnalyzer(ULONG thread_input)
 	}
 
 	for (;;) {
-		ULONG recevied_flags;
+		ULONG received_flags;
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
 		mutex_get(&bms_mutex);
@@ -293,13 +294,14 @@ static thread_t _hv_plate_data_thread = {
 
 void vHvPlateData(ULONG thread_input) {
 
-	init_hv_plate_chip(&bmsdata.plate_chip);
+	init_hv_plate_chip(bmsdata.plate_chip);
 	adi2950_write_read_config(1, &bmsdata.plate_chip);
 	tx_thread_sleep(MS_TO_TICKS(100));
 	float current = 0;
 	for (;;) {
 		current = get_pack_current(&bmsdata, &hspi2);
 		DEBUG_PRINTLN("PACK CURRENT: %f", current);
+		set_precharge_relay(&bmsdata, &hspi2, 1);
 		tx_thread_sleep(MS_TO_TICKS(_hv_plate_data_thread.sleep));
 	}
 }
