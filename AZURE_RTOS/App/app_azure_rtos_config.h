@@ -39,10 +39,7 @@ extern "C" {
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
-/* Using static memory allocation via threadX Byte memory pools */
-
-#define USE_STATIC_ALLOCATION                    1
-
+/* define the size of static threadX byte memory pools */
 #define TX_APP_MEM_POOL_SIZE                     30720
 
 /* USER CODE BEGIN EC */
@@ -67,4 +64,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
 #endif /* APP_AZURE_RTOS_CONFIG_H */

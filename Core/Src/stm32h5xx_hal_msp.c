@@ -299,7 +299,7 @@ void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef* hfdcan)
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_FDCAN;
-    PeriphClkInitStruct.FdcanClockSelection = RCC_FDCANCLKSOURCE_PLL1Q;
+    PeriphClkInitStruct.FdcanClockSelection = RCC_FDCANCLKSOURCE_HSE;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();
@@ -598,7 +598,17 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI1;
-    PeriphClkInitStruct.Spi1ClockSelection = RCC_SPI1CLKSOURCE_PLL1Q;
+    PeriphClkInitStruct.PLL3.PLL3Source = RCC_PLL3_SOURCE_HSE;
+    PeriphClkInitStruct.PLL3.PLL3M = 5;
+    PeriphClkInitStruct.PLL3.PLL3N = 60;
+    PeriphClkInitStruct.PLL3.PLL3P = 75;
+    PeriphClkInitStruct.PLL3.PLL3Q = 75;
+    PeriphClkInitStruct.PLL3.PLL3R = 50;
+    PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3_VCIRANGE_0;
+    PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3_VCORANGE_MEDIUM;
+    PeriphClkInitStruct.PLL3.PLL3FRACN = 0;
+    PeriphClkInitStruct.PLL3.PLL3ClockOut = RCC_PLL3_DIVP;
+    PeriphClkInitStruct.Spi1ClockSelection = RCC_SPI1CLKSOURCE_PLL3P;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();
