@@ -5,7 +5,7 @@
 static float get_current_conversion(uint32_t data)
 {
 	float current;
-	current = 1e-6 * ((int32_t)(data << (32 - 24)) >> (32 - 24));
+	current =  ((int32_t)(data << (32 - 24)) >> (32 - 24));
 	return current / (float)SHUNT_RESISTANCE;
 }
 
