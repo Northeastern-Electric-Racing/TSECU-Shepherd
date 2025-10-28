@@ -28,7 +28,7 @@ static thread_t _default_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 500, /* Sleep (in ticks) */
+	.sleep = MS_TO_TICKS(500), /* Sleep (in ticks) */
 	.function = vDefaultTask /* Thread Function */
 };
 
@@ -54,7 +54,7 @@ void vDefaultTask(ULONG thread_input) {
     HAL_IWDG_Refresh(&hiwdg);
 
     toggle_debug_led_1();
-    tx_thread_sleep(MS_TO_TICKS(_default_thread.sleep));
+    tx_thread_sleep(_default_thread.sleep);
 
   }
 }
@@ -66,7 +66,7 @@ static thread_t _state_machine_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 20, /* Sleep (in ticks) */
+	.sleep = MS_TO_TICKS(20), /* Sleep (in ticks) */
 	.function = vStateMachine /* Thread Function */
 };
 
@@ -92,7 +92,7 @@ void vStateMachine(ULONG thread_input)
 			start_timer(&telem_timer, 500);
 		}
 
-		tx_thread_sleep(MS_TO_TICKS(_state_machine_thread.sleep));
+		tx_thread_sleep(_state_machine_thread.sleep);
 	}
 }
 
@@ -103,7 +103,7 @@ static thread_t _can_receive_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 500,
+	.sleep = MS_TO_TICKS(500),
 	/* Sleep (in ticks) */ // TODO Change Can Receive to be triggered by thread flag
 	.function = vCanReceive /* Thread Function */
 };
@@ -126,7 +126,7 @@ void vCanReceive(ULONG thred_input)
 			}
 		}
 
-		tx_thread_sleep(MS_TO_TICKS(_can_receive_thread.sleep));
+		tx_thread_sleep(_can_receive_thread.sleep);
 	}
 }
 
@@ -137,7 +137,7 @@ static thread_t _can_dispatch_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 50, /* Sleep (in ticks) */ // TODO: Change to trigger thread flag
+	.sleep = MS_TO_TICKS(50), /* Sleep (in ticks) */ // TODO: Change to trigger thread flag
 	.function = vCanDispatch /* Thread Function */
 };
 
@@ -165,7 +165,7 @@ void vCanDispatch(ULONG thread_input)
 			}
 		}
 
-		tx_thread_sleep(MS_TO_TICKS(_can_dispatch_thread.sleep));
+		tx_thread_sleep(_can_dispatch_thread.sleep);
 	}
 }
 
@@ -176,7 +176,7 @@ static thread_t _analyzer_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 100, /* Sleep (in ticks) */
+	.sleep = MS_TO_TICKS(100), /* Sleep (in ticks) */
 	.function = vAnalyzer /* Thread Function */
 };
 
@@ -187,7 +187,6 @@ void vAnalyzer(ULONG thread_input)
 	}
 
 	for (;;) {
-		ULONG received_flags;
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
 		mutex_get(&bms_mutex);
@@ -227,7 +226,7 @@ static thread_t _segment_data_thread = {
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 2, /* Sleep (in ticks) */
+	.sleep = MS_TO_TICKS(500), /* Sleep (in ticks) */
 	.function = vGetSegmentData, /* Thread Function */
 };
 
@@ -277,7 +276,7 @@ void vGetSegmentData(ULONG thread_input)
 		HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
 		set_flag(ANALYZER_FLAG);
-		tx_thread_sleep(MS_TO_TICKS(500));
+		tx_thread_sleep(_segment_data_thread.sleep);
 	}
 }
 
@@ -302,7 +301,7 @@ void vHvPlateData(ULONG thread_input) {
 		current = get_pack_current(&bmsdata, &hspi2);
 		DEBUG_PRINTLN("PACK CURRENT: %f", current);
 		set_precharge_relay(&bmsdata, &hspi2, 1);
-		tx_thread_sleep(MS_TO_TICKS(_hv_plate_data_thread.sleep));
+		tx_thread_sleep(_hv_plate_data_thread.sleep);
 	}
 }
 
