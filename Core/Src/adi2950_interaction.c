@@ -57,7 +57,7 @@ void read_vr_registers(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDV2C, GPV2, E_2950);
 }
 
-void reset_gpo(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo)
+void set_gpo(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo)
 {
 	switch (gpo) {
 	case GPO1_2950:
@@ -93,7 +93,7 @@ void reset_gpo(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo)
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDCFGA2950, Config2950, A_2950);
 }
 
-void set_gpo(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo)
+void reset_gpo(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo)
 {
 	switch (gpo) {
 	case GPO1_2950:
