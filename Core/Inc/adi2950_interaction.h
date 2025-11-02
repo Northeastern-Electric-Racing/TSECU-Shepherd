@@ -13,9 +13,9 @@ void read_vbat_regsisters(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi);
 
 void read_ivbat_regsisters(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi);
 
-void set_gpo(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo);
-
 void reset_gpo(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo);
+
+void set_gpo(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo);
 
 void read_vr_registers(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi);
 
