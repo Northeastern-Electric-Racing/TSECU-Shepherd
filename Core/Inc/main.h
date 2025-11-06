@@ -57,6 +57,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
+// clang-format off
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -88,6 +90,8 @@ void Error_Handler(void);
 #define FAULT_MCU_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
+
+// clang-format on
  
 /* USER CODE END Private defines */
 
