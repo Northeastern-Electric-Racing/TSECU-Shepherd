@@ -1,10 +1,13 @@
 #include "adi2950_interaction.h"
 #include "hv_plate.h"
+#include "print_result.h"
+
+#define HV_CTRL_GPO GPO4_2950
 
 static float get_current_conversion(uint32_t data)
 {
 	float current;
-	current = 1e-6 * ((int32_t)(data << (32 - 24)) >> (32 - 24));
+	current = ((int32_t)(data << (32 - 24)) >> (32 - 24));
 	return current / (float)SHUNT_RESISTANCE;
 }
 
@@ -17,7 +20,7 @@ static float get_voltage_conversion(int data)
 
 void init_hv_plate_chip(cell_asic_2950 ic)
 {
-    // TODO: iron out config (mostly taken from adi code)
+	// TODO: iron out config (mostly taken from adi code)
 	ic.tx_cfga.gpo1c = PULLED_UP_TRISTATED;
 	ic.tx_cfga.gpo2c = PULLED_UP_TRISTATED;
 	ic.tx_cfga.gpo3c = PULLED_UP_TRISTATED;
@@ -92,22 +95,49 @@ void init_hv_plate_chip(cell_asic_2950 ic)
 
 float get_pack_current(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi)
 {
-	read_current_registers(bmsdata->plate_chip, hspi);
+	read_current_registers(&bmsdata->plate_chip, hspi);
 	return get_current_conversion(bmsdata->plate_chip.i.i1);
 }
 
-// TODO: finish API
 float get_batt_voltage(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi)
 {
-	return 0;
+	read_vbat_regsisters(&bmsdata->plate_chip, hspi);
+	float avg_volts =
+		(get_voltage_conversion(bmsdata->plate_chip.vbat.vbat1) +
+		 get_voltage_conversion(bmsdata->plate_chip.vbat.vbat2)) /
+		2;
+	return avg_volts;
 }
 
 float get_ts_voltage(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi)
 {
-	return 0;
+	read_vr_registers(&bmsdata->plate_chip, hspi);
+	// TODO: validate reading V2 and V3
+	// NOTE: TS+ is output to both V2 and V3
+	float avg_volts =
+		(get_voltage_conversion(bmsdata->plate_chip.vr.v_codes[1]) + // V2
+		 get_voltage_conversion(bmsdata->plate_chip.vr.v_codes[2])) / // V3
+		2;
+	return avg_volts; // TODO convert to temp
 }
 
-void trigger_precharge_relay(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi)
-{
-	return;
+float get_shunt_temp(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi) {
+	read_vr_registers(&bmsdata->plate_chip, hspi);
+	// TODO: validate reading V7 and V9
+	// NOTE: Temperature is output to both V7 and V9
+	float avg_volts =
+		(get_voltage_conversion(bmsdata->plate_chip.vr.v_codes[9]) + // V7A
+		 get_voltage_conversion(bmsdata->plate_chip.vr.v_codes[11])) / // V9B
+		2;
+	return avg_volts;
 }
+
+void set_precharge_relay(acc_data_t *bmsdata, SPI_HandleTypeDef *hspi, bool state)
+{
+	if (state) {	
+		set_gpo(&bmsdata->plate_chip, hspi, HV_CTRL_GPO);
+	} else {
+		reset_gpo(&bmsdata->plate_chip, hspi, HV_CTRL_GPO);
+	}
+}
+

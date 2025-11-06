@@ -211,7 +211,6 @@ void segment_retrieve_active_data(cell_asic chips[NUM_CHIPS],
 				  SPI_HandleTypeDef *hspi)
 
 {
-	printf("GETTING THERM DATA\n");
 	// read all therms using AUX 2
 	adc_and_read_aux2_registers(chips, hspi);
 

@@ -92,6 +92,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/middleware/src/c_utils.c"
     "Core/Src/hv_plate.c"
     "Core/Src/adi2950_interaction.c"
+    "Core/Src/tracex.c"
+    "Core/Src/traceout.c"
+    "Core/Src/traceout_app.c"
 )
 
 # Add include paths
@@ -122,3 +125,5 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     # Add user defined libraries
 )
 
+# Enable floating-point formatting support in printf
+target_link_options(${CMAKE_PROJECT_NAME} PRIVATE -u _printf_float)

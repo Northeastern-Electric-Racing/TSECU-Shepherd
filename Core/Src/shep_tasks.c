@@ -15,6 +15,7 @@
 #include "main.h"
 #include "hv_plate.h"
 #include "compute.h"
+#include "adi_2950.h"
 
 acc_data_t bmsdata;
 
@@ -23,11 +24,11 @@ acc_data_t bmsdata;
 static thread_t _default_thread = {
 	.name = "Default Task Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 2, /* Priority */
+	.priority = 1, /* Priority */
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 1000, /* Sleep (in ticks) */
+	.sleep = 500, /* Sleep (in ticks) */
 	.function = vDefaultTask /* Thread Function */
 };
 
@@ -132,12 +133,11 @@ void vCanReceive(ULONG thred_input)
 static thread_t _can_dispatch_thread = {
 	.name = "CAN Dispatch Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 1, /* Priority */
+	.priority = 2, /* Priority */
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 20,
-	/* Sleep (in ticks) */ // TODO: Change to trigger thread flag
+	.sleep = 50, /* Sleep (in ticks) */ // TODO: Change to trigger thread flag
 	.function = vCanDispatch /* Thread Function */
 };
 
@@ -150,13 +150,19 @@ void vCanDispatch(ULONG thread_input)
 	for (;;) {
 		/* Process incoming messages */
 		while (queue_receive(&can_outgoing, &message) == U_SUCCESS) {
-			//status = can_send_msg(can1, &message);
-			//if (status != U_SUCCESS) {
-			//	DEBUG_PRINTLN(
-			//		"WARNING: Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld) - Status %d",
-			//		message.id, status);
-				// u_TODO - maybe add the message back into the queue if it fails to send? not sure if this is a good idea tho
-			//}
+
+			while (HAL_CAN_GetTxMailboxesFreeLevel(can1->hcan) == 0U)
+			{
+				tx_thread_sleep(MS_TO_TICKS(1));
+			}
+
+			status = can_send_msg(can1, &message);
+			if (status != U_SUCCESS) {
+				DEBUG_PRINTLN(
+					"WARNING: Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld) - Status %d",
+					message.id, status);
+				 //u_TODO - maybe add the message back into the queue if it fails to send? not sure if this is a good idea tho
+			}
 		}
 
 		tx_thread_sleep(MS_TO_TICKS(_can_dispatch_thread.sleep));
@@ -166,7 +172,7 @@ void vCanDispatch(ULONG thread_input)
 static thread_t _analyzer_thread = {
 	.name = "Analyzer Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 6, /* Priority */
+	.priority = 4, /* Priority */
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
@@ -181,7 +187,7 @@ void vAnalyzer(ULONG thread_input)
 	}
 
 	for (;;) {
-		ULONG recevied_flags;
+		ULONG received_flags;
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
 		mutex_get(&bms_mutex);
@@ -217,7 +223,7 @@ void vAnalyzer(ULONG thread_input)
 static thread_t _segment_data_thread = {
 	.name = "Segment Data Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 1, /* Priority */
+	.priority = 2, /* Priority */
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
@@ -271,7 +277,7 @@ void vGetSegmentData(ULONG thread_input)
 		HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
 		set_flag(ANALYZER_FLAG);
-		tx_thread_sleep(MS_TO_TICKS(100));
+		tx_thread_sleep(MS_TO_TICKS(500));
 	}
 }
 
@@ -289,11 +295,13 @@ static thread_t _hv_plate_data_thread = {
 void vHvPlateData(ULONG thread_input) {
 
 	init_hv_plate_chip(bmsdata.plate_chip);
-	tx_thread_sleep(TICKS_TO_MS(500));
+	adi2950_write_read_config(1, &bmsdata.plate_chip);
+	tx_thread_sleep(MS_TO_TICKS(100));
 	float current = 0;
 	for (;;) {
 		current = get_pack_current(&bmsdata, &hspi2);
 		DEBUG_PRINTLN("PACK CURRENT: %f", current);
+		set_precharge_relay(&bmsdata, &hspi2, 1);
 		tx_thread_sleep(MS_TO_TICKS(_hv_plate_data_thread.sleep));
 	}
 }
@@ -301,14 +309,12 @@ void vHvPlateData(ULONG thread_input) {
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 {
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
-		    U_SUCCESS); 
-	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread),
-		    U_SUCCESS); 
+	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread), U_SUCCESS);
 
 	DEBUG_PRINTLN("Ran threads_init()");
 	return U_SUCCESS;
