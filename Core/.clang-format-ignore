@@ -4,3 +4,4 @@
 ./*/freertos*
 ./*/main*
 ./Startup/*
+./*/app_threadx*
