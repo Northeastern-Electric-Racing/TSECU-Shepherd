@@ -297,13 +297,14 @@ static thread_t _sanitizer_thread = {
 	.function = vHvPlateData, /* Thread Function */
 };
 
-void vSanitizer(ULONG thread_input) {
-
+void vSanitizer(ULONG thread_input)
+{
 	therm_state_t therm_states[NUM_CHIPS][NUM_CELLS_PER_CHIP];
 	temp_sanitizer_init(NUM_CELLS, NUM_CELLS_PER_CHIP, therm_states);
 
 	for (;;) {
-		temp_sanitizer_run(NUM_CHIPS, NUM_CELLS_PER_CHIP, bmsdata.chips, therm_states);
+		temp_sanitizer_run(NUM_CHIPS, NUM_CELLS_PER_CHIP, bmsdata.chips,
+				   therm_states);
 		tx_thread_sleep(MS_TO_TICKS(_hv_plate_data_thread.sleep));
 	}
 }
@@ -319,7 +320,6 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
-
 
 	DEBUG_PRINTLN("Ran threads_init()");
 	return U_SUCCESS;

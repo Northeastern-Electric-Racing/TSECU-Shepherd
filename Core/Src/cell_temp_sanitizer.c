@@ -21,12 +21,16 @@ void temp_sanitizer_run(int num_chips, int num_cells,
 	static bool first_reading = true;
 	for (int chip = 0; chip < num_chips; chip++) {
 		for (int cell = 0; cell < num_cells; cell++) {
-			therm_state_t *therm_state = &sanitized_out[num_chips][num_cells];
-			
+			therm_state_t *therm_state =
+				&sanitized_out[num_chips][num_cells];
+
 			float cell_temp = chip_data[chip]->cell_temp[cell];
-			if (!first_reading && cell_temp > therm_state->last_temp * (1 + (float)TOO_DIFF_THRESHOLD)) {
+			if (!first_reading &&
+			    cell_temp >
+				    therm_state->last_temp *
+					    (1 + (float)TOO_DIFF_THRESHOLD)) {
 				therm_state->valid = false;
-			} 
+			}
 			therm_state->last_temp = cell_temp;
 		}
 	}

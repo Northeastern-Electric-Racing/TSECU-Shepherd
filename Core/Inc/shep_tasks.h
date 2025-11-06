@@ -17,6 +17,7 @@ void vCanDispatch(ULONG thread_input);
 void vAnalyzer(ULONG thread_input);
 void vGetSegmentData(ULONG thread_input);
 void vHvPlateData(ULONG thread_input);
+void vSanitizer(ULONG thread_input);
 
 #define ANALYZER_FLAG 0x1
 
