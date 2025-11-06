@@ -7,7 +7,7 @@
 
 #include "datastructs.h"
 #include "main.h"
-#include <sht30.h>  
+#include <sht30.h>
 
 // TODO: Fix pinout defines
 
