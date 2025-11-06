@@ -56,5 +56,4 @@ float get_shunt_temp(bms_t *bmsdata, SPI_HandleTypeDef *hspi);
  */
 void set_precharge_relay(bms_t *bmsdata, SPI_HandleTypeDef *hspi, bool state);
 
-
 #endif

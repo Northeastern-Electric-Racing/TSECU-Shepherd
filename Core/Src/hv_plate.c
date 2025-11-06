@@ -113,21 +113,24 @@ float get_ts_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
 	read_vr_registers(bmsdata->plate_chip, hspi);
 	// TODO: validate reading V2 and V3
 	// NOTE: TS+ is output to both V2 and V3
-	float avg_volts =
-		(get_voltage_conversion(bmsdata->plate_chip.vr.v_codes[1]) + // V2
-		 get_voltage_conversion(bmsdata->plate_chip.vr.v_codes[2])) / // V3
-		2;
+	float avg_volts = (get_voltage_conversion(
+				   bmsdata->plate_chip.vr.v_codes[1]) + // V2
+			   get_voltage_conversion(
+				   bmsdata->plate_chip.vr.v_codes[2])) / // V3
+			  2;
 	return avg_volts; // TODO convert to temp
 }
 
-float get_shunt_temp(bms_t *bmsdata, SPI_HandleTypeDef *hspi) {
+float get_shunt_temp(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
+{
 	read_vr_registers(bmsdata->plate_chip, hspi);
 	// TODO: validate reading V7 and V9
 	// NOTE: Temperature is output to both V7 and V9
-	float avg_volts =
-		(get_voltage_conversion(bmsdata->plate_chip.vr.v_codes[9]) + // V7A
-		 get_voltage_conversion(bmsdata->plate_chip.vr.v_codes[11])) / // V9B
-		2;
+	float avg_volts = (get_voltage_conversion(
+				   bmsdata->plate_chip.vr.v_codes[9]) + // V7A
+			   get_voltage_conversion(
+				   bmsdata->plate_chip.vr.v_codes[11])) / // V9B
+			  2;
 	return avg_volts;
 }
 
