@@ -133,10 +133,9 @@ float get_shunt_temp(bms_t *bmsdata, SPI_HandleTypeDef *hspi) {
 
 void set_precharge_relay(bms_t *bmsdata, SPI_HandleTypeDef *hspi, bool state)
 {
-	if (state) {	
+	if (state) {
 		set_gpo(bmsdata->plate_chip, hspi, HV_CTRL_GPO);
 	} else {
 		reset_gpo(bmsdata->plate_chip, hspi, HV_CTRL_GPO);
 	}
 }
-

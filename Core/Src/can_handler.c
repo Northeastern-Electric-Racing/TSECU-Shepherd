@@ -24,7 +24,7 @@ static uint32_t can1_id_list_extended[2] = {
 uint8_t init_can(FDCAN_HandleTypeDef *hcan)
 {
 	return can_filter_init(hcan, can1, can1_id_list_standard,
-				can1_id_list_extended);
+			       can1_id_list_extended);
 }
 
 void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs)

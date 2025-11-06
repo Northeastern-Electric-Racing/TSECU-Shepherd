@@ -37,7 +37,7 @@ float get_batt_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi);
  * @param bmsdata pointer to bms data struct
  * @param hspi pointer to spi handler 
  */
-float get_ts_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi);  
+float get_ts_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi);
 
 /**
  * @brief Gets the current temperature of the shunt resistor
