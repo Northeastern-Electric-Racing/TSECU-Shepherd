@@ -6,8 +6,6 @@
 #include "stm32xx_hal.h"
 #include "adi_bms_2950data.h"
 
-// TODO: docs
-
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 
 /**
@@ -40,6 +38,14 @@ float get_batt_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi);
  * @param hspi pointer to spi handler 
  */
 float get_ts_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi);
+
+/**
+ * @brief Gets the current temperature of the shunt resistor
+ * 
+ * @param bmsdata pointer to bms data struct
+ * @param hspi pointer to spi handler  
+ */
+float get_shunt_temp(bms_t *bmsdata, SPI_HandleTypeDef *hspi);
 
 /**
  * @brief Sets the HV_CTRL GPO to the desired state to toggle precharge
