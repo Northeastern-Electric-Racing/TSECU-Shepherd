@@ -21,8 +21,7 @@ void temp_sanitizer_run(
 	static bool first_reading = true;
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			therm_state_t *therm_state =
-				&sanitized_out[chip][cell];
+			therm_state_t *therm_state = &sanitized_out[chip][cell];
 
 			float cell_temp = chip_data[chip].cell_temp[cell];
 			if (!first_reading &&

@@ -303,8 +303,7 @@ void vSanitizer(ULONG thread_input)
 	temp_sanitizer_init(therm_states);
 
 	for (;;) {
-		temp_sanitizer_run(bmsdata.chip_data,
-				   therm_states);
+		temp_sanitizer_run(bmsdata.chip_data, therm_states);
 		tx_thread_sleep(MS_TO_TICKS(_hv_plate_data_thread.sleep));
 	}
 }
