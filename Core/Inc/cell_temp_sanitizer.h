@@ -18,25 +18,20 @@ typedef struct {
 } therm_state_t;
 
 /**
- * @brief Given a grid of temperature values for cells, creates a grid of therm_t.
- * @param temps_in are the cell temperatures.
- * @param num_chips is the number of chips in the cell temperature array.
- * @param num_cells is the number of cells in the cell temperature array.
+ * @brief Creates a grid of therm_t.
  * @param sanitized_out is the output array of therm_t, which gets initialized by this function.
  */
-void temp_sanitizer_init(int num_chips, int num_cells,
-			 therm_state_t sanitized_out[num_chips][num_cells]);
+void temp_sanitizer_init(
+	therm_state_t sanitized_out[NUM_CHIPS][NUM_CELLS_PER_CHIP]);
 
 /**
  * @brief Given a grid of cell temperatures, updates the given grid of sanitized cell temperatures.
  * Should be run periodically.
- * @param temps_in are the cell temperatures.
- * @param num_chips is the number of chips in the cell temperature array.
- * @param num_cells is the number of cells in the cell temperature array.
+ * @param chip_data adbms6830 chip data (stores therm temps)
  * @param sanitized_out is the output array of therm_t, which gets initialized by this function.
  */
-void temp_sanitizer_run(int num_chips, int num_cells,
-			chipdata_t chip_data[num_chips][num_cells],
-			therm_state_t sanitized_out[num_chips][num_cells]);
+void temp_sanitizer_run(
+	chipdata_t chip_data[NUM_CHIPS],
+	therm_state_t sanitized_out[NUM_CHIPS][NUM_CELLS_PER_CHIP]);
 
 #endif // CEL_TEMP_SANITIZER_H

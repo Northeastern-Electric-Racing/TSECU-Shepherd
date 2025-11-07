@@ -300,10 +300,10 @@ static thread_t _sanitizer_thread = {
 void vSanitizer(ULONG thread_input)
 {
 	therm_state_t therm_states[NUM_CHIPS][NUM_CELLS_PER_CHIP];
-	temp_sanitizer_init(NUM_CELLS, NUM_CELLS_PER_CHIP, therm_states);
+	temp_sanitizer_init(therm_states);
 
 	for (;;) {
-		temp_sanitizer_run(NUM_CHIPS, NUM_CELLS_PER_CHIP, bmsdata.chips,
+		temp_sanitizer_run(bmsdata.chip_data,
 				   therm_states);
 		tx_thread_sleep(MS_TO_TICKS(_hv_plate_data_thread.sleep));
 	}
