@@ -93,8 +93,8 @@ int cell_data_logger_init(struct BMSLogger *logger)
 int cell_data_logger_timestamp_voltage(struct BMSLogger *logger)
 {
 	assert(logger);
-    
-	if (mutex_get(&logger_mutex) != U_SUCCESS) { 
+
+	if (mutex_get(&logger_mutex) != U_SUCCESS) {
 		printf("ERROR: Failed to acquire data logging mutex!\r\n");
 		return -1;
 	}
@@ -132,7 +132,7 @@ int cell_data_logger_timestamp_therms(struct BMSLogger *logger)
 
 	entry->cell_temperature_timestamp = get_us_timestamp();
 
-    mutex_put(&logger_mutex);
+	mutex_put(&logger_mutex);
 
 	return 0;
 }
@@ -199,8 +199,8 @@ int cell_data_log_get_last_n(const struct BMSLogger *logger, size_t n,
 
 	if (n > logger->ring_buff.curr_elements) {
 		printf("ERROR: Not enough logs available!\r\n");
-        return -1;	
-    }
+		return -1;
+	}
 
 	if (mutex_get(&logger_mutex) != U_SUCCESS) {
 		printf("ERROR: Failed to acquire data logging mutex!\r\n");
@@ -211,7 +211,7 @@ int cell_data_log_get_last_n(const struct BMSLogger *logger, size_t n,
 
 	mutex_put(&logger_mutex);
 
-    return 0;
+	return 0;
 }
 
 /**

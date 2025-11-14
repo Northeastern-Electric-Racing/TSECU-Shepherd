@@ -87,11 +87,10 @@ void handle_charging(bms_t *bmsdata)
 		/* Send CAN message, but not too often */
 		if (is_timer_expired(&charger_message_timer) ||
 		    !is_timer_active(&charger_message_timer)) {
-			send_charging_message(
-				(MAX_CHARGE_VOLT *
-				 (NUM_CELLS_PER_CHIP * 2) *
-				 NUM_SEGMENTS),
-				CHARGING_CURRENT, true);
+			send_charging_message((MAX_CHARGE_VOLT *
+					       (NUM_CELLS_PER_CHIP * 2) *
+					       NUM_SEGMENTS),
+					      CHARGING_CURRENT, true);
 			start_timer(&charger_message_timer, 1000);
 		}
 	} else {

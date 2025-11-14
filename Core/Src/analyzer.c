@@ -124,7 +124,8 @@ void calc_pack_temps(bms_t *bmsdata)
 			}
 
 			total_temp += bmsdata->chip_data[chip].cell_temp[cell];
-			total_seg_temp += bmsdata->chip_data[chip].cell_temp[cell];
+			total_seg_temp +=
+				bmsdata->chip_data[chip].cell_temp[cell];
 		}
 
 		/* only for NERO */
@@ -151,7 +152,7 @@ void calc_cell_voltages(bms_t *bmsdata)
 {
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-		 	if (bmsdata->current_state == CHARGING) {
+			if (bmsdata->current_state == CHARGING) {
 				// in charging state, we read single shot c codes ONLY
 				bmsdata->chip_data[chip].cell_voltages[cell] =
 					getVoltage(bmsdata->chips[chip]
@@ -384,15 +385,16 @@ void calc_open_cell_voltage(bms_t *bmsdata)
 	if (is_first_reading) {
 		// sanity check the last cell that the reading is good, oftentimes the first readings are bad
 		float last_cell =
-			bmsdata->chip_data[NUM_CHIPS - 1].cell_voltages
-				[NUM_CELLS_PER_CHIP - 1];
+			bmsdata->chip_data[NUM_CHIPS - 1]
+				.cell_voltages[NUM_CELLS_PER_CHIP - 1];
 		if (last_cell > 1 && last_cell < 5) {
 			is_first_reading = false;
 			start_timer(&ocvTimer, 750);
 		}
 
 		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-			for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP;
+			     cell++) {
 				bmsdata->chip_data[chip]
 					.open_cell_voltage[cell] =
 					bmsdata->chip_data[chip]
@@ -409,8 +411,8 @@ void calc_open_cell_voltage(bms_t *bmsdata)
 		if (is_timer_expired(&ocvTimer) ||
 		    !is_timer_active(&ocvTimer)) {
 			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-				for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP;
-				     cell++) {
+				for (uint8_t cell = 0;
+				     cell < NUM_CELLS_PER_CHIP; cell++) {
 					// Set current OCV value, ensure value is true OCV
 					if (bmsdata->chip_data[chip]
 							    .cell_voltages[cell] <
@@ -427,7 +429,8 @@ void calc_open_cell_voltage(bms_t *bmsdata)
 						bmsdata->chip_data[chip]
 							.open_cell_voltage[cell] =
 							bmsdata->segment_average_volts
-								[chip / 2]; // TODO should delete
+								[chip /
+								 2]; // TODO should delete
 					}
 				}
 			}

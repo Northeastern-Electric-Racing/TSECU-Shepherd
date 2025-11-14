@@ -42,5 +42,4 @@ void reset_gpo(cell_asic_2950 ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo);
  */
 void read_vr_registers(cell_asic_2950 ic, SPI_HandleTypeDef *hspi);
 
-
 #endif
