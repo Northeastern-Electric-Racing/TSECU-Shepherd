@@ -29,6 +29,6 @@ uint8_t queues_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_queue(byte_pool, &can_outgoing),
 		    U_SUCCESS); // Create Outgoing CAN Queue
 
-	DEBUG_PRINTLN("Ran queues_init().");
+	PRINTLN_INFO("Ran queues_init().");
 	return U_SUCCESS;
 }
