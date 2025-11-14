@@ -68,7 +68,7 @@ static thread_t _state_machine_thread = {
 
 void vStateMachine(ULONG thread_input)
 {
-	DEBUG_PRINTLN("Starting State Machine thread...");
+	PRINTLN_INFO("Starting State Machine thread...");
 
 	nertimer_t telem_timer;
 	// sends unimportant telemetry messages every 500ms
@@ -109,7 +109,8 @@ void vCanReceive(ULONG thred_input)
 	can_msg_t message;
 	for (;;) {
 		/* Process incoming messages */
-		while (queue_receive(&can_incoming, &message) == U_SUCCESS) {
+		while (queue_receive(&can_incoming, &message,
+				     TX_WAIT_FOREVER) == U_SUCCESS) {
 			switch (message.id) {
 			case CHARGERBOX_CANID:
 				// TODO process charger can message
@@ -146,10 +147,11 @@ void vCanDispatch(ULONG thread_input)
 
 	for (;;) {
 		/* Process incoming messages */
-		while (queue_receive(&can_outgoing, &message) == U_SUCCESS) {
+		while (queue_receive(&can_outgoing, &message,
+				     TX_WAIT_FOREVER) == U_SUCCESS) {
 			status = can_send_msg(can1, &message);
 			if (status != U_SUCCESS) {
-				DEBUG_PRINTLN(
+				PRINTLN_INFO(
 					"WARNING: Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld) - Status %d",
 					message.id, status);
 				// u_TODO - maybe add the message back into the queue if it fails to send? not sure if this is a good idea tho
@@ -281,7 +283,7 @@ void vHvPlateData(ULONG thread_input)
 	float current = 0;
 	for (;;) {
 		current = get_pack_current(&bmsdata, &hspi2);
-		DEBUG_PRINTLN("PACK CURRENT: %f", current);
+		PRINTLN_INFO("PACK CURRENT: %f", current);
 		tx_thread_sleep(MS_TO_TICKS(_hv_plate_data_thread.sleep));
 	}
 }
@@ -320,6 +322,6 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 
-	DEBUG_PRINTLN("Ran threads_init()");
+	PRINTLN_INFO("Ran threads_init()");
 	return U_SUCCESS;
 }

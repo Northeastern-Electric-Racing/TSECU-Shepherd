@@ -16,6 +16,6 @@ uint8_t mutexes_init()
 		    U_SUCCESS); // Create Logger Mutex.
 	CATCH_ERROR(create_mutex(&bms_mutex), U_SUCCESS); // Create BMS Mutex.
 
-	DEBUG_PRINTLN("Ran mutexes_init().");
+	PRINTLN_INFO("Ran mutexes_init().");
 	return U_SUCCESS;
 }

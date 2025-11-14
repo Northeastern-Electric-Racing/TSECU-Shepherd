@@ -26,6 +26,7 @@ void test_sm_balance_cells(void) {
     TEST_ASSERT_EQUAL_INT(true, bmsdata->should_balance);
 }
 
+// testing if we should charge
 void test_should_charge(void) {
     bmsdata->is_charger_connected = true;
     is_timer_expired_IgnoreAndReturn(true);
