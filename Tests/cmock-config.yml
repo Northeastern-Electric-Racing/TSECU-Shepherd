@@ -1,8 +1,6 @@
 
 :cmock:
   :mock_prefix: mock_   
-  :includes:
-    - stubs.h
   :plugins:
     - :ignore
     - :ignore_arg
