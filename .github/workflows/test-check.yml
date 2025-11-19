@@ -15,5 +15,5 @@ jobs:
       - name: Run UNITY Testing files
         run: |
           docker compose run --rm ner-gcc-arm \
-            sh -c "python3 Drivers/Embedded-Base/ner_environment/build_system/test_runner.py"
+            bash -c "set -e; python3 Drivers/Embedded-Base/ner_environment/build_system/test_runner.py"
             
