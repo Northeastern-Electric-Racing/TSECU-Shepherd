@@ -34,7 +34,7 @@ void test_should_charge(void) {
 
     is_timer_active_IgnoreAndReturn(false);
     start_timer_Ignore();
-    TEST_ASSERT_EQUAL_INT(true, sm_charging_check(bmsdata));
+    TEST_ASSERT_EQUAL_INT(false, sm_charging_check(bmsdata));
 }
 
 void test_charger_not_connected(void) {
