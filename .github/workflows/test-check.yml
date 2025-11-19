@@ -14,6 +14,6 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
       - name: Run UNITY Testing files
         run: |
-          docker compose run --rm ner-gcc-arm \
-            bash -c "python3 Drivers/Embedded-Base/ner_environment/build_system/test_runner.py; exit \$?"
+          docker compose run --rm --entrypoint python3 ner-gcc-arm \
+            Drivers/Embedded-Base/ner_environment/build_system/test_runner.py
             
