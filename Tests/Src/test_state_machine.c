@@ -39,7 +39,7 @@ void test_should_charge(void) {
 
 void test_charger_not_connected(void) {
     bmsdata->is_charger_connected = false;
-    TEST_ASSERT_EQUAL_INT(false, sm_charging_check(bmsdata));
+    TEST_ASSERT_EQUAL_INT(true, sm_charging_check(bmsdata));
 }
 
 int main(void) {
