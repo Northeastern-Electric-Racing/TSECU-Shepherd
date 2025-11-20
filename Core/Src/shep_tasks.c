@@ -109,7 +109,7 @@ void vCanReceive(ULONG thred_input)
 	can_msg_t message;
 	for (;;) {
 		/* Process incoming messages */
-		while (queue_receive(&can_incoming, &message) == U_SUCCESS) {
+		while (queue_receive(&can_incoming, &message, TX_WAIT_FOREVER) == U_SUCCESS) {
 			switch (message.id) {
 			case CHARGERBOX_CANID:
 				// TODO process charger can message
@@ -146,7 +146,7 @@ void vCanDispatch(ULONG thread_input)
 
 	for (;;) {
 		/* Process incoming messages */
-		while (queue_receive(&can_outgoing, &message) == U_SUCCESS) {
+		while (queue_receive(&can_outgoing, &message, TX_WAIT_FOREVER) == U_SUCCESS) {
 			status = can_send_msg(can1, &message);
 			if (status != U_SUCCESS) {
 				PRINTLN_INFO(
