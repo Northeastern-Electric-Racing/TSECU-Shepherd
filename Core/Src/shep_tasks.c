@@ -188,14 +188,7 @@ void vAnalyzer(ULONG thread_input)
 		calc_pack_voltage_stats(&bmsdata);
 		calc_cell_resistances(&bmsdata);
 
-		// these are dependent on above calculations
-		calc_cont_dcl(&bmsdata);
-		calc_cont_ccl(&bmsdata);
-		calc_state_of_charge(&bmsdata);
-
 		// send out telemetry data sourced from the above functions
-		send_acc_status_message(bmsdata.pack_ocv, bmsdata.pack_current,
-					bmsdata.soc);
 		send_cell_voltage_message(bmsdata.max_ocv, bmsdata.min_ocv,
 					  bmsdata.avg_ocv);
 		send_segment_average_volt_message(&bmsdata);
@@ -221,45 +214,47 @@ static thread_t _segment_data_thread = {
 
 void vGetSegmentData(ULONG thread_input)
 {
-	//HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
-	segment_init(bmsdata.chips, &hspi2);
-	//HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
+
+	acc_data_t *acc_data = (acc_data_t *)acc_data;
+
+	segment_init(acc_data->chips, &hspi2);
 
 	// must delay after init for some reason, or else ADC doesnt start up (-3.45 or something)
 	tx_thread_sleep(MS_TO_TICKS(500));
 
 	for (;;) {
-		segment_mute(bmsdata.chips, &hspi2);
+		segment_mute(acc_data->chips, &hspi2);
 
-		if (bmsdata.current_state == CHARGING) {
+		if (acc_data->bms_state == CHARGING) {
 			tx_thread_sleep(75);
 			// must delay to let settle after balancing has halted, or else cells read high
 		}
 
-		if (bmsdata.current_state == CHARGING) {
+		if (acc_data->bms_state == CHARGING) {
 			// in charging, debug data is required to get things like die temp
-			segment_retrieve_charging_data(bmsdata.chips, &hspi2);
+			segment_retrieve_charging_data(acc_data->chips, &hspi2);
 		} else {
 			// snap before getting data
-			segment_snap(bmsdata.chips, &hspi2);
-			segment_retrieve_active_data(bmsdata.chips, &hspi2);
+			segment_snap(acc_data->chips, &hspi2);
+			segment_retrieve_active_data(acc_data->chips, &hspi2);
 			// unsnap after getting data
-			segment_unsnap(bmsdata.chips, &hspi2);
+			segment_unsnap(acc_data->chips, &hspi2);
 			if (DEBUG_MODE_ENABLED) {
-				segment_retrieve_debug_data(bmsdata.chips,
+				segment_retrieve_debug_data(acc_data->chips,
 							    &hspi2);
 			}
 		}
 
-		if (bmsdata.current_state == CHARGING) {
-			segment_unmute(bmsdata.chips, &hspi2);
+		if (acc_data->bms_state == CHARGING) {
+			segment_unmute(acc_data->chips, &hspi2);
 		}
 
-		if (bmsdata.should_balance) {
-			segment_configure_balancing(bmsdata.chips,
-						    bmsdata.discharge_config,
+		if (acc_data->bms_state == BALANCING) {
+			segment_configure_balancing(acc_data->chips,
+						    acc_data->discharge_config,
 						    &hspi2);
 		}
+
 		set_flag(ANALYZER_FLAG);
 		tx_thread_sleep(MS_TO_TICKS(100));
 	}
@@ -268,7 +263,7 @@ void vGetSegmentData(ULONG thread_input)
 static thread_t _hv_plate_data_thread = {
 	.name = "HV Plate Data Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 2, /* Priority */
+	.priority = 2, /* Priority */	
 	.threshold = 0, /* Preemption Threshold */
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
@@ -278,12 +273,22 @@ static thread_t _hv_plate_data_thread = {
 
 void vHvPlateData(ULONG thread_input)
 {
-	init_hv_plate_chip(bmsdata.plate_chip);
+	hv_plate_t *hv_plate = (hv_plate_t *)thread_input;
+
+	init_hv_plate_chip(*hv_plate->ic);
 	tx_thread_sleep(TICKS_TO_MS(500));
 	float current = 0;
 	for (;;) {
-		current = get_pack_current(&bmsdata, &hspi2);
-		PRINTLN_INFO("PACK CURRENT: %f", current);
+		// get the current reading from the pack
+		hv_plate->pack_current = get_pack_current(hv_plate->ic, &hspi2);
+
+		// read voltages
+		hv_plate->ts_volts = get_ts_voltage(hv_plate->ic, &hspi2);
+		hv_plate->batt_volts = get_batt_voltage(hv_plate->ic, &hspi2);
+
+		// read shunt temperature
+		hv_plate->shunt_temp = get_shunt_temp(hv_plate->ic, &hspi2);
+
 		tx_thread_sleep(MS_TO_TICKS(_hv_plate_data_thread.sleep));
 	}
 }

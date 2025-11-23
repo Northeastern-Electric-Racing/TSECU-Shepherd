@@ -92,53 +92,53 @@ void init_hv_plate_chip(cell_asic_2950 ic)
 	ic.tx_cfgb.gpio2eoc = EOC_DISABLED2950;
 }
 
-float get_pack_current(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
+float get_pack_current(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 {
-	read_current_registers(bmsdata->plate_chip, hspi);
+	read_current_registers(*ic, hspi);
 	return get_current_conversion(bmsdata->plate_chip.i.i1);
 }
 
-float get_batt_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
+float get_batt_voltage(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 {
-	read_vbat_regsisters(bmsdata->plate_chip, hspi);
+	read_vbat_regsisters(*ic, hspi);
 	float avg_volts =
-		(get_voltage_conversion(bmsdata->plate_chip.vbat.vbat1) +
-		 get_voltage_conversion(bmsdata->plate_chip.vbat.vbat2)) /
+		(get_voltage_conversion(ic->vbat.vbat1) +
+		 get_voltage_conversion(ic->vbat.vbat2)) /
 		2;
 	return avg_volts;
 }
 
-float get_ts_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
+float get_ts_voltage(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 {
-	read_vr_registers(bmsdata->plate_chip, hspi);
+	read_vr_registers(*ic, hspi);
 	// TODO: validate reading V2 and V3
 	// NOTE: TS+ is output to both V2 and V3
 	float avg_volts = (get_voltage_conversion(
-				   bmsdata->plate_chip.vr.v_codes[1]) + // V2
+				   ic->vr.v_codes[1]) + // V2
 			   get_voltage_conversion(
-				   bmsdata->plate_chip.vr.v_codes[2])) / // V3
+				   ic->vr.v_codes[2])) / // V3
 			  2;
 	return avg_volts; // TODO convert to temp
 }
 
-float get_shunt_temp(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
+float get_shunt_temp(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 {
-	read_vr_registers(bmsdata->plate_chip, hspi);
+	read_vr_registers(*ic, hspi);
 	// TODO: validate reading V7 and V9
 	// NOTE: Temperature is output to both V7 and V9
 	float avg_volts = (get_voltage_conversion(
-				   bmsdata->plate_chip.vr.v_codes[9]) + // V7A
+				   ic->vr.v_codes[9]) + // V7A
 			   get_voltage_conversion(
-				   bmsdata->plate_chip.vr.v_codes[11])) / // V9B
+				   ic->vr.v_codes[11])) / // V9B
 			  2;
 	return avg_volts;
 }
 
-void set_precharge_relay(bms_t *bmsdata, SPI_HandleTypeDef *hspi, bool state)
+void set_precharge_relay(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi, bool state)
 {
 	if (state) {
-		set_gpo(bmsdata->plate_chip, hspi, HV_CTRL_GPO);
+		set_gpo(*ic, hspi, HV_CTRL_GPO);
 	} else {
-		reset_gpo(bmsdata->plate_chip, hspi, HV_CTRL_GPO);
+		reset_gpo(*ic, hspi, HV_CTRL_GPO);
 	}
 }

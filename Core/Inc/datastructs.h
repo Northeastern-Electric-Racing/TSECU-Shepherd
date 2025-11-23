@@ -53,6 +53,7 @@ typedef enum {
 	BOOT,
 	READY,
 	CHARGING,
+	BALANCING,
 	FAULTED,
 	NUM_STATES,
 } state_t;
@@ -68,16 +69,11 @@ typedef struct {
 
 	/* Array of structs containing raw data from and configurations for the ADBMS6830 chips */
 	cell_asic chips[NUM_CHIPS];
-	cell_asic_2950 plate_chip;
 
 	float pack_current;
 	float pack_voltage;
 	float pack_ocv;
 	float pack_res;
-
-	float cont_DCL;
-	float cont_CCL;
-	float soc;
 
 	float segment_average_temps[NUM_SEGMENTS];
 	/* OCV average voltages */
@@ -123,13 +119,81 @@ typedef struct {
 	// whether balancing should be on, or muted
 	bool should_balance;
 
-	/// whether the charger is connected, synonymous with being in the state of CHARGING, and therefore irreversible
+	// whether the charger is connected, synonymous with being in the state of CHARGING, and therefore irreversible
 	bool is_charger_connected;
 	/// whether the state machine has determined its time to charge
 	bool is_charging_enabled;
 
 	state_t current_state;
 } bms_t;
+
+/**
+ * @brief data read from the ADBMS2950 on our HV Plate
+ */
+typedef struct {
+	cell_asic_2950 *ic; // ADBMS2950 struct 
+	float ts_volts; // TS Voltage (V)
+	float batt_volts; // BATT Voltage (V)
+	float shunt_temp; // Temperature of shunt resistor (C)
+	float pack_current; // Current read through the shunt
+} hv_plate_t;
+
+/**
+ * @brief data read from the ADBMS6830 chips on our segments
+ */
+typedef struct {
+	/* chip_data and chips are parallel arrays. */
+
+	/* Array of structs containing raw data from and configurations for the ADBMS6830 chips */
+	cell_asic chips[NUM_CHIPS];
+	
+	/* state of the BMS supplied by the State Machine */
+	state_t bms_state;
+
+	// the current discharge configuration the state machine wants
+	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+} acc_data_t;
+
+typedef struct {
+
+	/* Array of data from all chips in the system */
+	chipdata_t chip_data[NUM_CHIPS];
+
+	acc_data_t *acc_data;
+	hv_plate_t *hv_plate;
+
+	/* Max, min, and avg thermistor readings */
+	crit_cellval_t max_temp;
+	crit_cellval_t min_temp;
+	float avg_temp;
+
+	/* Max, min, and avg voltage of the cells */
+	crit_cellval_t max_voltage;
+	crit_cellval_t min_voltage;
+	float avg_voltage;
+	float delt_voltage;
+
+	/* Max, min, average OCV readings */
+	crit_cellval_t max_ocv;
+	crit_cellval_t min_ocv;
+	float avg_ocv;
+	float delt_ocv;
+	float pack_ocv;
+	float pack_res;
+
+	// the highest current chip temperature, for faulting
+	crit_chipval_t max_chiptemp;
+
+	/* semgent temperature averages */
+	float segment_average_temps[NUM_SEGMENTS];
+	/* OCV average voltages */
+	float segment_average_volts[NUM_SEGMENTS];
+	/* Total voltages for each segment */
+	float segment_total_volts[NUM_SEGMENTS];
+
+	float pack_voltage;
+
+} analyzer_t;
 
 enum {
 	FAULTS_CLEAR = 0x0,
