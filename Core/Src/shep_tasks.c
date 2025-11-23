@@ -175,27 +175,30 @@ static thread_t _analyzer_thread = {
 
 void vAnalyzer(ULONG thread_input)
 {
+
+	analyzer_t *analyzer = (analyzer_t *)thread_input;
+
 	for (;;) {
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
 		mutex_get(&bms_mutex);
 
 		// calculate base values for later safety calcs
-		calc_cell_temps(&bmsdata);
-		calc_pack_temps(&bmsdata);
-		calc_cell_voltages(&bmsdata);
-		calc_open_cell_voltage(&bmsdata);
-		calc_pack_voltage_stats(&bmsdata);
-		calc_cell_resistances(&bmsdata);
+		calc_cell_temps(analyzer);
+		calc_pack_temps(analyzer);
+		calc_cell_voltages(analyzer);
+		calc_open_cell_voltage(analyzer);
+		calc_pack_voltage_stats(analyzer);
+		calc_cell_resistances(analyzer);
 
 		// send out telemetry data sourced from the above functions
-		send_cell_voltage_message(bmsdata.max_ocv, bmsdata.min_ocv,
-					  bmsdata.avg_ocv);
-		send_segment_average_volt_message(&bmsdata);
-		send_segment_total_volt_message(&bmsdata);
-		send_cell_temp_message(bmsdata.max_temp, bmsdata.min_temp,
-				       bmsdata.avg_temp);
-		send_segment_temp_message(&bmsdata);
+		send_cell_voltage_message(analyzer->max_ocv, analyzer->min_ocv,
+					  analyzer->avg_ocv);
+		send_segment_average_volt_message(analyzer); // TODO: Update CAN message send function defintions
+		send_segment_total_volt_message(analyzer);
+		send_cell_temp_message(analyzer->max_temp, analyzer->min_temp,
+				       analyzer->avg_temp);
+		send_segment_temp_message(&analyzer);
 
 		mutex_put(&bms_mutex);
 	}
