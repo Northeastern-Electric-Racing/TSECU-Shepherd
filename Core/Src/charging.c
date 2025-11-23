@@ -1,6 +1,6 @@
 
 #include "charging.h"
-#include"state_machine.h"
+#include "state_machine.h"
 #include "compute.h"
 #include "bms_config.h"
 #include "c_utils.h"
@@ -76,8 +76,7 @@ void handle_balance_cells(bms_t *bmsdata)
 	for (size_t chip = 0; chip < NUM_CHIPS; chip++) {
 		// ONLY iterate to MAX_BAL or the number of cells, whatever is lower.
 		// this is OK because they are sorted greatest to least in delta
-		int cell_max = min(NUM_CELLS_PER_CHIP,
-				   MAX_BAL_CHIP);
+		int cell_max = min(NUM_CELLS_PER_CHIP, MAX_BAL_CHIP);
 		for (size_t cell = 0; cell < cell_max; cell++) {
 			/* Check if cell voltage is above (low + threshold) */
 			if (new_ocv_map[chip][cell].val > (low + min_thresh)) {

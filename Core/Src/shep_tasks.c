@@ -15,6 +15,7 @@
 #include "main.h"
 #include "hv_plate.h"
 #include "compute.h"
+#include "cell_temp_sanitizer.h"
 
 bms_t bmsdata;
 
@@ -31,27 +32,27 @@ static thread_t _default_thread = {
 	.function = vDefaultTask /* Thread Function */
 };
 
-void vDefaultTask(ULONG thread_input) {
-  bool alt = true;
+void vDefaultTask(ULONG thread_input)
+{
+	bool alt = true;
 
-  /* Infinite loop */
-  for(;;)
-  {
-    #ifdef DEBUG_STATS
-    //print_bms_stats(&bmsdata);
-    #endif
+	/* Infinite loop */
+	for (;;) {
+#ifdef DEBUG_STATS
+//print_bms_stats(&bmsdata);
+#endif
 
-    if (alt) {
-      printf(".\n");
-    } else {
-      printf("..\n");
-    }
+		if (alt) {
+			printf(".\n");
+		} else {
+			printf("..\n");
+		}
 
-    alt = !alt;
+		alt = !alt;
 
-    HAL_IWDG_Refresh(&hiwdg);
-    tx_thread_sleep(MS_TO_TICKS(_default_thread.sleep));
-  }
+		HAL_IWDG_Refresh(&hiwdg);
+		tx_thread_sleep(MS_TO_TICKS(_default_thread.sleep));
+	}
 }
 
 static thread_t _state_machine_thread = {
@@ -67,7 +68,7 @@ static thread_t _state_machine_thread = {
 
 void vStateMachine(ULONG thread_input)
 {
-	DEBUG_PRINTLN("Starting State Machine thread...");
+	PRINTLN_INFO("Starting State Machine thread...");
 
 	nertimer_t telem_timer;
 	// sends unimportant telemetry messages every 500ms
@@ -75,7 +76,7 @@ void vStateMachine(ULONG thread_input)
 
 	for (;;) {
 		sm_handle_state(&bmsdata);
-		
+
 		if (is_timer_expired(&telem_timer)) {
 			// these are unimportant telemetry messages so they can be sent infrequently
 			send_bms_status_message(
@@ -108,7 +109,8 @@ void vCanReceive(ULONG thred_input)
 	can_msg_t message;
 	for (;;) {
 		/* Process incoming messages */
-		while (queue_receive(&can_incoming, &message) == U_SUCCESS) {
+		while (queue_receive(&can_incoming, &message,
+				     TX_WAIT_FOREVER) == U_SUCCESS) {
 			switch (message.id) {
 			case CHARGERBOX_CANID:
 				// TODO process charger can message
@@ -145,10 +147,11 @@ void vCanDispatch(ULONG thread_input)
 
 	for (;;) {
 		/* Process incoming messages */
-		while (queue_receive(&can_outgoing, &message) == U_SUCCESS) {
+		while (queue_receive(&can_outgoing, &message,
+				     TX_WAIT_FOREVER) == U_SUCCESS) {
 			status = can_send_msg(can1, &message);
 			if (status != U_SUCCESS) {
-				DEBUG_PRINTLN(
+				PRINTLN_INFO(
 					"WARNING: Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld) - Status %d",
 					message.id, status);
 				// u_TODO - maybe add the message back into the queue if it fails to send? not sure if this is a good idea tho
@@ -273,14 +276,36 @@ static thread_t _hv_plate_data_thread = {
 	.function = vHvPlateData, /* Thread Function */
 };
 
-void vHvPlateData(ULONG thread_input) {
-
+void vHvPlateData(ULONG thread_input)
+{
 	init_hv_plate_chip(bmsdata.plate_chip);
 	tx_thread_sleep(TICKS_TO_MS(500));
 	float current = 0;
 	for (;;) {
 		current = get_pack_current(&bmsdata, &hspi2);
-		DEBUG_PRINTLN("PACK CURRENT: %f", current);
+		PRINTLN_INFO("PACK CURRENT: %f", current);
+		tx_thread_sleep(MS_TO_TICKS(_hv_plate_data_thread.sleep));
+	}
+}
+
+static thread_t _sanitizer_thread = {
+	.name = "Sanitizer Thread", /* Name */
+	.size = 2048, /* Stack Size (in bytes) */
+	.priority = 3, /* Priority */
+	.threshold = 0, /* Preemption Threshold */
+	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+	.auto_start = TX_AUTO_START, /* Auto Start */
+	.sleep = MS_TO_TICKS(500), /* Sleep (in ticks) */
+	.function = vHvPlateData, /* Thread Function */
+};
+
+void vSanitizer(ULONG thread_input)
+{
+	therm_state_t therm_states[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+	temp_sanitizer_init(therm_states);
+
+	for (;;) {
+		temp_sanitizer_run(bmsdata.chip_data, therm_states);
 		tx_thread_sleep(MS_TO_TICKS(_hv_plate_data_thread.sleep));
 	}
 }
@@ -289,14 +314,14 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 {
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
-		    U_SUCCESS); 
-	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread),
-		    U_SUCCESS); 
+		    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 
-	DEBUG_PRINTLN("Ran threads_init()");
+	PRINTLN_INFO("Ran threads_init()");
 	return U_SUCCESS;
 }
