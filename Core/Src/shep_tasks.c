@@ -70,21 +70,23 @@ void vStateMachine(ULONG thread_input)
 {
 	PRINTLN_INFO("Starting State Machine thread...");
 
+	state_machine_t *state_machine = (state_machine_t *)thread_input;
+
 	nertimer_t telem_timer;
 	// sends unimportant telemetry messages every 500ms
 	start_timer(&telem_timer, 500);
 
 	for (;;) {
-		sm_handle_state(&bmsdata);
+		sm_handle_state(state_machine);
 
-		if (is_timer_expired(&telem_timer)) {
+		if (is_timer_expired(state_machine)) {
 			// these are unimportant telemetry messages so they can be sent infrequently
-			send_bms_status_message(
-				bmsdata.avg_temp, bmsdata.internal_temp,
-				bmsdata.current_state,
-				segment_is_balancing(bmsdata.chips));
-			send_fault_status_message(bmsdata.fault_code_crit,
-						  bmsdata.fault_code_noncrit);
+			send_bms_status_message( // TODO: can be moved to CAN dispatch
+				state_machine->analyzer_data->avg_temp, state_machine->analyzer_data->internal_temp, // TODO: we never set internal temp
+				state_machine->bms_state,
+				state_machine->bms_state == BALANCING); //  TODO: Update CAN message
+			send_fault_status_message(state_machine->fault_code_crit,
+						  state_machine->fault_code_noncrit);
 			start_timer(&telem_timer, 500);
 		}
 
@@ -151,10 +153,9 @@ void vCanDispatch(ULONG thread_input)
 				     TX_WAIT_FOREVER) == U_SUCCESS) {
 			status = can_send_msg(can1, &message);
 			if (status != U_SUCCESS) {
-				PRINTLN_INFO(
-					"WARNING: Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld) - Status %d",
+				PRINTLN_WARNING(
+					"Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld) - Status %d",
 					message.id, status);
-				// u_TODO - maybe add the message back into the queue if it fails to send? not sure if this is a good idea tho
 			}
 		}
 
@@ -228,12 +229,12 @@ void vGetSegmentData(ULONG thread_input)
 	for (;;) {
 		segment_mute(acc_data->chips, &hspi2);
 
-		if (acc_data->bms_state == CHARGING) {
+		if (acc_data->bms_state_machine->bms_state == CHARGING) {
 			tx_thread_sleep(75);
 			// must delay to let settle after balancing has halted, or else cells read high
 		}
 
-		if (acc_data->bms_state == CHARGING) {
+		if (acc_data->bms_state_machine->bms_state == CHARGING) {
 			// in charging, debug data is required to get things like die temp
 			segment_retrieve_charging_data(acc_data->chips, &hspi2);
 		} else {
@@ -248,11 +249,11 @@ void vGetSegmentData(ULONG thread_input)
 			}
 		}
 
-		if (acc_data->bms_state == CHARGING) {
+		if (acc_data->bms_state_machine->bms_state == CHARGING) {
 			segment_unmute(acc_data->chips, &hspi2);
 		}
 
-		if (acc_data->bms_state == BALANCING) {
+		if (acc_data->bms_state_machine->bms_state == BALANCING) {
 			segment_configure_balancing(acc_data->chips,
 						    acc_data->discharge_config,
 						    &hspi2);

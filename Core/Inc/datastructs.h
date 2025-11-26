@@ -127,10 +127,18 @@ typedef struct {
 	state_t current_state;
 } bms_t;
 
+/* Forward Declaration of Structs*/
+
+typedef struct state_machine state_machine_t;
+typedef struct analyzer analyzer_t;
+typedef struct hv_plate hv_plate_t;
+typedef struct acc_data acc_data_t;
+typedef struct sanitizer sanitizer_t;
+
 /**
  * @brief data read from the ADBMS2950 on our HV Plate
  */
-typedef struct {
+typedef struct hv_plate {
 	cell_asic_2950 *ic; // ADBMS2950 struct 
 	float ts_volts; // TS Voltage (V)
 	float batt_volts; // BATT Voltage (V)
@@ -141,20 +149,22 @@ typedef struct {
 /**
  * @brief data read from the ADBMS6830 chips on our segments
  */
-typedef struct {
-	/* chip_data and chips are parallel arrays. */
-
+typedef struct acc_data {
 	/* Array of structs containing raw data from and configurations for the ADBMS6830 chips */
 	cell_asic chips[NUM_CHIPS];
 	
-	/* state of the BMS supplied by the State Machine */
-	state_t bms_state;
+	/* state machine of the BMS supplied by the State Machine */
+	state_machine_t *bms_state_machine;
 
 	// the current discharge configuration the state machine wants
 	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+
 } acc_data_t;
 
-typedef struct {
+/**
+ * @brief data needed for processing raw data
+ */
+typedef struct analyzer {
 
 	/* Array of data from all chips in the system */
 	chipdata_t chip_data[NUM_CHIPS];
@@ -167,11 +177,17 @@ typedef struct {
 	crit_cellval_t min_temp;
 	float avg_temp;
 
+	// the board temperature
+	float internal_temp;
+
 	/* Max, min, and avg voltage of the cells */
 	crit_cellval_t max_voltage;
 	crit_cellval_t min_voltage;
 	float avg_voltage;
 	float delt_voltage;
+
+	// OCV timer
+	nertimer_t ocvTimer;
 
 	/* Max, min, average OCV readings */
 	crit_cellval_t max_ocv;
@@ -193,7 +209,35 @@ typedef struct {
 
 	float pack_voltage;
 
+	// TODO: move to BMS Algos struct
+	float cont_DCL;
+	float cont_CCL;
+
 } analyzer_t;
+
+/**
+ * @brief data for determine the current BMS State
+ */
+typedef struct state_machine {
+	state_t bms_state;
+
+	/**
+	 * @brief Note that this is a 32 bit integer, so there are 32 max possible fault codes
+	 */
+	// uint32_t fault_code;
+	uint32_t fault_code_crit;
+	uint32_t fault_code_noncrit;
+
+	analyzer_t *analyzer_data;
+
+	// charge settling timers
+	nertimer_t charger_settle_countup_timer;
+	nertimer_t charge_settle_countdown_timer;
+
+	// charging message timer for telemetry
+	nertimer_t charger_message_timer;
+
+} state_machine_t;
 
 enum {
 	FAULTS_CLEAR = 0x0,

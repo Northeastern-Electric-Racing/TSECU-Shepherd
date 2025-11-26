@@ -8,8 +8,8 @@
 #define NUM_FAULTS 8
 
 typedef enum {
+	FAULT_STAT_CLEAR = 0,
 	FAULT_STAT_FAULTED = 1,
-	FAULT_STAT_CLEARED = 2,
 } fault_stat_t;
 
 /**
@@ -18,7 +18,7 @@ typedef enum {
  * @param bmsdata
  * 
  */
-void charger_message_recieved(bms_t *bmsdata);
+void charger_message_recieved(state_machine_t *state_machine);
 
 /**
  * @brief Returns if we want to balance cells during a particular frame
@@ -27,7 +27,7 @@ void charger_message_recieved(bms_t *bmsdata);
  * @return true
  * @return false
  */
-bool sm_balancing_check(bms_t *bmsdata);
+bool sm_balancing_check(state_machine_t *state_machine);
 
 /**
  * @brief Returns if we want to charge cells during a particular frame
@@ -36,7 +36,7 @@ bool sm_balancing_check(bms_t *bmsdata);
  * @return true
  * @return false
  */
-bool sm_charging_check(bms_t *bmsdata);
+bool sm_charging_check(state_machine_t *state_machine);
 
 /**
  * @brief Returns any new faults or current faults that have come up
@@ -44,7 +44,7 @@ bool sm_charging_check(bms_t *bmsdata);
  *
  * @param accData
  */
-void sm_fault_return(bms_t *accData);
+void sm_fault_return(state_machine_t *state_machine);
 
 /**
  * @brief Used in parellel to faultReturn(), calculates each fault to append the
@@ -61,7 +61,7 @@ fault_stat_t sm_fault_eval(fault_eval_t *fault_item);
  *
  * @param bmsdata
  */
-void sm_handle_state(bms_t *bmsdata);
+void sm_handle_state(state_machine_t *state_machine);
 
 /**
  * @brief Algorithm behind determining which cells we want to balance
@@ -69,6 +69,6 @@ void sm_handle_state(bms_t *bmsdata);
  *
  * @param bms_data
  */
-void sm_balance_cells(bms_t *bms_data);
+void sm_balance_cells(state_machine_t *state_machine);
 
 #endif

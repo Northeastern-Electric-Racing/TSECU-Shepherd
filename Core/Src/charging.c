@@ -18,7 +18,7 @@ typedef struct {
  * @param arr 
  * @param n count
  */
-void chipsSelectionSort(bms_t *bmsdata,
+static void chipsSelectionSort(analyzer_t *analyzer,
 			val_idexed_t replaced_val[NUM_CHIPS][NUM_CELLS_PER_CHIP])
 {
 	for (size_t chip = 0; chip < NUM_CHIPS; chip++) {
@@ -26,7 +26,7 @@ void chipsSelectionSort(bms_t *bmsdata,
 		for (int i = 0; i < NUM_CELLS_PER_CHIP; i++) {
 			replaced_val[chip][i] = (val_idexed_t){
 				.idex = i,
-				.val = bmsdata->chip_data[chip]
+				.val = analyzer->chip_data[chip]
 					       .open_cell_voltage[i]
 			};
 		}
@@ -57,20 +57,20 @@ void chipsSelectionSort(bms_t *bmsdata,
 }
 
 /* Send cell balancing config to the segments */
-void handle_balance_cells(bms_t *bmsdata)
+void handle_balance_cells(analyzer_t *analyzer)
 {
 	// the maximum number of cells to balance per chip, usually tuned for thermal reasons
 	static const int MAX_BAL_CHIP = 7;
 
 	// the low cell, eventually they all must get there
-	float low = bmsdata->min_ocv.val;
+	float low = analyzer->min_ocv.val;
 	// the margin above the low cell to ignore, which is usually X% of the delta
-	float min_thresh = bmsdata->delt_ocv * 0.4;
+	float min_thresh = analyzer->delt_ocv * 0.4;
 
 	val_idexed_t new_ocv_map[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
 
 	// first, sort and cleanup everything
-	chipsSelectionSort(bmsdata, new_ocv_map);
+	chipsSelectionSort(analyzer, new_ocv_map);
 
 	/* Balance all cells above the threshold, using the sorted ocv map values but preserve the indexes*/
 	for (size_t chip = 0; chip < NUM_CHIPS; chip++) {
@@ -81,12 +81,12 @@ void handle_balance_cells(bms_t *bmsdata)
 			/* Check if cell voltage is above (low + threshold) */
 			if (new_ocv_map[chip][cell].val > (low + min_thresh)) {
 				/* Balance cell */
-				bmsdata->discharge_config
+				analyzer->acc_data->discharge_config // TODO: Mutex
 					[chip][new_ocv_map[chip][cell].idex] =
 					true;
 			} else {
 				/* Do not balance cell */
-				bmsdata->discharge_config
+				analyzer->acc_data->discharge_config
 					[chip][new_ocv_map[chip][cell].idex] =
 					false;
 			}

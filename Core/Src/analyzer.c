@@ -5,9 +5,6 @@
 #include "serialPrintResult.h"
 #include "timer.h"
 
-// the OCV timer
-nertimer_t ocvTimer;
-
 /**
  * @brief Map cells to therms (ra codes).  Note beta has only 6 therms. 
  */
@@ -148,7 +145,7 @@ void calc_cell_voltages(analyzer_t *analyzer)
 {
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			if (analyzer->acc_data->bms_state == CHARGING) {
+			if (analyzer->acc_data->bms_state_machine->bms_state == CHARGING) { // TOOO: Clean this
 				// in charging state, we read single shot c codes ONLY
 				analyzer->chip_data[chip].cell_voltages[cell] =
 					getVoltage(analyzer->acc_data->chips[chip]
@@ -283,7 +280,7 @@ void calc_open_cell_voltage(analyzer_t *analyzer)
 				.cell_voltages[NUM_CELLS_PER_CHIP - 1];
 		if (last_cell > 1 && last_cell < 5) {
 			is_first_reading = false;
-			start_timer(&ocvTimer, 750);
+			start_timer(&analyzer->ocvTimer, 750);
 		}
 
 		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
@@ -302,8 +299,8 @@ void calc_open_cell_voltage(analyzer_t *analyzer)
 	if (analyzer->hv_plate->pack_current < OCV_CURR_THRESH &&
 	    analyzer->hv_plate->pack_current > -1 * OCV_CURR_THRESH) {
 		// Timer expired or not active
-		if (is_timer_expired(&ocvTimer) ||
-		    !is_timer_active(&ocvTimer)) {
+		if (is_timer_expired(&analyzer->ocvTimer) ||
+		    !is_timer_active(&analyzer->ocvTimer)) {
 			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 				for (uint8_t cell = 0;
 				     cell < NUM_CELLS_PER_CHIP; cell++) {
@@ -329,7 +326,7 @@ void calc_open_cell_voltage(analyzer_t *analyzer)
 				}
 			}
 		} else {
-			start_timer(&ocvTimer, 750);
+			start_timer(&analyzer->ocvTimer, 750);
 		}
 	}
 }

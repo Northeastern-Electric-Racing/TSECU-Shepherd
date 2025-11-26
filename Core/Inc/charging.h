@@ -6,8 +6,8 @@
 /**
  * @brief entrypoint for handling balancing of cells.  DOES NOT ENABLE BALANCING, but does configure it.
  * 
- * @param bmsdata general BMS data struct
+ * @param analyzer general Analyzer struct for processed cell data
  */
-void handle_balance_cells(bms_t *bmsdata);
+void handle_balance_cells(analyzer_t *analyzer);
 
 #endif
