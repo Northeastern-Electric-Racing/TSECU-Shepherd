@@ -49,6 +49,19 @@ typedef struct {
 	uint8_t cellNum;
 } crit_cellval_t;
 
+/**
+ * @brief A therm_state_t is a struct of a (float, bool).
+ * - Last recorded temperature of a cell.
+ * - Whether the cell temperature can be used (i.e. whether the measurement is bad).
+ */
+typedef struct {
+	float last_temp;
+	bool valid;
+} therm_state_t;
+
+/**
+ * @brief States the BMS can be in
+ */
 typedef enum {
 	BOOT,
 	READY,
@@ -127,13 +140,13 @@ typedef struct {
 	state_t current_state;
 } bms_t;
 
-/* Forward Declaration of Structs*/
 
-typedef struct state_machine state_machine_t;
-typedef struct analyzer analyzer_t;
-typedef struct hv_plate hv_plate_t;
-typedef struct acc_data acc_data_t;
-typedef struct sanitizer sanitizer_t;
+/**
+ * @brief Data needed for the therm temp sanitizer
+ */
+typedef struct sanitizer {
+	therm_state_t sanitized_therms[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+} sanitizer_t;
 
 /**
  * @brief data read from the ADBMS2950 on our HV Plate
@@ -152,13 +165,9 @@ typedef struct hv_plate {
 typedef struct acc_data {
 	/* Array of structs containing raw data from and configurations for the ADBMS6830 chips */
 	cell_asic chips[NUM_CHIPS];
-	
-	/* state machine of the BMS supplied by the State Machine */
-	state_machine_t *bms_state_machine;
 
 	// the current discharge configuration the state machine wants
 	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
-
 } acc_data_t;
 
 /**
@@ -166,11 +175,10 @@ typedef struct acc_data {
  */
 typedef struct analyzer {
 
+	mutex_t analyzer_mutex;
+
 	/* Array of data from all chips in the system */
 	chipdata_t chip_data[NUM_CHIPS];
-
-	acc_data_t *acc_data;
-	hv_plate_t *hv_plate;
 
 	/* Max, min, and avg thermistor readings */
 	crit_cellval_t max_temp;
@@ -219,6 +227,7 @@ typedef struct analyzer {
  * @brief data for determine the current BMS State
  */
 typedef struct state_machine {
+
 	state_t bms_state;
 
 	/**
@@ -228,8 +237,6 @@ typedef struct state_machine {
 	uint32_t fault_code_crit;
 	uint32_t fault_code_noncrit;
 
-	analyzer_t *analyzer_data;
-
 	// charge settling timers
 	nertimer_t charger_settle_countup_timer;
 	nertimer_t charge_settle_countdown_timer;
@@ -237,7 +244,44 @@ typedef struct state_machine {
 	// charging message timer for telemetry
 	nertimer_t charger_message_timer;
 
+	mutex_t state_mutex; 
+
 } state_machine_t;
+
+/* Task Args */
+
+typedef struct 
+{
+    state_machine_t *state_machine;
+    analyzer_t *analyzer;
+	hv_plate_t *hv_plate; // TODO add hv plate interal data to analyzer
+
+} state_machine_args_t;
+
+typedef struct 
+{
+    analyzer_t *analyzer;
+    state_machine_t *state_machine;
+
+    acc_data_t *acc_data;
+    hv_plate_t *hv_plate;
+
+} analyzer_args_t;
+
+typedef struct 
+{
+    acc_data_t *acc_data;
+    state_machine_t *state_machine;
+} acc_data_args_t;
+
+typedef struct {
+    hv_plate_t *hv_plate;
+} hv_plate_args_t;
+
+typedef struct {
+    sanitizer_t *sanitizer;
+} saniziter_args_t;
+
 
 enum {
 	FAULTS_CLEAR = 0x0,

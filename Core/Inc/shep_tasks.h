@@ -4,12 +4,14 @@
 
 #include <stdint.h>
 #include "tx_api.h"
+#include "datastructs.h"
 
 /* Initializes all ThreadX threads. 
 *  Calls to _create_thread() should go in here
 */
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool);
 
+// TODO: docs
 void vDefaultTask(ULONG thread_input);
 void vStateMachine(ULONG thread_input);
 void vCanReceive(ULONG thred_input);
@@ -18,7 +20,6 @@ void vAnalyzer(ULONG thread_input);
 void vGetSegmentData(ULONG thread_input);
 void vHvPlateData(ULONG thread_input);
 void vSanitizer(ULONG thread_input);
-
-#define ANALYZER_FLAG 0x1
+void vBMSAlgorithms(ULONG thread_input);
 
 #endif

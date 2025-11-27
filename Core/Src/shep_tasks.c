@@ -70,21 +70,24 @@ void vStateMachine(ULONG thread_input)
 {
 	PRINTLN_INFO("Starting State Machine thread...");
 
-	state_machine_t *state_machine = (state_machine_t *)thread_input;
+	state_machine_args_t *state_machine_args = (state_machine_args_t *)thread_input;
+	state_machine_t *state_machine = state_machine_args->state_machine;
+	analyzer_t *analyzer = state_machine_args->analyzer;
+
 
 	nertimer_t telem_timer;
 	// sends unimportant telemetry messages every 500ms
 	start_timer(&telem_timer, 500);
 
 	for (;;) {
-		sm_handle_state(state_machine);
+		sm_handle_state(state_machine_args);
 
-		if (is_timer_expired(state_machine)) {
+		if (is_timer_expired(&telem_timer)) {
 			// these are unimportant telemetry messages so they can be sent infrequently
 			send_bms_status_message( // TODO: can be moved to CAN dispatch
-				state_machine->analyzer_data->avg_temp, state_machine->analyzer_data->internal_temp, // TODO: we never set internal temp
-				state_machine->bms_state,
-				state_machine->bms_state == BALANCING); //  TODO: Update CAN message
+				analyzer->avg_temp, state_machine_args->analyzer->internal_temp, // TODO: we never set internal temp
+				get_current_state(state_machine),
+				get_current_state(state_machine) == BALANCING); //  TODO: Update CAN message
 			send_fault_status_message(state_machine->fault_code_crit,
 						  state_machine->fault_code_noncrit);
 			start_timer(&telem_timer, 500);
@@ -177,31 +180,38 @@ static thread_t _analyzer_thread = {
 void vAnalyzer(ULONG thread_input)
 {
 
-	analyzer_t *analyzer = (analyzer_t *)thread_input;
+	analyzer_args_t *analyzer_args = (analyzer_args_t *)thread_input;
+
+	analyzer_t *analyzer = analyzer_args->analyzer;
+	acc_data_t *acc_data = analyzer_args->acc_data;
+	state_machine_t *state_machine = analyzer_args->state_machine;
+	hv_plate_t *hv_plate = analyzer_args->hv_plate; 
+
+	CATCH_ERROR(create_mutex(&analyzer_args->analyzer->analyzer_mutex), U_SUCCESS);
 
 	for (;;) {
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
-		mutex_get(&bms_mutex);
+		mutex_get(&analyzer_args->analyzer->analyzer_mutex);
 
 		// calculate base values for later safety calcs
-		calc_cell_temps(analyzer);
-		calc_pack_temps(analyzer);
-		calc_cell_voltages(analyzer);
-		calc_open_cell_voltage(analyzer);
-		calc_pack_voltage_stats(analyzer);
-		calc_cell_resistances(analyzer);
+		calc_cell_temps(analyzer, acc_data);
+		calc_pack_temps(analyzer, acc_data);
+		calc_cell_voltages(analyzer, acc_data, state_machine);
+		calc_open_cell_voltage(analyzer, acc_data, hv_plate);
+		calc_pack_voltage_stats(analyzer_args, acc_data);
+		calc_cell_resistances(analyzer_args, acc_data, hv_plate);
+
+		mutex_put(&analyzer_args->analyzer->analyzer_mutex);
 
 		// send out telemetry data sourced from the above functions
 		send_cell_voltage_message(analyzer->max_ocv, analyzer->min_ocv,
 					  analyzer->avg_ocv);
-		send_segment_average_volt_message(analyzer); // TODO: Update CAN message send function defintions
-		send_segment_total_volt_message(analyzer);
+		send_segment_average_volt_message(analyzer_args); // TODO: Update CAN message send function defintions
+		send_segment_total_volt_message(analyzer_args);
 		send_cell_temp_message(analyzer->max_temp, analyzer->min_temp,
 				       analyzer->avg_temp);
-		send_segment_temp_message(&analyzer);
-
-		mutex_put(&bms_mutex);
+		send_segment_temp_message(&analyzer_args);
 	}
 }
 
@@ -217,9 +227,11 @@ static thread_t _segment_data_thread = {
 };
 
 void vGetSegmentData(ULONG thread_input)
-{
+{	
+	acc_data_args_t *acc_data_args = (acc_data_args_t *)thread_input;
 
-	acc_data_t *acc_data = (acc_data_t *)acc_data;
+	acc_data_t *acc_data = acc_data_args->acc_data;
+	state_machine_t *state_machine = acc_data_args->state_machine;
 
 	segment_init(acc_data->chips, &hspi2);
 
@@ -229,12 +241,12 @@ void vGetSegmentData(ULONG thread_input)
 	for (;;) {
 		segment_mute(acc_data->chips, &hspi2);
 
-		if (acc_data->bms_state_machine->bms_state == CHARGING) {
+		if (get_current_state(state_machine) == CHARGING) {
 			tx_thread_sleep(75);
 			// must delay to let settle after balancing has halted, or else cells read high
 		}
 
-		if (acc_data->bms_state_machine->bms_state == CHARGING) {
+		if (get_current_state(state_machine) == CHARGING) {
 			// in charging, debug data is required to get things like die temp
 			segment_retrieve_charging_data(acc_data->chips, &hspi2);
 		} else {
@@ -249,14 +261,14 @@ void vGetSegmentData(ULONG thread_input)
 			}
 		}
 
-		if (acc_data->bms_state_machine->bms_state == CHARGING) {
+		if (get_current_state(state_machine) == CHARGING) {
 			segment_unmute(acc_data->chips, &hspi2);
 		}
 
-		if (acc_data->bms_state_machine->bms_state == BALANCING) {
+		if (get_current_state(state_machine) == BALANCING) {
 			segment_configure_balancing(acc_data->chips,
 						    acc_data->discharge_config,
-						    &hspi2);
+						    &hspi2); // TODO: Move to state machine
 		}
 
 		set_flag(ANALYZER_FLAG);
@@ -277,7 +289,9 @@ static thread_t _hv_plate_data_thread = {
 
 void vHvPlateData(ULONG thread_input)
 {
-	hv_plate_t *hv_plate = (hv_plate_t *)thread_input;
+	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
+
+	hv_plate_t *hv_plate = hv_plate_args->hv_plate;
 
 	init_hv_plate_chip(*hv_plate->ic);
 	tx_thread_sleep(TICKS_TO_MS(500));
@@ -305,17 +319,40 @@ static thread_t _sanitizer_thread = {
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
 	.sleep = MS_TO_TICKS(500), /* Sleep (in ticks) */
-	.function = vHvPlateData, /* Thread Function */
+	.function = vSanitizer, /* Thread Function */
 };
 
 void vSanitizer(ULONG thread_input)
 {
-	therm_state_t therm_states[NUM_CHIPS][NUM_CELLS_PER_CHIP];
-	temp_sanitizer_init(therm_states);
+
+	saniziter_args_t *sanitizer_args = (saniziter_args_t *)thread_input;
+
+	sanitizer_t *sanitizer = sanitizer_args->sanitizer;
+
+	temp_sanitizer_init(sanitizer);
 
 	for (;;) {
-		temp_sanitizer_run(bmsdata.chip_data, therm_states);
+		temp_sanitizer_run(sanitizer);
 		tx_thread_sleep(MS_TO_TICKS(_hv_plate_data_thread.sleep));
+	}
+}
+
+static thread_t _bms_algorithms_thread = {
+	.name = "BMS Algorithms Thread", /* Name */
+	.size = 2048, /* Stack Size (in bytes) */
+	.priority = 4, /* Priority */
+	.threshold = 0, /* Preemption Threshold */
+	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+	.auto_start = TX_AUTO_START, /* Auto Start */
+	.sleep = MS_TO_TICKS(500), /* Sleep (in ticks) */
+	.function = vBMSAlgorithms, /* Thread Function */
+};
+
+void vBMSAlgorithms(ULONG thread_input)
+{	
+	for (;;) {
+		// TODO: implement algo thread
+		tx_thread_sleep(MS_TO_TICKS(_bms_algorithms_thread.sleep));
 	}
 }
 
@@ -328,8 +365,9 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");
 	return U_SUCCESS;

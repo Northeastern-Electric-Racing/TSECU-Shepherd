@@ -4,6 +4,9 @@
 #include <float.h>
 #include "serialPrintResult.h"
 #include "timer.h"
+#include "state_machine.h"
+
+#define OCY_TIMER_DURATION 750 // in ticks
 
 /**
  * @brief Map cells to therms (ra codes).  Note beta has only 6 therms. 
@@ -53,11 +56,12 @@ static float calc_cell_temp_onboard(float voltage)
 	return calc_temp(res);
 }
 
-void calc_cell_temps(analyzer_t *analyzer)
+void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 {
+
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			int16_t x = analyzer->acc_data->chips[chip]
+			int16_t x = acc_data->chips[chip]
 					    .raux.ra_codes[THERM_MAP[cell]];
 			analyzer->chip_data[chip].cell_temp[cell] =
 				calc_cell_temp(getVoltage(x));
@@ -69,20 +73,20 @@ void calc_cell_temps(analyzer_t *analyzer)
 		// Take average of both onboard therms
 		analyzer->chip_data[chip].on_board_temp =
 			(calc_cell_temp_onboard(getVoltage(
-				 analyzer->acc_data->chips[chip].raux.ra_codes[6])) +
+				 acc_data->chips[chip].raux.ra_codes[6])) +
 			 calc_cell_temp_onboard(getVoltage(
-				 analyzer->acc_data->chips[chip].raux.ra_codes[7]))) /
+				 acc_data->chips[chip].raux.ra_codes[7]))) /
 			2;
 
 		/* set the die temp */
 		// conversion rate from datasheet, Table 105.  also in driver src
 		analyzer->chip_data[chip].die_temp =
-			(getVoltage(analyzer->acc_data->chips[chip].stata.itmp) / 0.0075) -
+			(getVoltage(acc_data->chips[chip].stata.itmp) / 0.0075) -
 			273;
 	}
 }
 
-void calc_pack_temps(analyzer_t *analyzer)
+void calc_pack_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 {
 	analyzer->max_temp.val = FLT_MIN;
 	analyzer->max_temp.cellNum = 0;
@@ -141,26 +145,26 @@ void calc_pack_temps(analyzer_t *analyzer)
 	analyzer->avg_temp = total_temp / NUM_CELLS;
 }
 
-void calc_cell_voltages(analyzer_t *analyzer)
+void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data, state_machine_t *state_machine)
 {
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			if (analyzer->acc_data->bms_state_machine->bms_state == CHARGING) { // TOOO: Clean this
+			if (get_current_state(state_machine) == CHARGING) { // TOOO: Clean this
 				// in charging state, we read single shot c codes ONLY
 				analyzer->chip_data[chip].cell_voltages[cell] =
-					getVoltage(analyzer->acc_data->chips[chip]
+					getVoltage(acc_data->chips[chip]
 							   .cell.c_codes[cell]);
 			} else {
 				analyzer->chip_data[chip].cell_voltages[cell] =
 					getVoltage(
-						analyzer->acc_data->chips[chip]
+						acc_data->chips[chip]
 							.fcell.fc_codes[cell]);
 			}
 		}
 	}
 }
 
-void calc_pack_voltage_stats(analyzer_t *analyzer)
+void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data)
 {
 	analyzer->max_voltage.val = FLT_MIN;
 	analyzer->max_voltage.cellNum = 0;
@@ -230,11 +234,14 @@ void calc_pack_voltage_stats(analyzer_t *analyzer)
 				analyzer->chip_data[c].open_cell_voltage[cell];
 		}
 		if (c % 2 == 1) {
+			// calc averge volatage across a segment
 			analyzer->segment_average_volts[c / 2] =
 				total_seg_volt / ((float)(NUM_CELLS * 2));
+
 			total_seg_volt = 0;
 		}
 	}
+
 
 	/* calculate some voltage stats */
 	// TODO: Make this based on total cells when actual segment is here
@@ -250,17 +257,19 @@ void calc_pack_voltage_stats(analyzer_t *analyzer)
 	analyzer->delt_ocv = analyzer->max_ocv.val - analyzer->min_ocv.val;
 }
 
-void calc_cell_resistances(analyzer_t *analyzer)
+void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data, hv_plate_t *hv_plate)
 {
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			if (fabs(analyzer->hv_plate->pack_current) >= 0.001) {
+
+			// Cell resistance drops when there is current running through the pack
+			if (fabs(hv_plate->pack_current) >= 0.001) {
 				analyzer->chip_data[c].cell_resistance[cell] =
 					(analyzer->chip_data[c]
 						 .open_cell_voltage[cell] -
 					 analyzer->chip_data[c]
 						 .cell_voltages[cell]) /
-					fabs(analyzer->hv_plate->pack_current);
+					fabs(hv_plate->pack_current);
 			} else {
 				analyzer->chip_data[c].cell_resistance[cell] =
 					0.015; // default resistance from data sheet
@@ -269,10 +278,11 @@ void calc_cell_resistances(analyzer_t *analyzer)
 	}
 }
 
-void calc_open_cell_voltage(analyzer_t *analyzer)
+void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data, hv_plate_t *hv_plate)
 {
 	static bool is_first_reading = true;
 	/* if there is no previous data point, set inital open cell voltage to current reading */
+	
 	if (is_first_reading) {
 		// sanity check the last cell that the reading is good, oftentimes the first readings are bad
 		float last_cell =
@@ -280,7 +290,7 @@ void calc_open_cell_voltage(analyzer_t *analyzer)
 				.cell_voltages[NUM_CELLS_PER_CHIP - 1];
 		if (last_cell > 1 && last_cell < 5) {
 			is_first_reading = false;
-			start_timer(&analyzer->ocvTimer, 750);
+			start_timer(&analyzer->ocvTimer, OCY_TIMER_DURATION);
 		}
 
 		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
@@ -294,10 +304,9 @@ void calc_open_cell_voltage(analyzer_t *analyzer)
 		}
 	}
 
-	// TODO validate
 	// If we are within the current threshold for open voltage measurments (1.5 mA)
-	if (analyzer->hv_plate->pack_current < OCV_CURR_THRESH &&
-	    analyzer->hv_plate->pack_current > -1 * OCV_CURR_THRESH) {
+	if (hv_plate->pack_current < OCV_CURR_THRESH &&
+	    hv_plate->pack_current > -1 * OCV_CURR_THRESH) {
 		// Timer expired or not active
 		if (is_timer_expired(&analyzer->ocvTimer) ||
 		    !is_timer_active(&analyzer->ocvTimer)) {
@@ -326,7 +335,7 @@ void calc_open_cell_voltage(analyzer_t *analyzer)
 				}
 			}
 		} else {
-			start_timer(&analyzer->ocvTimer, 750);
+			start_timer(&analyzer->ocvTimer, OCY_TIMER_DURATION);
 		}
 	}
 }
