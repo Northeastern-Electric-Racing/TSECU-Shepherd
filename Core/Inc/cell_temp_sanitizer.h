@@ -17,7 +17,8 @@ void temp_sanitizer_init(sanitizer_t *sanitizer);
  * @brief Given a grid of cell temperatures, updates the given grid of sanitized cell temperatures.
  * Should be run periodically.
  * @param sanitizer Struct containing sanitized therm data
+ * @param analyzer Struct containing analyzer data
  */
-void temp_sanitizer_run(sanitizer_t *sanitizer);
+void temp_sanitizer_run(sanitizer_t *sanitizer, analyzer_t *analyzer);
 
 #endif // CEL_TEMP_SANITIZER_H

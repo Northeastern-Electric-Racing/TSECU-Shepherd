@@ -192,6 +192,7 @@ void vAnalyzer(ULONG thread_input)
 	for (;;) {
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
+		// NOTE: All functions that modify chip data are externall mutexed
 		mutex_get(&analyzer_args->analyzer->analyzer_mutex);
 
 		// calculate base values for later safety calcs
@@ -328,11 +329,12 @@ void vSanitizer(ULONG thread_input)
 	saniziter_args_t *sanitizer_args = (saniziter_args_t *)thread_input;
 
 	sanitizer_t *sanitizer = sanitizer_args->sanitizer;
+	analyzer_t *analyzer = sanitizer_args->analyzer;
 
 	temp_sanitizer_init(sanitizer);
 
 	for (;;) {
-		temp_sanitizer_run(sanitizer);
+		temp_sanitizer_run(sanitizer, analyzer);
 		tx_thread_sleep(MS_TO_TICKS(_hv_plate_data_thread.sleep));
 	}
 }

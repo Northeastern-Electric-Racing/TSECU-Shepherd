@@ -4,8 +4,12 @@
 #include "datastructs.h"
 
 /**
+ * @brief Get the chip data for the given chip
+ */
+chipdata_t get_chip_data(analyzer_t *analyzer, uint8_t chip);
+
+/**
  * @brief Calculate thermistor values and cell temps using thermistors.
- * 
  */
 void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data);
 

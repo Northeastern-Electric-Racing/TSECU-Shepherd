@@ -176,7 +176,7 @@ void send_beta_status_b_message(float vref2, float v_analog, float v_digital,
 
 /**
  * @brief Send a message for the faults of beta chips.
- * TODO: remove thus
+ * TODO: remove this
  * 
  * @param chip ID of chip
  * @param flt_reg  the fault data register

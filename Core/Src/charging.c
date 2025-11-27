@@ -4,6 +4,7 @@
 #include "compute.h"
 #include "bms_config.h"
 #include "c_utils.h"
+#include "analyzer.h"
 
 #include <math.h>
 
@@ -26,7 +27,7 @@ static void chipsSelectionSort(analyzer_t *analyzer,
 		for (int i = 0; i < NUM_CELLS_PER_CHIP; i++) {
 			replaced_val[chip][i] = (val_idexed_t){
 				.idex = i,
-				.val = analyzer->chip_data[chip]
+				.val = get_chip_data(analyzer, chip)
 					       .open_cell_voltage[i]
 			};
 		}

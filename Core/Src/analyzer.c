@@ -56,6 +56,18 @@ static float calc_cell_temp_onboard(float voltage)
 	return calc_temp(res);
 }
 
+chipdata_t get_chip_data(analyzer_t *analyzer, uint8_t chip) {
+	assert_param(chip < NUM_CHIPS);
+
+	chipdata_t chip_data;
+
+	mutex_get(&analyzer->analyzer_mutex);
+	chip_data = analyzer->chip_data[chip];
+	mutex_put(&analyzer->analyzer_mutex);
+
+	return chip_data;
+}
+
 void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 {
 
@@ -244,7 +256,6 @@ void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data)
 
 
 	/* calculate some voltage stats */
-	// TODO: Make this based on total cells when actual segment is here
 	analyzer->avg_voltage = total_volt / NUM_CELLS;
 
 	analyzer->pack_voltage = total_volt;
@@ -282,6 +293,9 @@ void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data, hv_plate
 {
 	static bool is_first_reading = true;
 	/* if there is no previous data point, set inital open cell voltage to current reading */
+
+	const float MAX_CELL_VOLTAGE = 4.5; // V
+	const float MIN_CELL_VOLTAGE = 2; // V
 	
 	if (is_first_reading) {
 		// sanity check the last cell that the reading is good, oftentimes the first readings are bad
@@ -316,10 +330,10 @@ void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data, hv_plate
 					// Set current OCV value, ensure value is true OCV
 					if (analyzer->chip_data[chip]
 							    .cell_voltages[cell] <
-						    4.5 && // TODO globally define max and min volts
+						    MAX_CELL_VOLTAGE &&
 					    analyzer->chip_data[chip]
 							    .cell_voltages[cell] >
-						    2) {
+						    MIN_CELL_VOLTAGE) {
 						analyzer->chip_data[chip]
 							.open_cell_voltage[cell] =
 							analyzer->chip_data[chip]
