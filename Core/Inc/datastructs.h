@@ -255,6 +255,7 @@ typedef struct
     state_machine_t *state_machine;
     analyzer_t *analyzer;
 	hv_plate_t *hv_plate; // TODO add hv plate interal data to analyzer
+	acc_data_t *acc_data;
 
 } state_machine_args_t;
 
