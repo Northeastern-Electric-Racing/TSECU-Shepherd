@@ -58,8 +58,12 @@ static void chipsSelectionSort(analyzer_t *analyzer,
 }
 
 /* Send cell balancing config to the segments */
-void handle_balance_cells(analyzer_t *analyzer)
-{
+void handle_balance_cells(state_machine_args_t *state_machine_args)
+{	
+
+	analyzer_t *analyzer = state_machine_args->analyzer;
+	acc_data_t *acc_data = state_machine_args->acc_data;
+
 	// the maximum number of cells to balance per chip, usually tuned for thermal reasons
 	static const int MAX_BAL_CHIP = 7;
 
@@ -82,12 +86,12 @@ void handle_balance_cells(analyzer_t *analyzer)
 			/* Check if cell voltage is above (low + threshold) */
 			if (new_ocv_map[chip][cell].val > (low + min_thresh)) {
 				/* Balance cell */
-				analyzer->acc_data->discharge_config // TODO: Mutex
+				acc_data->discharge_config // TODO: Mutex
 					[chip][new_ocv_map[chip][cell].idex] =
 					true;
 			} else {
 				/* Do not balance cell */
-				analyzer->acc_data->discharge_config
+				acc_data->discharge_config
 					[chip][new_ocv_map[chip][cell].idex] =
 					false;
 			}
