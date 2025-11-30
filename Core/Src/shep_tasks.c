@@ -19,8 +19,6 @@
 
 bms_t bmsdata;
 
-// TODO: default task
-
 static thread_t _default_thread = {
 	.name = "Default Task Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
@@ -85,9 +83,9 @@ void vStateMachine(ULONG thread_input)
 		if (is_timer_expired(&telem_timer)) {
 			// these are unimportant telemetry messages so they can be sent infrequently
 			send_bms_status_message( // TODO: can be moved to CAN dispatch
-				analyzer->avg_temp, state_machine_args->analyzer->internal_temp, // TODO: we never set internal temp
+				analyzer->avg_temp, analyzer->internal_temp, // TODO: we never set internal temp
 				get_current_state(state_machine),
-				get_current_state(state_machine) == BALANCING); //  TODO: Update CAN message
+				get_current_state(state_machine) == BALANCING); //  TODO: remove is balancing
 			send_fault_status_message(state_machine->fault_code_crit,
 						  state_machine->fault_code_noncrit);
 			start_timer(&telem_timer, 500);
@@ -208,11 +206,11 @@ void vAnalyzer(ULONG thread_input)
 		// send out telemetry data sourced from the above functions
 		send_cell_voltage_message(analyzer->max_ocv, analyzer->min_ocv,
 					  analyzer->avg_ocv);
-		send_segment_average_volt_message(analyzer_args); // TODO: Update CAN message send function defintions
-		send_segment_total_volt_message(analyzer_args);
+		send_segment_average_volt_message(analyzer); // TODO: Update CAN message send function defintions
+		send_segment_total_volt_message(analyzer);
 		send_cell_temp_message(analyzer->max_temp, analyzer->min_temp,
 				       analyzer->avg_temp);
-		send_segment_temp_message(&analyzer_args);
+		send_segment_temp_message(analyzer);
 	}
 }
 

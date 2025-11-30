@@ -161,7 +161,7 @@ state_t get_current_state(state_machine_t *state_machine) {
 }
 
 
-void request_transition(state_machine_t *state_machine, state_t next_state)
+void request_transition(state_machine_args_t *state_machine_args, state_t next_state)
 {
 	if (get_current_state(state_machine_args->state_machine) == next_state)
 		return;
