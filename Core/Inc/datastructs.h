@@ -227,7 +227,7 @@ typedef struct {
 typedef struct {
     sanitizer_t *sanitizer;
 	analyzer_t *analyzer;
-} saniziter_args_t;
+} sanitizer_args_t;
 
 /* Task args end */
 

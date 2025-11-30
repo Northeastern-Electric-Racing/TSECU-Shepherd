@@ -313,7 +313,6 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 	// dont charge during the countup
 	if (!is_timer_expired(&state_machine_args->state_machine->charge_settle_countdown_timer) &&
 	    is_timer_active(&state_machine_args->state_machine->charge_settle_countdown_timer)) {
-		//printf("Charger settle countup active\r\n");
 		return false;
 	}
 
