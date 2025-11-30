@@ -5,7 +5,6 @@
 #include "u_tx_can.h"
 #include "shep_queues.h"
 #include "can_messages.h"
-#include "shep_mutexes.h"
 #include "shep_tasks.h"
 #include "timer.h"
 #include "state_machine.h"
