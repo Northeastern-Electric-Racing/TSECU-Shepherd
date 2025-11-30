@@ -74,14 +74,14 @@ typedef enum {
 /**
  * @brief Data needed for the therm temp sanitizer
  */
-typedef struct sanitizer {
+typedef struct {
 	therm_state_t sanitized_therms[NUM_CHIPS][NUM_CELLS_PER_CHIP];
 } sanitizer_t;
 
 /**
  * @brief data read from the ADBMS2950 on our HV Plate
  */
-typedef struct hv_plate {
+typedef struct {
 	cell_asic_2950 *ic; // ADBMS2950 struct 
 	float ts_volts; // TS Voltage (V)
 	float batt_volts; // BATT Voltage (V)
@@ -92,7 +92,7 @@ typedef struct hv_plate {
 /**
  * @brief data read from the ADBMS6830 chips on our segments
  */
-typedef struct acc_data {
+typedef struct {
 	/* Array of structs containing raw data from and configurations for the ADBMS6830 chips */
 	cell_asic chips[NUM_CHIPS];
 
@@ -103,7 +103,7 @@ typedef struct acc_data {
 /**
  * @brief data needed for processing raw data
  */
-typedef struct analyzer {
+typedef struct {
 
 	mutex_t analyzer_mutex;
 
@@ -146,17 +146,20 @@ typedef struct analyzer {
 	float segment_total_volts[NUM_SEGMENTS];
 
 	float pack_voltage;
+} analyzer_t;
 
-	// TODO: move to BMS Algos struct
+/**
+ * @brief data retrieved from BMS algorithms
+ */
+typedef struct {
 	float cont_DCL;
 	float cont_CCL;
-
-} analyzer_t;
+} bms_algos_t;
 
 /**
  * @brief data for determine the current BMS State
  */
-typedef struct state_machine {
+typedef struct  {
 
 	state_t bms_state;
 
@@ -189,7 +192,7 @@ typedef struct
     analyzer_t *analyzer;
 	hv_plate_t *hv_plate; // TODO add hv plate interal data to analyzer to remove hv_plate
 	acc_data_t *acc_data;
-
+	bms_algos_t *bms_algos;
 } state_machine_args_t;
 
 /**
@@ -199,10 +202,8 @@ typedef struct
 {
     analyzer_t *analyzer;
     state_machine_t *state_machine;
-
     acc_data_t *acc_data;
     hv_plate_t *hv_plate;
-
 } analyzer_args_t;
 
 /**
@@ -228,6 +229,15 @@ typedef struct {
     sanitizer_t *sanitizer;
 	analyzer_t *analyzer;
 } sanitizer_args_t;
+
+/**
+ * @brief args for vBmsAlgorithms
+ */
+typedef struct {
+    sanitizer_t *sanitizer;
+	analyzer_t *analyzer;
+	bms_algos_t *bms_algos
+} bms_algos_args_t;
 
 /* Task args end */
 

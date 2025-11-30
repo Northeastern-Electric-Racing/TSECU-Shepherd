@@ -259,6 +259,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	state_machine_t *state_machine = (state_machine_t *)malloc(sizeof(state_machine_t));
 	hv_plate_t *hv_plate = (hv_plate_t *)malloc(sizeof(hv_plate_t));
 	sanitizer_t *sanitizer = (sanitizer_t *)malloc(sizeof(sanitizer_t));
+	bms_algos_t *bms_algos = (bms_algos_t *)malloc(sizeof(bms_algos_t));
 
 	analyzer_args_t *analyzer_args = (analyzer_args_t *)malloc(sizeof(analyzer_args_t));
 	analyzer_args->acc_data = acc_data;
@@ -275,6 +276,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	state_machine_args->analyzer = analyzer;
 	state_machine_args->hv_plate = hv_plate;
 	state_machine_args->state_machine = state_machine;
+	state_machine_args->bms_algos = bms_algos;
 
 	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)malloc(sizeof(hv_plate_args_t));
 	hv_plate_args->hv_plate = hv_plate;
@@ -282,6 +284,12 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	sanitizer_args_t *sanitizer_args = (sanitizer_args_t *)malloc(sizeof(sanitizer_args_t));
 	sanitizer_args->analyzer = analyzer;
 	sanitizer_args->sanitizer = sanitizer;
+
+	bms_algos_args_t *bms_algos_args = (bms_algos_args_t *)malloc(sizeof(bms_algos_args_t));
+	bms_algos_args->analyzer = analyzer;
+	bms_algos_args->sanitizer = sanitizer;
+	bms_algos_args->bms_algos = bms_algos;
+	
 
 	/* Init Interfaces End */
 
@@ -377,6 +385,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.size = 2048, /* Stack Size (in bytes) */
 		.priority = 4, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
+		.thread_input = (ULONG)bms_algos_args, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 		.auto_start = TX_AUTO_START, /* Auto Start */
 		.function = vBMSAlgorithms, /* Thread Function */
