@@ -95,7 +95,7 @@ void init_hv_plate_chip(cell_asic_2950 ic)
 float get_pack_current(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 {
 	read_current_registers(*ic, hspi);
-	return get_current_conversion(bmsdata->plate_chip.i.i1);
+	return get_current_conversion(ic->i.i1);
 }
 
 float get_batt_voltage(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)

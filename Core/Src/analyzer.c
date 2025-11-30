@@ -297,9 +297,6 @@ void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data,
 	static bool is_first_reading = true;
 	/* if there is no previous data point, set inital open cell voltage to current reading */
 
-	const float MAX_CELL_VOLTAGE = 4.5; // V
-	const float MIN_CELL_VOLTAGE = 2; // V
-
 	if (is_first_reading) {
 		// sanity check the last cell that the reading is good, oftentimes the first readings are bad
 		float last_cell =
@@ -307,7 +304,7 @@ void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data,
 				.cell_voltages[NUM_CELLS_PER_CHIP - 1];
 		if (last_cell > 1 && last_cell < 5) {
 			is_first_reading = false;
-			start_timer(&analyzer->ocvTimer, OCY_TIMER_DURATION);
+			start_timer(&analyzer->ocvTimer, OCV_TIMER_DURATION);
 		}
 
 		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {

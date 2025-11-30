@@ -17,8 +17,6 @@
 #include "compute.h"
 #include "cell_temp_sanitizer.h"
 
-bms_t bmsdata;
-
 static thread_t _default_thread = {
 	.name = "Default Task Thread", /* Name */
 	.size = 2048, /* Stack Size (in bytes) */
@@ -29,6 +27,8 @@ static thread_t _default_thread = {
 	.sleep = 1000, /* Sleep (in ticks) */
 	.function = vDefaultTask /* Thread Function */
 };
+
+// TODO: pass in thread inputs
 
 void vDefaultTask(ULONG thread_input)
 {
@@ -185,23 +185,23 @@ void vAnalyzer(ULONG thread_input)
 	state_machine_t *state_machine = analyzer_args->state_machine;
 	hv_plate_t *hv_plate = analyzer_args->hv_plate; 
 
-	CATCH_ERROR(create_mutex(&analyzer_args->analyzer->analyzer_mutex), U_SUCCESS);
+	create_mutex(&analyzer->analyzer_mutex);
 
 	for (;;) {
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
 		// NOTE: All functions that modify chip data are externall mutexed
-		mutex_get(&analyzer_args->analyzer->analyzer_mutex);
+		mutex_get(&analyzer->analyzer_mutex);
 
 		// calculate base values for later safety calcs
 		calc_cell_temps(analyzer, acc_data);
 		calc_pack_temps(analyzer, acc_data);
 		calc_cell_voltages(analyzer, acc_data, state_machine);
 		calc_open_cell_voltage(analyzer, acc_data, hv_plate);
-		calc_pack_voltage_stats(analyzer_args, acc_data);
-		calc_cell_resistances(analyzer_args, acc_data, hv_plate);
+		calc_pack_voltage_stats(analyzer, acc_data);
+		calc_cell_resistances(analyzer, acc_data, hv_plate);
 
-		mutex_put(&analyzer_args->analyzer->analyzer_mutex);
+		mutex_put(&analyzer->analyzer_mutex);
 
 		// send out telemetry data sourced from the above functions
 		send_cell_voltage_message(analyzer->max_ocv, analyzer->min_ocv,
@@ -294,7 +294,7 @@ void vHvPlateData(ULONG thread_input)
 
 	init_hv_plate_chip(*hv_plate->ic);
 	tx_thread_sleep(TICKS_TO_MS(500));
-	float current = 0;
+
 	for (;;) {
 		// get the current reading from the pack
 		hv_plate->pack_current = get_pack_current(hv_plate->ic, &hspi2);

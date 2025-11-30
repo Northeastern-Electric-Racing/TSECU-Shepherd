@@ -81,7 +81,7 @@ void init_balancing(state_machine_args_t *state_machine_args)
 
 void handle_balancing(state_machine_args_t *state_machine_args) {
 	if (sm_balancing_check(state_machine_args)) {
-		handle_balance_cells(state_machine_args->analyzer);
+		handle_balance_cells(state_machine_args->analyzer, state_machine_args->acc_data);
 	} else {
 		request_transition(state_machine_args, CHARGING);
 	}
@@ -311,7 +311,7 @@ fault_stat_t sm_fault_eval(fault_eval_t *item)
 bool sm_charging_check(state_machine_args_t *state_machine_args)
 {
 	// dont charge during the countup
-	if (!is_timer_expired(&state_machine_args) &&
+	if (!is_timer_expired(&state_machine_args->state_machine->charge_settle_countdown_timer) &&
 	    is_timer_active(&state_machine_args->state_machine->charge_settle_countdown_timer)) {
 		//printf("Charger settle countup active\r\n");
 		return false;
@@ -337,15 +337,18 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 bool sm_balancing_check(state_machine_args_t *state_machine_args)
 {
 
+	state_machine_t *state_machine = state_machine_args->state_machine;
+	analyzer_t *analyzer = state_machine_args->analyzer;
+
 	// TODO: replace with mutexed getter
-	if (state_machine_args->analyzer->max_voltage.val <= BAL_MIN_V)
+	if (analyzer->max_voltage.val <= BAL_MIN_V)
 		return false;
-	if (state_machine_args->analyzer->delt_voltage <= MAX_DELTA_V)
+	if (analyzer->delt_voltage <= MAX_DELTA_V)
 		return false;
 
 	// Do not balance during the countup.
-	if (is_timer_active(&state_machine_args->state_machine->charger_settle_countup_timer &&
-	    !is_timer_expired(&state_machine_args->state_machine->charger_settle_countup_timer))) {
+	if (is_timer_active(&state_machine->charger_settle_countup_timer) &&
+	    !is_timer_expired(&state_machine->charger_settle_countup_timer)) {
 		return false;
 	}
 

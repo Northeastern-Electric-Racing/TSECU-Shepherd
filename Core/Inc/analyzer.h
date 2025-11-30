@@ -22,8 +22,7 @@ void calc_pack_temps(analyzer_t *analyzer, acc_data_t *acc_data);
 /**
  * @brief Calclaute the voltage of every cell in the pack.
  * 
- * @param bmsdata Pointer to BMS data struct.
- */
+*/
 void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data, state_machine_t *state_machine);
 
 /**
@@ -43,7 +42,5 @@ void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data, hv_plate
  * 
  */
 void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data, hv_plate_t *hv_plate);
-
-#define ANALYZER_FLAG 0x1
 
 #endif
