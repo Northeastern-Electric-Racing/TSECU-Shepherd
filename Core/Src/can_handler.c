@@ -55,7 +55,7 @@ void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs)
 
 uint8_t queue_can_msg(can_msg_t can_msg)
 {
-	return queue_send(&can_outgoing, &can_msg);
+	return queue_send(&can_outgoing, &can_msg, TX_WAIT_FOREVER);
 }
 
 /**
