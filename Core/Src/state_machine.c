@@ -1,5 +1,5 @@
 #include "state_machine.h"
-#include "can_messages.h"
+#include "can_messages_tx.h"
 #include "compute.h"
 #include "segment.h"
 #include "charging.h"
@@ -67,8 +67,8 @@ void init_ready(bms_t *bmsdata)
 void handle_ready(bms_t *bmsdata)
 {
 	// send our DCL and CCL to motors
-	send_mc_charge_message(bmsdata->cont_CCL);
-	send_mc_discharge_message(bmsdata->cont_DCL);
+	send_max_dc_brake_current_command(bmsdata->cont_CCL);
+	send_max_dc_current_command(bmsdata->cont_DCL);
 	compute_set_fault(false);
 }
 
@@ -87,15 +87,15 @@ void handle_charging(bms_t *bmsdata)
 		/* Send CAN message, but not too often */
 		if (is_timer_expired(&charger_message_timer) ||
 		    !is_timer_active(&charger_message_timer)) {
-			send_charging_message((MAX_CHARGE_VOLT *
+			send_bms_charge_message_send((MAX_CHARGE_VOLT *
 					       (NUM_CELLS_PER_CHIP * 2) *
 					       NUM_SEGMENTS),
-					      CHARGING_CURRENT, true);
+					      CHARGING_CURRENT, 0x00);
 			start_timer(&charger_message_timer, 1000);
 		}
 	} else {
 		bmsdata->is_charging_enabled = false;
-		send_charging_message(0, 0, false);
+		send_bms_charge_message_send(0, 0, 0xFF);
 	}
 
 	/* Check if we should balance */
@@ -105,8 +105,8 @@ void handle_charging(bms_t *bmsdata)
 		bmsdata->should_balance = false;
 
 	// disable discharge and charge from the MC
-	send_mc_discharge_message(0);
-	send_mc_charge_message(0);
+	send_max_dc_current_command(0);
+	send_max_dc_brake_current_command(0);
 }
 
 void charger_message_recieved(bms_t *bmsdata)
@@ -122,8 +122,8 @@ void init_faulted(bms_t *bmsdata)
 	// never balance when faulted
 	bmsdata->should_balance = false;
 
-	send_mc_charge_message(0);
-	send_mc_discharge_message(0);
+	send_max_dc_current_command(0);
+	send_max_dc_brake_current_command(0);
 	// never charge when faulted
 	bmsdata->is_charging_enabled = false;
 	return;
@@ -143,10 +143,10 @@ void handle_faulted(bms_t *bmsdata)
 	// never balance when faulted
 	bmsdata->should_balance = false;
 
-	send_mc_charge_message(0);
-	send_mc_discharge_message(0);
+	send_max_dc_current_command(0);
+	send_max_dc_brake_current_command(0);
 	if (bmsdata->is_charger_connected) {
-		send_charging_message(0, 0, false);
+		send_bms_charge_message_send(0, 0, 0xFF);
 	}
 
 	return;
@@ -298,13 +298,13 @@ fault_stat_t sm_fault_eval(fault_eval_t *item)
 		if (!fault_present) {
 			printf("\t\t\t*******Fault cleared: %s\n", item->id);
 			cancel_timer(&item->timer);
-			send_fault_timer_message(0, item->code, item->data_1);
+			send_bms_fault_timers(0, item->code, item->data_1);
 			return FAULT_STAT_CLEARED;
 		}
 
 		if (is_timer_expired(&item->timer) && fault_present) {
 			printf("\t\t\t*******Faulted: %s\n", item->id);
-			send_fault_timer_message(2, item->code, item->data_1);
+			send_bms_fault_timers(2, item->code, item->data_1);
 			return FAULT_STAT_FAULTED;
 		}
 
@@ -315,7 +315,7 @@ fault_stat_t sm_fault_eval(fault_eval_t *item)
 	else if (!is_timer_active(&item->timer) && fault_present) {
 		printf("\t\t\t*******Starting fault timer: %s\n", item->id);
 		start_timer(&item->timer, item->timeout);
-		send_fault_timer_message(1, item->code, item->data_1);
+		send_bms_fault_timers(1, item->code, item->data_1);
 
 		return 0;
 	}

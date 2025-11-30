@@ -4,7 +4,7 @@
 #include "u_tx_general.h"
 #include "u_tx_can.h"
 #include "shep_queues.h"
-#include "can_messages.h"
+#include "can_messages_tx.h"
 #include "shep_mutexes.h"
 #include "shep_tasks.h"
 #include "timer.h"
@@ -79,12 +79,12 @@ void vStateMachine(ULONG thread_input)
 
 		if (is_timer_expired(&telem_timer)) {
 			// these are unimportant telemetry messages so they can be sent infrequently
-			send_bms_status_message(
-				bmsdata.avg_temp, bmsdata.internal_temp,
-				bmsdata.current_state,
+			send_bms_status(
+				bmsdata.current_state, bmsdata.avg_temp, bmsdata.internal_temp,
 				segment_is_balancing(bmsdata.chips));
-			send_fault_status_message(bmsdata.fault_code_crit,
-						  bmsdata.fault_code_noncrit);
+			// TODO
+			// send_fault_status(bmsdata.fault_code_crit,
+			// 			  bmsdata.fault_code_noncrit);
 			start_timer(&telem_timer, 500);
 		}
 
@@ -192,15 +192,17 @@ void vAnalyzer(ULONG thread_input)
 		calc_state_of_charge(&bmsdata);
 
 		// send out telemetry data sourced from the above functions
-		send_acc_status_message(bmsdata.pack_ocv, bmsdata.pack_current,
-					bmsdata.soc);
-		send_cell_voltage_message(bmsdata.max_ocv, bmsdata.min_ocv,
-					  bmsdata.avg_ocv);
-		send_segment_average_volt_message(&bmsdata);
-		send_segment_total_volt_message(&bmsdata);
-		send_cell_temp_message(bmsdata.max_temp, bmsdata.min_temp,
+		send_pack_status(bmsdata.pack_ocv, bmsdata.pack_current, 0,
+					bmsdata.soc, 0);
+		send_cell_voltage(bmsdata.max_ocv.val, bmsdata.max_ocv.chipIndex, bmsdata.max_ocv.cellNum,
+		                    bmsdata.min_ocv.val, bmsdata.min_ocv.chipIndex, bmsdata.min_ocv.cellNum,
+							bmsdata.avg_ocv);
+		send_segment_average_voltages(bmsdata.segment_average_volts[0], bmsdata.segment_average_volts[1], bmsdata.segment_average_volts[2], bmsdata.segment_average_volts[3], bmsdata.segment_average_volts[4]);
+		send_segment_total_voltages(bmsdata.segment_total_volts[0],bmsdata.segment_total_volts[1],bmsdata.segment_total_volts[2],bmsdata.segment_total_volts[3],bmsdata.segment_total_volts[4]);
+		send_cell_temperatures(bmsdata.max_temp.val, bmsdata.max_temp.chipIndex, bmsdata.max_temp.cellNum,
+		bmsdata.min_temp.val, bmsdata.min_temp.chipIndex, bmsdata.min_temp.cellNum,
 				       bmsdata.avg_temp);
-		send_segment_temp_message(&bmsdata);
+		send_segment_temperatures(bmsdata.segment_average_temps[0], bmsdata.segment_average_temps[1], bmsdata.segment_average_temps[2], bmsdata.segment_average_temps[3],bmsdata.segment_average_temps[4]);
 
 		mutex_put(&bms_mutex);
 	}

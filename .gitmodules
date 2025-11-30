@@ -4,3 +4,6 @@
 [submodule "Drivers/adbms"]
 	path = Drivers/adbms
 	url = git@github.com:Northeastern-Electric-Racing/adbms.git
+[submodule "Drivers/Odyssey-Definitions"]
+	path = Drivers/Odyssey-Definitions
+	url = https://github.com/Northeastern-Electric-Racing/Odyssey-Definitions
