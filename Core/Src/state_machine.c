@@ -30,7 +30,8 @@ void handle_charging(state_machine_args_t *state_machine_args);
 void handle_balancing(state_machine_args_t *state_machine_args);
 void handle_faulted(state_machine_args_t *state_machine_args);
 
-void request_transition(state_machine_args_t *state_machine_args, state_t next_state);
+void request_transition(state_machine_args_t *state_machine_args,
+			state_t next_state);
 
 typedef void (*HandlerFunction_t)(state_machine_args_t *state_machine_args);
 typedef void (*InitFunction_t)(state_machine_args_t *state_machine_args);
@@ -67,7 +68,8 @@ void handle_ready(state_machine_args_t *state_machine_args)
 
 void init_charging(state_machine_args_t *state_machine_args)
 {
-	cancel_timer(&state_machine_args->state_machine->charger_settle_countup_timer);
+	cancel_timer(&state_machine_args->state_machine
+			      ->charger_settle_countup_timer);
 	return;
 }
 
@@ -79,9 +81,11 @@ void init_balancing(state_machine_args_t *state_machine_args)
 	return;
 }
 
-void handle_balancing(state_machine_args_t *state_machine_args) {
+void handle_balancing(state_machine_args_t *state_machine_args)
+{
 	if (sm_balancing_check(state_machine_args)) {
-		handle_balance_cells(state_machine_args->analyzer, state_machine_args->acc_data);
+		handle_balance_cells(state_machine_args->analyzer,
+				     state_machine_args->acc_data);
 	} else {
 		request_transition(state_machine_args, CHARGING);
 	}
@@ -92,15 +96,18 @@ void handle_charging(state_machine_args_t *state_machine_args)
 {
 	/* Check if we should charge */
 	if (sm_charging_check(state_machine_args)) {
-
 		/* Send CAN message, but not too often */
-		if (is_timer_expired(&state_machine_args->state_machine->charger_message_timer) ||
-		    !is_timer_active(&state_machine_args->state_machine->charger_message_timer)) {
+		if (is_timer_expired(&state_machine_args->state_machine
+					      ->charger_message_timer) ||
+		    !is_timer_active(&state_machine_args->state_machine
+					      ->charger_message_timer)) {
 			send_charging_message((MAX_CHARGE_VOLT *
 					       (NUM_CELLS_PER_CHIP * 2) *
 					       NUM_SEGMENTS),
 					      CHARGING_CURRENT, true);
-			start_timer(&state_machine_args->state_machine->charger_message_timer, 1000);
+			start_timer(&state_machine_args->state_machine
+					     ->charger_message_timer,
+				    1000);
 		}
 	} else {
 		send_charging_message(0, 0, false);
@@ -124,14 +131,15 @@ void charger_message_recieved(state_machine_args_t *state_machine_args)
 void init_faulted(state_machine_args_t *bmsdata)
 {
 	send_mc_charge_message(0);
-	send_mc_discharge_message(0);	
+	send_mc_discharge_message(0);
 	send_charging_message(0, 0, false);
 }
 
 void handle_faulted(state_machine_args_t *state_machine_args)
 {
 	// leave faulted if all is well
-	if (state_machine_args->state_machine->fault_code_crit == FAULTS_CLEAR) {
+	if (state_machine_args->state_machine->fault_code_crit ==
+	    FAULTS_CLEAR) {
 		compute_set_fault(false);
 		request_transition(state_machine_args, BOOT);
 		return;
@@ -140,19 +148,22 @@ void handle_faulted(state_machine_args_t *state_machine_args)
 
 void sm_handle_state(state_machine_args_t *state_machine_args)
 {
-	
 	// always check for faults no matter the current state
 	sm_fault_return(state_machine_args);
 
-	if (state_machine_args->state_machine->fault_code_crit != FAULTS_CLEAR) {
+	if (state_machine_args->state_machine->fault_code_crit !=
+	    FAULTS_CLEAR) {
 		request_transition(state_machine_args, FAULTED);
 	}
 
-	PRINTLN_INFO("FAULT STATUS: %d\n", get_current_state(state_machine_args->state_machine));
-	handler_LUT[get_current_state(state_machine_args->state_machine) ](state_machine_args);
+	PRINTLN_INFO("FAULT STATUS: %d\n",
+		     get_current_state(state_machine_args->state_machine));
+	handler_LUT[get_current_state(state_machine_args->state_machine)](
+		state_machine_args);
 }
 
-state_t get_current_state(state_machine_t *state_machine) {
+state_t get_current_state(state_machine_t *state_machine)
+{
 	state_t state;
 	mutex_get(&state_machine->state_mutex);
 	state = state_machine->bms_state;
@@ -160,15 +171,16 @@ state_t get_current_state(state_machine_t *state_machine) {
 	return state;
 }
 
-
-void request_transition(state_machine_args_t *state_machine_args, state_t next_state)
+void request_transition(state_machine_args_t *state_machine_args,
+			state_t next_state)
 {
 	if (get_current_state(state_machine_args->state_machine) == next_state)
 		return;
-	if (!valid_transition_from_to[get_current_state(state_machine_args->state_machine)][next_state])
+	if (!valid_transition_from_to[get_current_state(
+		    state_machine_args->state_machine)][next_state])
 		return;
 
-	mutex_get(&state_machine_args->state_machine->state_mutex);	
+	mutex_get(&state_machine_args->state_machine->state_mutex);
 
 	state_machine_args->state_machine->bms_state = next_state;
 	init_LUT[next_state](state_machine_args);
@@ -203,7 +215,7 @@ void sm_fault_return(state_machine_args_t *state_machine_args)
 	cancel_timer(&die_overtemp_timer);
 
 	fault_eval_t fault_table[NUM_FAULTS];
-	analyzer_t *fault_data = state_machine_args->analyzer; 
+	analyzer_t *fault_data = state_machine_args->analyzer;
 
 	// TODO: Change to mutexed getter callback for retrieving fault data
 
@@ -219,23 +231,26 @@ void sm_fault_return(state_machine_args_t *state_machine_args)
 	fault_table[7]  = (fault_eval_t) {.id = "Die Overtemp",            .timer =   die_overtemp_timer, .data_1 = fault_data->max_chiptemp.val,  .optype_1 = GT, .lim_1 = 													   MAX_CHIP_TEMP, .timeout =   MAX_CHIPTEMP_TIME, .code =            DIE_TEMP_MAXIMUM_FAULT,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
 	// clang-format on
 
-
 	fault_stat_t status;
 	for (int i = 0; i < NUM_FAULTS; i++) {
 		uint32_t item_code = fault_table[i].code;
 		status = sm_fault_eval(&fault_table[i]);
 		if (status == FAULT_STAT_FAULTED) {
 			if (fault_table[i].is_critical) {
-				state_machine_args->state_machine->fault_code_crit |= item_code;
+				state_machine_args->state_machine
+					->fault_code_crit |= item_code;
 			} else {
-				state_machine_args->state_machine->fault_code_noncrit |= item_code;
+				state_machine_args->state_machine
+					->fault_code_noncrit |= item_code;
 			}
 		} else if (status == FAULT_STAT_CLEAR) {
 			// Clear bit for non-critical faults
 			if (fault_table[i].is_critical) {
-				state_machine_args->state_machine->fault_code_crit &= ~item_code;
+				state_machine_args->state_machine
+					->fault_code_crit &= ~item_code;
 			} else {
-				state_machine_args->state_machine->fault_code_noncrit &= ~item_code;
+				state_machine_args->state_machine
+					->fault_code_noncrit &= ~item_code;
 			}
 		}
 	}
@@ -303,7 +318,7 @@ fault_stat_t sm_fault_eval(fault_eval_t *item)
 
 		return 0;
 	}
-	
+
 	PRINTLN_ERROR("Should not have reached here.");
 	return 0;
 }
@@ -314,23 +329,31 @@ fault_stat_t sm_fault_eval(fault_eval_t *item)
 bool sm_charging_check(state_machine_args_t *state_machine_args)
 {
 	// dont charge during the countup
-	if (!is_timer_expired(&state_machine_args->state_machine->charge_settle_countdown_timer) &&
-	    is_timer_active(&state_machine_args->state_machine->charge_settle_countdown_timer)) {
+	if (!is_timer_expired(&state_machine_args->state_machine
+				       ->charge_settle_countdown_timer) &&
+	    is_timer_active(&state_machine_args->state_machine
+				     ->charge_settle_countdown_timer)) {
 		return false;
 	}
 
 	// if we are counting down (the normal charging time)
-	if (is_timer_active(&state_machine_args->state_machine->charge_settle_countdown_timer)) {
+	if (is_timer_active(&state_machine_args->state_machine
+				     ->charge_settle_countdown_timer)) {
 		// if we need to stop charging, start the pause timer and stop charging immediately
-		if (is_timer_expired(&state_machine_args->state_machine->charge_settle_countdown_timer)) {
-			start_timer(&state_machine_args->state_machine->charge_settle_countdown_timer,
+		if (is_timer_expired(
+			    &state_machine_args->state_machine
+				     ->charge_settle_countdown_timer)) {
+			start_timer(&state_machine_args->state_machine
+					     ->charge_settle_countdown_timer,
 				    CHARGE_SETL_TIMEOUT);
 			return false;
 		} else
 			return true;
 	} else {
 		// start the countdown timer if it is inactive, meaning we went from pause --> unpause
-		start_timer(&state_machine_args->state_machine->charge_settle_countdown_timer, CHARGE_SETL_TIMEUP);
+		start_timer(&state_machine_args->state_machine
+				     ->charge_settle_countdown_timer,
+			    CHARGE_SETL_TIMEUP);
 		return true;
 	}
 }
@@ -338,7 +361,6 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 // check if balancing is allowed
 bool sm_balancing_check(state_machine_args_t *state_machine_args)
 {
-
 	state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
 

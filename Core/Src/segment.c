@@ -282,7 +282,7 @@ void segment_disable_balancing(cell_asic chips[NUM_CHIPS],
 
 void segment_enable_balancing(cell_asic chips[NUM_CHIPS],
 			      SPI_HandleTypeDef *hspi)
-{ 
+{
 	unmute_chips(chips, hspi);
 }
 

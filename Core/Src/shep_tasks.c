@@ -255,40 +255,46 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	/* Init Interfaces Start */
 	acc_data_t *acc_data = (acc_data_t *)malloc(sizeof(acc_data));
 	analyzer_t *analyzer = (analyzer_t *)malloc(sizeof(analyzer_t));
-	state_machine_t *state_machine = (state_machine_t *)malloc(sizeof(state_machine_t));
+	state_machine_t *state_machine =
+		(state_machine_t *)malloc(sizeof(state_machine_t));
 	hv_plate_t *hv_plate = (hv_plate_t *)malloc(sizeof(hv_plate_t));
 	sanitizer_t *sanitizer = (sanitizer_t *)malloc(sizeof(sanitizer_t));
 	bms_algos_t *bms_algos = (bms_algos_t *)malloc(sizeof(bms_algos_t));
 
-	analyzer_args_t *analyzer_args = (analyzer_args_t *)malloc(sizeof(analyzer_args_t));
+	analyzer_args_t *analyzer_args =
+		(analyzer_args_t *)malloc(sizeof(analyzer_args_t));
 	analyzer_args->acc_data = acc_data;
 	analyzer_args->hv_plate = hv_plate;
 	analyzer_args->analyzer = analyzer;
 	analyzer_args->state_machine = state_machine;
 
-	acc_data_args_t *acc_data_args = (acc_data_args_t *)malloc(sizeof(acc_data_args_t));
+	acc_data_args_t *acc_data_args =
+		(acc_data_args_t *)malloc(sizeof(acc_data_args_t));
 	acc_data_args->acc_data = acc_data;
 	acc_data_args->state_machine = state_machine;
 
-	state_machine_args_t *state_machine_args = (state_machine_args_t *)malloc(sizeof(state_machine_args_t));
+	state_machine_args_t *state_machine_args =
+		(state_machine_args_t *)malloc(sizeof(state_machine_args_t));
 	state_machine_args->acc_data = acc_data;
 	state_machine_args->analyzer = analyzer;
 	state_machine_args->hv_plate = hv_plate;
 	state_machine_args->state_machine = state_machine;
 	state_machine_args->bms_algos = bms_algos;
 
-	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)malloc(sizeof(hv_plate_args_t));
+	hv_plate_args_t *hv_plate_args =
+		(hv_plate_args_t *)malloc(sizeof(hv_plate_args_t));
 	hv_plate_args->hv_plate = hv_plate;
 
-	sanitizer_args_t *sanitizer_args = (sanitizer_args_t *)malloc(sizeof(sanitizer_args_t));
+	sanitizer_args_t *sanitizer_args =
+		(sanitizer_args_t *)malloc(sizeof(sanitizer_args_t));
 	sanitizer_args->analyzer = analyzer;
 	sanitizer_args->sanitizer = sanitizer;
 
-	bms_algos_args_t *bms_algos_args = (bms_algos_args_t *)malloc(sizeof(bms_algos_args_t));
+	bms_algos_args_t *bms_algos_args =
+		(bms_algos_args_t *)malloc(sizeof(bms_algos_args_t));
 	bms_algos_args->analyzer = analyzer;
 	bms_algos_args->sanitizer = sanitizer;
 	bms_algos_args->bms_algos = bms_algos;
-	
 
 	/* Init Interfaces End */
 

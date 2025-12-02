@@ -101,10 +101,9 @@ float get_pack_current(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 float get_batt_voltage(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 {
 	read_vbat_regsisters(*ic, hspi);
-	float avg_volts =
-		(get_voltage_conversion(ic->vbat.vbat1) +
-		 get_voltage_conversion(ic->vbat.vbat2)) /
-		2;
+	float avg_volts = (get_voltage_conversion(ic->vbat.vbat1) +
+			   get_voltage_conversion(ic->vbat.vbat2)) /
+			  2;
 	return avg_volts;
 }
 
@@ -113,10 +112,8 @@ float get_ts_voltage(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 	read_vr_registers(*ic, hspi);
 	// TODO: validate reading V2 and V3
 	// NOTE: TS+ is output to both V2 and V3
-	float avg_volts = (get_voltage_conversion(
-				   ic->vr.v_codes[1]) + // V2
-			   get_voltage_conversion(
-				   ic->vr.v_codes[2])) / // V3
+	float avg_volts = (get_voltage_conversion(ic->vr.v_codes[1]) + // V2
+			   get_voltage_conversion(ic->vr.v_codes[2])) / // V3
 			  2;
 	return avg_volts; // TODO convert to temp
 }
@@ -126,15 +123,14 @@ float get_shunt_temp(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 	read_vr_registers(*ic, hspi);
 	// TODO: validate reading V7 and V9
 	// NOTE: Temperature is output to both V7 and V9
-	float avg_volts = (get_voltage_conversion(
-				   ic->vr.v_codes[9]) + // V7A
-			   get_voltage_conversion(
-				   ic->vr.v_codes[11])) / // V9B
+	float avg_volts = (get_voltage_conversion(ic->vr.v_codes[9]) + // V7A
+			   get_voltage_conversion(ic->vr.v_codes[11])) / // V9B
 			  2;
 	return avg_volts;
 }
 
-void set_precharge_relay(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi, bool state)
+void set_precharge_relay(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi,
+			 bool state)
 {
 	if (state) {
 		set_gpo(*ic, hspi, HV_CTRL_GPO);

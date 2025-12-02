@@ -19,8 +19,9 @@ typedef struct {
  * @param arr 
  * @param n count
  */
-static void chipsSelectionSort(analyzer_t *analyzer,
-			val_idexed_t replaced_val[NUM_CHIPS][NUM_CELLS_PER_CHIP])
+static void
+chipsSelectionSort(analyzer_t *analyzer,
+		   val_idexed_t replaced_val[NUM_CHIPS][NUM_CELLS_PER_CHIP])
 {
 	for (size_t chip = 0; chip < NUM_CHIPS; chip++) {
 		// first fill the outer row
@@ -59,7 +60,7 @@ static void chipsSelectionSort(analyzer_t *analyzer,
 
 /* Send cell balancing config to the segments */
 void handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
-{	
+{
 	// the maximum number of cells to balance per chip, usually tuned for thermal reasons
 	static const int MAX_BAL_CHIP = 7;
 

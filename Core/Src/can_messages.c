@@ -665,7 +665,8 @@ void send_alpha_status_a_message(float segment_temp, uint8_t chip,
 	bitstream_add(&alpha_status_a_message, flt_reg->tmodchk, 1);	// TMODCHK (1 bit)
 	bitstream_add(&alpha_status_a_message, flt_reg->oscchk, 1);	 	// OSCCHK (1 bit)
 	
-	memcpy(msg.data, &bitstream_data, ALPHA_STAT_A_SIZE);
+	memcpy(msg.data, 
+		&bitstream_data, ALPHA_STAT_A_SIZE);
 
 	handle_bitstream_overflow(&alpha_status_a_message, msg.id);
 
