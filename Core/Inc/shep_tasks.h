@@ -48,6 +48,7 @@ void vGetSegmentData(ULONG thread_input);
  * @brief Task for collecting data from the ADBMS2950 and performing Coulomb Counting
  */
 void vHvPlateData(ULONG thread_input);
+void vSanitizer(ULONG thread_input);
 
 /**
  * @brief Task for saniziting temperature data to ensure integrity of algorithms
