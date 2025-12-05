@@ -53,6 +53,7 @@ float get_shunt_temp(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi);
  * @param hspi pointer to spi handler 
  * @param state if true, pulls the GPO up, if false pulls it down
  */
-void set_precharge_relay(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi, bool state);
+void set_precharge_relay(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi,
+			 bool state);
 
 #endif

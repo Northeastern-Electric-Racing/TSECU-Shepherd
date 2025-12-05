@@ -6,7 +6,7 @@
 #include "tx_api.h"
 #include "datastructs.h"
 
-#define ANALYZER_FLAG 0x1
+#define ANALYZER_FLAG  0x1
 #define SANITIZER_FLAG 0x2
 
 /* Initializes all ThreadX threads. 
