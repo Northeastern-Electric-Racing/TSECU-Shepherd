@@ -82,7 +82,7 @@ typedef struct {
  * @brief data read from the ADBMS2950 on our HV Plate
  */
 typedef struct {
-	cell_asic_2950 *ic; // ADBMS2950 struct 
+	cell_asic_2950 *ic; // ADBMS2950 struct
 	float ts_volts; // TS Voltage (V)
 	float batt_volts; // BATT Voltage (V)
 	float shunt_temp; // Temperature of shunt resistor (C)
@@ -104,7 +104,6 @@ typedef struct {
  * @brief data needed for processing raw data
  */
 typedef struct {
-
 	mutex_t analyzer_mutex;
 
 	/* Array of data from all chips in the system */
@@ -159,8 +158,7 @@ typedef struct {
 /**
  * @brief data for determine the current BMS State
  */
-typedef struct  {
-
+typedef struct {
 	state_t bms_state;
 
 	/**
@@ -177,7 +175,7 @@ typedef struct  {
 	// charging message timer for telemetry
 	nertimer_t charger_message_timer;
 
-	mutex_t state_mutex; 
+	mutex_t state_mutex;
 
 } state_machine_t;
 
@@ -186,11 +184,11 @@ typedef struct  {
 /**
  * @brief args for vStateMachine
  */
-typedef struct 
-{
-    state_machine_t *state_machine;
-    analyzer_t *analyzer;
-	hv_plate_t *hv_plate; // TODO add hv plate interal data to analyzer to remove hv_plate
+typedef struct {
+	state_machine_t *state_machine;
+	analyzer_t *analyzer;
+	hv_plate_t *
+		hv_plate; // TODO add hv plate interal data to analyzer to remove hv_plate
 	acc_data_t *acc_data;
 	bms_algos_t *bms_algos;
 } state_machine_args_t;
@@ -198,35 +196,33 @@ typedef struct
 /**
  * @brief args for vAnalyzer
  */
-typedef struct 
-{
-    analyzer_t *analyzer;
-    state_machine_t *state_machine;
-    acc_data_t *acc_data;
-    hv_plate_t *hv_plate;
+typedef struct {
+	analyzer_t *analyzer;
+	state_machine_t *state_machine;
+	acc_data_t *acc_data;
+	hv_plate_t *hv_plate;
 } analyzer_args_t;
 
 /**
  * @brief args for vGetSegmentData
  */
-typedef struct 
-{
-    acc_data_t *acc_data;
-    state_machine_t *state_machine;
+typedef struct {
+	acc_data_t *acc_data;
+	state_machine_t *state_machine;
 } acc_data_args_t;
 
 /**
  * @brief args for vHvPlate
  */
 typedef struct {
-    hv_plate_t *hv_plate;
+	hv_plate_t *hv_plate;
 } hv_plate_args_t;
 
 /**
  * @brief args for vSanitizer
  */
 typedef struct {
-    sanitizer_t *sanitizer;
+	sanitizer_t *sanitizer;
 	analyzer_t *analyzer;
 } sanitizer_args_t;
 
@@ -234,7 +230,7 @@ typedef struct {
  * @brief args for vBmsAlgorithms
  */
 typedef struct {
-    sanitizer_t *sanitizer;
+	sanitizer_t *sanitizer;
 	analyzer_t *analyzer;
 	bms_algos_t *bms_algos;
 } bms_algos_args_t;
