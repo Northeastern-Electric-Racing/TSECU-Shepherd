@@ -241,7 +241,7 @@ void calc_pack_voltage_stats(bms_t *bmsdata)
 		if (c % 2 == 1) {
 			bmsdata->segment_average_volts[c / 2] =
 				total_seg_volt / ((float)(NUM_CELLS * 2));
-			bmsdata->segment_average_volts[c / 2] = total_seg_volt;
+			bmsdata->segment_total_volts[c / 2] = total_seg_volt;
 			bmsdata->segment_delt_volts[c / 2] =
 				bmsdata->max_voltage.val -
 				bmsdata->min_voltage.val;
