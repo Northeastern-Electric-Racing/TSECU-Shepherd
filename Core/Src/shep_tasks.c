@@ -1,21 +1,21 @@
 
-#include "u_tx_threads.h"
-#include "u_tx_debug.h"
-#include "u_tx_general.h"
-#include "u_tx_can.h"
-#include "shep_queues.h"
-#include "can_messages.h"
-#include "shep_mutexes.h"
 #include "shep_tasks.h"
-#include "timer.h"
-#include "state_machine.h"
 #include "can_handler.h"
-#include "u_tx_flags.h"
-#include "segment.h"
-#include "main.h"
-#include "hv_plate.h"
-#include "compute.h"
+#include "can_messages.h"
 #include "cell_temp_sanitizer.h"
+#include "compute.h"
+#include "hv_plate.h"
+#include "main.h"
+#include "segment.h"
+#include "shep_mutexes.h"
+#include "shep_queues.h"
+#include "state_machine.h"
+#include "timer.h"
+#include "u_tx_can.h"
+#include "u_tx_debug.h"
+#include "u_tx_flags.h"
+#include "u_tx_general.h"
+#include "u_tx_threads.h"
 
 bms_t bmsdata;
 
@@ -39,7 +39,7 @@ void vDefaultTask(ULONG thread_input)
 	/* Infinite loop */
 	for (;;) {
 #ifdef DEBUG_STATS
-//print_bms_stats(&bmsdata);
+// print_bms_stats(&bmsdata);
 #endif
 
 		if (alt) {
@@ -78,7 +78,8 @@ void vStateMachine(ULONG thread_input)
 		sm_handle_state(&bmsdata);
 
 		if (is_timer_expired(&telem_timer)) {
-			// these are unimportant telemetry messages so they can be sent infrequently
+			// these are unimportant telemetry messages so they can be sent
+			// infrequently
 			send_bms_status_message(
 				bmsdata.avg_temp, bmsdata.internal_temp,
 				bmsdata.current_state,
@@ -100,7 +101,8 @@ static thread_t _can_receive_thread = {
 	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 	.auto_start = TX_AUTO_START, /* Auto Start */
 	.sleep = 500,
-	/* Sleep (in ticks) */ // TODO Change Can Receive to be triggered by thread flag
+	/* Sleep (in ticks) */ // TODO Change Can Receive to be triggered by thread
+	// flag
 	.function = vCanReceive /* Thread Function */
 };
 
@@ -152,9 +154,11 @@ void vCanDispatch(ULONG thread_input)
 			status = can_send_msg(can1, &message);
 			if (status != U_SUCCESS) {
 				PRINTLN_INFO(
-					"WARNING: Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld) - Status %d",
+					"WARNING: Failed to send message (on can1) after removing "
+					"from outgoing queue (Message ID: %ld) - Status %d",
 					message.id, status);
-				// u_TODO - maybe add the message back into the queue if it fails to send? not sure if this is a good idea tho
+				// u_TODO - maybe add the message back into the queue if it fails to
+				// send? not sure if this is a good idea tho
 			}
 		}
 
@@ -222,11 +226,12 @@ static thread_t _segment_data_thread = {
 
 void vGetSegmentData(ULONG thread_input)
 {
-	//HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
+	// HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
 	segment_init(bmsdata.chips, &hspi2);
-	//HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
+	// HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
-	// must delay after init for some reason, or else ADC doesnt start up (-3.45 or something)
+	// must delay after init for some reason, or else ADC doesnt start up (-3.45
+	// or something)
 	tx_thread_sleep(MS_TO_TICKS(500));
 
 	for (;;) {
@@ -234,7 +239,8 @@ void vGetSegmentData(ULONG thread_input)
 
 		if (bmsdata.current_state == CHARGING) {
 			tx_thread_sleep(75);
-			// must delay to let settle after balancing has halted, or else cells read high
+			// must delay to let settle after balancing has halted, or else cells read
+			// high
 		}
 
 		if (bmsdata.current_state == CHARGING) {
@@ -320,7 +326,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread), U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");

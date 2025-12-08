@@ -1,13 +1,14 @@
 
 #include "charging.h"
-#include "state_machine.h"
-#include "compute.h"
 #include "bms_config.h"
 #include "c_utils.h"
+#include "compute.h"
+#include "state_machine.h"
 
 #include <math.h>
 
-/// @brief A struct to hold the original float value and the index originally, as that holds meaning
+/// @brief A struct to hold the original float value and the index originally,
+/// as that holds meaning
 typedef struct {
 	float val;
 	size_t idex;
@@ -15,7 +16,7 @@ typedef struct {
 
 /**
  * @brief selection sorts ocv into structs that remember values
- * @param arr 
+ * @param arr
  * @param n count
  */
 void chipsSelectionSort(bms_t *bmsdata,
@@ -59,7 +60,8 @@ void chipsSelectionSort(bms_t *bmsdata,
 /* Send cell balancing config to the segments */
 void handle_balance_cells(bms_t *bmsdata)
 {
-	// the maximum number of cells to balance per chip, usually tuned for thermal reasons
+	// the maximum number of cells to balance per chip, usually tuned for thermal
+	// reasons
 	static const int MAX_BAL_CHIP = 7;
 
 	// the low cell, eventually they all must get there
@@ -72,7 +74,8 @@ void handle_balance_cells(bms_t *bmsdata)
 	// first, sort and cleanup everything
 	chipsSelectionSort(bmsdata, new_ocv_map);
 
-	/* Balance all cells above the threshold, using the sorted ocv map values but preserve the indexes*/
+	/* Balance all cells above the threshold, using the sorted ocv map values but
+   * preserve the indexes*/
 	for (size_t chip = 0; chip < NUM_CHIPS; chip++) {
 		// ONLY iterate to MAX_BAL or the number of cells, whatever is lower.
 		// this is OK because they are sorted greatest to least in delta

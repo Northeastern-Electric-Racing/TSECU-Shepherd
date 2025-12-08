@@ -6,11 +6,11 @@
 #include "cell_data_logging.h"
 #include "analyzer.h"
 #include "bms_config.h"
+#include "shep_mutexes.h"
 #include "stm32h5xx_hal.h"
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
-#include "shep_mutexes.h"
 
 // Used to get microsecond timestamps.
 extern TIM_HandleTypeDef htim1;
@@ -139,11 +139,12 @@ int cell_data_logger_timestamp_therms(struct BMSLogger *logger)
 
 /**
  * @brief Logs a new measurement and inserts it into the ring buffer.
- * 
+ *
  * @note The user must ensure timestamps are set before calling this function.
  *
  * @param logger Pointer to the BMSLogger instance managing the ring buffer.
- * @param bms_data Pointer to the BMS data structure containing cell voltages and temperatures.
+ * @param bms_data Pointer to the BMS data structure containing cell voltages
+ * and temperatures.
  * @return 0 on success, -1 on failure.
  */
 int cell_data_log_measurement(struct BMSLogger *logger, bms_t *bms_data)

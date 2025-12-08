@@ -1,12 +1,13 @@
 #include "can_messages.h"
-#include <math.h>
-#include "fdcan.h"
 #include "bitstream.h"
-#include "shep_queues.h"
 #include "c_utils.h"
 #include "can_handler.h"
+#include "fdcan.h"
+#include "shep_queues.h"
+#include <math.h>
 
-/// @brief A helper which sends appropriate error to stdout and CAN if a bistream overflows
+/// @brief A helper which sends appropriate error to stdout and CAN if a
+/// bistream overflows
 /// @param bitstream_res The bitstream to check for overflow
 /// @param can_id The CAN ID this bistream data is intended for
 /// @return 0 if success
@@ -17,7 +18,7 @@ static const bool handle_bitstream_overflow(bitstream_t *bitstream_res,
 		return 0;
 	}
 
-	//printf("CAN MESSAGE %ld overflowed!\n", can_id);
+	// printf("CAN MESSAGE %ld overflowed!\n", can_id);
 
 	static uint16_t overflow_cnt = 0;
 	overflow_cnt++;
@@ -316,7 +317,7 @@ void send_segment_total_volt_message(bms_t *bmsdata)
 
 void send_segment_delta_volt_message(bms_t *bmsdata)
 {
-    // clang-format off
+	// clang-format off
     bitstream_t segment_delta_volt_msg;
     uint8_t bitstream_data[8];
     bitstream_init(&segment_delta_volt_msg, bitstream_data, 8);
@@ -336,7 +337,7 @@ void send_segment_delta_volt_message(bms_t *bmsdata)
 
     handle_bitstream_overflow(&segment_delta_volt_msg, msg.id);
     queue_can_msg(msg);
-    // clang-format on
+	// clang-format on
 }
 
 void send_cell_temp_message(crit_cellval_t max_temp, crit_cellval_t min_temp,
@@ -739,10 +740,12 @@ void send_alpha_status_b_message(float v_res, uint8_t chip, float vref2,
 }
 
 /**
- * @brief Sends a CAN message containing the PEC error count for a specific chip.
+ * @brief Sends a CAN message containing the PEC error count for a specific
+ * chip.
  *
  * @param chip_num The index of the chip that reported PEC errors.
- * @param pec_count The total number of PEC errors detected for the specified chip.
+ * @param pec_count The total number of PEC errors detected for the specified
+ * chip.
  */
 void send_pec_error_message(uint8_t chip_num, uint16_t pec_count)
 {

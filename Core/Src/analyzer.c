@@ -3,8 +3,8 @@
 
 #include "analyzer.h"
 
-#include <math.h>
 #include <float.h>
+#include <math.h>
 
 #include "serialPrintResult.h"
 #include "timer.h"
@@ -21,7 +21,8 @@ const int THERM_MAP[NUM_CELLS_PER_CHIP] = { 0, 0, 1, 1, 2, 2, 3,
 // clang-format on
 
 /**
- * @brief Calculate the cell temperature of a 10,000 ohm NTP resistor (model 103)
+ * @brief Calculate the cell temperature of a 10,000 ohm NTP resistor (model
+ * 103)
  *
  * @param res The resistance of the resistor
  * @return float The temperature
@@ -29,7 +30,8 @@ const int THERM_MAP[NUM_CELLS_PER_CHIP] = { 0, 0, 1, 1, 2, 2, 3,
 float calc_temp(float res)
 {
 	float coef = res / 10000.0;
-	// achieved via passing ThermCalcs.xlsx into https://www.standardsapplied.com/nonlinear-curve-fitting-calculator.html
+	// achieved via passing ThermCalcs.xlsx into
+	// https://www.standardsapplied.com/nonlinear-curve-fitting-calculator.html
 	return -1149.531863 * (pow(coef, 1.0 / 8)) +
 	       658.9396848 * (pow(coef, 1.0 / 4)) +
 	       -87.8102815 * (pow(coef, 1.0 / 2)) + 2.034216235 * coef +
@@ -241,7 +243,8 @@ void calc_pack_voltage_stats(bms_t *bmsdata)
 				total_seg_volt / ((float)(NUM_CELLS * 2));
 			bmsdata->segment_average_volts[c / 2] = total_seg_volt;
 			bmsdata->segment_delt_volts[c / 2] =
-			    bmsdata->max_voltage.val - bmsdata->min_voltage.val;
+				bmsdata->max_voltage.val -
+				bmsdata->min_voltage.val;
 			total_seg_volt = 0;
 		}
 	}
@@ -299,8 +302,9 @@ void calc_cont_dcl(bms_t *bmsdata)
 	}
 
 	/* Temperature Derating: 50–55°C ramp down
-	   Derating begins at 50°C to limit stress as the pack heats up.
-	   DCL drops to 30A (10A per cell) at 55°C and shuts off above MAX_CELL_TEMP. */
+     Derating begins at 50°C to limit stress as the pack heats up.
+     DCL drops to 30A (10A per cell) at 55°C and shuts off above MAX_CELL_TEMP.
+   */
 	if (max_temp >= 55.0f) {
 		temp_derate_factor = MIN_DCL / (float)(MAX_PACK_DISCHG_CURR);
 	} else if (max_temp > 50.0f) {
@@ -313,8 +317,8 @@ void calc_cont_dcl(bms_t *bmsdata)
 	}
 
 	/* Cell Voltage Derating: 3.0–2.5V ramp down
-	   Below 3.0V, the pack begins reducing DCL to avoid deep discharge.
-	   DCL drops to 30A at 2.5V, and shuts off completely below MIN_VOLT. */
+     Below 3.0V, the pack begins reducing DCL to avoid deep discharge.
+     DCL drops to 30A at 2.5V, and shuts off completely below MIN_VOLT. */
 	if (min_cell_voltage < 3.0f && min_cell_voltage > 2.5f) {
 		cell_volt_derate_factor =
 			1.0f - ((3.0f - min_cell_voltage) / 0.5f) *
@@ -347,7 +351,7 @@ void calc_cont_ccl(bms_t *bmsdata)
 	// All cell charge limits were obtained from P45B Datasheet.
 
 	/* Temperature Derating: 0–10°C ramp up, 45–60°C ramp down
-	   10°C and 45°C chosen as safe margins from P45B charge temp limits. */
+     10°C and 45°C chosen as safe margins from P45B charge temp limits. */
 	if (min_temp <= MIN_CHG_TEMP || max_temp >= MAX_CELL_TEMP) {
 		bmsdata->cont_CCL = 0.0f;
 		return;
@@ -366,7 +370,8 @@ void calc_cont_ccl(bms_t *bmsdata)
 	}
 
 	/* Cell Voltage Derating: 4.15–4.205V ramp down
-	   4.15V was chosen to reduce current early and avoid overshooting the max limit. */
+     4.15V was chosen to reduce current early and avoid overshooting the max
+     limit. */
 	if (max_cell_voltage >= MAX_CHARGE_VOLT) {
 		cell_volt_derate_factor = 0.0f;
 	} else if (max_cell_voltage > 4.15f) {
@@ -384,9 +389,11 @@ void calc_cont_ccl(bms_t *bmsdata)
 void calc_open_cell_voltage(bms_t *bmsdata)
 {
 	static bool is_first_reading = true;
-	/* if there is no previous data point, set inital open cell voltage to current reading */
+	/* if there is no previous data point, set inital open cell voltage to current
+   * reading */
 	if (is_first_reading) {
-		// sanity check the last cell that the reading is good, oftentimes the first readings are bad
+		// sanity check the last cell that the reading is good, oftentimes the first
+		// readings are bad
 		float last_cell =
 			bmsdata->chip_data[NUM_CHIPS - 1]
 				.cell_voltages[NUM_CELLS_PER_CHIP - 1];
@@ -407,7 +414,8 @@ void calc_open_cell_voltage(bms_t *bmsdata)
 	}
 
 	// TODO validate
-	// If we are within the current threshold for open voltage measurments (1.5 mA)
+	// If we are within the current threshold for open voltage measurments (1.5
+	// mA)
 	if (bmsdata->pack_current < OCV_CURR_THRESH &&
 	    bmsdata->pack_current > -1 * OCV_CURR_THRESH) {
 		// Timer expired or not active

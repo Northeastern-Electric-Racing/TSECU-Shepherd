@@ -1,15 +1,17 @@
-#include "adi6830_interation.h"
 #include "adBms6830CmdList.h"
 #include "adBms6830GenericType.h"
-//#include "can_messages.h" // TODO set up can messages
+#include "adi6830_interation.h"
+// #include "can_messages.h" // TODO set up can messages
 #include "compute.h"
 #include "mcuWrapper.h"
 
 /**
- * @brief Count and reset PEC errors for all chips, then send a CAN message if needed.
+ * @brief Count and reset PEC errors for all chips, then send a CAN message if
+ * needed.
  *
- * This function iterates through all chips, accumulates the PEC (Packet Error Code) 
- * error count, resets the PEC error counter and Command counter, then sends a CAN message if any errors exist.
+ * This function iterates through all chips, accumulates the PEC (Packet Error
+ * Code) error count, resets the PEC error counter and Command counter, then
+ * sends a CAN message if any errors exist.
  *
  * @param chips Array of chips containing PEC error data.
  */
@@ -204,13 +206,13 @@ extern TIM_HandleTypeDef htim2;
 
 /**
  * @brief Delays a certain number of microseconds
- * 
+ *
  * Approximately +50% error as seen in logic analyzer
- * 
+ *
  * Make sure this TIM timer prescaler is set to (InternalClock)/(Prescaler) - 1
- * 
+ *
  * So a 64 MKhz clock would have a 63 Mhz prescaler to set a 1us tick
- * 
+ *
  * @param us the number of us to delay
  */
 void delay_us(uint32_t us)
@@ -223,10 +225,12 @@ void delay_us(uint32_t us)
 }
 
 /**
- * @brief Wake the isoSPI of every ADBMS6830 IC in the daisy chain. Blocking critical section wait for around 30us * NUM_CHIPS.
- * 
- * Takes in the SPI object as an onwership strategy, it is externed inside the driver
- * 
+ * @brief Wake the isoSPI of every ADBMS6830 IC in the daisy chain. Blocking
+ * critical section wait for around 30us * NUM_CHIPS.
+ *
+ * Takes in the SPI object as an onwership strategy, it is externed inside the
+ * driver
+ *
  */
 void adbms_wake_isospi(SPI_HandleTypeDef *hspi)
 {
@@ -239,8 +243,9 @@ void adbms_wake_isospi(SPI_HandleTypeDef *hspi)
 }
 
 /**
- * @brief Wake the chip of every ADBMS6830 IC.  Blocking critical section wait about 1ms * NUM_CHIPS
- * 
+ * @brief Wake the chip of every ADBMS6830 IC.  Blocking critical section wait
+ * about 1ms * NUM_CHIPS
+ *
  */
 void adbms_wake_core()
 {
@@ -253,7 +258,7 @@ void adbms_wake_core()
 
 /**
  * @brief Write data to all chips.
- * 
+ *
  * @param chip Array of chips to write data to.
  * @param command Command to issue to the chip.
  * @param type Register type to write to.
@@ -269,7 +274,7 @@ void write_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 
 /**
  * @brief Read data from all chips.
- * 
+ *
  * @param chips Array of chips to read data to.
  * @param command Command to issue to the chip.
  * @param type Register type to write to.

@@ -1,5 +1,5 @@
-#include "adi2950_interaction.h"
 #include "hv_plate.h"
+#include "adi2950_interaction.h"
 
 #define HV_CTRL_GPO GPIO4_2950
 
@@ -61,7 +61,7 @@ void init_hv_plate_chip(cell_asic_2950 ic)
 	ic.tx_cfga.vb1mux = SINGLE_ENDED_SGND;
 	ic.tx_cfga.vb2mux = SINGLE_ENDED_SGND;
 
-	//CFGB
+	// CFGB
 	ic.tx_cfgb.gpio1c = PULL_DOWN_OFF;
 	ic.tx_cfgb.gpio2c = PULL_DOWN_OFF;
 	ic.tx_cfgb.gpio3c = PULL_DOWN_OFF;

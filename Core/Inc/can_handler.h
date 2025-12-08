@@ -37,7 +37,7 @@
 #define SEGMENT_TOTAL_VOLT_CANID   0x91
 #define SEGMENT_TOTAL_VOLT_SIZE	   8
 #define SEGMENT_DELTA_VOLT_CANID   0x92
-#define SEGMENT_DELTA_VOLT_SIZE    8
+#define SEGMENT_DELTA_VOLT_SIZE	   8
 #define FAULT_CANID		   0x703 // TODO: cleanup
 #define FAULT_SIZE		   5
 #define NOISE_CANID		   0x88

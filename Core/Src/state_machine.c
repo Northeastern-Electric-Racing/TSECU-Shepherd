@@ -1,9 +1,9 @@
 #include "state_machine.h"
+#include "c_utils.h"
 #include "can_messages.h"
+#include "charging.h"
 #include "compute.h"
 #include "segment.h"
-#include "charging.h"
-#include "c_utils.h"
 
 // the countup timer for settling rest
 nertimer_t charger_settle_countup = { .active = false };
@@ -50,7 +50,8 @@ void init_boot(bms_t *bmsdata)
 void handle_boot(bms_t *bmsdata)
 {
 	bmsdata->should_balance = false;
-	// the charger could be connected on state machine boot, so lets not re-enter ready!
+	// the charger could be connected on state machine boot, so lets not re-enter
+	// ready!
 	if (bmsdata->is_charger_connected) {
 		request_transition(bmsdata, CHARGING);
 	} else {
@@ -138,7 +139,8 @@ void handle_faulted(bms_t *bmsdata)
 		return;
 	}
 
-	// not all is well, re-assert shutdown, turn our DCL and CCL to zero, turn off charging
+	// not all is well, re-assert shutdown, turn our DCL and CCL to zero, turn off
+	// charging
 	compute_set_fault(true);
 	// never balance when faulted
 	bmsdata->should_balance = false;
@@ -196,7 +198,7 @@ void sm_fault_return(bms_t *bmsdata)
 
 	if (!fault_table) {
 		/* Note that we are only allocating this table once at runtime, so there is
-         * no need to free it */
+     * no need to free it */
 		fault_table = (fault_eval_t *)malloc(NUM_FAULTS *
 						     sizeof(fault_eval_t));
 
@@ -234,7 +236,7 @@ void sm_fault_return(bms_t *bmsdata)
 		fault_table[7].data_1 = fault_data->max_chiptemp.val;
 	}
 
-	//printf("MIN VOLTS: %f", fault_data->min_voltage.val);
+	// printf("MIN VOLTS: %f", fault_data->min_voltage.val);
 	fault_stat_t status;
 	for (int i = 0; i < NUM_FAULTS; i++) {
 		uint32_t item_code = fault_table[i].code;
@@ -320,35 +322,37 @@ fault_stat_t sm_fault_eval(fault_eval_t *item)
 		return 0;
 	}
 	/* if (item->code == CELL_VOLTAGE_TOO_LOW) {
-          printf("\t\t\t*******Not fautled!!!!!\t%d\r\n",
-  !is_timer_active(&item->timer) && condition1 && condition2); printf("More
-  stats...\t:%d\t%d\r\n", is_timer_expired(&item->timer), item->timer.active);
-  } */
+    printf("\t\t\t*******Not fautled!!!!!\t%d\r\n",
+!is_timer_active(&item->timer) && condition1 && condition2); printf("More
+stats...\t:%d\t%d\r\n", is_timer_expired(&item->timer), item->timer.active);
+} */
 	printf("err should not get here");
 	return 0;
 }
 
 /* charger settle countup =  1 minute pause to let readings settle and get good
  * OCV */
-/* charger settle countdown = 5 minute interval between 1 minute settle pauses */
+/* charger settle countdown = 5 minute interval between 1 minute settle pauses
+ */
 bool sm_charging_check(bms_t *bmsdata)
 {
 	// samity check
 	if (!bmsdata->is_charger_connected) {
-		//printf("Charger not connected\r\n");
+		// printf("Charger not connected\r\n");
 		return false;
 	}
 
 	// dont charge during the countup
 	if (!is_timer_expired(&charger_settle_countup) &&
 	    is_timer_active(&charger_settle_countup)) {
-		//printf("Charger settle countup active\r\n");
+		// printf("Charger settle countup active\r\n");
 		return false;
 	}
 
 	// if we are counting down (the normal charging time)
 	if (is_timer_active(&charger_settle_countdown)) {
-		// if we need to stop charging, start the pause timer and stop charging immediately
+		// if we need to stop charging, start the pause timer and stop charging
+		// immediately
 		if (is_timer_expired(&charger_settle_countdown)) {
 			start_timer(&charger_settle_countup,
 				    CHARGE_SETL_TIMEOUT);
@@ -356,7 +360,8 @@ bool sm_charging_check(bms_t *bmsdata)
 		} else
 			return true;
 	} else {
-		// start the countdown timer if it is inactive, meaning we went from pause --> unpause
+		// start the countdown timer if it is inactive, meaning we went from pause
+		// --> unpause
 		start_timer(&charger_settle_countdown, CHARGE_SETL_TIMEUP);
 		return true;
 	}
