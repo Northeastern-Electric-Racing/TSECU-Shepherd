@@ -84,6 +84,8 @@ typedef struct {
 	float segment_average_volts[NUM_SEGMENTS];
 	/* Total voltages for each segment */
 	float segment_total_volts[NUM_SEGMENTS];
+	/* Delta voltages for each segment */
+	float segment_delt_volts[NUM_SEGMENTS];
 
 	// the board temperature
 	float internal_temp;

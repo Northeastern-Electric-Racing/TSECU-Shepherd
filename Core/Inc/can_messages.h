@@ -86,6 +86,7 @@ void send_cell_voltage_message(crit_cellval_t max_voltage,
 
 void send_segment_average_volt_message(bms_t *bmsdata);
 void send_segment_total_volt_message(bms_t *bmsdata);
+void send_segment_delta_volt_message(bms_t *bmsdata);
 
 /**
  * @brief sends cell temperature message
@@ -93,18 +94,18 @@ void send_segment_total_volt_message(bms_t *bmsdata);
  * @param max_temp
  * @param min_temp
  * @param avg_temp
- * 
+ *
  * @return Returns a fault if we are not able to send
  */
 void send_cell_temp_message(crit_cellval_t max_temp, crit_cellval_t min_temp,
 			    float avg_temp);
 
-/**	
- * @brief sends the average segment temperatures	
- *	
- *	
- *	
- * @return Returns a fault if we are not able to send	
+/**
+ * @brief sends the average segment temperatures
+ *
+ *
+ *
+ * @return Returns a fault if we are not able to send
  */
 void send_segment_temp_message(bms_t *bmsdata);
 
@@ -115,18 +116,18 @@ void send_fault_timer_message(uint8_t start_stop, uint32_t fault_code,
 
 /**
  * @brief Send CAN message for debugging the car on the fly.
- * 
- * @param debug0 
- * @param debug1 
- * @param debug2 
- * @param debug3 
+ *
+ * @param debug0
+ * @param debug1
+ * @param debug2
+ * @param debug3
  */
 void send_debug_message(uint8_t debug0, uint8_t debug1, uint16_t debug2,
 			uint32_t debug3);
 
 /**
  * @brief Send a message containing cell data.
- * 
+ *
  * @param alpha If this message contains alpha cell data. False sends a beta cell message.
  * @param temperature Temperature in Celsius. Has a maximum value of 80 degrees celsius.
  * @param voltage_a The voltage of cell A.
@@ -146,7 +147,7 @@ void send_cell_data_message(bool alpha, float temperature, float voltage_a,
 
 /**
  * @brief Send cell message containing Beta cell 10, the Beta onboard therm, the temperature of the ADBMS6830 die, and the voltage from V+ to V-.
- * 
+ *
  * @param cell_temperature Temperature of Beta cell 10.
  * @param voltage Voltage of Beta cell 10.
  * @param discharging Whether or not the cell is discharging.
@@ -162,7 +163,7 @@ void send_beta_status_a_message(float cell_temperature, float voltage,
 
 /**
  * @brief Send message containing ADBMS6830 diagnostic data.
- * 
+ *
  * @param vref2 Second reference voltage for ADBMS6830.
  * @param v_analog Analog power supply voltage.
  * @param v_digital Digital power supply voltage.
@@ -177,7 +178,7 @@ void send_beta_status_b_message(float vref2, float v_analog, float v_digital,
 /**
  * @brief Send a message for the faults of beta chips.
  * TODO: remove thus
- * 
+ *
  * @param chip ID of chip
  * @param flt_reg  the fault data register
  */
@@ -185,7 +186,7 @@ void send_beta_status_c_message(uint8_t chip, stc_ *flt_reg);
 
 /**
  * @brief Send message containing ADBMS6830 diagnostic data and onboard therm data.
- * 
+ *
  * @param segment_temp Temperature reading from on-board therm.
  * @param chip ID of the chip.
  * @param die_temperature Temperature of the ADBOS6830 die.
@@ -199,7 +200,7 @@ void send_alpha_status_a_message(float segment_temp, uint8_t chip,
 
 /**
  * @brief Send message containing ADBMS6830 diagnostic data.
- * 
+ *
  * @param v_res VREF2 across a resistor for open wire detection.
  * @param chip ID of the chip.
  * @param vref2 Second reference voltage for ADBMS6830.

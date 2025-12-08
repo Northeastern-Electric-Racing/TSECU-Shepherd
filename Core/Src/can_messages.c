@@ -261,6 +261,7 @@ void send_cell_voltage_message(crit_cellval_t max_voltage,
 
 	queue_can_msg(msg);
 }
+
 void send_segment_average_volt_message(bms_t *bmsdata)
 {
 	bitstream_t segment_average_volt_msg;
@@ -311,6 +312,31 @@ void send_segment_total_volt_message(bms_t *bmsdata)
 	handle_bitstream_overflow(&segment_total_volt_msg, msg.id);
 	queue_can_msg(msg);
 	// clang-format on
+}
+
+void send_segment_delta_volt_message(bms_t *bmsdata)
+{
+    // clang-format off
+    bitstream_t segment_delta_volt_msg;
+    uint8_t bitstream_data[8];
+    bitstream_init(&segment_delta_volt_msg, bitstream_data, 8);
+
+    bitstream_add(&segment_delta_volt_msg, bmsdata->segment_delt_volts[0] * 1000, 12); // Segment 1
+    bitstream_add(&segment_delta_volt_msg, bmsdata->segment_delt_volts[1] * 1000, 12); // Segment 2
+    bitstream_add(&segment_delta_volt_msg, bmsdata->segment_delt_volts[2] * 1000, 12); // Segment 3
+    bitstream_add(&segment_delta_volt_msg, bmsdata->segment_delt_volts[3] * 1000, 12); // Segment 4
+    bitstream_add(&segment_delta_volt_msg, bmsdata->segment_delt_volts[4] * 1000, 12); // Segment 5
+    bitstream_add(&segment_delta_volt_msg, 0, 4); // Extra (4 bits)
+
+    can_msg_t msg;
+    msg.id = SEGMENT_DELTA_VOLT_CANID;
+    msg.len = SEGMENT_DELTA_VOLT_SIZE;
+
+    memcpy(msg.data, &bitstream_data, 8);
+
+    handle_bitstream_overflow(&segment_delta_volt_msg, msg.id);
+    queue_can_msg(msg);
+    // clang-format on
 }
 
 void send_cell_temp_message(crit_cellval_t max_temp, crit_cellval_t min_temp,
@@ -458,7 +484,7 @@ void send_cell_data_message(bool alpha, float temperature, float voltage_a,
 
 	// patch bc 0 to 4
 	chip_ID /= 2;
-	
+
 
 	// if (alpha) {
 	// 	printf("ALPHA: c%d\n", chip_ID);
@@ -665,7 +691,7 @@ void send_alpha_status_a_message(float segment_temp, uint8_t chip,
 	bitstream_add(&alpha_status_a_message, flt_reg->thsd, 1);		// THSD (1 bit)
 	bitstream_add(&alpha_status_a_message, flt_reg->tmodchk, 1);	// TMODCHK (1 bit)
 	bitstream_add(&alpha_status_a_message, flt_reg->oscchk, 1);	 	// OSCCHK (1 bit)
-	
+
 	memcpy(msg.data, &bitstream_data, ALPHA_STAT_A_SIZE);
 
 	handle_bitstream_overflow(&alpha_status_a_message, msg.id);

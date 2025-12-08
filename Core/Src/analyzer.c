@@ -13,7 +13,7 @@
 nertimer_t ocvTimer;
 
 /**
- * @brief Map cells to therms (ra codes).  Note beta has only 6 therms. 
+ * @brief Map cells to therms (ra codes).  Note beta has only 6 therms.
  */
 const int THERM_MAP[NUM_CELLS_PER_CHIP] = { 0, 0, 1, 1, 2, 2, 3,
 					    3, 4, 4, 5, 5, 6 };
@@ -22,7 +22,7 @@ const int THERM_MAP[NUM_CELLS_PER_CHIP] = { 0, 0, 1, 1, 2, 2, 3,
 
 /**
  * @brief Calculate the cell temperature of a 10,000 ohm NTP resistor (model 103)
- * 
+ *
  * @param res The resistance of the resistor
  * @return float The temperature
  */
@@ -38,7 +38,7 @@ float calc_temp(float res)
 
 /**
  * @brief Calculate a cell temperature based on the thermistor reading.
- * 
+ *
  * @param voltage The thremistor reading.
  * @return float The temperature in degrees Celsius.
  */
@@ -50,7 +50,7 @@ float calc_cell_temp(float voltage)
 
 /**
  * @brief Calculate a cell temperature of onboard therm
- * 
+ *
  * @param voltage the voltage read by ADC
  * @return float The temperature in degrees C
  */
@@ -239,6 +239,9 @@ void calc_pack_voltage_stats(bms_t *bmsdata)
 		if (c % 2 == 1) {
 			bmsdata->segment_average_volts[c / 2] =
 				total_seg_volt / ((float)(NUM_CELLS * 2));
+			bmsdata->segment_average_volts[c / 2] = total_seg_volt;
+			bmsdata->segment_delt_volts[c / 2] =
+			    bmsdata->max_voltage.val - bmsdata->min_voltage.val;
 			total_seg_volt = 0;
 		}
 	}

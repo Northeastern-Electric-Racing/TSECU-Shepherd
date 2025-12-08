@@ -200,6 +200,7 @@ void vAnalyzer(ULONG thread_input)
 					  bmsdata.avg_ocv);
 		send_segment_average_volt_message(&bmsdata);
 		send_segment_total_volt_message(&bmsdata);
+		send_segment_delta_volt_message(&bmsdata);
 		send_cell_temp_message(bmsdata.max_temp, bmsdata.min_temp,
 				       bmsdata.avg_temp);
 		send_segment_temp_message(&bmsdata);
