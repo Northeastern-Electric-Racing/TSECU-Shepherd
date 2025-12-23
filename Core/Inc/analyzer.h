@@ -4,60 +4,46 @@
 #include "datastructs.h"
 
 /**
- * @brief Calculate thermistor values and cell temps using thermistors.
- * 
+ * @brief Get the chip data for the given chip
  */
-void calc_cell_temps(bms_t *bmsdata);
+chipdata_t get_chip_data(analyzer_t *analyzer, uint8_t chip);
+
+/**
+ * @brief Calculate thermistor values and cell temps using thermistors.
+ */
+void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data);
 
 /**
  * @brief Calculates pack temp, and avg, min, and max cell temperatures.
  * 
  */
-void calc_pack_temps(bms_t *bmsdata);
+void calc_pack_temps(analyzer_t *analyzer, acc_data_t *acc_data);
 
 /**
  * @brief Calclaute the voltage of every cell in the pack.
  * 
- * @param bmsdata Pointer to BMS data struct.
- */
-void calc_cell_voltages(bms_t *bmsdata);
+*/
+void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
+			state_machine_t *state_machine);
 
 /**
  * @brief Calculate statistics about pack voltage, such as min and max cell volt, pack and avg voltage, pack and avg OCV, and deltas.
  * 
  */
-void calc_pack_voltage_stats(bms_t *bmsdata);
+void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data);
 
 /**
  * @brief Calculate open cell voltages based on cell voltages and previous open cell voltages.
  * 
  */
-void calc_open_cell_voltage(bms_t *bmsdata);
+void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data,
+			    hv_plate_t *hv_plate);
 
 /**
  * @brief Calculate cell resistances using Rin = ( Voc - V )/I
  * 
  */
-void calc_cell_resistances(bms_t *bmsdata);
-
-/**
- * @brief Calculate the continuous discharge current limit based on cell temperatures and a cell temp to DCL lookup table.
- * 
- */
-void calc_cont_dcl(bms_t *bmsdata);
-
-/**
- * @brief Calculate continuous charge current limit (CCL) using linear derating from max cell temperature and voltage.
- *
- * @param bmsdata Pointer to BMS data structure.
- */
-void calc_cont_ccl(bms_t *bmsdata);
-
-/**
- * @brief Calcuate state of charge by using a formula based on datasheet graph
- * 
- * @param bmsdata Pointer to BMS data struct.
- */
-void calc_state_of_charge(bms_t *bmsdata);
+void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
+			   hv_plate_t *hv_plate);
 
 #endif

@@ -1,7 +1,6 @@
 #include "adi6830_interation.h"
 #include "adBms6830CmdList.h"
 #include "adBms6830GenericType.h"
-//#include "can_messages.h" // TODO set up can messages
 #include "compute.h"
 #include "mcuWrapper.h"
 
@@ -218,7 +217,8 @@ void delay_us(uint32_t us)
 	uint32_t tickstart = __HAL_TIM_GET_COUNTER(&htim2);
 	uint32_t wait = us;
 
-	while ((__HAL_TIM_GET_COUNTER(&htim2) - tickstart) < wait);
+	while ((__HAL_TIM_GET_COUNTER(&htim2) - tickstart) < wait)
+		;
 }
 
 /**
