@@ -1,16 +1,7 @@
 
 #include "analyzer.h"
-<<<<<<< HEAD
-
-#include "analyzer.h"
-
-#include <float.h>
-#include <math.h>
-
-=======
 #include <math.h>
 #include <float.h>
->>>>>>> develop
 #include "serialPrintResult.h"
 #include "timer.h"
 #include "state_machine.h"

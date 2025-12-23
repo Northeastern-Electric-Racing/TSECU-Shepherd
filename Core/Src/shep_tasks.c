@@ -1,13 +1,10 @@
 
-<<<<<<< HEAD
-=======
 #include "u_tx_threads.h"
 #include "u_tx_debug.h"
 #include "u_tx_general.h"
 #include "u_tx_can.h"
 #include "shep_queues.h"
 #include "can_messages.h"
->>>>>>> develop
 #include "shep_tasks.h"
 #include "can_handler.h"
 #include "can_messages.h"
@@ -16,7 +13,6 @@
 #include "hv_plate.h"
 #include "main.h"
 #include "segment.h"
-#include "shep_mutexes.h"
 #include "shep_queues.h"
 #include "state_machine.h"
 #include "timer.h"
@@ -66,16 +62,6 @@ void vStateMachine(ULONG thread_input)
 		sm_handle_state(state_machine_args);
 
 		if (is_timer_expired(&telem_timer)) {
-<<<<<<< HEAD
-			// these are unimportant telemetry messages so they can be sent
-			// infrequently
-			send_bms_status_message(
-				bmsdata.avg_temp, bmsdata.internal_temp,
-				bmsdata.current_state,
-				segment_is_balancing(bmsdata.chips));
-			send_fault_status_message(bmsdata.fault_code_crit,
-						  bmsdata.fault_code_noncrit);
-=======
 			// these are unimportant telemetry messages so they can be sent infrequently
 			send_bms_status_message( // TODO: can be moved to CAN dispatch
 				analyzer->avg_temp,
@@ -86,7 +72,6 @@ void vStateMachine(ULONG thread_input)
 			send_fault_status_message(
 				state_machine->fault_code_crit,
 				state_machine->fault_code_noncrit);
->>>>>>> develop
 			start_timer(&telem_timer, 500);
 		}
 
@@ -94,22 +79,6 @@ void vStateMachine(ULONG thread_input)
 	}
 }
 
-<<<<<<< HEAD
-static thread_t _can_receive_thread = {
-	.name = "Can Receive Thread", /* Name */
-	.size = 2048, /* Stack Size (in bytes) */
-	.priority = 2, /* Priority */
-	.threshold = 0, /* Preemption Threshold */
-	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-	.auto_start = TX_AUTO_START, /* Auto Start */
-	.sleep = 500,
-	/* Sleep (in ticks) */ // TODO Change Can Receive to be triggered by thread
-	// flag
-	.function = vCanReceive /* Thread Function */
-};
-
-=======
->>>>>>> develop
 void vCanReceive(ULONG thred_input)
 {
 	can_msg_t message;
