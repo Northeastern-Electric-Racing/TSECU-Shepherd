@@ -82,12 +82,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/analyzer.c"
     "Core/Src/can_handler.c"
     "Core/Src/can_messages.c"
-    "Core/Src/cell_data_logging.c"
     "Core/Src/charging.c"
     "Core/Src/compute.c"
     "Core/Src/hv_plate.c"
     "Core/Src/segment.c"
-    "Core/Src/shep_mutexes.c"
     "Core/Src/shep_queues.c"
     "Core/Src/shep_tasks.c"
     "Core/Src/state_machine.c"
@@ -121,4 +119,3 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
     # Add user defined libraries
 )
-

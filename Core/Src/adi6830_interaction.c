@@ -1,7 +1,6 @@
 #include "adi6830_interation.h"
 #include "adBms6830CmdList.h"
 #include "adBms6830GenericType.h"
-//#include "can_messages.h" // TODO set up can messages
 #include "compute.h"
 #include "mcuWrapper.h"
 

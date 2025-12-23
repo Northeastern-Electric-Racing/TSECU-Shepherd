@@ -282,7 +282,7 @@ void segment_disable_balancing(cell_asic chips[NUM_CHIPS],
 
 void segment_enable_balancing(cell_asic chips[NUM_CHIPS],
 			      SPI_HandleTypeDef *hspi)
-{ // TODO verify balancing safe
+{
 	unmute_chips(chips, hspi);
 }
 
@@ -312,7 +312,6 @@ void segment_configure_balancing(
 	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP],
 	SPI_HandleTypeDef *hspi)
 {
-	// TODO: Test
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			set_cell_discharge(&chips[chip], cell,
