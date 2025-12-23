@@ -1,2 +1,5 @@
 build
 .vscode
+
+Tests/Mocks/*
+Tests/build
