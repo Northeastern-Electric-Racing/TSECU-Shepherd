@@ -84,11 +84,6 @@ void send_shutdown_ctrl_message(uint8_t mpe_state);
 void send_cell_voltage_message(crit_cellval_t max_voltage,
 			       crit_cellval_t min_voltage, float avg_voltage);
 
-<<<<<<< HEAD
-void send_segment_average_volt_message(bms_t *bmsdata);
-void send_segment_total_volt_message(bms_t *bmsdata);
-void send_segment_delta_volt_message(bms_t *bmsdata);
-=======
 /**
  * @brief sends average voltage message
  * 
@@ -102,7 +97,14 @@ void send_segment_average_volt_message(analyzer_t *analyzer);
  * @param analyzer pointer to processed analyzer data
  */
 void send_segment_total_volt_message(analyzer_t *analyzer);
->>>>>>> develop
+
+/**
+ * @brief sneds segment delta voltage message
+ * 
+ * @param analyzer pointer to processed analyzer data
+ */
+void send_segment_delta_volt_message(analyzer_t *analyzer);
+
 
 /**
  * @brief sends cell temperature message
@@ -110,26 +112,12 @@ void send_segment_total_volt_message(analyzer_t *analyzer);
  * @param max_temp
  * @param min_temp
  * @param avg_temp
-<<<<<<< HEAD
- *
- * @return Returns a fault if we are not able to send
-=======
->>>>>>> develop
  */
 void send_cell_temp_message(crit_cellval_t max_temp, crit_cellval_t min_temp,
 			    float avg_temp);
 
-<<<<<<< HEAD
-/**
- * @brief sends the average segment temperatures
- *
- *
- *
- * @return Returns a fault if we are not able to send
-=======
 /**	
  * @brief sends the average segment temperatures		
->>>>>>> develop
  */
 void send_segment_temp_message(analyzer_t *analyzer);
 
@@ -201,12 +189,7 @@ void send_beta_status_b_message(float vref2, float v_analog, float v_digital,
 
 /**
  * @brief Send a message for the faults of beta chips.
-<<<<<<< HEAD
- * TODO: remove thus
- *
-=======
  * 
->>>>>>> develop
  * @param chip ID of chip
  * @param flt_reg  the fault data register
  */
