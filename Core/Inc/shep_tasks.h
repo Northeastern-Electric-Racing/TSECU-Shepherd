@@ -3,13 +3,6 @@
 #define SHEP_TASKS_H
 
 #include "tx_api.h"
-<<<<<<< HEAD
-#include <stdint.h>
-
-/* Initializes all ThreadX threads.
- *  Calls to _create_thread() should go in here
- */
-=======
 #include "datastructs.h"
 
 #define ANALYZER_FLAG  0x1
@@ -18,7 +11,6 @@
 /* Initializes all ThreadX threads. 
 *  Calls to create_thread() should go in here
 */
->>>>>>> develop
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool);
 
 /**
