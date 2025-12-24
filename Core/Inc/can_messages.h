@@ -105,7 +105,6 @@ void send_segment_total_volt_message(analyzer_t *analyzer);
  */
 void send_segment_delta_volt_message(analyzer_t *analyzer);
 
-
 /**
  * @brief sends cell temperature message
  *
