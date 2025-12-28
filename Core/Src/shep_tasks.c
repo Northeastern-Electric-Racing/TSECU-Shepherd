@@ -449,6 +449,17 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vBMSAlgorithms, /* Thread Function */
 	};
 
+	thread_t _debug_thread = {
+		.name = "BMS Debug Mode Thread", /* Name */
+		.size = 2048, /* Stack Size (in bytes) */
+		.priority = 4, /* Priority */
+		.threshold = 0, /* Preemption Threshold */
+		.thread_input = (ULONG)analyzer, /* Thread Args */
+		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+		.auto_start = TX_AUTO_START, /* Auto Start */
+		.function = vDebug, /* Thread Function */
+	};
+
 	/* Task Definitions End */
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
@@ -462,6 +473,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 		    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");
 	return U_SUCCESS;
