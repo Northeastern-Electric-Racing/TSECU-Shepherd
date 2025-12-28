@@ -5,29 +5,35 @@
 static void close_relay(void *args)
 {
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
-	set_gpo(*precharge_config->hv_plate->ic, precharge_config->gpo);
+	set_precharge_relay(precharge_config->hv_plate->ic, true);
 	precharge_config->air_switch_closed = true;
 }
 
 static void open_relay(void *args)
 {
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
-	reset_gpo(*precharge_config->hv_plate->ic, precharge_config->gpo);
+	set_precharge_relay(precharge_config->hv_plate->ic, false);
 	precharge_config->air_switch_closed = false;
 }
 
-prechargeconfig_t *precharge_init(hv_plate_t *hv_plate, GPO_2950 gpo,
-				  float transition_ratio, float lower_ratio,
-				  uint32_t debounce_time,
-				  prechargeconfig_t *precharge_config)
+static void set_precharge_relay(cell_asic_2950 *ic, bool state)
+{
+	if (state) {
+		set_gpo(*ic, HV_CTRL_GPO);
+	} else {
+		reset_gpo(*ic, HV_CTRL_GPO);
+	}
+}
+
+prechargeconfig_t *precharge_init(prechargeconfig_t *precharge_config,
+				  hv_plate_t *hv_plate, float transition_ratio,
+				  uint32_t debounce_time)
 {
 	assert(precharge_config != NULL);
 	assert(hv_plate != NULL);
 	assert(transition_ratio > 0 && transition_ratio < 1);
 
-	precharge_config->gpo = gpo;
 	precharge_config->transition_ratio = transition_ratio;
-	precharge_config->lower_ratio = lower_ratio;
 	precharge_config->open_debounce_timer =
 		(nertimer_t){ 0, 0, false, false };
 	precharge_config->close_debounce_timer =
@@ -40,15 +46,13 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 {
 	hv_plate_t *hv_plate = precharge_config->hv_plate;
 	bool should_precharge = // TODO: mutex hv plate data
-		hv_plate->ts_volts * precharge_config->lower_ratio >= hv_plate->batt_volts;
+		hv_plate->ts_volts * precharge_config->transition_ratio >=
+		hv_plate->batt_volts;
 
-	debounce(should_precharge,
-		 &precharge_config->open_debounce_timer,
+	debounce(should_precharge, &precharge_config->open_debounce_timer,
 		 precharge_config->debounce_time, close_relay,
 		 precharge_config);
 
-	debounce(!should_precharge,
-		 &precharge_config->close_debounce_timer,
-		 precharge_config->debounce_time, open_relay,
-		 precharge_config);
+	debounce(!should_precharge, &precharge_config->close_debounce_timer,
+		 precharge_config->debounce_time, open_relay, precharge_config);
 }

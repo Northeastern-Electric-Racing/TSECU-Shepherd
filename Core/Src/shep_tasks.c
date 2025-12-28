@@ -248,16 +248,11 @@ void vPrecharge(ULONG args)
 	hv_plate_t *hv_plate = (hv_plate_t *)args;
 
 	prechargeconfig_t precharge_config;
-	precharge_init(&precharge_config, hv_plate->ic, GPO4_2950, 0.9f, 0.8f,
+	precharge_init(&precharge_config, hv_plate, 0.9f,
 		       50 /* ms debounce time */);
 
 	for (;;) {
-		float batt_v = read_batt_voltage_volts(hv_plate->ic,
-						       hspi2);
-		float ts_v = read_ts_voltage_volts(hv_plate->ic,
-						   hspi2);
-		handle_precharge(&precharge_config, batt_v, ts_v);
-
+		handle_precharge(&precharge_config);
 		tx_thread_sleep(MS_TO_TICKS(50)); // TODO; fix thread timing
 	}
 }
