@@ -261,21 +261,24 @@ void vDebug(ULONG thread_input)
 					get_chip_data(analyzer, chip);
 			for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP;
 			     cell += 2) {
+
+				// Sends two cells per messages
+				// Accounts for odd number of cells
 				send_cell_data_message(
 					chip_data.alpha,
 					chip_data.cell_temp[cell],
 					chip_data.cell_voltages[cell],
 
-					chip_data
+					cell + 1 == NUM_CELLS_PER_CHIP ? 0 : chip_data
 						.cell_voltages[cell + 1],
 					chip,
 					cell,
 					cell + 1,
 					chip_data.is_balacing[cell],
 
-					chip_data.is_balacing[cell + 1],
+					cell + 1 == NUM_CELLS_PER_CHIP ? 0 : chip_data.is_balacing[cell + 1],
 					chip_data.cs_fault[cell],
-					chip_data.cs_fault[cell + 1]);
+					cell + 1 == NUM_CELLS_PER_CHIP ? 0 : chip_data.cs_fault[cell + 1]);
 
 					tx_thread_sleep(10); // TODO: enhance timing
 			} 
