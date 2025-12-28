@@ -138,7 +138,7 @@ void vAnalyzer(ULONG thread_input)
 		calc_open_cell_voltage(analyzer, acc_data, hv_plate);
 		calc_pack_voltage_stats(analyzer, acc_data);
 		calc_cell_resistances(analyzer, acc_data, hv_plate);
-		update_chsip_status(analyzer, acc_data);
+		update_chip_status(analyzer, acc_data);
 
 		mutex_put(&analyzer->analyzer_mutex);
 

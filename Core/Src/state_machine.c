@@ -96,7 +96,7 @@ void handle_charging(state_machine_args_t *state_machine_args)
 {
 	/* Check if we should charge */
 	if (sm_charging_check(state_machine_args)) {
-		/* Send CAN message, but snot too often */
+		/* Send CAN message, but not too often */
 		if (is_timer_expired(&state_machine_args->state_machine
 					      ->charger_message_timer) ||
 		    !is_timer_active(&state_machine_args->state_machine
