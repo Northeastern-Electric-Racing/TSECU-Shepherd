@@ -256,7 +256,7 @@ void vPrecharge(ULONG args)
 						       hspi2);
 		float ts_v = read_ts_voltage_volts(hv_plate->ic,
 						   hspi2);
-		handle_prechasrge(&precharge_config, batt_v, ts_v);
+		handle_precharge(&precharge_config, batt_v, ts_v);
 
 		tx_thread_sleep(MS_TO_TICKS(50)); // TODO; fix thread timing
 	}

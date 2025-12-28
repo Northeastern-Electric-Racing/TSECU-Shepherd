@@ -36,11 +36,11 @@ prechargeconfig_t *precharge_init(hv_plate_t *hv_plate, GPO_2950 gpo,
 	precharge_config->air_switch_closed = false;
 }
 
-void handle_precharge(prechargeconfig_t *precharge_config,
-		       float batt_voltage, float ts_voltage)
+void handle_precharge(prechargeconfig_t *precharge_config)
 {
-	bool should_precharge =
-		ts_voltage * precharge_config->lower_ratio >= batt_voltage;
+	hv_plate_t *hv_plate = precharge_config->hv_plate;
+	bool should_precharge = // TODO: mutex hv plate data
+		hv_plate->ts_volts * precharge_config->lower_ratio >= hv_plate->batt_volts;
 
 	debounce(should_precharge,
 		 &precharge_config->open_debounce_timer,
