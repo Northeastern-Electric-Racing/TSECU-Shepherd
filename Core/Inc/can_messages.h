@@ -160,8 +160,8 @@ void send_cell_data_message(bool alpha, float temperature, float voltage_a,
  * @param flt_reg The fault register of the chip (statc)
  */
 void send_status_a_message(float segment_temp, uint8_t chip,
-				 float die_temperature, float vpv, float vmv,
-				 stc_ *flt_reg);
+			   float die_temperature, float vpv, float vmv,
+			   stc_ *flt_reg);
 
 /**
  * @brief Send message containing ADBMS6830 diagnostic data.
@@ -174,8 +174,7 @@ void send_status_a_message(float segment_temp, uint8_t chip,
  * @param flt_reg The fault register of the chip (statc)
  */
 void send_status_b_message(float v_res, uint8_t chip, float vref2,
-				 float v_analog, float v_digital,
-				 stc_ *flt_reg);
+			   float v_analog, float v_digital, stc_ *flt_reg);
 
 /**
  * @brief Sends a CAN message containing the PEC error count for a specific chip.
