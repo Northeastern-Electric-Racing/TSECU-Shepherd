@@ -26,7 +26,7 @@ typedef struct {
 	int error_reading;
 
 	bool alpha;
-		/* whether the chip is an alpha or beta */ // TODO initialize properly
+	/* whether the chip is an alpha or beta */ // TODO initialize properly
 
 	/* These are calculated during the analysis of data */
 
