@@ -369,6 +369,6 @@ void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 		chip_data.vref2 = getVoltage(acc_data->chips[chip].stata.vref2);
 		chip_data.v_analog = getVoltage(acc_data->chips[chip].statb.va),
 		chip_data.v_digital =
-			getVoltage(acc_data->chips[chip].statb.vd),
+			getVoltage(acc_data->chips[chip].statb.vd);
 	}
 }
