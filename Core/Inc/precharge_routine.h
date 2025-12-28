@@ -22,8 +22,7 @@ typedef struct {
  * @return a precharge configuration for running the precharge thread.
  */
 prechargeconfig_t *precharge_init(prechargeconfig_t *precharge_config,
-				  hv_plate_t *hv_plate, 
-				  float transition_ratio,
+				  hv_plate_t *hv_plate, float transition_ratio,
 				  uint32_t debounce_time);
 /**
  * @brief Handles the precharge routine given the current BATT and TS voltages.
