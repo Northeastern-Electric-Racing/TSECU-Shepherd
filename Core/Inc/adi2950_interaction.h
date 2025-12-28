@@ -22,18 +22,16 @@ void read_vbat_regsisters(cell_asic_2950 ic, SPI_HandleTypeDef *hspi);
 /**
  * @brief Sets the state of a gpo pin.
  * @param ic Pointer to the adbms2950 data structure.
- * @param hspi Pointer to the SPI interface handle.
  * @param gpo GPO to set
  */
-void set_gpo(cell_asic_2950 ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo);
+void set_gpo(cell_asic_2950 ic, GPO_2950 gpo);
 
 /**
  * @brief Resets a gpo pin.
  * @param ic Pointer to the adbms2950 data structure.
- * @param hspi Pointer to the SPI interface handle.
  * @param gpo GPO to reset
  */
-void reset_gpo(cell_asic_2950 ic, SPI_HandleTypeDef *hspi, GPO_2950 gpo);
+void reset_gpo(cell_asic_2950 ic, GPO_2950 gpo);
 
 /**
  * @brief Reads the voltage registers from the ADBMS2950.

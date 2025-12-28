@@ -1,63 +1,54 @@
 #include "precharge_routine.h"
+#include <assert.h>
+#include "debounce.h"
 
-prechargeconfig_t *precharge_init(cell_asic_2950 ic, SPI_HandleTypeDef *hspi,
-				  GPO_2950 gpo, float transition_ratio,
-				  float lower_ratio, uint32_t debounce_time,
+static void close_relay(void *args)
+{
+	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
+	set_gpo(*precharge_config->hv_plate->ic, precharge_config->gpo);
+	precharge_config->air_switch_closed = true;
+}
+
+static void open_relay(void *args)
+{
+	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
+	reset_gpo(*precharge_config->hv_plate->ic, precharge_config->gpo);
+	precharge_config->air_switch_closed = false;
+}
+
+prechargeconfig_t *precharge_init(hv_plate_t *hv_plate, GPO_2950 gpo,
+				  float transition_ratio, float lower_ratio,
+				  uint32_t debounce_time,
 				  prechargeconfig_t *precharge_config)
 {
-	precharge_config->ic = ic;
-	precharge_config->hspi = hspi;
+	assert(precharge_config != NULL);
+	assert(hv_plate != NULL);
+	assert(transition_ratio > 0 && transition_ratio < 1);
+
 	precharge_config->gpo = gpo;
 	precharge_config->transition_ratio = transition_ratio;
 	precharge_config->lower_ratio = lower_ratio;
-	precharge_config->debounce_timer = (nertimer_t){ 0, 0, false, false };
+	precharge_config->open_debounce_timer =
+		(nertimer_t){ 0, 0, false, false };
+	precharge_config->close_debounce_timer =
+		(nertimer_t){ 0, 0, false, false };
 	precharge_config->debounce_time = debounce_time;
+	precharge_config->air_switch_closed = false;
 }
 
-void precharge_run(prechargeconfig_t *precharge_config)
+void handle_precharge(prechargeconfig_t *precharge_config,
+		       float batt_voltage, float ts_voltage)
 {
-	if (precharge_config == NULL) {
-		return;
-	}
-	bool air_switch_closed = false;
-	for (;;) {
-		float batt_v = read_batt_voltage_volts(precharge_config->ic,
-						       precharge_config->hspi);
-		float ts_v = read_ts_voltage_volts(precharge_config->ic,
-						   precharge_config->hspi);
-		// Chcek if timer is active, cannot change switch state in that case.
-		if (is_timer_active(&precharge_config->debounce_timer)) {
-			if (is_timer_expired(
-				    &precharge_config->debounce_timer)) {
-				cancel_timer(&precharge_config->debounce_timer);
-			} else {
-				// SOME SORT OF DELAY?
-				continue;
-			}
-		} else if (!air_switch_closed) {
-			// Check if charged up until threshold.
-			// Should there be another check for depleted battery voltage?
-			if (ts_v >=
-			    (batt_v * precharge_config->transition_ratio)) {
-				set_gpo(precharge_config->ic,
-					precharge_config->hspi,
-					precharge_config->gpo);
-				air_switch_closed = true;
-				start_timer(&precharge_config->debounce_timer,
-					    precharge_config->debounce_time);
-			}
-		} else {
-			// Reopen capacitor if voltage too low.
-			if (ts_v <= (batt_v * precharge_config->lower_ratio)) {
-				reset_gpo(precharge_config->ic,
-					  precharge_config->hspi,
-					  precharge_config->gpo);
-				air_switch_closed = false;
-				// I would assume there could be a voltage spike here as well.
-				start_timer(&precharge_config->debounce_timer,
-					    precharge_config->debounce_time);
-			}
-		}
-		// DELAY?
-	}
+	bool should_precharge =
+		ts_voltage * precharge_config->lower_ratio >= batt_voltage;
+
+	debounce(should_precharge,
+		 &precharge_config->open_debounce_timer,
+		 precharge_config->debounce_time, close_relay,
+		 precharge_config);
+
+	debounce(!should_precharge,
+		 &precharge_config->close_debounce_timer,
+		 precharge_config->debounce_time, open_relay,
+		 precharge_config);
 }

@@ -15,6 +15,7 @@
 #include "hv_plate.h"
 #include "compute.h"
 #include "cell_temp_sanitizer.h"
+#include "precharge_routine.h"
 
 void vDefaultTask(ULONG thread_input)
 {
@@ -239,6 +240,25 @@ void vSanitizer(ULONG thread_input)
 	for (;;) {
 		temp_sanitizer_run(sanitizer, analyzer);
 		tx_thread_sleep(MS_TO_TICKS(500));
+	}
+}
+
+void vPrecharge(ULONG args)
+{
+	hv_plate_t *hv_plate = (hv_plate_t *)args;
+
+	prechargeconfig_t precharge_config;
+	precharge_init(&precharge_config, hv_plate->ic, GPO4_2950, 0.9f, 0.8f,
+		       50 /* ms debounce time */);
+
+	for (;;) {
+		float batt_v = read_batt_voltage_volts(hv_plate->ic,
+						       hspi2);
+		float ts_v = read_ts_voltage_volts(hv_plate->ic,
+						   hspi2);
+		handle_prechasrge(&precharge_config, batt_v, ts_v);
+
+		tx_thread_sleep(MS_TO_TICKS(50)); // TODO; fix thread timing
 	}
 }
 

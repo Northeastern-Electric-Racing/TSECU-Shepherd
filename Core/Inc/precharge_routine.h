@@ -1,14 +1,16 @@
 #include "adi2950_interaction.h"
 #include "timer.h"
+#include "hv_plate.h"
 
 typedef struct {
-	cell_asic_2950 ic;
-	SPI_HandleTypeDef *hspi;
+	hv_plate_t *hv_plate;
 	GPO_2950 gpo;
 	float transition_ratio;
 	float lower_ratio;
-	nertimer_t debounce_timer;
+	nertimer_t open_debounce_timer;
+	nertimer_t close_debounce_timer;
 	uint32_t debounce_time;
+	bool air_switch_closed;
 } prechargeconfig_t;
 
 /**
@@ -22,13 +24,16 @@ typedef struct {
  * @param precharge_config is the empty configuration to configure.
  * @return a precharge configuration for running the precharge thread.
  */
-prechargeconfig_t *precharge_init(cell_asic_2950 ic, SPI_HandleTypeDef *hspi,
-				  GPO_2950 gpo, float transition_ratio,
-				  float lower_ratio, uint32_t debounce_time,
+prechargeconfig_t *precharge_init(hv_plate_t *hv_plate, GPO_2950 gpo,
+				  float transition_ratio, float lower_ratio,
+				  uint32_t debounce_time,
 				  prechargeconfig_t *precharge_config);
-
 /**
- * @brief Runs the pre-charge until the threshold-ratio is reached, after which the AIR switch is set to open.
- * @param precharge_config is the configuration to run.
+ * @brief Handles the precharge routine given the current BATT and TS voltages.
+ * @param precharge_config the prechsarge configuration struct.
+ * @param batt_voltage the current BATT voltage.
+ * @param ts_voltage the current TS voltage.
+ * NOTE: Ment to be run in a Thread on a loop due to debounces
  */
-void precharge_run(prechargeconfig_t *precharge_config);
+void handle_precharge(prechargeconfig_t *precharge_config, float batt_voltage,
+		      float ts_voltage);
