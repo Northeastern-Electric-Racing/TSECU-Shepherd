@@ -87,6 +87,9 @@ typedef struct {
 	float batt_volts; // BATT Voltage (V)
 	float shunt_temp; // Temperature of shunt resistor (C)
 	float pack_current; // Current read through the shunt
+
+	uint8_t pec_error_count; // number of PEC errors detected during last read
+
 } hv_plate_t;
 
 /**
@@ -98,6 +101,8 @@ typedef struct {
 
 	// the current discharge configuration the state machine wants
 	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+
+	uint8_t pec_error_count; // number of PEC errors detected during last read
 } acc_data_t;
 
 /**
@@ -248,25 +253,13 @@ enum {
 	CELL_VOLTAGE_TOO_HIGH = 0x2,
 	CELL_VOLTAGE_TOO_LOW = 0x4,
 	PACK_TOO_HOT = 0x8,
-	OPEN_WIRING_FAULT =
-		0x10, /* cell tap wire is either weakly connected or not connected */
-	INTERNAL_SOFTWARE_FAULT = 0x20, /* general software fault */
-	INTERNAL_THERMAL_ERROR =
-		0x40, /* internal hardware fault reulting from too hot of onboard temps */
-	INTERNAL_CELL_COMM_FAULT =
-		0x80, /* this is due to an invalid CRC from retrieving values */
-	CURRENT_SENSOR_FAULT = 0x100,
-	CHARGE_READING_MISMATCH =
-		0x200, /* charge voltage when not supposed to be charging*/
-	LOW_CELL_VOLTAGE = 0x400, /* voltage of a cell falls below 90 mV */
-	WEAK_PACK_FAULT = 0x800,
-	EXTERNAL_CAN_FAULT = 0x1000,
-	DISCHARGE_LIMIT_ENFORCEMENT_FAULT = 0x2000,
-	CHARGER_SAFETY_RELAY = 0x4000,
-	BATTERY_THERMISTOR = 0x8000,
-	CHARGER_CAN_FAULT = 0x10000,
-	CHARGE_LIMIT_ENFORCEMENT_FAULT = 0x20000,
-	DIE_TEMP_MAXIMUM_FAULT = 0x40000,
+	WEAK_PACK_FAULT = 0x10,
+	EXTERNAL_CAN_FAULT = 0x20,
+	DISCHARGE_LIMIT_ENFORCEMENT_FAULT = 0x40,
+	CHARGE_LIMIT_ENFORCEMENT_FAULT = 0x80,
+	DIE_TEMP_MAXIMUM_FAULT = 0x100,
+	HV_PLATE_COMMS_FAULT = 0x200,
+	SEGMENT_COMMS_FAULT = 0x400,
 
 	MAX_FAULTS = 0x80000000 /* Maximum allowable fault code */
 };

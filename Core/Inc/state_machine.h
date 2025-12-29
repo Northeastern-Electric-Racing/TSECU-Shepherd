@@ -56,9 +56,9 @@ void sm_fault_return(state_machine_args_t *state_machine_args);
  * fault status
  *
  * @param fault_item fault data
- * @return fault_status code
+ * @return true if fault is present, false otherwise
  */
-fault_stat_t sm_fault_eval(fault_eval_t *fault_item);
+bool sm_fault_eval(fault_eval_t *fault_item);
 
 /**
  * @brief handles the state machine, calls the appropriate handler function and
