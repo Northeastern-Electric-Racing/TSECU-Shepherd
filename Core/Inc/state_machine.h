@@ -7,11 +7,6 @@
 
 #define NUM_FAULTS 8
 
-typedef enum {
-	FAULT_STAT_CLEAR = 0,
-	FAULT_STAT_FAULTED = 1,
-} fault_stat_t;
-
 /**
  * @brief gets the current state of the BMS
  * 
