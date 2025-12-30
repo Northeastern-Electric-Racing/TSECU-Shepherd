@@ -90,6 +90,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/shep_tasks.c"
     "Core/Src/state_machine.c"
     "Core/Src/cell_temp_sanitizer.c"
+    "Core/Src/soc.c"
 )
 
 # Add include paths
