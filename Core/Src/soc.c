@@ -32,9 +32,9 @@ static float _get_initial_soc(analyzer_t *analyzer, hv_plate_t *hv_plate)
 
 	// check for if min OCV has not been initialized yet
 	if (min_ocv < MIN_VOLT) {
-		min_ocv = -1;
+		return -1;
 	} else if (min_ocv > MAX_VOLT) {
-		min_ocv = -1;
+		return -1;
 	}
 
 	// lookup the capacity from the table
