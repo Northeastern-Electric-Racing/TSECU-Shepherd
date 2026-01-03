@@ -387,7 +387,7 @@ void set_segment_comms_fault(state_machine_t *state_mach)
 	mutex_put(&state_mach->state_mutex);
 }
 
-void clear_segment_comms_fault(state_machine_t* state_mach)
+void clear_segment_comms_fault(state_machine_t *state_mach)
 {
 	mutex_get(&state_mach->state_mutex);
 	state_mach->fault_code_noncrit &= ~ISOSPI_BREAK_FAULT;
