@@ -4,6 +4,7 @@
 #include "bms_config.h"
 #include "can_messages.h"
 #include "timer.h"
+#include "state_machine.h"
 
 /** @brief Break detect threshold.
  *  PEC errors > this value in the accumulation window indicate a break.
@@ -164,12 +165,8 @@ static void isospi_detect_break(cell_asic chips[NUM_CHIPS],
 					isospi_status.state = ISOSPI_BREAK_DETECTED;
 					isospi_status.break_chip = (uint8_t)(first_faulty_chip_idx + 1U);
 
-					mutex_get(&state_mach->state_mutex);
-
 					// Sets non-critical isospi break fault
-					state_mach->fault_code_noncrit |= ISOSPI_BREAK_FAULT;
-
-					mutex_put(&state_mach->state_mutex);
+					set_segment_comms_fault(state_mach);
 
 					printf("[isoSPI] Break Detected at Chip %u\n\r", first_faulty_chip_idx + 1U);
 				}
@@ -287,9 +284,7 @@ void isospi_handle_state(cell_asic chips[NUM_CHIPS],
 
 		// Clear all faults return to normal operation state
 		printf("[isoSPI] Recovery Complete, Fault Cleared\n\r");
-		mutex_get(&state_mach->state_mutex);
-		state_mach->fault_code_noncrit &= ~ISOSPI_BREAK_FAULT;
-		mutex_put(&state_mach->state_mutex);
+		clear_segment_comms_fault(state_mach);
 		isospi_status.state = ISOSPI_STATE_NORMAL;
 		break;
 
