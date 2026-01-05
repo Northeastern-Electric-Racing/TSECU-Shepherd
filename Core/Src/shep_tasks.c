@@ -258,7 +258,6 @@ void vDebug(ULONG thread_input)
 	analyzer_t *analyzer = (analyzer_t *)thread_input;
 
 	for (;;) {
-
 		get_flag(DEBUG_FLAG, TX_WAIT_FOREVER);
 
 		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
