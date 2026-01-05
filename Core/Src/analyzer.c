@@ -345,7 +345,7 @@ void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 		// Cell Diagnostics
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			// balancing status
-			chip_data.is_balacing[cell] =
+			chip_data.is_balancing[cell] =
 				(acc_data->chips[chip].tx_cfgb.dcc >> cell) & 1;
 			// S_C fault status
 			chip_data.cs_fault[cell] =

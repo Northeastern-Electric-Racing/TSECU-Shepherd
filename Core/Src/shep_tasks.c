@@ -142,6 +142,8 @@ void vAnalyzer(ULONG thread_input)
 
 		mutex_put(&analyzer->analyzer_mutex);
 
+		set_flag(DEBUG_FLAG);
+
 		// send out telemetry data sourced from the above functions
 		send_cell_voltage_message(analyzer->max_ocv, analyzer->min_ocv,
 					  analyzer->avg_ocv);
@@ -256,6 +258,9 @@ void vDebug(ULONG thread_input)
 	analyzer_t *analyzer = (analyzer_t *)thread_input;
 
 	for (;;) {
+
+		get_flag(DEBUG_FLAG, TX_WAIT_FOREVER);
+
 		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 			chipdata_t chip_data = get_chip_data(analyzer, chip);
 			for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP;
@@ -272,11 +277,11 @@ void vDebug(ULONG thread_input)
 						chip_data.cell_voltages[cell +
 									1],
 					chip, cell, cell + 1,
-					chip_data.is_balacing[cell],
+					chip_data.is_balancing[cell],
 
 					cell + 1 == NUM_CELLS_PER_CHIP ?
 						0 :
-						chip_data.is_balacing[cell + 1],
+						chip_data.is_balancing[cell + 1],
 					chip_data.cs_fault[cell],
 					cell + 1 == NUM_CELLS_PER_CHIP ?
 						0 :

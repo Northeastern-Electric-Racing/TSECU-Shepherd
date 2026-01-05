@@ -43,7 +43,7 @@ typedef struct {
 	float die_temp;
 
 	/* Chip and Cell Diagnostic Data */
-	bool is_balacing[NUM_CELLS_PER_CHIP];
+	bool is_balancing[NUM_CELLS_PER_CHIP];
 	bool cs_fault[NUM_CELLS_PER_CHIP];
 
 	float vpv;

@@ -8,6 +8,7 @@
 
 #define ANALYZER_FLAG  0x1
 #define SANITIZER_FLAG 0x2
+#define DEBUG_FLAG   0x4
 
 /* Initializes all ThreadX threads. 
 *  Calls to create_thread() should go in here
