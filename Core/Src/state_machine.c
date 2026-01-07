@@ -379,3 +379,17 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 	// Do not balance if the shutdown circuit is open.
 	return !read_shutdown();
 }
+
+void set_segment_comms_fault(state_machine_t *state_mach)
+{
+	mutex_get(&state_mach->state_mutex);
+	state_mach->fault_code_noncrit |= ISOSPI_BREAK_FAULT;
+	mutex_put(&state_mach->state_mutex);
+}
+
+void clear_segment_comms_fault(state_machine_t *state_mach)
+{
+	mutex_get(&state_mach->state_mutex);
+	state_mach->fault_code_noncrit &= ~ISOSPI_BREAK_FAULT;
+	mutex_put(&state_mach->state_mutex);
+}
