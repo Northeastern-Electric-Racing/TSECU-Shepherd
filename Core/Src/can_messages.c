@@ -263,22 +263,22 @@ void send_cell_voltage_message(crit_cellval_t max_voltage,
 	queue_can_msg(msg);
 }
 
-void send_segment_average_volt_message(bms_t *bmsdata)
+void send_segment_average_volt_message(analyzer_t *analyzer)
 {
 	bitstream_t segment_average_volt_msg;
 	uint8_t bitstream_data[8];
 	bitstream_init(&segment_average_volt_msg, bitstream_data, 8);
 
 	bitstream_add(&segment_average_volt_msg,
-		      bmsdata->segment_average_volts[0] * 1000, 12);
+		      analyzer->segment_average_volts[0] * 1000, 12);
 	bitstream_add(&segment_average_volt_msg,
-		      bmsdata->segment_average_volts[1] * 1000, 12);
+		      analyzer->segment_average_volts[1] * 1000, 12);
 	bitstream_add(&segment_average_volt_msg,
-		      bmsdata->segment_average_volts[2] * 1000, 12);
+		      analyzer->segment_average_volts[2] * 1000, 12);
 	bitstream_add(&segment_average_volt_msg,
-		      bmsdata->segment_average_volts[3] * 1000, 12);
+		      analyzer->segment_average_volts[3] * 1000, 12);
 	bitstream_add(&segment_average_volt_msg,
-		      bmsdata->segment_average_volts[4] * 1000, 12);
+		      analyzer->segment_average_volts[4] * 1000, 12);
 
 	can_msg_t msg;
 	msg.id = SEGMENT_AVERAGE_VOLT_CANID;
@@ -290,18 +290,22 @@ void send_segment_average_volt_message(bms_t *bmsdata)
 	queue_can_msg(msg);
 }
 
-void send_segment_total_volt_message(bms_t *bmsdata)
+void send_segment_total_volt_message(analyzer_t *analyzer)
 {
-	// clang-format off
 	bitstream_t segment_total_volt_msg;
 	uint8_t bitstream_data[8];
 	bitstream_init(&segment_total_volt_msg, bitstream_data, 8);
 
-	bitstream_add(&segment_total_volt_msg, bmsdata->segment_total_volts[0] * 39, 12); // Segment 1
-	bitstream_add(&segment_total_volt_msg, bmsdata->segment_total_volts[1] * 39, 12); // Segment 2
-	bitstream_add(&segment_total_volt_msg, bmsdata->segment_total_volts[2] * 39, 12); // Segment 3
-	bitstream_add(&segment_total_volt_msg, bmsdata->segment_total_volts[3] * 39, 12); // Segment 4
-	bitstream_add(&segment_total_volt_msg, bmsdata->segment_total_volts[4] * 39, 12); // Segment 5
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[0] * 39, 12); // Segment 1
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[1] * 39, 12); // Segment 2
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[2] * 39, 12); // Segment 3
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[3] * 39, 12); // Segment 4
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[4] * 39, 12); // Segment 5
 	bitstream_add(&segment_total_volt_msg, 0, 4); // Extra (4 bits)
 
 	can_msg_t msg;
@@ -312,32 +316,34 @@ void send_segment_total_volt_message(bms_t *bmsdata)
 
 	handle_bitstream_overflow(&segment_total_volt_msg, msg.id);
 	queue_can_msg(msg);
-	// clang-format on
 }
 
-void send_segment_delta_volt_message(bms_t *bmsdata)
+void send_segment_delta_volt_message(analyzer_t *analyzer)
 {
-	// clang-format off
-    bitstream_t segment_delta_volt_msg;
-    uint8_t bitstream_data[8];
-    bitstream_init(&segment_delta_volt_msg, bitstream_data, 8);
+	bitstream_t segment_delta_volt_msg;
+	uint8_t bitstream_data[8];
+	bitstream_init(&segment_delta_volt_msg, bitstream_data, 8);
 
-    bitstream_add(&segment_delta_volt_msg, bmsdata->segment_delt_volts[0] * 1000, 12); // Segment 1
-    bitstream_add(&segment_delta_volt_msg, bmsdata->segment_delt_volts[1] * 1000, 12); // Segment 2
-    bitstream_add(&segment_delta_volt_msg, bmsdata->segment_delt_volts[2] * 1000, 12); // Segment 3
-    bitstream_add(&segment_delta_volt_msg, bmsdata->segment_delt_volts[3] * 1000, 12); // Segment 4
-    bitstream_add(&segment_delta_volt_msg, bmsdata->segment_delt_volts[4] * 1000, 12); // Segment 5
-    bitstream_add(&segment_delta_volt_msg, 0, 4); // Extra (4 bits)
+	bitstream_add(&segment_delta_volt_msg,
+		      analyzer->segment_delt_volts[0] * 1000, 12); // Segment 1
+	bitstream_add(&segment_delta_volt_msg,
+		      analyzer->segment_delt_volts[1] * 1000, 12); // Segment 2
+	bitstream_add(&segment_delta_volt_msg,
+		      analyzer->segment_delt_volts[2] * 1000, 12); // Segment 3
+	bitstream_add(&segment_delta_volt_msg,
+		      analyzer->segment_delt_volts[3] * 1000, 12); // Segment 4
+	bitstream_add(&segment_delta_volt_msg,
+		      analyzer->segment_delt_volts[4] * 1000, 12); // Segment 5
+	bitstream_add(&segment_delta_volt_msg, 0, 4); // Extra (4 bits)
 
-    can_msg_t msg;
-    msg.id = SEGMENT_DELTA_VOLT_CANID;
-    msg.len = SEGMENT_DELTA_VOLT_SIZE;
+	can_msg_t msg;
+	msg.id = SEGMENT_DELTA_VOLT_CANID;
+	msg.len = SEGMENT_DELTA_VOLT_SIZE;
 
-    memcpy(msg.data, &bitstream_data, 8);
+	memcpy(msg.data, &bitstream_data, 8);
 
-    handle_bitstream_overflow(&segment_delta_volt_msg, msg.id);
-    queue_can_msg(msg);
-	// clang-format on
+	handle_bitstream_overflow(&segment_delta_volt_msg, msg.id);
+	queue_can_msg(msg);
 }
 
 void send_cell_temp_message(crit_cellval_t max_temp, crit_cellval_t min_temp,
@@ -364,7 +370,7 @@ void send_cell_temp_message(crit_cellval_t max_temp, crit_cellval_t min_temp,
 	queue_can_msg(msg);
 }
 
-void send_segment_temp_message(bms_t *bmsdata)
+void send_segment_temp_message(analyzer_t *analyzer)
 {
 	struct __attribute__((__packed__)) {
 		int8_t segment1_average_temp;
@@ -375,15 +381,15 @@ void send_segment_temp_message(bms_t *bmsdata)
 	} segment_temp_msg_data;
 
 	segment_temp_msg_data.segment1_average_temp =
-		bmsdata->segment_average_temps[0];
+		analyzer->segment_average_temps[0];
 	segment_temp_msg_data.segment2_average_temp =
-		bmsdata->segment_average_temps[1];
+		analyzer->segment_average_temps[1];
 	segment_temp_msg_data.segment3_average_temp =
-		bmsdata->segment_average_temps[2];
+		analyzer->segment_average_temps[2];
 	segment_temp_msg_data.segment4_average_temp =
-		bmsdata->segment_average_temps[3];
+		analyzer->segment_average_temps[3];
 	segment_temp_msg_data.segment5_average_temp =
-		bmsdata->segment_average_temps[4];
+		analyzer->segment_average_temps[4];
 
 	can_msg_t msg = { .id = SEGMENT_TEMP_CANID,
 			  .len = SEGMENT_TEMP_SIZE,
@@ -524,7 +530,6 @@ void send_cell_data_message(bool alpha, float temperature, float voltage_a,
 	queue_can_msg(msg);
 }
 
-// TODO confirm cell 10 vs 11?. Jack verified VPV wil chip 0 on 3/17/2025
 void send_beta_status_a_message(float cell_temperature, float voltage,
 				bool discharging, uint8_t chip,
 				float segment_temperature,
@@ -692,8 +697,9 @@ void send_alpha_status_a_message(float segment_temp, uint8_t chip,
 	bitstream_add(&alpha_status_a_message, flt_reg->thsd, 1);		// THSD (1 bit)
 	bitstream_add(&alpha_status_a_message, flt_reg->tmodchk, 1);	// TMODCHK (1 bit)
 	bitstream_add(&alpha_status_a_message, flt_reg->oscchk, 1);	 	// OSCCHK (1 bit)
-
-	memcpy(msg.data, &bitstream_data, ALPHA_STAT_A_SIZE);
+	
+	memcpy(msg.data, 
+		&bitstream_data, ALPHA_STAT_A_SIZE);
 
 	handle_bitstream_overflow(&alpha_status_a_message, msg.id);
 

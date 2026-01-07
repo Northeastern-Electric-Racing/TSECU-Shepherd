@@ -49,36 +49,95 @@ typedef struct {
 	uint8_t cellNum;
 } crit_cellval_t;
 
+/**
+ * @brief A therm_state_t is a struct of a (float, bool).
+ * - Last recorded temperature of a cell.
+ * - Whether the cell temperature can be used (i.e. whether the measurement is bad).
+ */
+typedef struct {
+	float last_temp;
+	bool valid;
+} therm_state_t;
+
+/**
+ * @brief States the BMS can be in
+ */
 typedef enum {
 	BOOT,
 	READY,
 	CHARGING,
+	BALANCING,
 	FAULTED,
 	NUM_STATES,
 } state_t;
 
 /**
- * @brief stores all data related to the bms
+ * @brief Data needed for the therm temp sanitizer
  */
 typedef struct {
-	/* chip_data and chips are parallel arrays. */
+	therm_state_t sanitized_therms[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+} sanitizer_t;
+
+/**
+ * @brief data read from the ADBMS2950 on our HV Plate
+ */
+typedef struct {
+	cell_asic_2950 *ic; // ADBMS2950 struct
+	float ts_volts; // TS Voltage (V)
+	float batt_volts; // BATT Voltage (V)
+	float shunt_temp; // Temperature of shunt resistor (C)
+	float pack_current; // Current read through the shunt
+} hv_plate_t;
+
+/**
+ * @brief data read from the ADBMS6830 chips on our segments
+ */
+typedef struct {
+	/* Array of structs containing raw data from and configurations for the ADBMS6830 chips */
+	cell_asic chips[NUM_CHIPS];
+
+	// the current discharge configuration the state machine wants
+	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+} acc_data_t;
+
+/**
+ * @brief data needed for processing raw data
+ */
+typedef struct {
+	mutex_t analyzer_mutex;
 
 	/* Array of data from all chips in the system */
 	chipdata_t chip_data[NUM_CHIPS];
 
-	/* Array of structs containing raw data from and configurations for the ADBMS6830 chips */
-	cell_asic chips[NUM_CHIPS];
-	cell_asic_2950 plate_chip;
+	/* Max, min, and avg thermistor readings */
+	crit_cellval_t max_temp;
+	crit_cellval_t min_temp;
+	float avg_temp;
 
-	float pack_current;
-	float pack_voltage;
+	// the board temperature
+	float internal_temp;
+
+	/* Max, min, and avg voltage of the cells */
+	crit_cellval_t max_voltage;
+	crit_cellval_t min_voltage;
+	float avg_voltage;
+	float delt_voltage;
+
+	// OCV timer
+	nertimer_t ocvTimer;
+
+	/* Max, min, average OCV readings */
+	crit_cellval_t max_ocv;
+	crit_cellval_t min_ocv;
+	float avg_ocv;
+	float delt_ocv;
 	float pack_ocv;
 	float pack_res;
 
-	float cont_DCL;
-	float cont_CCL;
-	float soc;
+	// the highest current chip temperature, for faulting
+	crit_chipval_t max_chiptemp;
 
+	/* semgent temperature averages */
 	float segment_average_temps[NUM_SEGMENTS];
 	/* OCV average voltages */
 	float segment_average_volts[NUM_SEGMENTS];
@@ -87,8 +146,22 @@ typedef struct {
 	/* Delta voltages for each segment */
 	float segment_delt_volts[NUM_SEGMENTS];
 
-	// the board temperature
-	float internal_temp;
+	float pack_voltage;
+} analyzer_t;
+
+/**
+ * @brief data retrieved from BMS algorithms
+ */
+typedef struct {
+	float cont_DCL;
+	float cont_CCL;
+} bms_algos_t;
+
+/**
+ * @brief data for determine the current BMS State
+ */
+typedef struct {
+	state_t bms_state;
 
 	/**
 	 * @brief Note that this is a 32 bit integer, so there are 32 max possible fault codes
@@ -97,42 +170,78 @@ typedef struct {
 	uint32_t fault_code_crit;
 	uint32_t fault_code_noncrit;
 
-	/* Max, min, and avg thermistor readings */
-	crit_cellval_t max_temp;
-	crit_cellval_t min_temp;
-	float avg_temp;
+	// charge settling timers
+	nertimer_t charger_settle_countup_timer;
+	nertimer_t charge_settle_countdown_timer;
 
-	// the highest current chip temperature, for faulting
-	crit_chipval_t max_chiptemp;
+	// charging message timer for telemetry
+	nertimer_t charger_message_timer;
 
-	/* Max and min cell resistances */
-	crit_cellval_t max_res;
-	crit_cellval_t min_res;
+	mutex_t state_mutex;
 
-	/* Max, min, and avg voltage of the cells */
-	crit_cellval_t max_voltage;
-	crit_cellval_t min_voltage;
-	float avg_voltage;
-	float delt_voltage;
+} state_machine_t;
 
-	crit_cellval_t max_ocv;
-	crit_cellval_t min_ocv;
-	float avg_ocv;
-	float delt_ocv;
+/* Task Args */
 
-	// the current discharge configuration the state machine wants
-	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
-	// whether balancing should be on, or muted
-	bool should_balance;
+/**
+ * @brief args for vStateMachine
+ */
+typedef struct {
+	state_machine_t *state_machine;
+	analyzer_t *analyzer;
+	hv_plate_t *
+		hv_plate; // TODO add hv plate interal data to analyzer to remove hv_plate
+	acc_data_t *acc_data;
+	bms_algos_t *bms_algos;
+} state_machine_args_t;
 
-	/// whether the charger is connected, synonymous with being in the state of CHARGING, and therefore irreversible
-	bool is_charger_connected;
-	/// whether the state machine has determined its time to charge
-	bool is_charging_enabled;
+/**
+ * @brief args for vAnalyzer
+ */
+typedef struct {
+	analyzer_t *analyzer;
+	state_machine_t *state_machine;
+	acc_data_t *acc_data;
+	hv_plate_t *hv_plate;
+} analyzer_args_t;
 
-	state_t current_state;
-} bms_t;
+/**
+ * @brief args for vGetSegmentData
+ */
+typedef struct {
+	acc_data_t *acc_data;
+	state_machine_t *state_machine;
+} acc_data_args_t;
 
+/**
+ * @brief args for vHvPlate
+ */
+typedef struct {
+	hv_plate_t *hv_plate;
+} hv_plate_args_t;
+
+/**
+ * @brief args for vSanitizer
+ */
+typedef struct {
+	sanitizer_t *sanitizer;
+	analyzer_t *analyzer;
+} sanitizer_args_t;
+
+/**
+ * @brief args for vBmsAlgorithms
+ */
+typedef struct {
+	sanitizer_t *sanitizer;
+	analyzer_t *analyzer;
+	bms_algos_t *bms_algos;
+} bms_algos_args_t;
+
+/* Task args end */
+
+/**
+ * @brief Fault codes
+ */
 enum {
 	FAULTS_CLEAR = 0x0,
 
