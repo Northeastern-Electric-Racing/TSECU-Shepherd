@@ -1,6 +1,7 @@
 
 #include "soc.h"
 #include "stm32xx_hal.h"
+#include "tx_api.h"
 
 #define FULL_CAPACITY_AH \
 	5.0f // datasheet specified 5000 mAh capacity for the Molicel P50Bs
@@ -72,7 +73,7 @@ void update_soc(analyzer_t *analyzer, hv_plate_t *hv_plate)
 			return; // invalid OCV reading, cannot initialize SoC
 		}
 		analyzer->soc = initial_soc;
-		prev_time = (float)HAL_GetTick(); // in milliseconds
+		prev_time = TICKS_TO_MS(tx_time_get()); // in milliseconds
 		is_first_run = false;
 		return;
 	}
@@ -81,13 +82,14 @@ void update_soc(analyzer_t *analyzer, hv_plate_t *hv_plate)
 	// SoC(t) = SoC(t-1) + I(t)/Qn * (t1 - t0)
 
 	float last_soc = analyzer->soc;
-	float curr_time = (float)HAL_GetTick(); // in milliseconds
+	float curr_time = TICKS_TO_MS(tx_time_get()); // in milliseconds
 	float delta_time =
 		(curr_time - prev_time) / 3600000.0; // convert to hours
 
 	float current = hv_plate->pack_current; // in Amperes
 
-	float soc = last_soc + (current * delta_time) / FULL_CAPACITY_AH;
+	// mutliplied by -1 since discharging current is positive
+	float soc = -1 * last_soc + (current * delta_time) / FULL_CAPACITY_AH;
 	if (soc > 1.0f) {
 		soc = 1.0f;
 	} else if (soc < 0.0f) {
