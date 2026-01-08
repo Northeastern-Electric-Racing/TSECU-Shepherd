@@ -15,6 +15,7 @@
 #include "hv_plate.h"
 #include "compute.h"
 #include "cell_temp_sanitizer.h"
+#include "isospi_recovery.h"
 #include "soc.h"
 
 void vDefaultTask(ULONG thread_input)
@@ -163,6 +164,8 @@ void vGetSegmentData(ULONG thread_input)
 
 	segment_init(acc_data->chips, &hspi2);
 
+	isospi_break_detection_init(acc_data->chips);
+
 	// must delay after init for some reason, or else ADC doesnt start up (-3.45 or something)
 	tx_thread_sleep(MS_TO_TICKS(500));
 
@@ -177,12 +180,20 @@ void vGetSegmentData(ULONG thread_input)
 		if (get_current_state(state_machine) == CHARGING) {
 			// in charging, debug data is required to get things like die temp
 			segment_retrieve_charging_data(acc_data->chips, &hspi2);
+
+			isospi_handle_state(acc_data->chips, state_machine,
+					    &hspi2);
+
 		} else {
 			// snap before getting data
 			segment_snap(acc_data->chips, &hspi2);
 			segment_retrieve_active_data(acc_data->chips, &hspi2);
 			// unsnap after getting data
 			segment_unsnap(acc_data->chips, &hspi2);
+
+			isospi_handle_state(acc_data->chips, state_machine,
+					    &hspi2);
+
 			if (DEBUG_MODE_ENABLED) {
 				segment_retrieve_debug_data(acc_data->chips,
 							    &hspi2);
