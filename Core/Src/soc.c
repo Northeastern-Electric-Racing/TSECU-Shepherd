@@ -88,8 +88,8 @@ void update_soc(analyzer_t *analyzer, hv_plate_t *hv_plate)
 
 	float current = hv_plate->pack_current; // in Amperes
 
-	// mutliplied by -1 since discharging current is positive
-	float soc = -1 * last_soc + (current * delta_time) / FULL_CAPACITY_AH;
+	// subtracted since discharging current is positive
+	float soc =  last_soc - (current * delta_time) / FULL_CAPACITY_AH;
 	if (soc > 1.0f) {
 		soc = 1.0f;
 	} else if (soc < 0.0f) {
