@@ -91,6 +91,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/state_machine.c"
     "Core/Src/cell_temp_sanitizer.c"
     "Core/Src/isospi_recovery.c"
+    "Core/Src/dcl.c"
+    "Core/Src/ccl.c"
 )
 
 # Add include paths
