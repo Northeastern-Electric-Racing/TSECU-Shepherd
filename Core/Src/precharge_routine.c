@@ -25,9 +25,8 @@ static void set_precharge_relay(cell_asic_2950 *ic, bool state)
 	}
 }
 
-prechargeconfig_t *precharge_init(prechargeconfig_t *precharge_config,
-				  hv_plate_t *hv_plate, float transition_ratio,
-				  uint32_t debounce_time)
+void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
+		    float transition_ratio, uint32_t debounce_time)
 {
 	assert(precharge_config != NULL);
 	assert(hv_plate != NULL);
@@ -46,8 +45,8 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 {
 	hv_plate_t *hv_plate = precharge_config->hv_plate;
 	bool should_precharge = // TODO: mutex hv plate data
-		hv_plate->ts_volts * precharge_config->transition_ratio >=
-		hv_plate->batt_volts;
+		hv_plate->ts_volts >=
+		hv_plate->batt_volts * precharge_config->transition_ratio;
 
 	debounce(should_precharge, &precharge_config->open_debounce_timer,
 		 precharge_config->debounce_time, close_relay,

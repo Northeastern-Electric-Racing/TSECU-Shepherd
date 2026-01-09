@@ -268,7 +268,7 @@ void vPrecharge(ULONG args)
 
 	prechargeconfig_t precharge_config;
 	precharge_init(&precharge_config, hv_plate, 0.9f,
-		       50 /* ms debounce time */);
+		       200 /* ms debounce time */);
 
 	for (;;) {
 		handle_precharge(&precharge_config);

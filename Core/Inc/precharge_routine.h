@@ -19,11 +19,9 @@ typedef struct {
  * @param ic pointer to ADBMS2950 data struct
  * @param threshold_ratio if batt volts > ts volts * threshold_ratio, close the AIR switch
  * @param debounce_time is the time to wait after the AIR switch opens before closing again (to prevent immediate closes) in milliseconds.
- * @return a precharge configuration for running the precharge thread.
  */
-prechargeconfig_t *precharge_init(prechargeconfig_t *precharge_config,
-				  hv_plate_t *hv_plate, float transition_ratio,
-				  uint32_t debounce_time);
+void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
+		    float transition_ratio, uint32_t debounce_time);
 /**
  * @brief Handles the precharge routine given the current BATT and TS voltages.
  * @param precharge_config the prechsarge configuration struct.
