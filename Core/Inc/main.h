@@ -60,32 +60,34 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define TS_MINUS_SENSE_Pin	 GPIO_PIN_0
+#define TS_MINUS_SENSE_Pin GPIO_PIN_0
 #define TS_MINUS_SENSE_GPIO_Port GPIOC
-#define TS_PLUS_SENSE_Pin	 GPIO_PIN_3
-#define TS_PLUS_SENSE_GPIO_Port	 GPIOC
-#define SPI6_CS_Pin		 GPIO_PIN_0
-#define SPI6_CS_GPIO_Port	 GPIOA
-#define SPI2_CS_Pin		 GPIO_PIN_3
-#define SPI2_CS_GPIO_Port	 GPIOA
-#define SPI3_CS_Pin		 GPIO_PIN_4
-#define SPI3_CS_GPIO_Port	 GPIOA
-#define ACC_SENSE_Pin		 GPIO_PIN_0
-#define ACC_SENSE_GPIO_Port	 GPIOB
-#define PHY_IRQ_Pin		 GPIO_PIN_7
-#define PHY_IRQ_GPIO_Port	 GPIOE
-#define PHY_RESET_Pin		 GPIO_PIN_10
-#define PHY_RESET_GPIO_Port	 GPIOE
-#define PHY_GPIO_Pin		 GPIO_PIN_11
-#define PHY_GPIO_GPIO_Port	 GPIOE
-#define FAN_PWM0_Pin		 GPIO_PIN_7
-#define FAN_PWM0_GPIO_Port	 GPIOC
-#define FAN_PWM1_Pin		 GPIO_PIN_8
-#define FAN_PWM1_GPIO_Port	 GPIOC
-#define SP1_CS_Pin		 GPIO_PIN_10
-#define SP1_CS_GPIO_Port	 GPIOG
-#define FAULT_MCU_Pin		 GPIO_PIN_15
-#define FAULT_MCU_GPIO_Port	 GPIOG
+#define TS_PLUS_SENSE_Pin GPIO_PIN_3
+#define TS_PLUS_SENSE_GPIO_Port GPIOC
+#define SPI6_CS_Pin GPIO_PIN_0
+#define SPI6_CS_GPIO_Port GPIOA
+#define SPI2_CS_Pin GPIO_PIN_3
+#define SPI2_CS_GPIO_Port GPIOA
+#define SPI3_CS_Pin GPIO_PIN_4
+#define SPI3_CS_GPIO_Port GPIOA
+#define ACC_SENSE_Pin GPIO_PIN_0
+#define ACC_SENSE_GPIO_Port GPIOB
+#define TSIP_SENSE_Pin GPIO_PIN_1
+#define TSIP_SENSE_GPIO_Port GPIOB
+#define PHY_IRQ_Pin GPIO_PIN_7
+#define PHY_IRQ_GPIO_Port GPIOE
+#define PHY_RESET_Pin GPIO_PIN_10
+#define PHY_RESET_GPIO_Port GPIOE
+#define PHY_GPIO_Pin GPIO_PIN_11
+#define PHY_GPIO_GPIO_Port GPIOE
+#define FAN_PWM0_Pin GPIO_PIN_7
+#define FAN_PWM0_GPIO_Port GPIOC
+#define FAN_PWM1_Pin GPIO_PIN_8
+#define FAN_PWM1_GPIO_Port GPIOC
+#define SP1_CS_Pin GPIO_PIN_10
+#define SP1_CS_GPIO_Port GPIOG
+#define FAULT_MCU_Pin GPIO_PIN_15
+#define FAULT_MCU_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
 
