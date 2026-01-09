@@ -66,7 +66,6 @@
 #define LOW_CELL_TIME	   55000
 #define HIGH_TEMP_TIME	   55000
 #define MAX_CHIPTEMP_TIME  55000
-#define COMMS_ERROR_TIME   55000
 
 // system wide base ADBMS sample rate
 #define SAMPLE_RATE 2 /* Hz */

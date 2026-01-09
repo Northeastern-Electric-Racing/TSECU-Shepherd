@@ -204,8 +204,6 @@ void sm_fault_return(state_machine_args_t *state_machine_args)
 	nertimer_t low_cell_timer = { 0 };
 	nertimer_t high_temp_timer = { 0 };
 	nertimer_t die_overtemp_timer = { 0 };
-	nertimer_t hv_plate_comms_timer = { 0 };
-	nertimer_t segment_comms_timer = { 0 };
 
 	// initialize fault timers
 	cancel_timer(&ovr_curr_timer);
@@ -216,8 +214,6 @@ void sm_fault_return(state_machine_args_t *state_machine_args)
 	cancel_timer(&low_cell_timer);
 	cancel_timer(&high_temp_timer);
 	cancel_timer(&die_overtemp_timer);
-	cancel_timer(&hv_plate_comms_timer);
-	cancel_timer(&segment_comms_timer);
 
 	fault_eval_t fault_table[NUM_FAULTS];
 	analyzer_t *fault_data = state_machine_args->analyzer;
