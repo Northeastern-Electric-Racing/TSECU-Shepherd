@@ -113,13 +113,13 @@ void handle_charging(state_machine_args_t *state_machine_args)
 		send_charging_message(0, 0, false);
 	}
 
-	/* Check if we should balance */
-	if (sm_balancing_check(state_machine_args))
-		request_transition(state_machine_args, BALANCING);
-
 	// disable discharge and charge from the MC
 	send_mc_discharge_message(0);
 	send_mc_charge_message(0);
+
+	/* Check if we should balance */
+	if (sm_balancing_check(state_machine_args))
+		request_transition(state_machine_args, BALANCING);
 }
 
 void charger_message_recieved(state_machine_args_t *state_machine_args)
@@ -385,4 +385,18 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 
 	// Do not balance if the shutdown circuit is open.
 	return !read_shutdown();
+}
+
+void set_segment_comms_fault(state_machine_t *state_mach)
+{
+	mutex_get(&state_mach->state_mutex);
+	state_mach->fault_code_noncrit |= ISOSPI_BREAK_FAULT;
+	mutex_put(&state_mach->state_mutex);
+}
+
+void clear_segment_comms_fault(state_machine_t *state_mach)
+{
+	mutex_get(&state_mach->state_mutex);
+	state_mach->fault_code_noncrit &= ~ISOSPI_BREAK_FAULT;
+	mutex_put(&state_mach->state_mutex);
 }

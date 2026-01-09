@@ -63,4 +63,18 @@ bool sm_fault_eval(fault_eval_t *fault_item);
  */
 void sm_handle_state(state_machine_args_t *state_machine_args);
 
+/**
+ * @brief Sets the segment communication fault.
+ * 
+ * @param state_mach Pointer to the state machine data structure.
+ */
+void set_segment_comms_fault(state_machine_t *state_mach);
+
+/**
+ * @brief Clears the segment communication fault.
+ * 
+ * @param state_mach Pointer to the state machine data structure.
+ */
+void clear_segment_comms_fault(state_machine_t *state_mach);
+
 #endif
