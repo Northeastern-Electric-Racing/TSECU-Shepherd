@@ -2,6 +2,15 @@
 #include <assert.h>
 #include "debounce.h"
 
+static void set_precharge_relay(cell_asic_2950 *ic, bool state)
+{
+	if (state) {
+		set_gpo(*ic, HV_CTRL_GPO);
+	} else {
+		reset_gpo(*ic, HV_CTRL_GPO);
+	}
+}
+
 static void close_relay(void *args)
 {
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
@@ -14,15 +23,6 @@ static void open_relay(void *args)
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
 	set_precharge_relay(precharge_config->hv_plate->ic, false);
 	precharge_config->air_switch_closed = false;
-}
-
-static void set_precharge_relay(cell_asic_2950 *ic, bool state)
-{
-	if (state) {
-		set_gpo(*ic, HV_CTRL_GPO);
-	} else {
-		reset_gpo(*ic, HV_CTRL_GPO);
-	}
 }
 
 void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
