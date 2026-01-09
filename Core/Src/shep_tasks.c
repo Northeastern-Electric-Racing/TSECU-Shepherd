@@ -16,6 +16,7 @@
 #include "compute.h"
 #include "cell_temp_sanitizer.h"
 #include "isospi_recovery.h"
+#include "soc.h"
 
 void vDefaultTask(ULONG thread_input)
 {
@@ -219,6 +220,7 @@ void vHvPlateData(ULONG thread_input)
 	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
 
 	hv_plate_t *hv_plate = hv_plate_args->hv_plate;
+	analyzer_t *analyzer = hv_plate_args->analyzer;
 
 	init_hv_plate_chip(*hv_plate->ic);
 	tx_thread_sleep(TICKS_TO_MS(500));
@@ -226,6 +228,9 @@ void vHvPlateData(ULONG thread_input)
 	for (;;) {
 		// get the current reading from the pack
 		hv_plate->pack_current = get_pack_current(hv_plate->ic, &hspi2);
+
+		// updates the SoC value in the analyzer struct based on the pack current received
+		update_soc(analyzer, hv_plate);
 
 		// read voltages
 		hv_plate->ts_volts = get_ts_voltage(hv_plate->ic, &hspi2);
@@ -295,6 +300,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	hv_plate_args_t *hv_plate_args =
 		(hv_plate_args_t *)malloc(sizeof(hv_plate_args_t));
 	hv_plate_args->hv_plate = hv_plate;
+	hv_plate_args->analyzer = analyzer;
 
 	sanitizer_args_t *sanitizer_args =
 		(sanitizer_args_t *)malloc(sizeof(sanitizer_args_t));

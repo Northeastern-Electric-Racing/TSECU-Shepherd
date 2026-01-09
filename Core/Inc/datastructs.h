@@ -165,8 +165,11 @@ typedef struct {
 	float segment_average_volts[NUM_SEGMENTS];
 	/* Total voltages for each segment */
 	float segment_total_volts[NUM_SEGMENTS];
-
+	/* Pack voltage */
 	float pack_voltage;
+
+	/* SoC of the Pack*/
+	float soc;
 } analyzer_t;
 
 /**
@@ -238,6 +241,7 @@ typedef struct {
  */
 typedef struct {
 	hv_plate_t *hv_plate;
+	analyzer_t *analyzer;
 } hv_plate_args_t;
 
 /**
