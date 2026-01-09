@@ -25,19 +25,36 @@ typedef struct {
 typedef struct {
 	int error_reading;
 
+	bool alpha;
+	/* whether the chip is an alpha or beta */ // TODO initialize properly
+
 	/* These are calculated during the analysis of data */
 
 	/* Cell temperature in celsius */
-	float cell_temp[NUM_CELLS];
-	float cell_resistance[NUM_CELLS];
-	float open_cell_voltage[NUM_CELLS];
-	float cell_voltages[NUM_CELLS];
+	float cell_temp[NUM_CELLS_PER_CHIP];
+	float cell_resistance[NUM_CELLS_PER_CHIP];
+	float open_cell_voltage[NUM_CELLS_PER_CHIP];
+	float cell_voltages[NUM_CELLS_PER_CHIP];
 
-	/* For temperatures of on-board therms. */
+	/* For temperatures of on-board therms.*/
 	float on_board_temp;
 
 	/// temperature of the die
 	float die_temp;
+
+	/* Chip and Cell Diagnostic Data */
+	bool is_balancing[NUM_CELLS_PER_CHIP];
+	bool cs_fault[NUM_CELLS_PER_CHIP];
+
+	float vpv;
+	float vmv;
+	float v_res;
+	float vref2;
+	float v_analog;
+	float v_digital;
+
+	stc_ flt_reg;
+
 } chipdata_t;
 
 /**

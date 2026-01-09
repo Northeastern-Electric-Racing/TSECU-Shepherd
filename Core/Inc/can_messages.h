@@ -150,56 +150,18 @@ void send_cell_data_message(bool alpha, float temperature, float voltage_a,
 			    bool discharging_b, bool cvs_a, bool cvs_b);
 
 /**
- * @brief Send cell message containing Beta cell 10, the Beta onboard therm, the temperature of the ADBMS6830 die, and the voltage from V+ to V-.
- * 
- * @param cell_temperature Temperature of Beta cell 10.
- * @param voltage Voltage of Beta cell 10.
- * @param discharging Whether or not the cell is discharging.
- * @param chip The ID of the chip.
- * @param segment_temperature The output of the onboard therm.
- * @param die_temperature The temperature of the ADBMS6830 die.
- * @param vpv The voltage from V+ to V-.
- */
-void send_beta_status_a_message(float cell_temperature, float voltage,
-				bool discharging, uint8_t chip,
-				float segment_temperature,
-				float die_temperature, float vpv);
-
-/**
- * @brief Send message containing ADBMS6830 diagnostic data.
- * 
- * @param vref2 Second reference voltage for ADBMS6830.
- * @param v_analog Analog power supply voltage.
- * @param v_digital Digital power supply voltage.
- * @param chip ID of the chip.
- * @param v_res VREF2 across a resistor for open wire detection.
- * @param vmv Voltage between S1N and V-.
- * @param cvs The C v S fault of Beta chip 10
- */
-void send_beta_status_b_message(float vref2, float v_analog, float v_digital,
-				uint8_t chip, float v_res, float vmv, bool cvs);
-
-/**
- * @brief Send a message for the faults of beta chips.
- * 
- * @param chip ID of chip
- * @param flt_reg  the fault data register
- */
-void send_beta_status_c_message(uint8_t chip, stc_ *flt_reg);
-
-/**
  * @brief Send message containing ADBMS6830 diagnostic data and onboard therm data.
  * 
  * @param segment_temp Temperature reading from on-board therm.
  * @param chip ID of the chip.
- * @param die_temperature Temperature of the ADBOS6830 die.
+ * @param die_temperature Temperature of the ADBMS6830 die.
  * @param vpv The voltage from V+ to V-.
  * @param vmv Voltage between S1N and V-.
  * @param flt_reg The fault register of the chip (statc)
  */
-void send_alpha_status_a_message(float segment_temp, uint8_t chip,
-				 float die_temperature, float vpv, float vmv,
-				 stc_ *flt_reg);
+void send_status_a_message(float segment_temp, uint8_t chip,
+			   float die_temperature, float vpv, float vmv,
+			   stc_ *flt_reg);
 
 /**
  * @brief Send message containing ADBMS6830 diagnostic data.
@@ -211,9 +173,8 @@ void send_alpha_status_a_message(float segment_temp, uint8_t chip,
  * @param v_digital Digital power supply voltage.
  * @param flt_reg The fault register of the chip (statc)
  */
-void send_alpha_status_b_message(float v_res, uint8_t chip, float vref2,
-				 float v_analog, float v_digital,
-				 stc_ *flt_reg);
+void send_status_b_message(float v_res, uint8_t chip, float vref2,
+			   float v_analog, float v_digital, stc_ *flt_reg);
 
 /**
  * @brief Sends a CAN message containing the PEC error count for a specific chip.
