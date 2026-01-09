@@ -3,14 +3,19 @@
 #include "adBms6830GenericType.h"
 #include "compute.h"
 #include "mcuWrapper.h"
+#include "isospi_recovery.h"
+
+#define MAX_PEC_ERROR_ACCUM (100U) // Max accumulated PECs
+
+#define ADBMS_ADC_POLL_TIMEOUT (200U) // ms
 
 /**
- * @brief Count and reset PEC errors for all chips, then send a CAN message if needed.
+ * @brief Count PEC errors for all chips, send CAN message, and reset counters.
  *
  * This function iterates through all chips, accumulates the PEC (Packet Error Code) 
  * error count, resets the PEC error counter and Command counter, then sends a CAN message if any errors exist.
  *
- * @param chips Array of chips containing PEC error data.
+ * @param chips Pointer to the array of cell_asic structures.
  */
 static void count_pec_errors(cell_asic chips[NUM_CHIPS])
 {
@@ -94,13 +99,33 @@ static void count_pec_errors(cell_asic chips[NUM_CHIPS])
 			}
 
 			send_pec_error_message(chip, pec_error_count);
+
+			// Accumulate PEC errors only after startup mask timer ends
+			if (!is_startup_pec_mask_active()) {
+				// Saturate at MAX_PEC_ERROR_ACCUM
+				if ((MAX_PEC_ERROR_ACCUM -
+				     chips[chip].pec_error_sum) <
+				    pec_error_count) {
+					chips[chip].pec_error_sum =
+						MAX_PEC_ERROR_ACCUM;
+				} else {
+					chips[chip].pec_error_sum +=
+						pec_error_count; // cleared in detect_isospi_break()
+				}
+			}
 		}
 
+		// Reset PEC counters for next round
 		memset(&(chips[chip].cccrc), 0, sizeof(chips[chip].cccrc));
 	}
 }
 
 // --- BEGIN SET HELPERS ---
+
+void set_iso_spi_line(cell_asic *chip, isospi_line_ line)
+{
+	chip->isospi_line = line;
+}
 
 void set_REFON(cell_asic *chip, REFON state)
 {
@@ -199,54 +224,26 @@ void set_discharge_timeout(cell_asic *chip, DCTO timeout)
 
 // --- BEGIN RW ---
 
-extern TIM_HandleTypeDef htim2;
-
-/**
- * @brief Delays a certain number of microseconds
- * 
- * Approximately +50% error as seen in logic analyzer
- * 
- * Make sure this TIM timer prescaler is set to (InternalClock)/(Prescaler) - 1
- * 
- * So a 64 MKhz clock would have a 63 Mhz prescaler to set a 1us tick
- * 
- * @param us the number of us to delay
- */
-void delay_us(uint32_t us)
-{
-	uint32_t tickstart = __HAL_TIM_GET_COUNTER(&htim2);
-	uint32_t wait = us;
-
-	while ((__HAL_TIM_GET_COUNTER(&htim2) - tickstart) < wait)
-		;
-}
-
-/**
- * @brief Wake the isoSPI of every ADBMS6830 IC in the daisy chain. Blocking critical section wait for around 30us * NUM_CHIPS.
- * 
- * Takes in the SPI object as an onwership strategy, it is externed inside the driver
- * 
- */
-void adbms_wake_isospi(SPI_HandleTypeDef *hspi)
-{
-	for (uint8_t ic = 0; ic < NUM_CHIPS; ic++) {
-		adBmsCsLow();
-		delay_us(500);
-		adBmsCsHigh();
-		delay_us(500);
-	}
-}
-
 /**
  * @brief Wake the chip of every ADBMS6830 IC.  Blocking critical section wait about 1ms * NUM_CHIPS
  * 
+ * @param line   isoSPI line to wake (ISOSPI_LINE_A or ISOSPI_LINE_B).
+ * @param num_ic Number of ICs present on the specified isoSPI line.
  */
-void adbms_wake_core()
+void adbms_wake_core(isospi_line_ line, uint8_t num_ic)
 {
-	for (uint8_t ic = 0; ic < NUM_CHIPS; ic++) {
-		adBmsCsLow();
-		adBmsCsHigh();
-		delay_us(4000);
+	switch (line) {
+	case ISOSPI_LINE_A:
+	case ISOSPI_LINE_B:
+		for (uint8_t ic = 0; ic < num_ic; ic++) {
+			adBmsLineCsLow(line);
+			adBmsLineCsHigh(line);
+			delay_us(4000);
+		}
+		break;
+	default:
+		printf(" Invalid isoSPI line selected \n");
+		break;
 	}
 }
 
@@ -261,8 +258,6 @@ void adbms_wake_core()
 void write_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 		      GRP group, SPI_HandleTypeDef *hspi)
 {
-	adbms_wake_isospi(hspi);
-
 	adBmsWriteData(NUM_CHIPS, chips, command, type, group);
 }
 
@@ -277,16 +272,16 @@ void write_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 void read_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 		     GRP group, SPI_HandleTypeDef *hspi)
 {
-	adbms_wake_isospi(hspi);
-
 	adBmsReadData(NUM_CHIPS, chips, command, type, group);
 
 	count_pec_errors(chips);
 }
 
-uint32_t adBmsPollAdc_indicator(uint8_t poll_type[2])
+uint32_t adBmsPollAdc_indicator(cell_asic chips[NUM_CHIPS],
+				uint8_t poll_type[2])
 {
-	uint32_t result = adBmsPollAdc(poll_type);
+	uint32_t result = adBmsPollAdc(NUM_CHIPS, chips, poll_type,
+				       ADBMS_ADC_POLL_TIMEOUT);
 	return result;
 }
 
@@ -294,32 +289,84 @@ uint32_t adBmsPollAdc_indicator(uint8_t poll_type[2])
 
 void soft_reset_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adbms_wake_isospi(hspi);
-	spiSendCmd(SRST);
-	adbms_wake_core();
+	uint8_t ic_count_a = 0U, ic_count_b = 0U;
+
+	getIsoSPILineChipCount(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	if (ic_count_a > 0) {
+		adBmsWakeISOSPILine(ISOSPI_LINE_A, ic_count_a);
+		spiSendCmd(ISOSPI_LINE_A, SRST);
+		adbms_wake_core(ISOSPI_LINE_A, ic_count_a);
+	}
+
+	if (ic_count_b > 0) {
+		adBmsWakeISOSPILine(ISOSPI_LINE_B, ic_count_b);
+		spiSendCmd(ISOSPI_LINE_B, SRST);
+		adbms_wake_core(ISOSPI_LINE_B, ic_count_b);
+	}
 }
 
 void mute_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adbms_wake_isospi(hspi);
-	spiSendCmd(MUTE);
+	uint8_t ic_count_a = 0U, ic_count_b = 0U;
+
+	getIsoSPILineChipCount(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	if (ic_count_a > 0) {
+		adBmsWakeISOSPILine(ISOSPI_LINE_A, ic_count_a);
+		spiSendCmd(ISOSPI_LINE_A, MUTE);
+	}
+
+	if (ic_count_b > 0) {
+		adBmsWakeISOSPILine(ISOSPI_LINE_B, ic_count_b);
+		spiSendCmd(ISOSPI_LINE_B, MUTE);
+	}
 }
+
 void unmute_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adbms_wake_isospi(hspi);
-	spiSendCmd(UNMUTE);
+	uint8_t ic_count_a = 0U, ic_count_b = 0U;
+
+	getIsoSPILineChipCount(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	if (ic_count_a > 0) {
+		adBmsWakeISOSPILine(ISOSPI_LINE_A, ic_count_a);
+		spiSendCmd(ISOSPI_LINE_A, UNMUTE);
+	}
+
+	if (ic_count_b > 0) {
+		adBmsWakeISOSPILine(ISOSPI_LINE_B, ic_count_b);
+		spiSendCmd(ISOSPI_LINE_B, UNMUTE);
+	}
 }
 
 void snap_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adbms_wake_isospi(hspi);
-	spiSendCmd(SNAP);
+	uint8_t ic_count_a = 0U, ic_count_b = 0U;
+
+	getIsoSPILineChipCount(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	if (ic_count_a > 0) {
+		adBmsWakeISOSPILine(ISOSPI_LINE_A, ic_count_a);
+		spiSendCmd(ISOSPI_LINE_A, SNAP);
+	}
+
+	if (ic_count_b > 0) {
+		adBmsWakeISOSPILine(ISOSPI_LINE_B, ic_count_b);
+		spiSendCmd(ISOSPI_LINE_B, SNAP);
+	}
 }
 
 void unsnap_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adbms_wake_isospi(hspi);
-	spiSendCmd(UNSNAP);
+	uint8_t ic_count_a = 0U, ic_count_b = 0U;
+
+	getIsoSPILineChipCount(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	if (ic_count_a > 0) {
+		adBmsWakeISOSPILine(ISOSPI_LINE_A, ic_count_a);
+		spiSendCmd(ISOSPI_LINE_A, UNSNAP);
+	}
+
+	if (ic_count_b > 0) {
+		adBmsWakeISOSPILine(ISOSPI_LINE_B, ic_count_b);
+		spiSendCmd(ISOSPI_LINE_B, UNSNAP);
+	}
 }
 
 void write_config_regs(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
@@ -399,9 +446,8 @@ void adc_and_read_aux_registers(cell_asic chips[NUM_CHIPS],
 				SPI_HandleTypeDef *hspi)
 {
 	// TODO only poll correct GPIOs
-	adbms_wake_isospi(hspi);
-	adBms6830_Adax(AUX_OW_OFF, PUP_DOWN, AUX_ALL);
-	adBmsPollAdc_indicator(PLAUX1);
+	adBms6830_Adax(NUM_CHIPS, chips, AUX_OW_OFF, PUP_DOWN, AUX_ALL);
+	adBmsPollAdc_indicator(chips, PLAUX1);
 
 	read_adbms_data(chips, RDAUXA, Aux, A, hspi);
 	read_adbms_data(chips, RDAUXB, Aux, B, hspi);
@@ -412,9 +458,8 @@ void adc_and_read_aux_registers(cell_asic chips[NUM_CHIPS],
 void adc_and_read_aux2_registers(cell_asic chips[NUM_CHIPS],
 				 SPI_HandleTypeDef *hspi)
 {
-	adbms_wake_isospi(hspi);
-	adBms6830_Adax2(AUX_ALL);
-	adBmsPollAdc_indicator(PLAUX2);
+	adBms6830_Adax2(NUM_CHIPS, chips, AUX_ALL);
+	adBmsPollAdc_indicator(chips, PLAUX2);
 
 	read_adbms_data(chips, RDRAXA, RAux, A, hspi);
 	read_adbms_data(chips, RDRAXB, RAux, B, hspi);
@@ -469,18 +514,18 @@ void read_serial_id(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 
 void get_c_adc_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adbms_wake_isospi(hspi);
-	adBms6830_Adcv(RD_OFF, SINGLE, DCP_OFF, RSTF_ON, OW_OFF_ALL_CH);
-	adBmsPollAdc_indicator(PLCADC);
+	adBms6830_Adcv(NUM_CHIPS, chips, RD_OFF, SINGLE, DCP_OFF, RSTF_ON,
+		       OW_OFF_ALL_CH);
+	adBmsPollAdc_indicator(chips, PLCADC);
 
 	read_c_voltage_registers(chips, hspi);
 }
 
 void get_avgd_cell_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adbms_wake_isospi(hspi);
-	adBms6830_Adcv(RD_OFF, SINGLE, DCP_OFF, RSTF_OFF, OW_OFF_ALL_CH);
-	adBmsPollAdc_indicator(PLCADC);
+	adBms6830_Adcv(NUM_CHIPS, chips, RD_OFF, SINGLE, DCP_OFF, RSTF_OFF,
+		       OW_OFF_ALL_CH);
+	adBmsPollAdc_indicator(chips, PLCADC);
 
 	read_average_voltage_registers(chips, hspi);
 }
@@ -494,9 +539,8 @@ void get_avgd_cell_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 
 void get_s_adc_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adbms_wake_isospi(hspi);
-	adBms6830_Adsv(SINGLE, DCP_OFF, OW_OFF_ALL_CH);
-	adBmsPollAdc_indicator(PLSADC);
+	adBms6830_Adsv(NUM_CHIPS, chips, SINGLE, DCP_OFF, OW_OFF_ALL_CH);
+	adBmsPollAdc_indicator(chips, PLSADC);
 
 	read_s_voltage_registers(chips, hspi);
 }
@@ -504,18 +548,18 @@ void get_s_adc_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 void get_c_and_s_adc_voltages(cell_asic chips[NUM_CHIPS],
 			      SPI_HandleTypeDef *hspi)
 {
-	adbms_wake_isospi(hspi);
-	adBms6830_Adcv(RD_ON, SINGLE, DCP_OFF, RSTF_OFF, OW_OFF_ALL_CH);
-	adBmsPollAdc_indicator(PLSADC);
+	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, SINGLE, DCP_OFF, RSTF_OFF,
+		       OW_OFF_ALL_CH);
+	adBmsPollAdc_indicator(chips, PLSADC);
 
 	read_c_voltage_registers(chips, hspi);
 	read_s_voltage_registers(chips, hspi);
 }
 
-void start_c_adc_conv(SPI_HandleTypeDef *hspi)
+void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adbms_wake_isospi(hspi);
-	adBms6830_Adcv(RD_ON, CONTINUOUS, DCP_OFF, RSTF_ON, OW_OFF_ALL_CH);
+	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, CONTINUOUS, DCP_OFF, RSTF_ON,
+		       OW_OFF_ALL_CH);
 }
 
 // --- END ADC POLL ---
