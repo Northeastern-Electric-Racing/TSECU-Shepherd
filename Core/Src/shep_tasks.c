@@ -292,46 +292,46 @@ void vDebug(ULONG thread_input)
 		get_flag(DEBUG_FLAG, TX_WAIT_FOREVER);
 
 		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-			chipdata_t chip_data = get_chip_data(analyzer, chip);
+			chipdata_t *chip_data = get_chip_data(analyzer, chip);
 			for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP;
 			     cell += 2) {
 				// Sends two cells per messages
 				// Accounts for odd number of cells
 				send_cell_data_message(
-					chip_data.alpha,
-					chip_data.cell_temp[cell],
-					chip_data.cell_voltages[cell],
+					chip_data->alpha,
+					chip_data->cell_temp[cell],
+					chip_data->cell_voltages[cell],
 
 					cell + 1 == NUM_CELLS_PER_CHIP ?
 						0 :
-						chip_data.cell_voltages[cell +
+						chip_data->cell_voltages[cell +
 									1],
 					chip, cell, cell + 1,
-					chip_data.is_balancing[cell],
+					chip_data->is_balancing[cell],
 
 					cell + 1 == NUM_CELLS_PER_CHIP ?
 						0 :
-						chip_data.is_balancing[cell + 1],
-					chip_data.cs_fault[cell],
+						chip_data->is_balancing[cell + 1],
+					chip_data->cs_fault[cell],
 					cell + 1 == NUM_CELLS_PER_CHIP ?
 						0 :
-						chip_data.cs_fault[cell + 1]);
+						chip_data->cs_fault[cell + 1]);
 
 				tx_thread_sleep(10); // TODO: enhance timing
 			}
 
-			send_status_a_message(chip_data.on_board_temp, chip,
-					      chip_data.die_temp, chip_data.vpv,
-					      chip_data.vmv,
-					      &chip_data.flt_reg);
+			send_status_a_message(chip_data->on_board_temp, chip,
+					      chip_data->die_temp, chip_data->vpv,
+					      chip_data->vmv,
+					      &chip_data->flt_reg);
 
 			tx_thread_sleep(30); // TODO: enhance timing
 
-			send_status_b_message(chip_data.v_res, chip,
-					      chip_data.vref2,
-					      chip_data.v_analog,
-					      chip_data.v_digital,
-					      &chip_data.flt_reg);
+			send_status_b_message(chip_data->v_res, chip,
+					      chip_data->vref2,
+					      chip_data->v_analog,
+					      chip_data->v_digital,
+					      &chip_data->flt_reg);
 
 			tx_thread_sleep(30); // TODO: enhance timing
 		}

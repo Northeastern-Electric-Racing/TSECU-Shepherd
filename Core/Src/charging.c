@@ -29,7 +29,7 @@ chipsSelectionSort(analyzer_t *analyzer,
 			replaced_val[chip][i] = (val_idexed_t){
 				.idex = i,
 				.val = get_chip_data(analyzer, chip)
-					       .open_cell_voltage[i]
+					       ->open_cell_voltage[i]
 			};
 		}
 

@@ -56,14 +56,10 @@ static float calc_cell_temp_onboard(float voltage)
 	return calc_temp(res);
 }
 
-chipdata_t get_chip_data(analyzer_t *analyzer, uint8_t chip)
+chipdata_t *get_chip_data(analyzer_t *analyzer, uint8_t chip)
 {
 	assert_param(chip < NUM_CHIPS);
-
-	chipdata_t chip_data;
-	chip_data = analyzer->chip_data[chip]; // TODO; MUTEX
-
-	return chip_data;
+	return &analyzer->chip_data[chip]; // TODO; MUTEX
 }
 
 void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data)
@@ -340,35 +336,35 @@ void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data,
 void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 {
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-		chipdata_t chip_data = get_chip_data(analyzer, chip);
+		chipdata_t *chip_data = get_chip_data(analyzer, chip);
 
 		// Cell Diagnostics
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			// balancing status
-			chip_data.is_balancing[cell] =
+			chip_data->is_balancing[cell] =
 				(acc_data->chips[chip].tx_cfgb.dcc >> cell) & 1;
 			// S_C fault status
-			chip_data.cs_fault[cell] =
+			chip_data->cs_fault[cell] =
 				(acc_data->chips[chip].statc.cs_flt >> cell) &
 				1;
 		}
 
 		// Chip Diagnotics
-		chip_data.die_temp =
+		chip_data->die_temp =
 			getVoltage(acc_data->chips[chip].stata.itmp / 0.0075) -
 			273;
-		chip_data.vpv =
+		chip_data->vpv =
 			20.0 *
 			getVoltage( // VPV is ra_code 11 w/ different scale
 				acc_data->chips[chip].aux.a_codes[11]),
-		chip_data.vmv =
+		chip_data->vmv =
 			(20.0 * getVoltage( // VMV is ra_code 10
 					acc_data->chips[chip].aux.a_codes[10])),
-		chip_data.flt_reg = acc_data->chips[chip].statc;
-		chip_data.v_res = getVoltage(acc_data->chips[chip].statb.vr4k);
-		chip_data.vref2 = getVoltage(acc_data->chips[chip].stata.vref2);
-		chip_data.v_analog = getVoltage(acc_data->chips[chip].statb.va),
-		chip_data.v_digital =
+		chip_data->flt_reg = acc_data->chips[chip].statc;
+		chip_data->v_res = getVoltage(acc_data->chips[chip].statb.vr4k);
+		chip_data->vref2 = getVoltage(acc_data->chips[chip].stata.vref2);
+		chip_data->v_analog = getVoltage(acc_data->chips[chip].statb.va),
+		chip_data->v_digital =
 			getVoltage(acc_data->chips[chip].statb.vd);
 	}
 }
