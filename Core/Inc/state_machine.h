@@ -5,7 +5,7 @@
 #include "analyzer.h"
 #include "datastructs.h"
 
-#define NUM_FAULTS 8
+#define NUM_FAULTS 7
 
 /**
  * @brief gets the current state of the BMS

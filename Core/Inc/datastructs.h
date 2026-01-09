@@ -104,9 +104,6 @@ typedef struct {
 	float batt_volts; // BATT Voltage (V)
 	float shunt_temp; // Temperature of shunt resistor (C)
 	float pack_current; // Current read through the shunt
-
-	uint8_t pec_error_count; // number of PEC errors detected during last read
-
 } hv_plate_t;
 
 /**
@@ -118,8 +115,6 @@ typedef struct {
 
 	// the current discharge configuration the state machine wants
 	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
-
-	uint8_t pec_error_count; // number of PEC errors detected during last read
 } acc_data_t;
 
 /**

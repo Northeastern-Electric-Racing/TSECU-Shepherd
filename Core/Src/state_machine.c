@@ -193,7 +193,6 @@ void sm_fault_return(state_machine_args_t *state_machine_args)
 	bms_algos_t *bms_algos = state_machine_args->bms_algos;
 	hv_plate_t *hv_plate = state_machine_args->hv_plate;
 	state_machine_t *state_machine = state_machine_args->state_machine;
-	acc_data_t *acc_data = state_machine_args->acc_data;
 
 	/* FAULT CHECK (Check for fuckies) */
 
@@ -232,8 +231,6 @@ void sm_fault_return(state_machine_args_t *state_machine_args)
 	fault_table[4]  = (fault_eval_t) {.id = "High Charge Voltage",     .timer =    ovr_chgvolt_timer, .data_1 =  fault_data->max_ocv.val,      .optype_1 = GT, .lim_1 =                                              MAX_CHARGE_VOLT,         .timeout =  OVER_VOLT_TIME,     .code =             CELL_VOLTAGE_TOO_HIGH,  .optype_2 = EQ, .data_2 = state_machine->bms_state == CHARGING,  .lim_2 =      true,   .is_critical = true  };
 	fault_table[5]  = (fault_eval_t) {.id = "High Cell Temp",              .timer =      high_temp_timer, .data_1 =     fault_data->max_temp.val,  .optype_1 = GT, .lim_1 =                                                        MAX_CELL_TEMP, .timeout =      HIGH_TEMP_TIME, .code =                      PACK_TOO_HOT,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
 	fault_table[6]  = (fault_eval_t) {.id = "Die Overtemp",            .timer =   die_overtemp_timer, .data_1 = fault_data->max_chiptemp.val,  .optype_1 = GT, .lim_1 = 													   MAX_CHIP_TEMP, .timeout =   MAX_CHIPTEMP_TIME, .code =            DIE_TEMP_MAXIMUM_FAULT,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
-	fault_table[7]  = (fault_eval_t) {.id = "HV Plate Comms",            .timer =   hv_plate_comms_timer, .data_1 = hv_plate->pec_error_count,  .optype_1 = GE, .lim_1 = 													   1, .timeout =   MAX_CHIPTEMP_TIME, .code =            HV_PLATE_COMMS_FAULT,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
-	fault_table[8]  = (fault_eval_t) {.id = "Segment Comms",            .timer =   segment_comms_timer, .data_1 = acc_data->pec_error_count,  .optype_1 = GE, .lim_1 = 													   1, .timeout =   COMMS_ERROR_TIME, .code =            SEGMENT_COMMS_FAULT,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
 	// clang-format on
 
 	bool faulted = false;
@@ -390,13 +387,13 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 void set_segment_comms_fault(state_machine_t *state_mach)
 {
 	mutex_get(&state_mach->state_mutex);
-	state_mach->fault_code_noncrit |= ISOSPI_BREAK_FAULT;
+	state_mach->fault_code_noncrit |= SEGMENT_COMMS_FAULT;
 	mutex_put(&state_mach->state_mutex);
 }
 
 void clear_segment_comms_fault(state_machine_t *state_mach)
 {
 	mutex_get(&state_mach->state_mutex);
-	state_mach->fault_code_noncrit &= ~ISOSPI_BREAK_FAULT;
+	state_mach->fault_code_noncrit &= ~SEGMENT_COMMS_FAULT;
 	mutex_put(&state_mach->state_mutex);
 }
