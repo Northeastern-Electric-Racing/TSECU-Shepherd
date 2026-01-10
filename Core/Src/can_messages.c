@@ -295,11 +295,16 @@ void send_segment_total_volt_message(analyzer_t *analyzer)
 	uint8_t bitstream_data[8];
 	bitstream_init(&segment_total_volt_msg, bitstream_data, 8);
 
-	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[0] * 39, 12); // Segment 1
-	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[1] * 39, 12); // Segment 2
-	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[2] * 39, 12); // Segment 3
-	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[3] * 39, 12); // Segment 4
-	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[4] * 39, 12); // Segment 5
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[0] * 39, 12); // Segment 1
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[1] * 39, 12); // Segment 2
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[2] * 39, 12); // Segment 3
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[3] * 39, 12); // Segment 4
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[4] * 39, 12); // Segment 5
 	bitstream_add(&segment_total_volt_msg, 0, 4); // Extra (4 bits)
 
 	can_msg_t msg;
