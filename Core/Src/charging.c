@@ -2,8 +2,6 @@
 #include "charging.h"
 #include "bms_config.h"
 #include "c_utils.h"
-#include "compute.h"
-#include "state_machine.h"
 #include "analyzer.h"
 
 #include <math.h>

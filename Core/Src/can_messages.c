@@ -262,7 +262,6 @@ void send_cell_voltage_message(crit_cellval_t max_voltage,
 
 	queue_can_msg(msg);
 }
-
 void send_segment_average_volt_message(analyzer_t *analyzer)
 {
 	bitstream_t segment_average_volt_msg;
@@ -296,16 +295,11 @@ void send_segment_total_volt_message(analyzer_t *analyzer)
 	uint8_t bitstream_data[8];
 	bitstream_init(&segment_total_volt_msg, bitstream_data, 8);
 
-	bitstream_add(&segment_total_volt_msg,
-		      analyzer->segment_total_volts[0] * 39, 12); // Segment 1
-	bitstream_add(&segment_total_volt_msg,
-		      analyzer->segment_total_volts[1] * 39, 12); // Segment 2
-	bitstream_add(&segment_total_volt_msg,
-		      analyzer->segment_total_volts[2] * 39, 12); // Segment 3
-	bitstream_add(&segment_total_volt_msg,
-		      analyzer->segment_total_volts[3] * 39, 12); // Segment 4
-	bitstream_add(&segment_total_volt_msg,
-		      analyzer->segment_total_volts[4] * 39, 12); // Segment 5
+	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[0] * 39, 12); // Segment 1
+	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[1] * 39, 12); // Segment 2
+	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[2] * 39, 12); // Segment 3
+	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[3] * 39, 12); // Segment 4
+	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[4] * 39, 12); // Segment 5
 	bitstream_add(&segment_total_volt_msg, 0, 4); // Extra (4 bits)
 
 	can_msg_t msg;
@@ -530,132 +524,8 @@ void send_cell_data_message(bool alpha, float temperature, float voltage_a,
 	queue_can_msg(msg);
 }
 
-void send_beta_status_a_message(float cell_temperature, float voltage,
-				bool discharging, uint8_t chip,
-				float segment_temperature,
-				float die_temperature, float vpv)
-{
-	can_msg_t msg = { .id = BETA_STAT_A_CANID, .len = BETA_STAT_A_SIZE, .data = { 0 } };
-
-	// patch bc 0 to 4
-	chip /= 2;
-
-	// printf("BETA Chip: %d\n", chip);
-	// printf("VOLT 10: %f, b%d\n", voltage, discharging);
-	// printf("SegTemp: %f\n", segment_temperature);
-	// printf("DieTemp: %f\n", die_temperature);
-	// printf("VPV: %f\n", vpv);
-
-	cell_temperature *= 10;
-	voltage *= 1000;
-	segment_temperature *= 10;
-	die_temperature *= 100;
-	vpv *= 100;
-
-	bitstream_t beta_status_a_message;
-	uint8_t bitstream_data[8];
-	bitstream_init(&beta_status_a_message, bitstream_data,
-		       8); // Create 8-byte bitstream
-
-	bitstream_add(&beta_status_a_message, cell_temperature,
-		      10); // Cell temperature (10 bits)
-	bitstream_add(&beta_status_a_message, voltage, 13); // Voltage (13 bits)
-	bitstream_add(&beta_status_a_message, discharging,
-		      1); // Discharging (1 bit)
-	bitstream_add(&beta_status_a_message, chip,
-		      4); // Chip ID (4 bits)
-	bitstream_add(&beta_status_a_message, segment_temperature,
-		      10); // Segment temperature (10 bits)
-	bitstream_add(&beta_status_a_message, die_temperature,
-		      13); // Die temperature (13 bits)
-	bitstream_add(&beta_status_a_message, vpv, 13); // Vpv (12 bits)
-
-	memcpy(msg.data, &bitstream_data, BETA_STAT_A_SIZE);
-
-	handle_bitstream_overflow(&beta_status_a_message, msg.id);
-
-	queue_can_msg(msg);
-}
-
-// Changes made by Sam on 3/30/25, not verified
-// verified by Jack on chip 0, 3/12/2025.
-void send_beta_status_b_message(float vref2, float v_analog, float v_digital,
-				uint8_t chip, float v_res, float vmv, bool cvs)
-{
-	can_msg_t msg = { .id = BETA_STAT_B_CANID, .len = BETA_STAT_B_SIZE, .data = { 0 } };
-
-	// patch bc 0 to 4
-	chip /= 2;
-
-	// printf("BETA Chip: %d\n", chip);
-	// printf("Vref2 %f\n", vref2);
-	// printf("v_analog %f\n", v_analog);
-	// printf("v_digital %f\n", v_digital);
-	// printf("v_res %f\n", v_res);
-	// printf("vmv %f\n", vmv);
-
-	vref2 *= 1000;
-	v_analog *= 100;
-	v_digital *= 100;
-	v_res *= 1000;
-	vmv *= 1000;
-
-	bitstream_t beta_status_b_message;
-	uint8_t bitstream_data[8];
-	bitstream_init(&beta_status_b_message, bitstream_data, 8); // Create 8-byte bitstream
-
-	bitstream_add(&beta_status_b_message, vref2, 13); 				// Vref2 (13 bits)
-	bitstream_add(&beta_status_b_message, v_analog, 10); 			// Vanalog (10 bits)
-	bitstream_add(&beta_status_b_message, v_digital, 10); 			// Vdigital (10 bits)
-	bitstream_add(&beta_status_b_message, chip, 4); 	// Chip ID (4 bits)
-	bitstream_add(&beta_status_b_message, v_res, 13); 				// Vres (13 bits)
-	bitstream_add(&beta_status_b_message, vmv, 13); 				// Vmv (13 bits)
-	bitstream_add(&beta_status_b_message, cvs, 1); 					// C v S fault of Beta cell 10 (1 bit)
-
-	memcpy(msg.data, &bitstream_data, BETA_STAT_B_SIZE);
-
-	handle_bitstream_overflow(&beta_status_b_message, msg.id);
-
-	queue_can_msg(msg);
-}
-
-// verified by Jack on chip 0 3/12/2025.  For some reason OTP1_MED triggering without print?
-void send_beta_status_c_message(uint8_t chip, stc_ *flt_reg)
-{
-	can_msg_t msg = { .id = BETA_STAT_C_CANID, .len = BETA_STAT_C_SIZE, .data = { 0 } };
-
-	// patch bc 0 to 4
-	chip /= 2;
-
-	bitstream_t beta_status_c_message;
-	uint8_t bitstream_data[3];
-	bitstream_init(&beta_status_c_message, bitstream_data, 3); // Create 3-byte bitstream
-
-	bitstream_add(&beta_status_c_message, chip, 4);	// Chip ID (4 bits)
-	bitstream_add(&beta_status_c_message, flt_reg->va_ov, 1);		// VA_OV (1 bit)
-	bitstream_add(&beta_status_c_message, flt_reg->va_uv, 1);		// VA_UV (1 bit)
-	bitstream_add(&beta_status_c_message, flt_reg->vd_ov, 1);		// VD_OV (1 bit)
-	bitstream_add(&beta_status_c_message, flt_reg->vd_uv, 1);		// VD_OV (1 bit)
-	bitstream_add(&beta_status_c_message, flt_reg->vde, 1);			// VDE (1 bit)
-	bitstream_add(&beta_status_c_message, flt_reg->vdel, 2);		// VDEL (2 bits)
-	bitstream_add(&beta_status_c_message, flt_reg->spiflt, 1);		// SPIFLT (1 bit)
-	bitstream_add(&beta_status_c_message, flt_reg->sleep, 1);		// SLEEP (1 bit)
-	bitstream_add(&beta_status_c_message, flt_reg->thsd, 1);		// THSD (1 bit)
-	bitstream_add(&beta_status_c_message, flt_reg->tmodchk, 1);		// TMODCHK (1 bit)
-	bitstream_add(&beta_status_c_message, flt_reg->oscchk, 1);		// OSCCHK (1 bit)
-	bitstream_add(&beta_status_c_message, flt_reg->otp1_med, 1);	// OTP1_MED (1 bit)
-	bitstream_add(&beta_status_c_message, flt_reg->otp2_med, 1);	// OTP2_MED (1 bit)
-	bitstream_add(&beta_status_c_message, 0, 7);					// Extra (7 bits)
-
-	memcpy(msg.data, &bitstream_data, BETA_STAT_C_SIZE);
-
-	handle_bitstream_overflow(&beta_status_c_message, msg.id);
-
-	queue_can_msg(msg);
-}
-
 // verified 3/17/2025 for chip 0 by Jack, EXCLUDING VMV (see TODO)
-void send_alpha_status_a_message(float segment_temp, uint8_t chip,
+void send_status_a_message(float segment_temp, uint8_t chip,
 				 float die_temperature, float vpv, float vmv,
 				 stc_ *flt_reg)
 {
@@ -707,7 +577,7 @@ void send_alpha_status_a_message(float segment_temp, uint8_t chip,
 }
 
 // verified 3/17/2025 for chip 0 by Jack. mostly faults too
-void send_alpha_status_b_message(float v_res, uint8_t chip, float vref2,
+void send_status_b_message(float v_res, uint8_t chip, float vref2,
 				 float v_analog, float v_digital, stc_ *flt_reg)
 {
 	can_msg_t msg = { .id = ALPHA_STAT_B_CANID, .len = ALPHA_STAT_B_SIZE, .data = { 0 } };
@@ -772,5 +642,32 @@ void send_pec_error_message(uint8_t chip_num, uint16_t pec_count)
 
 	memcpy(&msg.data, &pec_data, sizeof(pec_data));
 
+	queue_can_msg(msg);
+}
+
+/**
+ * @brief Sends ISO SPI status over CAN.
+ *
+ * @param status Pointer to isospi_status_t structure.
+ */
+void send_isospi_status_message(const isospi_status_t *status)
+{
+	struct __attribute__((__packed__)) {
+		uint8_t state;
+		uint8_t break_location;
+		uint8_t ver_attempts;
+		uint8_t recovery_successful;
+	} msg_data;
+
+	msg_data.state = (uint8_t)status->state;
+	msg_data.break_location = status->break_chip;
+	msg_data.ver_attempts = status->verification_attempts;
+	msg_data.recovery_successful = status->recovery_successful;
+
+	can_msg_t msg = { .id = ISOSPI_STS_CANID,
+			  .len = ISOSPI_STS_SIZE,
+			  .data = { 0 } };
+
+	memcpy(msg.data, &msg_data, sizeof(msg_data));
 	queue_can_msg(msg);
 }

@@ -4,9 +4,18 @@
 #include "adBms6830Data.h"
 #include "stm32h5xx_hal.h"
 #include "bms_config.h"
+#include "datastructs.h"
 #include "can_messages.h"
 
 // --- BEGIN SET HELPERS ---
+
+/**
+ * @brief Set the isoSPI line of the chip.
+ * 
+ * @param chip Pointer to the chip to modify.
+ * @param line isoSPI line of chip.
+ */
+void set_iso_spi_line(cell_asic *chip, isospi_line_ line);
 
 /**
  * @brief Set the status of the REFON bit.
@@ -335,7 +344,7 @@ void get_c_and_s_adc_voltages(cell_asic chips[NUM_CHIPS],
  * @brief Starts a continous c ADC conversion with S redundancy
  * 
  */
-void start_c_adc_conv(SPI_HandleTypeDef *hspi);
+void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
 
 // --- END ADC POLL ---
 
