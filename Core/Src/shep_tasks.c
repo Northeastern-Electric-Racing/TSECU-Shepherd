@@ -6,8 +6,14 @@
 #include "shep_queues.h"
 #include "can_messages.h"
 #include "shep_tasks.h"
+#include "timer.h"
+#include "state_machine.h"
 #include "can_handler.h"
-#include "can_messages.h"
+#include "u_tx_flags.h"
+#include "segment.h"
+#include "main.h"
+#include "hv_plate.h"
+#include "compute.h"
 #include "cell_temp_sanitizer.h"
 #include "isospi_recovery.h"
 #include "soc.h"
@@ -19,7 +25,7 @@ void vDefaultTask(ULONG thread_input)
 	/* Infinite loop */
 	for (;;) {
 #ifdef DEBUG_STATS
-// print_bms_stats(&bmsdata);
+//print_bms_stats(&bmsdata);
 #endif
 
 		if (alt) {
@@ -163,10 +169,7 @@ void vGetSegmentData(ULONG thread_input)
 
 	isospi_break_detection_init(acc_data->chips);
 
-	segment_init(acc_data->chips, &hspi2);
-
-	// must delay after init for some reason, or else ADC doesnt start up (-3.45
-	// or something)
+	// must delay after init for some reason, or else ADC doesnt start up (-3.45 or something)
 	tx_thread_sleep(MS_TO_TICKS(500));
 
 	for (;;) {
@@ -174,8 +177,7 @@ void vGetSegmentData(ULONG thread_input)
 
 		if (get_current_state(state_machine) == CHARGING) {
 			tx_thread_sleep(75);
-			// must delay to let settle after balancing has halted, or else cells read
-			// high
+			// must delay to let settle after balancing has halted, or else cells read high
 		}
 
 		if (get_current_state(state_machine) == CHARGING) {
@@ -262,7 +264,7 @@ void vSanitizer(ULONG thread_input)
 void vBMSAlgorithms(ULONG thread_input)
 {
 	for (;;) {
-		temp_sanitizer_run(sanitizer, analyzer);
+		// TODO: implement algo thread
 		tx_thread_sleep(MS_TO_TICKS(500));
 	}
 }
