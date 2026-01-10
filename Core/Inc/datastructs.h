@@ -184,11 +184,11 @@ typedef struct {
 	float segment_total_volts[NUM_SEGMENTS];
 	/* Delta voltages for each segment */
 	float segment_delt_volts[NUM_SEGMENTS];
-  
-  /* Voltage of pack */
+
+	/* Voltage of pack */
 	float pack_voltage;
-  
-  /* SoC of the Pack*/
+
+	/* SoC of the Pack*/
 	float soc;
 } analyzer_t;
 
