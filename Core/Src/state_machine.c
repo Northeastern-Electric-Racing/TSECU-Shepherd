@@ -316,7 +316,7 @@ bool sm_fault_eval(fault_eval_t *item)
 		// STARTING FAULTED TIMER MESSAGE
 		send_fault_timer_message(1, item->code, item->data_1);
 
-		return true;
+		return false;
 	}
 
 	PRINTLN_ERROR("Should not have reached here.");
