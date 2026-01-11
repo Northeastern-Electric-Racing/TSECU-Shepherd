@@ -9,7 +9,7 @@
 #define OCV_TIMER_DURATION 750 // in ticks
 
 /**
- * @brief Map cells to therms (ra codes).  Note beta has only 6 therms. 
+ * @brief Map cells to therms (ra codes).  Note beta has only 6 therms.
  */
 const int THERM_MAP[NUM_CELLS_PER_CHIP] = { 0, 0, 1, 1, 2, 2, 3,
 					    3, 4, 4, 5, 5, 6 };
@@ -17,15 +17,17 @@ const int THERM_MAP[NUM_CELLS_PER_CHIP] = { 0, 0, 1, 1, 2, 2, 3,
 // clang-format on
 
 /**
- * @brief Calculate the cell temperature of a 10,000 ohm NTP resistor (model 103)
- * 
+ * @brief Calculate the cell temperature of a 10,000 ohm NTP resistor (model
+ * 103)
+ *
  * @param res The resistance of the resistor
  * @return float The temperature
  */
 static float calc_temp(float res)
 {
 	float coef = res / 10000.0;
-	// achieved via passing ThermCalcs.xlsx into https://www.standardsapplied.com/nonlinear-curve-fitting-calculator.html
+	// achieved via passing ThermCalcs.xlsx into
+	// https://www.standardsapplied.com/nonlinear-curve-fitting-calculator.html
 	return -1149.531863 * (pow(coef, 1.0 / 8)) +
 	       658.9396848 * (pow(coef, 1.0 / 4)) +
 	       -87.8102815 * (pow(coef, 1.0 / 2)) + 2.034216235 * coef +
@@ -34,7 +36,7 @@ static float calc_temp(float res)
 
 /**
  * @brief Calculate a cell temperature based on the thermistor reading.
- * 
+ *
  * @param voltage The thremistor reading.
  * @return float The temperature in degrees Celsius.
  */
@@ -46,7 +48,7 @@ static float calc_cell_temp(float voltage)
 
 /**
  * @brief Calculate a cell temperature of onboard therm
- * 
+ *
  * @param voltage the voltage read by ADC
  * @return float The temperature in degrees C
  */
@@ -245,7 +247,10 @@ void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data)
 			// calc averge volatage across a segment
 			analyzer->segment_average_volts[c / 2] =
 				total_seg_volt / ((float)(NUM_CELLS * 2));
-
+			analyzer->segment_total_volts[c / 2] = total_seg_volt;
+			analyzer->segment_delt_volts[c / 2] =
+				analyzer->max_voltage.val -
+				analyzer->min_voltage.val;
 			total_seg_volt = 0;
 		}
 	}
@@ -291,7 +296,8 @@ void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data,
 	/* if there is no previous data point, set inital open cell voltage to current reading */
 
 	if (is_first_reading) {
-		// sanity check the last cell that the reading is good, oftentimes the first readings are bad
+		// sanity check the last cell that the reading is good, oftentimes the first
+		// readings are bad
 		float last_cell =
 			analyzer->chip_data[NUM_CHIPS - 1]
 				.cell_voltages[NUM_CELLS_PER_CHIP - 1];

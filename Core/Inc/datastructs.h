@@ -182,7 +182,10 @@ typedef struct {
 	float segment_average_volts[NUM_SEGMENTS];
 	/* Total voltages for each segment */
 	float segment_total_volts[NUM_SEGMENTS];
-	/* Pack voltage */
+	/* Delta voltages for each segment */
+	float segment_delt_volts[NUM_SEGMENTS];
+
+	/* Voltage of pack */
 	float pack_voltage;
 
 	/* SoC of the Pack*/

@@ -1,6 +1,6 @@
 #include "shep_queues.h"
-#include "u_tx_debug.h"
 #include "fdcan.h"
+#include "u_tx_debug.h"
 
 /* Incoming CAN Queue */
 queue_t can_incoming = {
@@ -18,9 +18,9 @@ queue_t can_outgoing = {
 	.capacity = 10 /* Number of messages the queue can hold. */
 };
 
-/* Initializes all ThreadX queues. 
-*  Calls to _create_queue() should go in here
-*/
+/* Initializes all ThreadX queues.
+ *  Calls to _create_queue() should go in here
+ */
 uint8_t queues_init(TX_BYTE_POOL *byte_pool)
 {
 	/* Create Queues */

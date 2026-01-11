@@ -1,5 +1,7 @@
 #include "state_machine.h"
+#include "c_utils.h"
 #include "can_messages.h"
+#include "charging.h"
 #include "compute.h"
 #include "segment.h"
 #include "charging.h"
