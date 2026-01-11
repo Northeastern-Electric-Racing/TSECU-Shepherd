@@ -6,7 +6,7 @@
 /**
  * @brief Get the chip data for the given chip
  */
-chipdata_t get_chip_data(analyzer_t *analyzer, uint8_t chip);
+chipdata_t *get_chip_data(analyzer_t *analyzer, uint8_t chip);
 
 /**
  * @brief Calculate thermistor values and cell temps using thermistors.

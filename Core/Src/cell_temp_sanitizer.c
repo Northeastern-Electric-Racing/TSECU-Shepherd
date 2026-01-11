@@ -23,7 +23,7 @@ void temp_sanitizer_run(sanitizer_t *sanitizer, analyzer_t *analyzer)
 				&sanitizer->sanitized_therms[chip][cell];
 
 			float cell_temp =
-				get_chip_data(analyzer, chip).cell_temp[cell];
+				get_chip_data(analyzer, chip)->cell_temp[cell];
 			if (!first_reading &&
 			    cell_temp >
 				    therm_state->last_temp *

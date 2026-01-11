@@ -1,7 +1,7 @@
 #include "hv_plate.h"
 #include "adi2950_interaction.h"
 
-#define HV_CTRL_GPO GPIO4_2950
+#define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 
 static float get_current_conversion(uint32_t data)
 {
@@ -125,14 +125,4 @@ float get_shunt_temp(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 			   get_voltage_conversion(ic->vr.v_codes[11])) / // V9B
 			  2;
 	return avg_volts;
-}
-
-void set_precharge_relay(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi,
-			 bool state)
-{
-	if (state) {
-		set_gpo(*ic, hspi, HV_CTRL_GPO);
-	} else {
-		reset_gpo(*ic, hspi, HV_CTRL_GPO);
-	}
 }
