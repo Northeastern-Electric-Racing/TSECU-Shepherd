@@ -2,7 +2,6 @@
 #ifndef SHEP_TASKS_H
 #define SHEP_TASKS_H
 
-#include <stdint.h>
 #include "tx_api.h"
 #include "datastructs.h"
 

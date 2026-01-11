@@ -1,5 +1,7 @@
 #include "state_machine.h"
+#include "c_utils.h"
 #include "can_messages.h"
+#include "charging.h"
 #include "compute.h"
 #include "segment.h"
 #include "charging.h"
@@ -192,6 +194,7 @@ void sm_fault_return(state_machine_args_t *state_machine_args)
 {
 	bms_algos_t *bms_algos = state_machine_args->bms_algos;
 	hv_plate_t *hv_plate = state_machine_args->hv_plate;
+	state_machine_t *state_machine = state_machine_args->state_machine;
 
 	/* FAULT CHECK (Check for fuckies) */
 
@@ -217,25 +220,22 @@ void sm_fault_return(state_machine_args_t *state_machine_args)
 	fault_eval_t fault_table[NUM_FAULTS];
 	analyzer_t *fault_data = state_machine_args->analyzer;
 
-	// TODO: Change to mutexed getter callback for retrieving fault data
-
 	// clang-format off
 											// ___________FAULT ID____________   __________TIMER___________   _____________DATA________________    __OPERATOR__   ____________________________________THRESHOLD____________________________  _______TIMER LENGTH_________  _____________FAULT CODE_________________    	___OPERATOR 2__ ________________________DATA 2______________   __THRESHOLD 2_____ ______CRITICAL________
-	fault_table[0]  = (fault_eval_t) {.id = "Discharge Current Limit", .timer =       ovr_curr_timer, .data_1 =     hv_plate->pack_current,  .optype_1 = GT, .lim_1 = bms_algos->cont_DCL ,                                                .timeout =      OVER_CURR_TIME, .code = DISCHARGE_LIMIT_ENFORCEMENT_FAULT,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
-	fault_table[1]  = (fault_eval_t) {.id = "Charge Current Limit",    .timer =    ovr_chgcurr_timer, .data_1 =     hv_plate->pack_current,  .optype_1 = GT, .lim_1 =                                        bms_algos->cont_CCL,          .timeout =  OVER_CHG_CURR_TIME, .code =    CHARGE_LIMIT_ENFORCEMENT_FAULT,  .optype_2 = LT,  .data_2 =         state_machine_args->hv_plate->pack_current,  .lim_2 =          0, .is_critical = true  };
+	fault_table[0]  = (fault_eval_t) {.id = "Discharge Current Limit", .timer =       ovr_curr_timer, .data_1 =     hv_plate->pack_current,  .optype_1 = GT, .lim_1 = bms_algos->cont_DCL ,                                                .timeout =      OVER_CURR_TIME, .code = DISCHARGE_LIMIT_ENFORCEMENT_FAULT,  .optype_2 = NOP /* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
+	fault_table[1]  = (fault_eval_t) {.id = "Charge Current Limit",    .timer =    ovr_chgcurr_timer, .data_1 =     hv_plate->pack_current,  .optype_1 = GT, .lim_1 =                                        bms_algos->cont_CCL,          .timeout =  OVER_CHG_CURR_TIME, .code =    CHARGE_LIMIT_ENFORCEMENT_FAULT,  .optype_2 = NOP /* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
 	fault_table[2]  = (fault_eval_t) {.id = "Low Cell Voltage",        .timer =      undr_volt_timer, .data_1 =  fault_data->min_ocv.val,      .optype_1 = LT, .lim_1 =                                                     MIN_VOLT,         .timeout =     UNDER_VOLT_TIME, .code =              CELL_VOLTAGE_TOO_LOW,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
-	fault_table[3]  = (fault_eval_t) {.id = "High Charge Voltage",     .timer =    ovr_chgvolt_timer, .data_1 =  fault_data->max_ocv.val,      .optype_1 = GT, .lim_1 =                                              MAX_CHARGE_VOLT,         .timeout =  OVER_VOLT_TIME,     .code =             CELL_VOLTAGE_TOO_HIGH,  .optype_2 = EQ, .data_2 = state_machine_args->state_machine->bms_state == CHARGING,  .lim_2 =      true,   .is_critical = true  };
-	fault_table[4]  = (fault_eval_t) {.id = "High Cell Voltage",       .timer =       ovr_volt_timer, .data_1 =  fault_data->max_ocv.val,      .optype_1 = GT, .lim_1 =                                                     MAX_VOLT,         .timeout =      OVER_VOLT_TIME, .code =             CELL_VOLTAGE_TOO_HIGH,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
-	fault_table[5]  = (fault_eval_t) {.id = "High Temp",               .timer =      high_temp_timer, .data_1 =     fault_data->max_temp.val,  .optype_1 = GT, .lim_1 =                                                        MAX_CELL_TEMP, .timeout =      HIGH_TEMP_TIME, .code =                      PACK_TOO_HOT,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
-	fault_table[6]  = (fault_eval_t) {.id = "Extremely Low Voltage",   .timer =       low_cell_timer, .data_1 =  fault_data->min_ocv.val,      .optype_1 = LT, .lim_1 =                                                                  0.9, .timeout =       LOW_CELL_TIME, .code =                  LOW_CELL_VOLTAGE,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
-	fault_table[7]  = (fault_eval_t) {.id = "Die Overtemp",            .timer =   die_overtemp_timer, .data_1 = fault_data->max_chiptemp.val,  .optype_1 = GT, .lim_1 = 													   MAX_CHIP_TEMP, .timeout =   MAX_CHIPTEMP_TIME, .code =            DIE_TEMP_MAXIMUM_FAULT,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
+	fault_table[3]  = (fault_eval_t) {.id = "High Cell Voltage",       .timer =       ovr_volt_timer, .data_1 =  fault_data->max_ocv.val,      .optype_1 = GT, .lim_1 =                                                     MAX_VOLT,         .timeout =      OVER_VOLT_TIME, .code =             CELL_VOLTAGE_TOO_HIGH,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
+	fault_table[4]  = (fault_eval_t) {.id = "High Charge Voltage",     .timer =    ovr_chgvolt_timer, .data_1 =  fault_data->max_ocv.val,      .optype_1 = GT, .lim_1 =                                              MAX_CHARGE_VOLT,         .timeout =  OVER_VOLT_TIME,     .code =             CELL_VOLTAGE_TOO_HIGH,  .optype_2 = EQ, .data_2 = state_machine->bms_state == CHARGING,  .lim_2 =      true,   .is_critical = true  };
+	fault_table[5]  = (fault_eval_t) {.id = "High Cell Temp",              .timer =      high_temp_timer, .data_1 =     fault_data->max_temp.val,  .optype_1 = GT, .lim_1 =                                                        MAX_CELL_TEMP, .timeout =      HIGH_TEMP_TIME, .code =                      PACK_TOO_HOT,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
+	fault_table[6]  = (fault_eval_t) {.id = "Die Overtemp",            .timer =   die_overtemp_timer, .data_1 = fault_data->max_chiptemp.val,  .optype_1 = GT, .lim_1 = 													   MAX_CHIP_TEMP, .timeout =   MAX_CHIPTEMP_TIME, .code =            DIE_TEMP_MAXIMUM_FAULT,  .optype_2 = NOP/* ------------------------------UNUSED-------------------------*/, .is_critical = true  };
 	// clang-format on
 
-	fault_stat_t status;
+	bool faulted = false;
 	for (int i = 0; i < NUM_FAULTS; i++) {
 		uint32_t item_code = fault_table[i].code;
-		status = sm_fault_eval(&fault_table[i]);
-		if (status == FAULT_STAT_FAULTED) {
+		faulted = sm_fault_eval(&fault_table[i]);
+		if (faulted) {
 			if (fault_table[i].is_critical) {
 				state_machine_args->state_machine
 					->fault_code_crit |= item_code;
@@ -243,7 +243,7 @@ void sm_fault_return(state_machine_args_t *state_machine_args)
 				state_machine_args->state_machine
 					->fault_code_noncrit |= item_code;
 			}
-		} else if (status == FAULT_STAT_CLEAR) {
+		} else {
 			// Clear bit for non-critical faults
 			if (fault_table[i].is_critical) {
 				state_machine_args->state_machine
@@ -256,7 +256,7 @@ void sm_fault_return(state_machine_args_t *state_machine_args)
 	}
 }
 
-fault_stat_t sm_fault_eval(fault_eval_t *item)
+bool sm_fault_eval(fault_eval_t *item)
 {
 	bool condition1;
 	bool condition2;
@@ -291,36 +291,38 @@ fault_stat_t sm_fault_eval(fault_eval_t *item)
 			      (condition1 && (item->optype_2 == NOP)));
 
 	if ((!(is_timer_active(&item->timer))) && !fault_present) {
-		return FAULT_STAT_CLEAR;
+		return false;
 	}
 
 	if (is_timer_active(&item->timer)) {
 		if (!fault_present) {
 			PRINTLN_INFO("\tFault cleared: %s\n", item->id);
 			cancel_timer(&item->timer);
+			// STOPPING TIMER MESSSAGE
 			send_fault_timer_message(0, item->code, item->data_1);
-			return FAULT_STAT_CLEAR;
+			return false;
 		}
 
 		if (is_timer_expired(&item->timer) && fault_present) {
 			PRINTLN_INFO("\tFaulted: %s\n", item->id);
+			// FAULT TIMER EXPIRED MESSAGE
 			send_fault_timer_message(2, item->code, item->data_1);
-			return FAULT_STAT_FAULTED;
+			return true;
 		}
 
-		return FAULT_STAT_CLEAR;
-	}
+		return false;
 
-	else if (!is_timer_active(&item->timer) && fault_present) {
+	} else if (!is_timer_active(&item->timer) && fault_present) {
 		PRINTLN_INFO("\tStarting Fault Timer: %s\n", item->id);
 		start_timer(&item->timer, item->timeout);
+		// STARTING FAULTED TIMER MESSAGE
 		send_fault_timer_message(1, item->code, item->data_1);
 
-		return 0;
+		return false;
 	}
 
 	PRINTLN_ERROR("Should not have reached here.");
-	return 0;
+	return true;
 }
 
 /* charger settle countup =  1 minute pause to let readings settle and get good
@@ -383,13 +385,13 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 void set_segment_comms_fault(state_machine_t *state_mach)
 {
 	mutex_get(&state_mach->state_mutex);
-	state_mach->fault_code_noncrit |= ISOSPI_BREAK_FAULT;
+	state_mach->fault_code_noncrit |= SEGMENT_COMMS_FAULT;
 	mutex_put(&state_mach->state_mutex);
 }
 
 void clear_segment_comms_fault(state_machine_t *state_mach)
 {
 	mutex_get(&state_mach->state_mutex);
-	state_mach->fault_code_noncrit &= ~ISOSPI_BREAK_FAULT;
+	state_mach->fault_code_noncrit &= ~SEGMENT_COMMS_FAULT;
 	mutex_put(&state_mach->state_mutex);
 }

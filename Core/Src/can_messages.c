@@ -1,12 +1,13 @@
 #include "can_messages.h"
-#include <math.h>
-#include "fdcan.h"
 #include "bitstream.h"
-#include "shep_queues.h"
 #include "c_utils.h"
 #include "can_handler.h"
+#include "fdcan.h"
+#include "shep_queues.h"
+#include <math.h>
 
-/// @brief A helper which sends appropriate error to stdout and CAN if a bistream overflows
+/// @brief A helper which sends appropriate error to stdout and CAN if a
+/// bistream overflows
 /// @param bitstream_res The bitstream to check for overflow
 /// @param can_id The CAN ID this bistream data is intended for
 /// @return 0 if success
@@ -17,7 +18,7 @@ static const bool handle_bitstream_overflow(bitstream_t *bitstream_res,
 		return 0;
 	}
 
-	//printf("CAN MESSAGE %ld overflowed!\n", can_id);
+	// printf("CAN MESSAGE %ld overflowed!\n", can_id);
 
 	static uint16_t overflow_cnt = 0;
 	overflow_cnt++;
@@ -290,16 +291,20 @@ void send_segment_average_volt_message(analyzer_t *analyzer)
 
 void send_segment_total_volt_message(analyzer_t *analyzer)
 {
-	// clang-format off
 	bitstream_t segment_total_volt_msg;
 	uint8_t bitstream_data[8];
 	bitstream_init(&segment_total_volt_msg, bitstream_data, 8);
 
-	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[0] * 39, 12); // Segment 1
-	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[1] * 39, 12); // Segment 2
-	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[2] * 39, 12); // Segment 3
-	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[3] * 39, 12); // Segment 4
-	bitstream_add(&segment_total_volt_msg, analyzer->segment_total_volts[4] * 39, 12); // Segment 5
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[0] * 39, 12); // Segment 1
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[1] * 39, 12); // Segment 2
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[2] * 39, 12); // Segment 3
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[3] * 39, 12); // Segment 4
+	bitstream_add(&segment_total_volt_msg,
+		      analyzer->segment_total_volts[4] * 39, 12); // Segment 5
 	bitstream_add(&segment_total_volt_msg, 0, 4); // Extra (4 bits)
 
 	can_msg_t msg;
@@ -310,7 +315,34 @@ void send_segment_total_volt_message(analyzer_t *analyzer)
 
 	handle_bitstream_overflow(&segment_total_volt_msg, msg.id);
 	queue_can_msg(msg);
-	// clang-format on
+}
+
+void send_segment_delta_volt_message(analyzer_t *analyzer)
+{
+	bitstream_t segment_delta_volt_msg;
+	uint8_t bitstream_data[8];
+	bitstream_init(&segment_delta_volt_msg, bitstream_data, 8);
+
+	bitstream_add(&segment_delta_volt_msg,
+		      analyzer->segment_delt_volts[0] * 1000, 12); // Segment 1
+	bitstream_add(&segment_delta_volt_msg,
+		      analyzer->segment_delt_volts[1] * 1000, 12); // Segment 2
+	bitstream_add(&segment_delta_volt_msg,
+		      analyzer->segment_delt_volts[2] * 1000, 12); // Segment 3
+	bitstream_add(&segment_delta_volt_msg,
+		      analyzer->segment_delt_volts[3] * 1000, 12); // Segment 4
+	bitstream_add(&segment_delta_volt_msg,
+		      analyzer->segment_delt_volts[4] * 1000, 12); // Segment 5
+	bitstream_add(&segment_delta_volt_msg, 0, 4); // Extra (4 bits)
+
+	can_msg_t msg;
+	msg.id = SEGMENT_DELTA_VOLT_CANID;
+	msg.len = SEGMENT_DELTA_VOLT_SIZE;
+
+	memcpy(msg.data, &bitstream_data, 8);
+
+	handle_bitstream_overflow(&segment_delta_volt_msg, msg.id);
+	queue_can_msg(msg);
 }
 
 void send_cell_temp_message(crit_cellval_t max_temp, crit_cellval_t min_temp,
@@ -458,7 +490,7 @@ void send_cell_data_message(bool alpha, float temperature, float voltage_a,
 
 	// patch bc 0 to 4
 	chip_ID /= 2;
-	
+
 
 	// if (alpha) {
 	// 	printf("ALPHA: c%d\n", chip_ID);
@@ -589,10 +621,12 @@ void send_status_b_message(float v_res, uint8_t chip, float vref2,
 }
 
 /**
- * @brief Sends a CAN message containing the PEC error count for a specific chip.
+ * @brief Sends a CAN message containing the PEC error count for a specific
+ * chip.
  *
  * @param chip_num The index of the chip that reported PEC errors.
- * @param pec_count The total number of PEC errors detected for the specified chip.
+ * @param pec_count The total number of PEC errors detected for the specified
+ * chip.
  */
 void send_pec_error_message(uint8_t chip_num, uint16_t pec_count)
 {

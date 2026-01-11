@@ -5,12 +5,7 @@
 #include "analyzer.h"
 #include "datastructs.h"
 
-#define NUM_FAULTS 8
-
-typedef enum {
-	FAULT_STAT_CLEAR = 0,
-	FAULT_STAT_FAULTED = 1,
-} fault_stat_t;
+#define NUM_FAULTS 7
 
 /**
  * @brief gets the current state of the BMS
@@ -56,9 +51,9 @@ void sm_fault_return(state_machine_args_t *state_machine_args);
  * fault status
  *
  * @param fault_item fault data
- * @return fault_status code
+ * @return true if fault is present, false otherwise
  */
-fault_stat_t sm_fault_eval(fault_eval_t *fault_item);
+bool sm_fault_eval(fault_eval_t *fault_item);
 
 /**
  * @brief handles the state machine, calls the appropriate handler function and
