@@ -287,19 +287,19 @@ void vBMSAlgorithms(ULONG thread_input)
 
 void vControl(ULONG thread_input)
 {
-    analyzer_t *analyzer = (analyzer_t *)thread_input;
+	analyzer_t *analyzer = (analyzer_t *)thread_input;
 
-    // Initialize control
-    control_init();
+	// Initialize control
+	control_init();
 
-    for (;;) {
-        mutex_get(&analyzer->analyzer_mutex);
-        float* segment_average_temps = analyzer->segment_average_temps;
-        handle_segement_average_temps(segment_average_temps);
-        mutex_put(&analyzer->analyzer_mutex);
+	for (;;) {
+		mutex_get(&analyzer->analyzer_mutex);
+		float *segment_average_temps = analyzer->segment_average_temps;
+		handle_segement_average_temps(segment_average_temps);
+		mutex_put(&analyzer->analyzer_mutex);
 
-        tx_thread_sleep(MS_TO_TICKS(50));
-    }
+		tx_thread_sleep(MS_TO_TICKS(50));
+	}
 }
 
 void vDebug(ULONG thread_input)
@@ -505,14 +505,14 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	};
 
 	thread_t _control_thread = {
-    	.name = "Control Thread", /* Name */
-    	.size = 2048, /* Stack Size (in bytes) */
-    	.priority = 4, /* Priority */
-    	.threshold = 0, /* Preemption Threshold */
-    	.thread_input = (ULONG)analyzer, /* Thread Args */
-    	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-    	.auto_start = TX_AUTO_START, /* Auto Start */
-    	.function = vControl, /* Thread Function */
+		.name = "Control Thread", /* Name */
+		.size = 2048, /* Stack Size (in bytes) */
+		.priority = 4, /* Priority */
+		.threshold = 0, /* Preemption Threshold */
+		.thread_input = (ULONG)analyzer, /* Thread Args */
+		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+		.auto_start = TX_AUTO_START, /* Auto Start */
+		.function = vControl, /* Thread Function */
 	};
 
 	thread_t _debug_thread = {

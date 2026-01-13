@@ -3,19 +3,19 @@
 
 #include <stdint.h>
 
-#define _PERCENT_16(x) ((uint16_t)(x * ((1 << 16) - 1)/100.0f))
+#define _PERCENT_16(x) ((uint16_t)(x * ((1 << 16) - 1) / 100.0f))
 typedef enum {
-    PWM_DUTY_0,
-    PWM_DUTY_10  = _PERCENT_16(10),
-    PWM_DUTY_20  = _PERCENT_16(20),
-    PWM_DUTY_30  = _PERCENT_16(30),
-    PWM_DUTY_40  = _PERCENT_16(40),
-    PWM_DUTY_50  = _PERCENT_16(50),
-    PWM_DUTY_60  = _PERCENT_16(60),
-    PWM_DUTY_70  = _PERCENT_16(70),
-    PWM_DUTY_80  = _PERCENT_16(80),
-    PWM_DUTY_90  = _PERCENT_16(90),
-    PWM_DUTY_100 = _PERCENT_16(100),
+	PWM_DUTY_0,
+	PWM_DUTY_10 = _PERCENT_16(10),
+	PWM_DUTY_20 = _PERCENT_16(20),
+	PWM_DUTY_30 = _PERCENT_16(30),
+	PWM_DUTY_40 = _PERCENT_16(40),
+	PWM_DUTY_50 = _PERCENT_16(50),
+	PWM_DUTY_60 = _PERCENT_16(60),
+	PWM_DUTY_70 = _PERCENT_16(70),
+	PWM_DUTY_80 = _PERCENT_16(80),
+	PWM_DUTY_90 = _PERCENT_16(90),
+	PWM_DUTY_100 = _PERCENT_16(100),
 } pwm_duty_t;
 #undef _PERCENT_16
 
@@ -41,6 +41,6 @@ void write_fan_duty_cycle(pwm_duty_t pwm_duty);
  * @brief Control fan based on segement average temps
  *
  */
-void handle_segement_average_temps(float* segment_average_temps);
+void handle_segement_average_temps(float *segment_average_temps);
 
 #endif

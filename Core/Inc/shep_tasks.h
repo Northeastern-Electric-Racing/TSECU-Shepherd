@@ -63,6 +63,6 @@ void vBMSAlgorithms(ULONG thread_input);
 /**
  * @brief Task for controlling fan
  */
- void vControl(ULONG thread_input);
+void vControl(ULONG thread_input);
 
 #endif
