@@ -14,6 +14,7 @@
 #include "main.h"
 #include "hv_plate.h"
 #include "compute.h"
+#include "control.h"
 #include "cell_temp_sanitizer.h"
 #include "precharge_routine.h"
 #include "isospi_recovery.h"
@@ -284,6 +285,23 @@ void vBMSAlgorithms(ULONG thread_input)
 	}
 }
 
+void vControl(ULONG thread_input)
+{
+    analyzer_t *analyzer = (analyzer_t *)thread_input;
+
+    // Initialize control
+    control_init();
+
+    for (;;) {
+        mutex_get(&analyzer->analyzer_mutex);
+        float* segment_average_temps = analyzer->segment_average_temps;
+        handle_segement_average_temps(segment_average_temps);
+        mutex_put(&analyzer->analyzer_mutex);
+
+        tx_thread_sleep(MS_TO_TICKS(50));
+    }
+}
+
 void vDebug(ULONG thread_input)
 {
 	analyzer_t *analyzer = (analyzer_t *)thread_input;
@@ -486,6 +504,17 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vBMSAlgorithms, /* Thread Function */
 	};
 
+	thread_t _control_thread = {
+    	.name = "Control Thread", /* Name */
+    	.size = 2048, /* Stack Size (in bytes) */
+    	.priority = 4, /* Priority */
+    	.threshold = 0, /* Preemption Threshold */
+    	.thread_input = (ULONG)analyzer, /* Thread Args */
+    	.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+    	.auto_start = TX_AUTO_START, /* Auto Start */
+    	.function = vControl, /* Thread Function */
+	};
+
 	thread_t _debug_thread = {
 		.name = "BMS Debug Mode Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
@@ -510,6 +539,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 		    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");
