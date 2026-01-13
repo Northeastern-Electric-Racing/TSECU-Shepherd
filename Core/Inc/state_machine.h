@@ -5,70 +5,76 @@
 #include "analyzer.h"
 #include "datastructs.h"
 
-#define NUM_FAULTS 8
+#define NUM_FAULTS 7
 
-typedef enum {
-	FAULT_STAT_FAULTED = 1,
-	FAULT_STAT_CLEARED = 2,
-} fault_stat_t;
+/**
+ * @brief gets the current state of the BMS
+ * 
+ * @param state_machine pointer to state_machine_args data
+ */
+state_t get_current_state(state_machine_t *state_machine);
 
 /**
  * @brief Called when we receive a message from the charger
  * 
- * @param bmsdata
+ * @param state_machine_args pointer to state_machine_args data
  * 
  */
-void charger_message_recieved(bms_t *bmsdata);
+void charger_message_recieved(state_machine_args_t *state_machine_args);
 
 /**
  * @brief Returns if we want to balance cells during a particular frame
  *
- * @param bmsdata
- * @return true
- * @return false
+ * @param state_machine_args pointer to state_machine_args data
+ * @return true is can balance, false otherwise
  */
-bool sm_balancing_check(bms_t *bmsdata);
+bool sm_balancing_check(state_machine_args_t *state_machine_args);
 
 /**
  * @brief Returns if we want to charge cells during a particular frame
  *
- * @param bmsdata
- * @return true
- * @return false
+ * @param state_machine_args pointer to state_machine_args data
+ * @return true is can charge, false otherwise
  */
-bool sm_charging_check(bms_t *bmsdata);
+bool sm_charging_check(state_machine_args_t *state_machine_args);
 
 /**
  * @brief Returns any new faults or current faults that have come up
  * @note Should be bitwise OR'ed with the current fault status
  *
- * @param accData
+ * @param state_machine_args pointer to state_machine_args data
  */
-void sm_fault_return(bms_t *accData);
+void sm_fault_return(state_machine_args_t *state_machine_args);
 
 /**
  * @brief Used in parellel to faultReturn(), calculates each fault to append the
  * fault status
  *
- * @param fault_item
- * @return fault_status
+ * @param fault_item fault data
+ * @return true if fault is present, false otherwise
  */
-fault_stat_t sm_fault_eval(fault_eval_t *fault_item);
+bool sm_fault_eval(fault_eval_t *fault_item);
 
 /**
  * @brief handles the state machine, calls the appropriate handler function and
  * runs every loop functions
  *
- * @param bmsdata
+ * @param state_machine_args pointer to state_machine_args data
  */
-void sm_handle_state(bms_t *bmsdata);
+void sm_handle_state(state_machine_args_t *state_machine_args);
 
 /**
- * @brief Algorithm behind determining which cells we want to balance
- * @note Directly interfaces with the segments
- *
- * @param bms_data
+ * @brief Sets the segment communication fault.
+ * 
+ * @param state_mach Pointer to the state machine data structure.
  */
-void sm_balance_cells(bms_t *bms_data);
+void set_segment_comms_fault(state_machine_t *state_mach);
+
+/**
+ * @brief Clears the segment communication fault.
+ * 
+ * @param state_mach Pointer to the state machine data structure.
+ */
+void clear_segment_comms_fault(state_machine_t *state_mach);
 
 #endif

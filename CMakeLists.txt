@@ -57,7 +57,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/middleware/src/bitstream.c"
     "Drivers/adbms/adbms6830/program/src/mcuWrapper.c"
     "Drivers/adbms/adbms6830/program/src/serialPrintResult.c"
-    "Drivers/adbms/adbms6830/program/src/mcuWrapper.c"
     "Drivers/adbms/adbms6830/lib/src/adBms6830ParseCreate.c"
     "Drivers/adbms/adbms6830/lib/src/adBms6830GenericType.c"
     "Drivers/adbms/adbms2950/lib/src/adBms2950TestHelper.c"
@@ -82,16 +81,16 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/analyzer.c"
     "Core/Src/can_handler.c"
     "Core/Src/can_messages.c"
-    "Core/Src/cell_data_logging.c"
     "Core/Src/charging.c"
     "Core/Src/compute.c"
     "Core/Src/hv_plate.c"
     "Core/Src/segment.c"
-    "Core/Src/shep_mutexes.c"
     "Core/Src/shep_queues.c"
     "Core/Src/shep_tasks.c"
     "Core/Src/state_machine.c"
     "Core/Src/cell_temp_sanitizer.c"
+    "Core/Src/soc.c"
+    "Core/Src/isospi_recovery.c"
 )
 
 # Add include paths
@@ -121,4 +120,3 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
     # Add user defined libraries
 )
-

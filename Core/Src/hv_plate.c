@@ -1,19 +1,17 @@
-#include "adi2950_interaction.h"
 #include "hv_plate.h"
+#include "adi2950_interaction.h"
 
-#define HV_CTRL_GPO GPIO4_2950
+#define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 
 static float get_current_conversion(uint32_t data)
 {
-	float current;
-	current = 1e-6 * ((int32_t)(data << (32 - 24)) >> (32 - 24));
+	float current = 1e-6 * ((int32_t)(data << (32 - 24)) >> (32 - 24));
 	return current / (float)SHUNT_RESISTANCE;
 }
 
 static float get_voltage_conversion(int data)
 {
-	float voltage;
-	voltage = 100e-6 * (int16_t)data;
+	float voltage = 100e-6 * (int16_t)data;
 	return voltage;
 }
 
@@ -61,7 +59,7 @@ void init_hv_plate_chip(cell_asic_2950 ic)
 	ic.tx_cfga.vb1mux = SINGLE_ENDED_SGND;
 	ic.tx_cfga.vb2mux = SINGLE_ENDED_SGND;
 
-	//CFGB
+	// CFGB
 	ic.tx_cfgb.gpio1c = PULL_DOWN_OFF;
 	ic.tx_cfgb.gpio2c = PULL_DOWN_OFF;
 	ic.tx_cfgb.gpio3c = PULL_DOWN_OFF;
@@ -92,53 +90,39 @@ void init_hv_plate_chip(cell_asic_2950 ic)
 	ic.tx_cfgb.gpio2eoc = EOC_DISABLED2950;
 }
 
-float get_pack_current(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
+float get_pack_current(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 {
-	read_current_registers(bmsdata->plate_chip, hspi);
-	return get_current_conversion(bmsdata->plate_chip.i.i1);
+	read_current_registers(*ic, hspi);
+	return get_current_conversion(ic->i.i1);
 }
 
-float get_batt_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
+float get_batt_voltage(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 {
-	read_vbat_regsisters(bmsdata->plate_chip, hspi);
-	float avg_volts =
-		(get_voltage_conversion(bmsdata->plate_chip.vbat.vbat1) +
-		 get_voltage_conversion(bmsdata->plate_chip.vbat.vbat2)) /
-		2;
+	read_vbat_regsisters(*ic, hspi);
+	float avg_volts = (get_voltage_conversion(ic->vbat.vbat1) +
+			   get_voltage_conversion(ic->vbat.vbat2)) /
+			  2;
 	return avg_volts;
 }
 
-float get_ts_voltage(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
+float get_ts_voltage(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 {
-	read_vr_registers(bmsdata->plate_chip, hspi);
+	read_vr_registers(*ic, hspi);
 	// TODO: validate reading V2 and V3
 	// NOTE: TS+ is output to both V2 and V3
-	float avg_volts = (get_voltage_conversion(
-				   bmsdata->plate_chip.vr.v_codes[1]) + // V2
-			   get_voltage_conversion(
-				   bmsdata->plate_chip.vr.v_codes[2])) / // V3
+	float avg_volts = (get_voltage_conversion(ic->vr.v_codes[1]) + // V2
+			   get_voltage_conversion(ic->vr.v_codes[2])) / // V3
 			  2;
 	return avg_volts; // TODO convert to temp
 }
 
-float get_shunt_temp(bms_t *bmsdata, SPI_HandleTypeDef *hspi)
+float get_shunt_temp(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
 {
-	read_vr_registers(bmsdata->plate_chip, hspi);
+	read_vr_registers(*ic, hspi);
 	// TODO: validate reading V7 and V9
 	// NOTE: Temperature is output to both V7 and V9
-	float avg_volts = (get_voltage_conversion(
-				   bmsdata->plate_chip.vr.v_codes[9]) + // V7A
-			   get_voltage_conversion(
-				   bmsdata->plate_chip.vr.v_codes[11])) / // V9B
+	float avg_volts = (get_voltage_conversion(ic->vr.v_codes[9]) + // V7A
+			   get_voltage_conversion(ic->vr.v_codes[11])) / // V9B
 			  2;
 	return avg_volts;
-}
-
-void set_precharge_relay(bms_t *bmsdata, SPI_HandleTypeDef *hspi, bool state)
-{
-	if (state) {
-		set_gpo(bmsdata->plate_chip, hspi, HV_CTRL_GPO);
-	} else {
-		reset_gpo(bmsdata->plate_chip, hspi, HV_CTRL_GPO);
-	}
 }
