@@ -182,7 +182,10 @@ typedef struct {
 	float segment_average_volts[NUM_SEGMENTS];
 	/* Total voltages for each segment */
 	float segment_total_volts[NUM_SEGMENTS];
-	/* Pack voltage */
+	/* Delta voltages for each segment */
+	float segment_delt_volts[NUM_SEGMENTS];
+
+	/* Voltage of pack */
 	float pack_voltage;
 
 	/* SoC of the Pack*/
@@ -291,26 +294,13 @@ enum {
 	CELL_VOLTAGE_TOO_HIGH = 0x2,
 	CELL_VOLTAGE_TOO_LOW = 0x4,
 	PACK_TOO_HOT = 0x8,
-	OPEN_WIRING_FAULT =
-		0x10, /* cell tap wire is either weakly connected or not connected */
-	INTERNAL_SOFTWARE_FAULT = 0x20, /* general software fault */
-	INTERNAL_THERMAL_ERROR =
-		0x40, /* internal hardware fault reulting from too hot of onboard temps */
-	INTERNAL_CELL_COMM_FAULT =
-		0x80, /* this is due to an invalid CRC from retrieving values */
-	CURRENT_SENSOR_FAULT = 0x100,
-	CHARGE_READING_MISMATCH =
-		0x200, /* charge voltage when not supposed to be charging*/
-	LOW_CELL_VOLTAGE = 0x400, /* voltage of a cell falls below 90 mV */
-	WEAK_PACK_FAULT = 0x800,
-	EXTERNAL_CAN_FAULT = 0x1000,
-	DISCHARGE_LIMIT_ENFORCEMENT_FAULT = 0x2000,
-	CHARGER_SAFETY_RELAY = 0x4000,
-	BATTERY_THERMISTOR = 0x8000,
-	CHARGER_CAN_FAULT = 0x10000,
-	CHARGE_LIMIT_ENFORCEMENT_FAULT = 0x20000,
-	DIE_TEMP_MAXIMUM_FAULT = 0x40000,
-	ISOSPI_BREAK_FAULT = 0x80000,
+	WEAK_PACK_FAULT = 0x10,
+	EXTERNAL_CAN_FAULT = 0x20,
+	DISCHARGE_LIMIT_ENFORCEMENT_FAULT = 0x40,
+	CHARGE_LIMIT_ENFORCEMENT_FAULT = 0x80,
+	DIE_TEMP_MAXIMUM_FAULT = 0x100,
+	HV_PLATE_COMMS_FAULT = 0x200,
+	SEGMENT_COMMS_FAULT = 0x400,
 
 	MAX_FAULTS = 0x80000000 /* Maximum allowable fault code */
 };

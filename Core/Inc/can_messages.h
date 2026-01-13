@@ -99,6 +99,13 @@ void send_segment_average_volt_message(analyzer_t *analyzer);
 void send_segment_total_volt_message(analyzer_t *analyzer);
 
 /**
+ * @brief sneds segment delta voltage message
+ * 
+ * @param analyzer pointer to processed analyzer data
+ */
+void send_segment_delta_volt_message(analyzer_t *analyzer);
+
+/**
  * @brief sends cell temperature message
  *
  * @param max_temp
@@ -120,18 +127,18 @@ void send_fault_timer_message(uint8_t start_stop, uint32_t fault_code,
 
 /**
  * @brief Send CAN message for debugging the car on the fly.
- * 
- * @param debug0 
- * @param debug1 
- * @param debug2 
- * @param debug3 
+ *
+ * @param debug0
+ * @param debug1
+ * @param debug2
+ * @param debug3
  */
 void send_debug_message(uint8_t debug0, uint8_t debug1, uint16_t debug2,
 			uint32_t debug3);
 
 /**
  * @brief Send a message containing cell data.
- * 
+ *
  * @param alpha If this message contains alpha cell data. False sends a beta cell message.
  * @param temperature Temperature in Celsius. Has a maximum value of 80 degrees celsius.
  * @param voltage_a The voltage of cell A.
@@ -151,7 +158,7 @@ void send_cell_data_message(bool alpha, float temperature, float voltage_a,
 
 /**
  * @brief Send message containing ADBMS6830 diagnostic data and onboard therm data.
- * 
+ *
  * @param segment_temp Temperature reading from on-board therm.
  * @param chip ID of the chip.
  * @param die_temperature Temperature of the ADBMS6830 die.
@@ -165,7 +172,7 @@ void send_status_a_message(float segment_temp, uint8_t chip,
 
 /**
  * @brief Send message containing ADBMS6830 diagnostic data.
- * 
+ *
  * @param v_res VREF2 across a resistor for open wire detection.
  * @param chip ID of the chip.
  * @param vref2 Second reference voltage for ADBMS6830.

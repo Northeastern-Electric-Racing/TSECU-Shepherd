@@ -1,4 +1,3 @@
-#include "adi6830_interation.h"
 #include "adBms6830CmdList.h"
 #include "adBms6830GenericType.h"
 #include "compute.h"
@@ -12,8 +11,9 @@
 /**
  * @brief Count PEC errors for all chips, send CAN message, and reset counters.
  *
- * This function iterates through all chips, accumulates the PEC (Packet Error Code) 
- * error count, resets the PEC error counter and Command counter, then sends a CAN message if any errors exist.
+ * This function iterates through all chips, accumulates the PEC (Packet Error
+ * Code) error count, resets the PEC error counter and Command counter, then
+ * sends a CAN message if any errors exist.
  *
  * @param chips Pointer to the array of cell_asic structures.
  */
@@ -249,7 +249,7 @@ void adbms_wake_core(isospi_line_ line, uint8_t num_ic)
 
 /**
  * @brief Write data to all chips.
- * 
+ *
  * @param chip Array of chips to write data to.
  * @param command Command to issue to the chip.
  * @param type Register type to write to.
@@ -263,7 +263,7 @@ void write_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 
 /**
  * @brief Read data from all chips.
- * 
+ *
  * @param chips Array of chips to read data to.
  * @param command Command to issue to the chip.
  * @param type Register type to write to.
