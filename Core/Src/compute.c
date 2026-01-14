@@ -14,7 +14,8 @@ extern I2C_HandleTypeDef hi2c1;
 
 // moving the bulk of the pointers over
 static inline uint8_t sht30_i2c_write(uint8_t *data, uint8_t dev_address,
-				      uint8_t length)
+	
+	uint8_t length)
 {
 	return HAL_I2C_Master_Transmit(&hi2c1, dev_address, data, length,
 				       HAL_MAX_DELAY);
@@ -46,7 +47,6 @@ void init_compute(compute_t *compute_ptr)
 	compute = compute_ptr;
 }
 
-// TODO: Fix pinout defines
 void compute_set_fault(bool fault_state)
 {
 	if (fault_state) {
