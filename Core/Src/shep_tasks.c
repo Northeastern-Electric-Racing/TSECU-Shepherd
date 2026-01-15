@@ -491,7 +491,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	};
 
 	thread_t _sanitizer_thread = {
-		.name = " Sanitizer Thread", /* Name */
+		.name = "Sanitizer Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
 		.priority = 3, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
