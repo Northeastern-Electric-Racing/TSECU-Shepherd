@@ -43,7 +43,7 @@ bool control_init_peripherals(void)
 
 void handle_max_temp(float max_temp)
 {
-    uint16_t duty;
+	uint16_t duty;
 	if (max_temp <= 30.0f) {
 		duty = _PERCENT_16(CONTROL_MIN_DUTY_FAN);
 	} else if (max_temp <= 50.0f) {
