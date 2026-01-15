@@ -41,14 +41,14 @@ bool control_init_peripherals(void)
 	return error;
 }
 
-void handle_max_temp(float max_temp)
+void control_fan(float pack_high_temp)
 {
 	uint16_t duty;
-	if (max_temp <= 30.0f) {
+	if (pack_high_temp <= 30.0f) {
 		duty = _PERCENT_16(CONTROL_MIN_DUTY_FAN);
-	} else if (max_temp <= 50.0f) {
+	} else if (pack_high_temp <= 50.0f) {
 		duty = _PERCENT_16(50);
-	} else if (max_temp <= 60.0f) {
+	} else if (pack_high_temp <= 60.0f) {
 		duty = _PERCENT_16(75);
 	} else {
 		duty = _PERCENT_16(100);

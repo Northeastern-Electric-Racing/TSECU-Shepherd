@@ -302,8 +302,8 @@ void vControl(ULONG thread_input)
 
 	for (;;) {
 		mutex_get(&analyzer->analyzer_mutex);
-		float max_temp = analyzer->max_temp.val;
-		handle_max_temp(max_temp);
+		float pack_high_temp = analyzer->max_temp.val;
+		control_fan(pack_high_temp);
 		mutex_put(&analyzer->analyzer_mutex);
 
 		tx_thread_sleep(MS_TO_TICKS(50));

@@ -24,7 +24,7 @@ bool control_init_peripherals(void);
 /**
  * @brief Do control based on max temp from analyzer
  */
-void handle_max_temp(float max_temp);
+void control_fan(float pack_high_temp);
 
 /**
  * @brief Send calypso message for controlling fans
