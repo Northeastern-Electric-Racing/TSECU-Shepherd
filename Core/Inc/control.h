@@ -8,8 +8,8 @@
 #define CONTROL_MIN_DUTY_FAN 20
 
 typedef struct {
-  TIM_HandleTypeDef *tim_handle;
-  int channel_identifier;
+	TIM_HandleTypeDef *tim_handle;
+	int channel_identifier;
 } pwm_device_t;
 
 typedef enum { DEVICE_FAN0, NUM_DEVICES } control_devices;
