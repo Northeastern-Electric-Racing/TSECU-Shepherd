@@ -53,7 +53,7 @@ void temp_sanitizer_run(sanitizer_t *sanitizer, analyzer_t *analyzer)
 					sanitizer->max_sanitized_temp.cellNum =
 						cell;
 				}
-			// if max is no longer valid, max is reset
+				// if max is no longer valid, max is reset
 			} else if (sanitizer->max_sanitized_temp.cellNum ==
 					   cell &&
 				   sanitizer->max_sanitized_temp.chipIndex ==
