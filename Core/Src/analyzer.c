@@ -37,7 +37,7 @@ static float calc_temp(float res)
  */
 static float calc_cell_temp(float voltage)
 {
-	float res = (voltage * 10000) / (3 - voltage);
+	float res = (10000 * (3 - voltage)) / voltage;
 	return calc_temp(res);
 }
 
