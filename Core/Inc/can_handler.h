@@ -40,6 +40,8 @@
 #define SEGMENT_TOTAL_VOLT_SIZE	   8
 #define SEGMENT_DELTA_VOLT_CANID   0x92
 #define SEGMENT_DELTA_VOLT_SIZE	   8
+#define ONBOARD_THERM_CANID	   0x93
+#define ONBOARD_THERM_SIZE	   6
 #define FAULT_CANID		   0x703 // TODO: cleanup
 #define FAULT_SIZE		   5
 #define NOISE_CANID		   0x88
@@ -63,7 +65,7 @@
 #define BETA_STAT_C_CANID  0x6F0
 #define BETA_STAT_C_SIZE   3
 #define ALPHA_STAT_A_CANID 0x6FC
-#define ALPHA_STAT_A_SIZE  8
+#define ALPHA_STAT_A_SIZE  7
 #define ALPHA_STAT_B_CANID 0x6FF
 #define ALPHA_STAT_B_SIZE  8
 

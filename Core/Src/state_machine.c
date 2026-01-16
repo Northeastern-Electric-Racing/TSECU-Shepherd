@@ -300,14 +300,14 @@ bool sm_fault_eval(fault_eval_t *item)
 			PRINTLN_INFO("\tFault cleared: %s\n", item->id);
 			cancel_timer(&item->timer);
 			// STOPPING TIMER MESSSAGE
-			send_fault_timer_message(0, item->code, item->data_1);
+			send_fault_timer_message(FAULT_TIMER_STOPPED, item->code, item->data_1);
 			return false;
 		}
 
 		if (is_timer_expired(&item->timer) && fault_present) {
 			PRINTLN_INFO("\tFaulted: %s\n", item->id);
 			// FAULT TIMER EXPIRED MESSAGE
-			send_fault_timer_message(2, item->code, item->data_1);
+			send_fault_timer_message(FAULT_TIMER_EXPIRED, item->code, item->data_1);
 			return true;
 		}
 
@@ -317,7 +317,7 @@ bool sm_fault_eval(fault_eval_t *item)
 		PRINTLN_INFO("\tStarting Fault Timer: %s\n", item->id);
 		start_timer(&item->timer, item->timeout);
 		// STARTING FAULTED TIMER MESSAGE
-		send_fault_timer_message(1, item->code, item->data_1);
+		send_fault_timer_message(FAULT_TIMER_STARTED, item->code, item->data_1);
 
 		return false;
 	}

@@ -321,7 +321,7 @@ void vDebug(ULONG thread_input)
 				tx_thread_sleep(10); // TODO: enhance timing
 			}
 
-			send_status_a_message(chip_data->on_board_temp, chip,
+			send_status_a_message(chip,
 					      chip_data->die_temp,
 					      chip_data->vpv, chip_data->vmv,
 					      &chip_data->flt_reg);
@@ -334,8 +334,12 @@ void vDebug(ULONG thread_input)
 					      chip_data->v_digital,
 					      &chip_data->flt_reg);
 
-			tx_thread_sleep(30); // TODO: enhance timing
-		}
+			tx_thread_sleep(30); // TODO: enhance timings
+
+			send_onboard_therm_message(chip_data);
+
+			tx_thread_sleep(30); // TODO: enhance timings
+		}	
 	}
 }
 

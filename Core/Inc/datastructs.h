@@ -37,7 +37,7 @@ typedef struct {
 	float cell_voltages[NUM_CELLS_PER_CHIP];
 
 	/* Maximum temperature of on-board therms.*/
-	float on_board_temp;
+	float on_board_temp[NUM_ONBOARD_THERMS_PER_CHIP];
 
 	/// temperature of the die
 	float die_temp;
@@ -87,6 +87,12 @@ typedef enum {
 	FAULTED,
 	NUM_STATES,
 } state_t;
+
+typedef enum {
+	FAULT_TIMER_STOPPED,
+	FAULT_TIMER_STARTED,
+	FAULT_TIMER_EXPIRED,
+} fault_timer_status_t;
 
 /**
  * @brief Data needed for the therm temp sanitizer

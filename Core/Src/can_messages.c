@@ -399,30 +399,6 @@ void send_segment_temp_message(analyzer_t *analyzer)
 	queue_can_msg(msg);
 }
 
-// UNUSED
-void send_fault_message(uint8_t status, int16_t curr, int16_t in_dcl)
-{
-	struct __attribute__((__packed__)) {
-		uint8_t status;
-		int16_t pack_curr;
-		int16_t dcl;
-	} fault_msg_data;
-
-	fault_msg_data.status = status;
-	fault_msg_data.pack_curr = curr;
-	fault_msg_data.dcl = in_dcl;
-
-	endian_swap(&fault_msg_data.pack_curr,
-		    sizeof(fault_msg_data.pack_curr));
-	endian_swap(&fault_msg_data.dcl, sizeof(fault_msg_data.dcl));
-
-	can_msg_t msg = { .id = FAULT_CANID, .len = FAULT_SIZE, .data = { 0 } };
-
-	memcpy(msg.data, &fault_msg_data, sizeof(fault_msg_data));
-
-	queue_can_msg(msg);
-}
-
 void send_fault_timer_message(uint8_t start_stop, uint32_t fault_code,
 			      float data_1)
 {
@@ -530,32 +506,22 @@ void send_cell_data_message(bool alpha, float temperature, float voltage_a,
 }
 
 // verified 3/17/2025 for chip 0 by Jack, EXCLUDING VMV (see TODO)
-void send_status_a_message(float segment_temp, uint8_t chip,
+void send_status_a_message(uint8_t chip,
 				 float die_temperature, float vpv, float vmv,
 				 stc_ *flt_reg)
 {
 	can_msg_t msg = { .id = ALPHA_STAT_A_CANID, .len = ALPHA_STAT_A_SIZE, .data = { 0 } };
 
-
-	// printf("SegTemp %f\n", segment_temp);
-	// printf("DieTemp %f\n", die_temperature);
-	// printf("VPV %f\n", vpv);
-	// printf("VMV %f\n", vmv);
-
-	segment_temp *= 10;
-
 	die_temperature *= 100;
 	vpv *= 100;
 	vmv *= 1000;
-
 	chip /= 2;
 
 
 	bitstream_t alpha_status_a_message;
 	uint8_t bitstream_data[8];
-	bitstream_init(&alpha_status_a_message, bitstream_data, 8);	// Create 8-byte bitstream
+	bitstream_init(&alpha_status_a_message, bitstream_data, 7);	// Create 7-byte bitstream
 
-	bitstream_add(&alpha_status_a_message, segment_temp, 10);		// Segment Temp (10 bits)
 	bitstream_add(&alpha_status_a_message, chip, 4);	// Chip ID (4 bits)
 	bitstream_add(&alpha_status_a_message, die_temperature, 13);	// Die Temp (13 bits)
 	bitstream_add(&alpha_status_a_message, vpv, 13);				// Vpv (13 bits)
@@ -671,6 +637,25 @@ void send_isospi_status_message(const isospi_status_t *status)
 
 	can_msg_t msg = { .id = ISOSPI_STS_CANID,
 			  .len = ISOSPI_STS_SIZE,
+			  .data = { 0 } };
+
+	memcpy(msg.data, &msg_data, sizeof(msg_data));
+	queue_can_msg(msg);
+}
+
+void send_onboard_therm_message(chipdata_t *chip_data) {
+	struct __attribute__((__packed__)) {
+		uint16_t therm1_temp;
+		uint16_t therm2_temp;
+		uint16_t therm3_temp;
+	} msg_data;
+
+	msg_data.therm1_temp = (uint16_t)(chip_data->on_board_temp[0] * 100) / 100;
+	msg_data.therm2_temp = (uint16_t)(chip_data->on_board_temp[1] * 100) / 100;
+	msg_data.therm3_temp = (uint16_t)(chip_data->on_board_temp[2] * 100) / 100;
+
+	can_msg_t msg = { .id = ONBOARD_THERM_CANID,
+			  .len = ONBOARD_THERM_CANID,
 			  .data = { 0 } };
 
 	memcpy(msg.data, &msg_data, sizeof(msg_data));
