@@ -36,7 +36,7 @@ typedef struct {
 	float open_cell_voltage[NUM_CELLS_PER_CHIP];
 	float cell_voltages[NUM_CELLS_PER_CHIP];
 
-	/* For temperatures of on-board therms.*/
+	/* Maximum temperature of on-board therms.*/
 	float on_board_temp;
 
 	/// temperature of the die
