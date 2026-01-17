@@ -15,8 +15,10 @@
 #include "hv_plate.h"
 #include "compute.h"
 #include "cell_temp_sanitizer.h"
+#include "precharge_routine.h"
 #include "isospi_recovery.h"
 #include "dcl.h"
+#include "soc.h"
 
 void vDefaultTask(ULONG thread_input)
 {
@@ -140,8 +142,11 @@ void vAnalyzer(ULONG thread_input)
 		calc_open_cell_voltage(analyzer, acc_data, hv_plate);
 		calc_pack_voltage_stats(analyzer, acc_data);
 		calc_cell_resistances(analyzer, acc_data, hv_plate);
+		update_chip_status(analyzer, acc_data);
 
 		mutex_put(&analyzer->analyzer_mutex);
+
+		set_flag(DEBUG_FLAG);
 
 		// send out telemetry data sourced from the above functions
 		send_cell_voltage_message(analyzer->max_ocv, analyzer->min_ocv,
@@ -220,6 +225,7 @@ void vHvPlateData(ULONG thread_input)
 	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
 
 	hv_plate_t *hv_plate = hv_plate_args->hv_plate;
+	analyzer_t *analyzer = hv_plate_args->analyzer;
 
 	init_hv_plate_chip(*hv_plate->ic);
 	tx_thread_sleep(TICKS_TO_MS(500));
@@ -227,6 +233,9 @@ void vHvPlateData(ULONG thread_input)
 	for (;;) {
 		// get the current reading from the pack
 		hv_plate->pack_current = get_pack_current(hv_plate->ic, &hspi2);
+
+		// updates the SoC value in the analyzer struct based on the pack current received
+		update_soc(analyzer, hv_plate);
 
 		// read voltages
 		hv_plate->ts_volts = get_ts_voltage(hv_plate->ic, &hspi2);
@@ -254,11 +263,80 @@ void vSanitizer(ULONG thread_input)
 	}
 }
 
+void vPrecharge(ULONG args)
+{
+	hv_plate_t *hv_plate = (hv_plate_t *)args;
+
+	prechargeconfig_t precharge_config;
+	precharge_init(&precharge_config, hv_plate, 0.9f,
+		       200 /* ms debounce time */);
+
+	for (;;) {
+		handle_precharge(&precharge_config);
+		tx_thread_sleep(MS_TO_TICKS(50)); // TODO; fix thread timing
+	}
+}
+
 void vBMSAlgorithms(ULONG thread_input)
 {
 	for (;;) {
 		// TODO: implement algo thread
 		tx_thread_sleep(MS_TO_TICKS(500));
+	}
+}
+
+void vDebug(ULONG thread_input)
+{
+	analyzer_t *analyzer = (analyzer_t *)thread_input;
+
+	for (;;) {
+		get_flag(DEBUG_FLAG, TX_WAIT_FOREVER);
+
+		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+			chipdata_t *chip_data = get_chip_data(analyzer, chip);
+			for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP;
+			     cell += 2) {
+				// Sends two cells per messages
+				// Accounts for odd number of cells
+				send_cell_data_message(
+					chip_data->alpha,
+					chip_data->cell_temp[cell],
+					chip_data->cell_voltages[cell],
+
+					cell + 1 == NUM_CELLS_PER_CHIP ?
+						0 :
+						chip_data->cell_voltages[cell +
+									 1],
+					chip, cell, cell + 1,
+					chip_data->is_balancing[cell],
+
+					cell + 1 == NUM_CELLS_PER_CHIP ?
+						0 :
+						chip_data->is_balancing[cell +
+									1],
+					chip_data->cs_fault[cell],
+					cell + 1 == NUM_CELLS_PER_CHIP ?
+						0 :
+						chip_data->cs_fault[cell + 1]);
+
+				tx_thread_sleep(10); // TODO: enhance timing
+			}
+
+			send_status_a_message(chip_data->on_board_temp, chip,
+					      chip_data->die_temp,
+					      chip_data->vpv, chip_data->vmv,
+					      &chip_data->flt_reg);
+
+			tx_thread_sleep(30); // TODO: enhance timing
+
+			send_status_b_message(chip_data->v_res, chip,
+					      chip_data->vref2,
+					      chip_data->v_analog,
+					      chip_data->v_digital,
+					      &chip_data->flt_reg);
+
+			tx_thread_sleep(30); // TODO: enhance timing
+		}
 	}
 }
 
@@ -292,10 +370,12 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	state_machine_args->hv_plate = hv_plate;
 	state_machine_args->state_machine = state_machine;
 	state_machine_args->bms_algos = bms_algos;
+	state_machine_args->sanitizer = sanitizer;
 
 	hv_plate_args_t *hv_plate_args =
 		(hv_plate_args_t *)malloc(sizeof(hv_plate_args_t));
 	hv_plate_args->hv_plate = hv_plate;
+	hv_plate_args->analyzer = analyzer;
 
 	sanitizer_args_t *sanitizer_args =
 		(sanitizer_args_t *)malloc(sizeof(sanitizer_args_t));
@@ -408,6 +488,17 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vBMSAlgorithms, /* Thread Function */
 	};
 
+	thread_t _debug_thread = {
+		.name = "BMS Debug Mode Thread", /* Name */
+		.size = 2048, /* Stack Size (in bytes) */
+		.priority = 4, /* Priority */
+		.threshold = 0, /* Preemption Threshold */
+		.thread_input = (ULONG)analyzer, /* Thread Args */
+		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+		.auto_start = TX_AUTO_START, /* Auto Start */
+		.function = vDebug, /* Thread Function */
+	};
+
 	/* Task Definitions End */
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
@@ -421,6 +512,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 		    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");
 	return U_SUCCESS;

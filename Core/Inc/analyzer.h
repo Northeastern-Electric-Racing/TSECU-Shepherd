@@ -6,7 +6,7 @@
 /**
  * @brief Get the chip data for the given chip
  */
-chipdata_t get_chip_data(analyzer_t *analyzer, uint8_t chip);
+chipdata_t *get_chip_data(analyzer_t *analyzer, uint8_t chip);
 
 /**
  * @brief Calculate thermistor values and cell temps using thermistors.
@@ -41,9 +41,13 @@ void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data,
 
 /**
  * @brief Calculate cell resistances using Rin = ( Voc - V )/I
- * 
  */
 void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
 			   hv_plate_t *hv_plate);
+
+/**
+* @brief Updates the cell status of balancing and S_C_faults based on raw cell data
+*/
+void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data);
 
 #endif

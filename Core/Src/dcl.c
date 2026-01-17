@@ -84,7 +84,8 @@ static float dcl_from_cell_volt(float ocv)
 	return dcl;
 }
 
-static float calc_inst_dcl(const analyzer_t* const analyzer, const hv_plate_t* const hv_plate)
+static float calc_inst_dcl(const analyzer_t *const analyzer,
+			   const hv_plate_t *const hv_plate)
 {
 	float dcl_min_temp = dcl_from_temp(analyzer->min_temp.val);
 	float dcl_max_temp = dcl_from_temp(analyzer->max_temp.val);
@@ -115,7 +116,9 @@ void dcl_init(void)
 	dcl_ctrl.pulse_allowed = false;
 }
 
-void calc_cont_dcl(const analyzer_t* const analyzer, const hv_plate_t* const hv_plate, bms_algos_t* const bms_algos)
+void calc_cont_dcl(const analyzer_t *const analyzer,
+		   const hv_plate_t *const hv_plate,
+		   bms_algos_t *const bms_algos)
 {
 	float cont_dcl = calc_inst_dcl(analyzer, hv_plate);
 	bool in_safe_zone = (cont_dcl == DCL_MAX_CURRENT_A);

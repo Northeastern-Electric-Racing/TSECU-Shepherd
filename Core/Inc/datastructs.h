@@ -25,19 +25,36 @@ typedef struct {
 typedef struct {
 	int error_reading;
 
+	bool alpha;
+	/* whether the chip is an alpha or beta */ // TODO initialize properly
+
 	/* These are calculated during the analysis of data */
 
 	/* Cell temperature in celsius */
-	float cell_temp[NUM_CELLS];
-	float cell_resistance[NUM_CELLS];
-	float open_cell_voltage[NUM_CELLS];
-	float cell_voltages[NUM_CELLS];
+	float cell_temp[NUM_CELLS_PER_CHIP];
+	float cell_resistance[NUM_CELLS_PER_CHIP];
+	float open_cell_voltage[NUM_CELLS_PER_CHIP];
+	float cell_voltages[NUM_CELLS_PER_CHIP];
 
-	/* For temperatures of on-board therms. */
+	/* Maximum temperature of on-board therms.*/
 	float on_board_temp;
 
 	/// temperature of the die
 	float die_temp;
+
+	/* Chip and Cell Diagnostic Data */
+	bool is_balancing[NUM_CELLS_PER_CHIP];
+	bool cs_fault[NUM_CELLS_PER_CHIP];
+
+	float vpv;
+	float vmv;
+	float v_res;
+	float vref2;
+	float v_analog;
+	float v_digital;
+
+	stc_ flt_reg;
+
 } chipdata_t;
 
 /**
@@ -76,6 +93,8 @@ typedef enum {
  */
 typedef struct {
 	therm_state_t sanitized_therms[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+	crit_cellval_t max_sanitized_temp;
+
 } sanitizer_t;
 
 /**
@@ -165,8 +184,14 @@ typedef struct {
 	float segment_average_volts[NUM_SEGMENTS];
 	/* Total voltages for each segment */
 	float segment_total_volts[NUM_SEGMENTS];
+	/* Delta voltages for each segment */
+	float segment_delt_volts[NUM_SEGMENTS];
 
+	/* Voltage of pack */
 	float pack_voltage;
+
+	/* SoC of the Pack*/
+	float soc;
 } analyzer_t;
 
 /**
@@ -213,6 +238,7 @@ typedef struct {
 		hv_plate; // TODO add hv plate interal data to analyzer to remove hv_plate
 	acc_data_t *acc_data;
 	bms_algos_t *bms_algos;
+	sanitizer_t *sanitizer;
 } state_machine_args_t;
 
 /**
@@ -238,6 +264,7 @@ typedef struct {
  */
 typedef struct {
 	hv_plate_t *hv_plate;
+	analyzer_t *analyzer;
 } hv_plate_args_t;
 
 /**
@@ -270,26 +297,13 @@ enum {
 	CELL_VOLTAGE_TOO_HIGH = 0x2,
 	CELL_VOLTAGE_TOO_LOW = 0x4,
 	PACK_TOO_HOT = 0x8,
-	OPEN_WIRING_FAULT =
-		0x10, /* cell tap wire is either weakly connected or not connected */
-	INTERNAL_SOFTWARE_FAULT = 0x20, /* general software fault */
-	INTERNAL_THERMAL_ERROR =
-		0x40, /* internal hardware fault reulting from too hot of onboard temps */
-	INTERNAL_CELL_COMM_FAULT =
-		0x80, /* this is due to an invalid CRC from retrieving values */
-	CURRENT_SENSOR_FAULT = 0x100,
-	CHARGE_READING_MISMATCH =
-		0x200, /* charge voltage when not supposed to be charging*/
-	LOW_CELL_VOLTAGE = 0x400, /* voltage of a cell falls below 90 mV */
-	WEAK_PACK_FAULT = 0x800,
-	EXTERNAL_CAN_FAULT = 0x1000,
-	DISCHARGE_LIMIT_ENFORCEMENT_FAULT = 0x2000,
-	CHARGER_SAFETY_RELAY = 0x4000,
-	BATTERY_THERMISTOR = 0x8000,
-	CHARGER_CAN_FAULT = 0x10000,
-	CHARGE_LIMIT_ENFORCEMENT_FAULT = 0x20000,
-	DIE_TEMP_MAXIMUM_FAULT = 0x40000,
-	ISOSPI_BREAK_FAULT = 0x80000,
+	WEAK_PACK_FAULT = 0x10,
+	EXTERNAL_CAN_FAULT = 0x20,
+	DISCHARGE_LIMIT_ENFORCEMENT_FAULT = 0x40,
+	CHARGE_LIMIT_ENFORCEMENT_FAULT = 0x80,
+	DIE_TEMP_MAXIMUM_FAULT = 0x100,
+	HV_PLATE_COMMS_FAULT = 0x200,
+	SEGMENT_COMMS_FAULT = 0x400,
 
 	MAX_FAULTS = 0x80000000 /* Maximum allowable fault code */
 };

@@ -9,64 +9,42 @@
 #define OCV_TIMER_DURATION 750 // in ticks
 
 /**
- * @brief Map cells to therms (ra codes).  Note beta has only 6 therms. 
+ * @brief Map cells to therms (ra codes).  Note beta has only 6 therms.
  */
-const int THERM_MAP[NUM_CELLS_PER_CHIP] = { 0, 0, 1, 1, 2, 2, 3,
-					    3, 4, 4, 5, 5, 6 };
+const int THERM_MAP[NUM_CELLS_PER_CHIP] = { 0, 0, 1, 1, 5, 5, 6,
+					    6, 7, 7, 8, 8, 9 };
 
 // clang-format on
 
 /**
  * @brief Calculate the cell temperature of a 10,000 ohm NTP resistor (model 103)
- * 
+ *
  * @param res The resistance of the resistor
  * @return float The temperature
  */
 static float calc_temp(float res)
 {
-	float coef = res / 10000.0;
-	// achieved via passing ThermCalcs.xlsx into https://www.standardsapplied.com/nonlinear-curve-fitting-calculator.html
-	return -1149.531863 * (pow(coef, 1.0 / 8)) +
-	       658.9396848 * (pow(coef, 1.0 / 4)) +
-	       -87.8102815 * (pow(coef, 1.0 / 2)) + 2.034216235 * coef +
-	       601.008351;
+	// achieved via math --  See BMS 25 Mapping and Calcs
+	return ((298.15 * 3462.28) / (298.15 * logf(res / 10100) + 3462.28)) -
+	       273.15;
 }
 
 /**
  * @brief Calculate a cell temperature based on the thermistor reading.
- * 
+ *
  * @param voltage The thremistor reading.
  * @return float The temperature in degrees Celsius.
  */
 static float calc_cell_temp(float voltage)
 {
-	float res = (5600 * (3 - voltage)) / voltage;
+	float res = (10000 * (3 - voltage)) / voltage;
 	return calc_temp(res);
 }
 
-/**
- * @brief Calculate a cell temperature of onboard therm
- * 
- * @param voltage the voltage read by ADC
- * @return float The temperature in degrees C
- */
-static float calc_cell_temp_onboard(float voltage)
-{
-	float res = (5600 * (5 - voltage)) / voltage;
-	return calc_temp(res);
-}
-
-chipdata_t get_chip_data(analyzer_t *analyzer, uint8_t chip)
+chipdata_t *get_chip_data(analyzer_t *analyzer, uint8_t chip)
 {
 	assert_param(chip < NUM_CHIPS);
-
-	chipdata_t chip_data;
-
-	mutex_get(&analyzer->analyzer_mutex);
-	chip_data = analyzer->chip_data[chip];
-	mutex_put(&analyzer->analyzer_mutex);
-
-	return chip_data;
+	return &analyzer->chip_data[chip]; // TODO; MUTEX
 }
 
 void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data)
@@ -80,12 +58,13 @@ void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 		}
 
 		// Calculate onboard therm temps and chip temps
-		analyzer->chip_data[chip].on_board_temp =
-			(calc_cell_temp_onboard(getVoltage(
-				 acc_data->chips[chip].raux.ra_codes[6])) +
-			 calc_cell_temp_onboard(getVoltage(
-				 acc_data->chips[chip].raux.ra_codes[7]))) /
-			2;
+		analyzer->chip_data[chip].on_board_temp = fmaxf(
+			fmaxf(calc_cell_temp(getVoltage(
+				      acc_data->chips[chip].raux.ra_codes[2])),
+			      calc_cell_temp(getVoltage(
+				      acc_data->chips[chip].raux.ra_codes[3]))),
+			calc_cell_temp(getVoltage(
+				acc_data->chips[chip].raux.ra_codes[4])));
 
 		/* set the die temp */
 		// conversion rate from datasheet, Table 105.  also in driver src
@@ -252,7 +231,10 @@ void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data)
 			// calc averge volatage across a segment
 			analyzer->segment_average_volts[c / 2] =
 				total_seg_volt / ((float)(NUM_CELLS * 2));
-
+			analyzer->segment_total_volts[c / 2] = total_seg_volt;
+			analyzer->segment_delt_volts[c / 2] =
+				analyzer->max_voltage.val -
+				analyzer->min_voltage.val;
 			total_seg_volt = 0;
 		}
 	}
@@ -298,7 +280,8 @@ void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data,
 	/* if there is no previous data point, set inital open cell voltage to current reading */
 
 	if (is_first_reading) {
-		// sanity check the last cell that the reading is good, oftentimes the first readings are bad
+		// sanity check the last cell that the reading is good, oftentimes the first
+		// readings are bad
 		float last_cell =
 			analyzer->chip_data[NUM_CHIPS - 1]
 				.cell_voltages[NUM_CELLS_PER_CHIP - 1];
@@ -337,5 +320,43 @@ void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data,
 		} else {
 			start_timer(&analyzer->ocvTimer, OCV_TIMER_DURATION);
 		}
+	}
+}
+
+void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
+{
+	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+		chipdata_t *chip_data = get_chip_data(analyzer, chip);
+
+		// Cell Diagnostics
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			// balancing status
+			chip_data->is_balancing[cell] =
+				(acc_data->chips[chip].tx_cfgb.dcc >> cell) & 1;
+			// S_C fault status
+			chip_data->cs_fault[cell] =
+				(acc_data->chips[chip].statc.cs_flt >> cell) &
+				1;
+		}
+
+		// Chip Diagnotics
+		chip_data->die_temp =
+			getVoltage(acc_data->chips[chip].stata.itmp / 0.0075) -
+			273;
+		chip_data->vpv =
+			20.0 *
+			getVoltage( // VPV is ra_code 11 w/ different scale
+				acc_data->chips[chip].aux.a_codes[11]),
+		chip_data->vmv =
+			(20.0 * getVoltage( // VMV is ra_code 10
+					acc_data->chips[chip].aux.a_codes[10])),
+		chip_data->flt_reg = acc_data->chips[chip].statc;
+		chip_data->v_res = getVoltage(acc_data->chips[chip].statb.vr4k);
+		chip_data->vref2 =
+			getVoltage(acc_data->chips[chip].stata.vref2);
+		chip_data->v_analog =
+			getVoltage(acc_data->chips[chip].statb.va),
+		chip_data->v_digital =
+			getVoltage(acc_data->chips[chip].statb.vd);
 	}
 }

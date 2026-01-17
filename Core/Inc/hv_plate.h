@@ -6,7 +6,7 @@
 #include "stm32xx_hal.h"
 #include "adi_bms_2950data.h"
 
-#define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
+#define HV_CTRL_GPO GPIO4_2950
 
 /**
  * @brief initializes the adbms2950
@@ -45,15 +45,5 @@ float get_ts_voltage(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi);
  * @param hspi pointer to spi handler  
  */
 float get_shunt_temp(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi);
-
-/**
- * @brief Sets the HV_CTRL GPO to the desired state to toggle precharge
- * 
- * @param ic pointer to adbms data struct
- * @param hspi pointer to spi handler 
- * @param state if true, pulls the GPO up, if false pulls it down
- */
-void set_precharge_relay(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi,
-			 bool state);
 
 #endif
