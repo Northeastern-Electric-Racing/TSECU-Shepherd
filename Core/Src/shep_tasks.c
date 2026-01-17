@@ -16,6 +16,7 @@
 #include "compute.h"
 #include "cell_temp_sanitizer.h"
 #include "isospi_recovery.h"
+#include "dcl.h"
 
 void vDefaultTask(ULONG thread_input)
 {
