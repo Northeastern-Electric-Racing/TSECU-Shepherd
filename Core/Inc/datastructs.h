@@ -202,6 +202,21 @@ typedef struct {
 	float cont_CCL;
 } bms_algos_t;
 
+typedef enum {
+	CURRENT_LIMIT_STATE_REST = 0,
+	CURRENT_LIMIT_STATE_PULSE,
+	CURRENT_LIMIT_STATE_COOLDOWN
+} current_limit_algo_state_t;
+
+typedef struct {
+	current_limit_algo_state_t state;
+	nertimer_t pulse_timer;
+	nertimer_t t_above;
+	nertimer_t t_below;
+	nertimer_t rest_timer;
+	bool pulse_allowed;
+} current_limit_pulse_ctrl_t;
+
 /**
  * @brief data for determine the current BMS State
  */
