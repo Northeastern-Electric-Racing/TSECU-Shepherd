@@ -3,6 +3,7 @@
 #include "compute.h"
 #include "mcuWrapper.h"
 #include "isospi_recovery.h"
+#include "can_messages.h"
 
 #define MAX_PEC_ERROR_ACCUM (100U) // Max accumulated PECs
 

@@ -93,6 +93,8 @@ typedef enum {
  */
 typedef struct {
 	therm_state_t sanitized_therms[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+	crit_cellval_t max_sanitized_temp;
+
 } sanitizer_t;
 
 /**
@@ -236,6 +238,7 @@ typedef struct {
 		hv_plate; // TODO add hv plate interal data to analyzer to remove hv_plate
 	acc_data_t *acc_data;
 	bms_algos_t *bms_algos;
+	sanitizer_t *sanitizer;
 } state_machine_args_t;
 
 /**
