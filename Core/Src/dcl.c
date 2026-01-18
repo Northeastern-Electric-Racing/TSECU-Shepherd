@@ -162,7 +162,6 @@ void calc_dcl(const analyzer_t *const analyzer,
 
 		// clang-format on
 	} else {
-
 		if (dcl_ctrl.pulse_allowed == true) {
 			dcl_ctrl.state = CURRENT_LIMIT_STATE_REST;
 			cancel_timer(&dcl_ctrl.t_above);
@@ -170,7 +169,6 @@ void calc_dcl(const analyzer_t *const analyzer,
 			cancel_timer(&dcl_ctrl.pulse_timer);
 			cancel_timer(&dcl_ctrl.rest_timer);
 		}
-		
 	}
 
 	dcl_ctrl.pulse_allowed = is_pulse_allowed;
