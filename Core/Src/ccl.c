@@ -95,15 +95,14 @@ void ccl_init(pulse_cooldown_mode_t cd_mode)
 	cancel_timer(&ccl_ctrl.cooldown_timer);
 }
 
-void ccl_calc_inst_limit(
-	const current_limit_algo_inputs_t *const curr_lim_inputs,
-	bms_algos_t *const bms_algos)
+void ccl_calc_inst_limit(current_limit_algo_inputs_t curr_lim_inputs,
+			 bms_algos_t *const bms_algos)
 {
-	float ccl_min_temp = ccl_from_temp(curr_lim_inputs->min_temp);
-	float ccl_max_temp = ccl_from_temp(curr_lim_inputs->max_temp);
+	float ccl_min_temp = ccl_from_temp(curr_lim_inputs.min_temp);
+	float ccl_max_temp = ccl_from_temp(curr_lim_inputs.max_temp);
 	float ccl_temp = fminf(ccl_min_temp, ccl_max_temp);
 
-	float ccl_ocv = ccl_from_cell_volt(curr_lim_inputs->max_ocv);
+	float ccl_ocv = ccl_from_cell_volt(curr_lim_inputs.max_ocv);
 
 	float ccl = fminf(ccl_temp, ccl_ocv);
 

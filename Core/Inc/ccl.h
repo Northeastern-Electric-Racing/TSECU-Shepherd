@@ -25,9 +25,8 @@ void ccl_init(pulse_cooldown_mode_t cd_mode);
  *
  * @return Instantaneous charge current limit (A)
  */
-void ccl_calc_inst_limit(
-	const current_limit_algo_inputs_t *const curr_lim_inputs,
-	bms_algos_t *const bms_algos);
+void ccl_calc_inst_limit(current_limit_algo_inputs_t curr_lim_inputs,
+			 bms_algos_t *const bms_algos);
 
 /**
  * @brief Compute the continuous charge current limit.

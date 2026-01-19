@@ -96,15 +96,14 @@ void dcl_init(pulse_cooldown_mode_t cooldown_mode)
 	cancel_timer(&dcl_ctrl.cooldown_timer);
 }
 
-void dcl_calc_inst_limit(
-	const current_limit_algo_inputs_t *const curr_lim_inputs,
-	bms_algos_t *const bms_algos)
+void dcl_calc_inst_limit(current_limit_algo_inputs_t curr_lim_inputs,
+			 bms_algos_t *const bms_algos)
 {
-	float dcl_min_temp = dcl_from_temp(curr_lim_inputs->min_temp);
-	float dcl_max_temp = dcl_from_temp(curr_lim_inputs->max_temp);
+	float dcl_min_temp = dcl_from_temp(curr_lim_inputs.min_temp);
+	float dcl_max_temp = dcl_from_temp(curr_lim_inputs.max_temp);
 	float dcl_temp = fminf(dcl_min_temp, dcl_max_temp);
 
-	float dcl_ocv = dcl_from_cell_volt(curr_lim_inputs->min_ocv);
+	float dcl_ocv = dcl_from_cell_volt(curr_lim_inputs.min_ocv);
 
 	float dcl = fminf(dcl_temp, dcl_ocv);
 

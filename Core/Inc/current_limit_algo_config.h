@@ -5,11 +5,15 @@
 
 // clang-format off
 
+/******************************* COMMON *******************************/
+
 #define TRIGGER_DEBOUNCE_MS           (50UL)
 #define QUIET_DEBOUNCE_MS             (50UL)
 #define PULSE_ENABLE_MARGIN_A         (0.01f)
 
-/******************************* DCL ****************************************/
+/******************************* DCL **********************************/
+
+#define DCL_PULSE_ENABLE
 
 #define DCL_TEMP_MIN_C		          MIN_DISCHG_TEMP
 #define DCL_TEMP_RAMP_UP_END_C	      (10.0f)
@@ -33,7 +37,9 @@
 
 #define DCL_TRIGGER_HYST_A	          (2.0f)
 
-/******************************* CCL ****************************************/
+/******************************* CCL **********************************/
+
+#define CCL_PULSE_ENABLE
 
 #define CCL_TEMP_MIN_C		          MIN_CHG_TEMP
 #define CCL_TEMP_RAMP_UP_END_C	      (10.0f)

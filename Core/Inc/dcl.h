@@ -25,9 +25,8 @@ void dcl_init(pulse_cooldown_mode_t cooldown_mode);
  *
  * @return Instantaneous discharge current limit (A)
  */
-void dcl_calc_inst_limit(
-	const current_limit_algo_inputs_t *const curr_lim_inputs,
-	bms_algos_t *const bms_algos);
+void dcl_calc_inst_limit(current_limit_algo_inputs_t curr_lim_inputs,
+			 bms_algos_t *const bms_algos);
 
 /**
  * @brief Compute the continuous discharge current limit.
