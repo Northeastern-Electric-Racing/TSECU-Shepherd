@@ -4,25 +4,27 @@
 #include "datastructs.h"
 
 /**
- * @brief Initializes discharge current limit (DCL) algorithms timers and state
+ * @brief Initialize the discharge current limit (DCL) pulse controller.
  *
- * Should be called once during system startup in the bms algorithms task, 
- * may need additional calls during isoSPI recovery. 
+ * Initializes internal state and timers for the DCL pulse and cooldown
+ * mechanism. This function should be called once at system startup and
+ * may be re-invoked during recovery events to reset internal state.
+ * 
+ * @param cd_mode  Cooldown behavior mode for pulse operation
  */
-void dcl_init(void);
+void dcl_init(pulse_cooldown_mode_t cd_mode);
 
 /**
- * @brief Calculates the continuous discharge current limit.
+ * @brief Compute the discharge current limit.
  *
- * Computes the discharge current limit from cell temperature and cell voltage.
- * When operating in the safe region, a time-limited discharge pulse and
- * subsequent cooldown may be applied.
+ * Calculates the discharge current limit based on the provided operating
+ * conditions. When permitted, a time-limited discharge pulse and optional
+ * cooldown behavior may be applied.
  *
- * @param analyzer   Analyzer data containing cell and pack measurements.
- * @param hv_plate   High-voltage plate data used for DCL pulse evaluation.
- * @param bms_algos  Output structure where the computed DCL is stored.
+ * @param curr_lim_inputs  Current limit algorithm inputs
+ * @param bms_algos        Output structure updated with the computed DCL
  */
-void calc_dcl(const analyzer_t *const analyzer,
-	      const hv_plate_t *const hv_plate, bms_algos_t *const bms_algos);
+void calc_dcl(current_limit_algo_inputs_t curr_lim_inputs,
+	      bms_algos_t *const bms_algos);
 
 #endif // DCL_H

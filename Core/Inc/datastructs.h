@@ -202,18 +202,65 @@ typedef struct {
 	float cont_CCL;
 } bms_algos_t;
 
+/**
+ * @brief Cooldown behavior selection for pulse-based current limiting.
+ *
+ * Defines when a cooldown period is enforced after a pulse.
+ */
 typedef enum {
-	CURRENT_LIMIT_STATE_REST = 0,
-	CURRENT_LIMIT_STATE_PULSE,
-	CURRENT_LIMIT_STATE_COOLDOWN
+	COOLDOWN_ON_FULL_PULSE = 0, // Cooldown only after full pulse
+	COOLDOWN_ALWAYS // Cooldown after any pulse exit
+} pulse_cooldown_mode_t;
+
+/**
+ * @brief State machine states for the pulse-based current limit algorithm.
+ *
+ * Represents the high-level operating phase of the limiter.
+ */
+typedef enum {
+	CURRENT_LIMIT_STATE_REST = 0, // Limiter idle
+	CURRENT_LIMIT_STATE_PULSE, // Pulse active
+	CURRENT_LIMIT_STATE_COOLDOWN // Cooldown active
 } current_limit_algo_state_t;
 
+/**
+ * @brief Input values for the current limit algorithms.
+ *
+ * This structure contains only the operating-point inputs required by the
+ * algorithm. It is algorithm-owned and does not represent system state.
+ */
 typedef struct {
+	float min_temp;
+	float max_temp;
+	float min_ocv;
+	float pack_current;
+} current_limit_algo_inputs_t;
+
+/**
+ * @brief Internal control and state for pulse-based current limiting.
+ *
+ * Holds the algorithm state machine, timers, and configuration needed to
+ * manage pulse and cooldown behavior. This structure is owned and maintained
+ * by the current limit algorithm.
+ */
+typedef struct {
+	// Current limiter state
 	current_limit_algo_state_t state;
+
+	// Cooldown behavior mode
+	pulse_cooldown_mode_t cooldown_mode;
+
+	// Pulse duration timer
 	nertimer_t pulse_timer;
+
+	// Above and below threshold debounce timer
 	nertimer_t t_above;
 	nertimer_t t_below;
-	nertimer_t rest_timer;
+
+	// Cooldown duration timer
+	nertimer_t cooldown_timer;
+
+	// Pulse allowed flag
 	bool pulse_allowed;
 } current_limit_pulse_ctrl_t;
 
