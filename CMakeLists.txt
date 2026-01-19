@@ -80,7 +80,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/adi6830_interaction.c"
     "Core/Src/analyzer.c"
     "Core/Src/can_handler.c"
-    "Core/Src/can_messages.c"
+    "Core/Src/can_messages_tx.c"
     "Core/Src/charging.c"
     "Core/Src/compute.c"
     "Core/Src/hv_plate.c"
