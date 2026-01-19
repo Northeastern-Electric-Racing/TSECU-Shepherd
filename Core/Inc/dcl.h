@@ -10,21 +10,35 @@
  * mechanism. This function should be called once at system startup and
  * may be re-invoked during recovery events to reset internal state.
  * 
- * @param cd_mode  Cooldown behavior mode for pulse operation
+ * @param cooldown_mode  Cooldown behavior mode for pulse operation
  */
-void dcl_init(pulse_cooldown_mode_t cd_mode);
+void dcl_init(pulse_cooldown_mode_t cooldown_mode);
 
 /**
- * @brief Compute the discharge current limit.
+ * @brief Compute instantaneous discharge current limit.
  *
- * Calculates the discharge current limit based on the provided operating
- * conditions. When permitted, a time-limited discharge pulse and optional
- * cooldown behavior may be applied.
+ * Determines the most restrictive discharge current limit based on cell
+ * temperature and cell open-circuit voltage.
  *
  * @param curr_lim_inputs  Current limit algorithm inputs
- * @param bms_algos        Output structure updated with the computed DCL
+ * @param bms_algos        Output structure updated with the instantaneous DCL
+ *
+ * @return Instantaneous discharge current limit (A)
  */
-void calc_dcl(current_limit_algo_inputs_t curr_lim_inputs,
-	      bms_algos_t *const bms_algos);
+void dcl_calc_inst_limit(
+	const current_limit_algo_inputs_t *const curr_lim_inputs,
+	bms_algos_t *const bms_algos);
+
+/**
+ * @brief Compute the continuous discharge current limit.
+ *
+ * Applies pulse and cooldown behavior to the discharge current limit.
+ * When pulse operation is not permitted, the limit defaults to the
+ * previously computed instantaneous discharge current limit.
+ *
+ * @param pack_current  Pack discharge current (A)
+ * @param bms_algos     Output structure updated with the applied DCL
+ */
+void dcl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos);
 
 #endif // DCL_H

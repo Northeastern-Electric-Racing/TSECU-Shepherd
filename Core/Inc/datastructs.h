@@ -200,6 +200,8 @@ typedef struct {
 typedef struct {
 	float cont_DCL;
 	float cont_CCL;
+	float inst_DCL;
+	float inst_CCL;
 } bms_algos_t;
 
 /**
@@ -233,7 +235,7 @@ typedef struct {
 	float min_temp;
 	float max_temp;
 	float min_ocv;
-	float pack_current;
+	float max_ocv;
 } current_limit_algo_inputs_t;
 
 /**

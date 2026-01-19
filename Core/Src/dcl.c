@@ -27,22 +27,22 @@ static float dcl_from_temp(float temperature_c)
 {
 	float dcl = 0.0f;
 
-	// Outside valid temperature range -> minimum current
+	// Outside valid temperature range -> minimum discharge current
 	if ((temperature_c <= DCL_TEMP_MIN_C) ||
 	    (temperature_c >= DCL_TEMP_MAX_C)) {
 		dcl = DCL_MIN_CURRENT_A;
 	} else if (temperature_c <
-		   DCL_TEMP_RAMP_UP_END_C) { // Ramp up above low-temperature derate threshold
+		   DCL_TEMP_RAMP_UP_END_C) { // Ramp up discharge current above low-temperature derate threshold
 		dcl = linear_interpolate(temperature_c, DCL_TEMP_MIN_C,
 					 DCL_TEMP_RAMP_UP_END_C,
 					 DCL_MIN_CURRENT_A, DCL_MAX_CURRENT_A);
 	} else if (temperature_c >
-		   DCL_TEMP_RAMP_DOWN_START_C) { // Ramp down above high-temperature derate threshold
+		   DCL_TEMP_RAMP_DOWN_START_C) { // Ramp down discharge current above high-temperature derate threshold
 		dcl = linear_interpolate(temperature_c,
 					 DCL_TEMP_RAMP_DOWN_START_C,
 					 DCL_TEMP_MAX_C, DCL_MAX_CURRENT_A,
 					 DCL_MIN_CURRENT_A);
-	} else { // Within nominal temperature range -> maximum current
+	} else { // Within nominal temperature range -> maximum discharge current
 		dcl = DCL_MAX_CURRENT_A;
 	}
 
@@ -62,59 +62,29 @@ static float dcl_from_cell_volt(float ocv)
 {
 	float dcl = 0.0f;
 
-	// Below minimum OCV -> minimum current
+	// Below minimum OCV -> minimum discharge current
 	if (ocv <= DCL_OCV_MIN_V) {
 		dcl = DCL_MIN_CURRENT_A;
 	} else if (ocv <
-		   DCL_OCV_DERATE_THRESH) { // Ramp down below OCV derate threshold
+		   DCL_OCV_DERATE_THRESH) { // Ramp down discharge current below OCV derate threshold
 		dcl = linear_interpolate(ocv, DCL_OCV_MIN_V,
 					 DCL_OCV_DERATE_THRESH,
 					 DCL_MIN_CURRENT_A, DCL_MAX_CURRENT_A);
-	} else { // Above OCV derate threshold -> maximum current
+	} else { // Above OCV derate threshold -> maximum discharge current
 		dcl = DCL_MAX_CURRENT_A;
 	}
 
 	return dcl;
 }
 
-/**
- * @brief Compute instantaneous discharge current limit.
- *
- * Determines the most restrictive discharge current limit based on cell
- * temperature and cell open-circuit voltage.
- *
- * @param min_temp  Minimum cell temperature (deg C)
- * @param max_temp  Maximum cell temperature (deg C)
- * @param min_ocv   Minimum cell open-circuit voltage (V)
- *
- * @return Instantaneous discharge current limit (A)
- */
-static float calc_inst_dcl(float min_temp, float max_temp, float min_ocv)
+void dcl_init(pulse_cooldown_mode_t cooldown_mode)
 {
-	float dcl_min_temp = dcl_from_temp(min_temp);
-	float dcl_max_temp = dcl_from_temp(max_temp);
-	float dcl_temp = fminf(dcl_min_temp, dcl_max_temp);
-
-	float dcl_ocv = dcl_from_cell_volt(min_ocv);
-
-	float dcl = fminf(dcl_temp, dcl_ocv);
-
-	if (dcl < 0.0f) {
-		dcl = 0.0f;
-	} else if (dcl > DCL_MAX_CURRENT_A) {
-		dcl = DCL_MAX_CURRENT_A;
-	}
-
-	return dcl;
-}
-
-void dcl_init(pulse_cooldown_mode_t cd_mode)
-{
-	if (cd_mode != COOLDOWN_ALWAYS && cd_mode != COOLDOWN_ON_FULL_PULSE) {
+	if (cooldown_mode != COOLDOWN_ALWAYS &&
+	    cooldown_mode != COOLDOWN_ON_FULL_PULSE) {
 		printf("[DCL] Invalid cooldown mode!! Using default mode [COOLDOWN_ALWAYS]");
 		dcl_ctrl.cooldown_mode = COOLDOWN_ALWAYS;
 	} else {
-		dcl_ctrl.cooldown_mode = cd_mode;
+		dcl_ctrl.cooldown_mode = cooldown_mode;
 	}
 
 	dcl_ctrl.state = CURRENT_LIMIT_STATE_REST;
@@ -126,24 +96,37 @@ void dcl_init(pulse_cooldown_mode_t cd_mode)
 	cancel_timer(&dcl_ctrl.cooldown_timer);
 }
 
-void calc_dcl(current_limit_algo_inputs_t curr_lim_inputs,
-	      bms_algos_t *const bms_algos)
+void dcl_calc_inst_limit(
+	const current_limit_algo_inputs_t *const curr_lim_inputs,
+	bms_algos_t *const bms_algos)
 {
-	// Calculate instantaneous DCL from temperature and OCV
-	float inst_dcl = calc_inst_dcl(curr_lim_inputs.min_temp,
-				       curr_lim_inputs.max_temp,
-				       curr_lim_inputs.min_ocv);
+	float dcl_min_temp = dcl_from_temp(curr_lim_inputs->min_temp);
+	float dcl_max_temp = dcl_from_temp(curr_lim_inputs->max_temp);
+	float dcl_temp = fminf(dcl_min_temp, dcl_max_temp);
 
+	float dcl_ocv = dcl_from_cell_volt(curr_lim_inputs->min_ocv);
+
+	float dcl = fminf(dcl_temp, dcl_ocv);
+
+	if (dcl < 0.0f) {
+		dcl = 0.0f;
+	} else if (dcl > DCL_MAX_CURRENT_A) {
+		dcl = DCL_MAX_CURRENT_A;
+	}
+
+	bms_algos->inst_DCL = dcl;
+}
+
+void dcl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
+{
 	// Default applied DCL is the instantaneous limit
-	float applied_dcl = inst_dcl;
+	float applied_dcl = bms_algos->inst_DCL;
 
 	// Check if pulse operation is allowed
-	bool is_pulse_allowed =
-		(inst_dcl >= (DCL_MAX_CURRENT_A - DCL_PULSE_ENABLE_MARGIN_A));
+	bool is_pulse_allowed = (bms_algos->inst_DCL >=
+				 (DCL_MAX_CURRENT_A - PULSE_ENABLE_MARGIN_A));
 
 	if (is_pulse_allowed == true) {
-		float pack_current = curr_lim_inputs.pack_current;
-
 		// clang-format off
 		switch (dcl_ctrl.state) {
 			case CURRENT_LIMIT_STATE_REST:
@@ -151,7 +134,7 @@ void calc_dcl(current_limit_algo_inputs_t curr_lim_inputs,
 				// Apply pulse current while monitoring entry condition
 				applied_dcl = DCL_MAX_PULSE_CURRENT_A;
 				
-				if (pack_current > (DCL_MAX_CURRENT_A + TRIGGER_HYST_A)) {
+				if (pack_current > (DCL_MAX_CURRENT_A + DCL_TRIGGER_HYST_A)) {
 					
 					// Start debounce for pulse entry
 					if (is_timer_active(&dcl_ctrl.t_above) == false) {
@@ -176,7 +159,7 @@ void calc_dcl(current_limit_algo_inputs_t curr_lim_inputs,
 				// Apply pulse current during active pulse
 				applied_dcl = DCL_MAX_PULSE_CURRENT_A;
 
-				if (pack_current < (DCL_MAX_CURRENT_A - TRIGGER_HYST_A)) {
+				if (pack_current < (DCL_MAX_CURRENT_A - DCL_TRIGGER_HYST_A)) {
 
 					// Start debounce for early pulse exit
 					if (is_timer_active(&dcl_ctrl.t_below) == false) {
@@ -200,7 +183,7 @@ void calc_dcl(current_limit_algo_inputs_t curr_lim_inputs,
 								break;
 							default:
 								// Fallback to rest state
-								dcl_ctrl.state = CURRENT_LIMIT_STATE_REST;
+								dcl_ctrl.cooldown_mode = COOLDOWN_ALWAYS;
 								break;
 						}
 
