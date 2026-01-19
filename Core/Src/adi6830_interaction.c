@@ -3,7 +3,7 @@
 #include "compute.h"
 #include "mcuWrapper.h"
 #include "isospi_recovery.h"
-#include "can_messages.h"
+#include "can_messages_tx.h"
 
 #define MAX_PEC_ERROR_ACCUM (100U) // Max accumulated PECs
 
@@ -99,7 +99,7 @@ static void count_pec_errors(cell_asic chips[NUM_CHIPS])
 				printf("\n");
 			}
 
-			send_pec_error_message(chip, pec_error_count);
+			send_pec_error_count_notification_per_chip(chip, pec_error_count);
 
 			// Accumulate PEC errors only after startup mask timer ends
 			if (!is_startup_pec_mask_active()) {
@@ -227,7 +227,7 @@ void set_discharge_timeout(cell_asic *chip, DCTO timeout)
 
 /**
  * @brief Wake the chip of every ADBMS6830 IC.  Blocking critical section wait about 1ms * NUM_CHIPS
- * 
+ *
  * @param line   isoSPI line to wake (ISOSPI_LINE_A or ISOSPI_LINE_B).
  * @param num_ic Number of ICs present on the specified isoSPI line.
  */

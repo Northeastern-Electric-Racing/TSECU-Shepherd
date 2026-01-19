@@ -1,10 +1,11 @@
 
+#include "can_messages.h"
 #include "u_tx_threads.h"
 #include "u_tx_debug.h"
 #include "u_tx_general.h"
 #include "u_tx_can.h"
-#include "shep_queues.h"
-#include "can_messages.h"
+#include "u_queues.h"
+#include "can_messages_tx.h"
 #include "shep_tasks.h"
 #include "timer.h"
 #include "state_machine.h"
@@ -60,15 +61,16 @@ void vStateMachine(ULONG thread_input)
 
 		if (is_timer_expired(&telem_timer)) {
 			// these are unimportant telemetry messages so they can be sent infrequently
-			send_bms_status_message( // TODO: can be moved to CAN dispatch
+			send_bms_status( // TODO: can be moved to CAN dispatch
+			get_current_state(state_machine),
 				analyzer->avg_temp,
 				analyzer->internal_temp, // TODO: we never set internal temp
-				get_current_state(state_machine),
 				get_current_state(state_machine) ==
 					BALANCING); //  TODO: remove is balancing
-			send_fault_status_message(
+			/* TODO send_fault_status(
 				state_machine->fault_code_crit,
 				state_machine->fault_code_noncrit);
+				*/
 			start_timer(&telem_timer, 500);
 		}
 
@@ -148,14 +150,16 @@ void vAnalyzer(ULONG thread_input)
 		set_flag(DEBUG_FLAG);
 
 		// send out telemetry data sourced from the above functions
-		send_cell_voltage_message(analyzer->max_ocv, analyzer->min_ocv,
+		send_cell_voltage(analyzer->max_ocv.val, analyzer->max_ocv.chipIndex, analyzer->max_ocv.cellNum,
+		analyzer->min_ocv.val,analyzer->min_ocv.chipIndex, analyzer->min_ocv.cellNum,
 					  analyzer->avg_ocv);
-		send_segment_average_volt_message(
-			analyzer); // TODO: Update CAN message send function defintions
-		send_segment_total_volt_message(analyzer);
-		send_cell_temp_message(analyzer->max_temp, analyzer->min_temp,
+		send_segment_average_voltages(
+			analyzer->segment_average_volts[0], analyzer->segment_average_volts[1], analyzer->segment_average_volts[2], analyzer->segment_average_volts[3], analyzer->segment_average_volts[4]);
+		send_segment_total_voltages(analyzer->segment_total_volts[0], analyzer->segment_total_volts[1], analyzer->segment_total_volts[2], analyzer->segment_total_volts[3], analyzer->segment_total_volts[4]);
+		send_cell_temperatures(analyzer->max_temp.val, analyzer->max_temp.chipIndex, analyzer->max_temp.cellNum,
+		analyzer->min_temp.val, analyzer->min_temp.chipIndex, analyzer->min_temp.cellNum,
 				       analyzer->avg_temp);
-		send_segment_temp_message(analyzer);
+		send_segment_temperatures(			analyzer->segment_average_temps[0], analyzer->segment_average_temps[1], analyzer->segment_average_temps[2], analyzer->segment_average_temps[3], analyzer->segment_average_temps[4]);
 	}
 }
 
