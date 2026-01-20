@@ -6,7 +6,7 @@
 
 #define _PERCENT_16(x) ((uint16_t)(x * ((1 << 16) - 1) / 100.0f))
 
-float calypso_signals[NUM_DEVICES];
+uint8_t calypso_signals[NUM_DEVICES];
 pwm_device_t device_fan0;
 
 static HAL_StatusTypeDef _init_pwm_device(pwm_device_t *device)
@@ -63,6 +63,10 @@ void control_fan(float pack_high_temp)
 void control_message_fans(can_msg_t msg)
 {
 	// First byte is the requested duty cycle (0-100)
-	calypso_signals[DEVICE_FAN0] = *(msg.data);
+	uint8_t duty = *(msg.data);
+	if (duty > 100) {
+		duty = 100;
+	}
+	calypso_signals[DEVICE_FAN0] = duty;
 }
 #undef _PERCENT_16
