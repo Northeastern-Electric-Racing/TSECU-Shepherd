@@ -2,8 +2,7 @@
 
 #include "main.h"
 
-#define PWM_INIT_MAX_ATTEMPTS 10
-#define INIT_TIMEOUT_MS	      10
+#define INIT_TIMEOUT_MS 10
 
 #define _PERCENT_16(x) ((uint16_t)(x * ((1 << 16) - 1) / 100.0f))
 
@@ -63,6 +62,7 @@ void control_fan(float pack_high_temp)
 
 void control_message_fans(can_msg_t msg)
 {
-	calypso_signals[DEVICE_FAN0] = *((float *)msg.data);
+	// First byte is the requested duty cycle (0-100)
+	calypso_signals[DEVICE_FAN0] = *(msg.data);
 }
 #undef _PERCENT_16

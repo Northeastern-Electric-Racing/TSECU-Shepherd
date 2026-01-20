@@ -368,7 +368,7 @@ void vDebug(ULONG thread_input)
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 {
 	/* Init Interfaces Start */
-	acc_data_t *acc_data = (acc_data_t *)malloc(sizeof(acc_data));
+	acc_data_t *acc_data = (acc_data_t *)malloc(sizeof(acc_data_t));
 	analyzer_t *analyzer = (analyzer_t *)malloc(sizeof(analyzer_t));
 	state_machine_t *state_machine =
 		(state_machine_t *)malloc(sizeof(state_machine_t));
