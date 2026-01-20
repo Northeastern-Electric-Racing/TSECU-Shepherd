@@ -86,21 +86,21 @@ void send_cell_voltage_message(crit_cellval_t max_voltage,
 
 /**
  * @brief sends average voltage message
- * 
+ *
  * @param analyzer pointer to processed analyzer data
  */
 void send_segment_average_volt_message(analyzer_t *analyzer);
 
 /**
  * @brief sneds segment total voltage message
- * 
+ *
  * @param analyzer pointer to processed analyzer data
  */
 void send_segment_total_volt_message(analyzer_t *analyzer);
 
 /**
  * @brief sneds segment delta voltage message
- * 
+ *
  * @param analyzer pointer to processed analyzer data
  */
 void send_segment_delta_volt_message(analyzer_t *analyzer);
@@ -115,8 +115,8 @@ void send_segment_delta_volt_message(analyzer_t *analyzer);
 void send_cell_temp_message(crit_cellval_t max_temp, crit_cellval_t min_temp,
 			    float avg_temp);
 
-/**	
- * @brief sends the average segment temperatures		
+/**
+ * @brief sends the average segment temperatures
  */
 void send_segment_temp_message(analyzer_t *analyzer);
 
@@ -197,5 +197,12 @@ void send_pec_error_message(uint8_t chip_num, uint16_t pec_count);
  * @param status Pointer to isospi_status_t structure.
  */
 void send_isospi_status_message(const isospi_status_t *status);
+
+/**
+ * @brief Send PWM duty cycle signals over CAN.
+ *
+ * @param pointer to signals
+ */
+void send_control_signals(const uint8_t *signals)
 
 #endif

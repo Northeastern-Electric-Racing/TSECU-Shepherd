@@ -14,6 +14,8 @@ typedef struct {
 
 typedef enum { DEVICE_FAN0, NUM_DEVICES } control_devices;
 
+extern uint8_t control_device_signals[];
+
 /**
  * @brief Initialize i/o for control
  *

@@ -92,6 +92,9 @@ void vCanReceive(ULONG thred_input)
 			case DTI_CURRENT_CANID:
 				// TODO process charger can message
 				break;
+			case CALYPSO_CONTROL_CANID:
+				control_message_fans(message);
+				break;
 			default:
 				break;
 			}
@@ -305,6 +308,8 @@ void vControl(ULONG thread_input)
 		float pack_high_temp = analyzer->max_temp.val;
 		control_fan(pack_high_temp);
 		mutex_put(&analyzer->analyzer_mutex);
+
+		send_control_signals(control_device_signals);
 
 		tx_thread_sleep(MS_TO_TICKS(50));
 	}

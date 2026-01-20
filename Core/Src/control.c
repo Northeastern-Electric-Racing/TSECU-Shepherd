@@ -4,9 +4,10 @@
 
 #define INIT_TIMEOUT_MS 10
 
-#define _PERCENT_16(x) ((uint16_t)(x * ((1 << 16) - 1) / 100.0f))
+#define _PERCENT_16(x) ((uint16_t)(x * (((1 << 16) - 1) / 100)))
 
 uint8_t calypso_signals[NUM_DEVICES];
+uint8_t control_device_signals[NUM_DEVICES];
 pwm_device_t device_fan0;
 
 static HAL_StatusTypeDef _init_pwm_device(pwm_device_t *device)
@@ -57,6 +58,8 @@ void control_fan(float pack_high_temp)
 	if (duty_from_calypso > duty) {
 		duty = duty_from_calypso;
 	}
+
+	control_device_signals[DEVICE_FAN0] = (uint8_t)(duty >> 8);
 	_write_pwm_device(&device_fan0, duty);
 }
 
