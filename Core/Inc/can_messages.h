@@ -203,6 +203,6 @@ void send_isospi_status_message(const isospi_status_t *status);
  *
  * @param pointer to signals
  */
-void send_control_signals(const uint8_t *signals)
+void send_control_signals(const uint8_t *signals);
 
 #endif
