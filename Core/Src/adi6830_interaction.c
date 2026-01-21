@@ -227,7 +227,7 @@ void set_discharge_timeout(cell_asic *chip, DCTO timeout)
 
 /**
  * @brief Wake the chip of every ADBMS6830 IC.  Blocking critical section wait about 1ms * NUM_CHIPS
- * 
+ *
  * @param line   isoSPI line to wake (ISOSPI_LINE_A or ISOSPI_LINE_B).
  * @param num_ic Number of ICs present on the specified isoSPI line.
  */

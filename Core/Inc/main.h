@@ -38,6 +38,7 @@ extern "C" {
 /* USER CODE BEGIN ET */
 extern IWDG_HandleTypeDef hiwdg;
 extern SPI_HandleTypeDef hspi2;
+extern TIM_HandleTypeDef htim3;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
