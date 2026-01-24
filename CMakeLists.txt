@@ -94,6 +94,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/current_limit_algo_utils.c"
     "Core/Src/dcl.c"
     "Core/Src/ccl.c"
+    "Core/Src/control.c"
 )
 
 # Add include paths

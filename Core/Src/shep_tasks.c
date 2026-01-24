@@ -1,25 +1,26 @@
 
-#include "u_tx_threads.h"
-#include "u_tx_debug.h"
-#include "u_tx_general.h"
-#include "u_tx_can.h"
-#include "shep_queues.h"
-#include "can_messages.h"
 #include "shep_tasks.h"
-#include "timer.h"
-#include "state_machine.h"
 #include "can_handler.h"
-#include "u_tx_flags.h"
-#include "segment.h"
-#include "main.h"
-#include "hv_plate.h"
-#include "compute.h"
+#include "can_messages.h"
 #include "cell_temp_sanitizer.h"
-#include "precharge_routine.h"
+#include "compute.h"
+#include "control.h"
+#include "hv_plate.h"
 #include "isospi_recovery.h"
 #include "dcl.h"
 #include "ccl.h"
+#include "main.h"
+#include "precharge_routine.h"
+#include "segment.h"
+#include "shep_queues.h"
 #include "soc.h"
+#include "state_machine.h"
+#include "timer.h"
+#include "u_tx_can.h"
+#include "u_tx_debug.h"
+#include "u_tx_flags.h"
+#include "u_tx_general.h"
+#include "u_tx_threads.h"
 
 void vDefaultTask(ULONG thread_input)
 {
@@ -28,7 +29,7 @@ void vDefaultTask(ULONG thread_input)
 	/* Infinite loop */
 	for (;;) {
 #ifdef DEBUG_STATS
-//print_bms_stats(&bmsdata);
+// print_bms_stats(&bmsdata);
 #endif
 
 		if (alt) {
@@ -61,7 +62,8 @@ void vStateMachine(ULONG thread_input)
 		sm_handle_state(state_machine_args);
 
 		if (is_timer_expired(&telem_timer)) {
-			// these are unimportant telemetry messages so they can be sent infrequently
+			// these are unimportant telemetry messages so they can be sent
+			// infrequently
 			send_bms_status_message( // TODO: can be moved to CAN dispatch
 				analyzer->avg_temp,
 				analyzer->internal_temp, // TODO: we never set internal temp
@@ -92,6 +94,9 @@ void vCanReceive(ULONG thred_input)
 			case DTI_CURRENT_CANID:
 				// TODO process charger can message
 				break;
+			case CALYPSO_CONTROL_CANID:
+				control_message_fans(message);
+				break;
 			default:
 				break;
 			}
@@ -112,7 +117,8 @@ void vCanDispatch(ULONG thread_input)
 			status = can_send_msg(can1, &message);
 			if (status != U_SUCCESS) {
 				PRINTLN_WARNING(
-					"Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld) - Status %d",
+					"Failed to send message (on can1) after removing from "
+					"outgoing queue (Message ID: %ld) - Status %d",
 					message.id, status);
 			}
 		}
@@ -172,7 +178,8 @@ void vGetSegmentData(ULONG thread_input)
 
 	isospi_break_detection_init(acc_data->chips);
 
-	// must delay after init for some reason, or else ADC doesnt start up (-3.45 or something)
+	// must delay after init for some reason, or else ADC doesnt start up (-3.45
+	// or something)
 	tx_thread_sleep(MS_TO_TICKS(500));
 
 	for (;;) {
@@ -180,7 +187,8 @@ void vGetSegmentData(ULONG thread_input)
 
 		if (get_current_state(state_machine) == CHARGING) {
 			tx_thread_sleep(75);
-			// must delay to let settle after balancing has halted, or else cells read high
+			// must delay to let settle after balancing has halted, or else cells read
+			// high
 		}
 
 		if (get_current_state(state_machine) == CHARGING) {
@@ -238,7 +246,8 @@ void vHvPlateData(ULONG thread_input)
 		// get the current reading from the pack
 		hv_plate->pack_current = get_pack_current(hv_plate->ic, &hspi2);
 
-		// updates the SoC value in the analyzer struct based on the pack current received
+		// updates the SoC value in the analyzer struct based on the pack current
+		// received
 		update_soc(analyzer, hv_plate);
 
 		// Calculate continous DCL and CCL
@@ -308,6 +317,28 @@ void vBMSAlgorithms(ULONG thread_input)
 	}
 }
 
+void vControl(ULONG thread_input)
+{
+	analyzer_t *analyzer = (analyzer_t *)thread_input;
+
+	// Initialize peripherals for control
+	bool failed = !control_init_peripherals();
+	if (failed) {
+		printf("Failed to initialize one or more peripherals.\n");
+	}
+
+	for (;;) {
+		mutex_get(&analyzer->analyzer_mutex);
+		float pack_high_temp = analyzer->max_temp.val;
+		control_fan(pack_high_temp);
+		mutex_put(&analyzer->analyzer_mutex);
+
+		send_control_signals(control_device_signals);
+
+		tx_thread_sleep(MS_TO_TICKS(50));
+	}
+}
+
 void vDebug(ULONG thread_input)
 {
 	analyzer_t *analyzer = (analyzer_t *)thread_input;
@@ -366,7 +397,7 @@ void vDebug(ULONG thread_input)
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 {
 	/* Init Interfaces Start */
-	acc_data_t *acc_data = (acc_data_t *)malloc(sizeof(acc_data));
+	acc_data_t *acc_data = (acc_data_t *)malloc(sizeof(acc_data_t));
 	analyzer_t *analyzer = (analyzer_t *)malloc(sizeof(analyzer_t));
 	state_machine_t *state_machine =
 		(state_machine_t *)malloc(sizeof(state_machine_t));
@@ -511,6 +542,17 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vBMSAlgorithms, /* Thread Function */
 	};
 
+	thread_t _control_thread = {
+		.name = "Control Thread", /* Name */
+		.size = 2048, /* Stack Size (in bytes) */
+		.priority = 4, /* Priority */
+		.threshold = 0, /* Preemption Threshold */
+		.thread_input = (ULONG)analyzer, /* Thread Args */
+		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+		.auto_start = TX_AUTO_START, /* Auto Start */
+		.function = vControl, /* Thread Function */
+	};
+
 	thread_t _debug_thread = {
 		.name = "BMS Debug Mode Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
@@ -535,6 +577,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 		    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");

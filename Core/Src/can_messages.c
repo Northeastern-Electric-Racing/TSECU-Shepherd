@@ -572,8 +572,8 @@ void send_status_a_message(float segment_temp, uint8_t chip,
 	bitstream_add(&alpha_status_a_message, flt_reg->thsd, 1);		// THSD (1 bit)
 	bitstream_add(&alpha_status_a_message, flt_reg->tmodchk, 1);	// TMODCHK (1 bit)
 	bitstream_add(&alpha_status_a_message, flt_reg->oscchk, 1);	 	// OSCCHK (1 bit)
-	
-	memcpy(msg.data, 
+
+	memcpy(msg.data,
 		&bitstream_data, ALPHA_STAT_A_SIZE);
 
 	handle_bitstream_overflow(&alpha_status_a_message, msg.id);
@@ -671,6 +671,27 @@ void send_isospi_status_message(const isospi_status_t *status)
 
 	can_msg_t msg = { .id = ISOSPI_STS_CANID,
 			  .len = ISOSPI_STS_SIZE,
+			  .data = { 0 } };
+
+	memcpy(msg.data, &msg_data, sizeof(msg_data));
+	queue_can_msg(msg);
+}
+
+/**
+ * @brief Send PWM duty cycle signals over CAN.
+ *
+ * @param pointer to signals
+ */
+void send_control_signals(const uint8_t *signals)
+{
+	struct __attribute__((__packed__)) {
+		uint8_t fan_duty;
+	} msg_data;
+
+	msg_data.fan_duty = signals[0];
+
+	can_msg_t msg = { .id = CONTROL_CANID,
+			  .len = CONTROL_SIZE,
 			  .data = { 0 } };
 
 	memcpy(msg.data, &msg_data, sizeof(msg_data));
