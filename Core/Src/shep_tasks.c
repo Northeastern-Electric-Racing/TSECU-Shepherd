@@ -20,7 +20,6 @@
 #include "dcl.h"
 #include "ccl.h"
 #include "soc.h"
-#include "current_limit_algo_config.h"
 
 void vDefaultTask(ULONG thread_input)
 {
@@ -242,13 +241,9 @@ void vHvPlateData(ULONG thread_input)
 		// updates the SoC value in the analyzer struct based on the pack current received
 		update_soc(analyzer, hv_plate);
 
-#ifdef DCL_PULSE_ENABLE
+		// Calculate continous DCL and CCL
 		dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
-#endif
-
-#ifdef CCL_PULSE_ENABLE
 		ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
-#endif
 
 		// read voltages
 		hv_plate->ts_volts = get_ts_voltage(hv_plate->ic, &hspi2);
@@ -308,14 +303,6 @@ void vBMSAlgorithms(ULONG thread_input)
 
 		dcl_calc_inst_limit(algo_inputs, bms_algos);
 		ccl_calc_inst_limit(algo_inputs, bms_algos);
-
-#ifndef DCL_PULSE_ENABLE
-		bms_algos->cont_DCL = bms_algos->inst_DCL;
-#endif
-
-#ifndef CCL_PULSE_ENABLE
-		bms_algos->cont_CCL = bms_algos->inst_CCL;
-#endif
 
 		tx_thread_sleep(MS_TO_TICKS(500));
 	}

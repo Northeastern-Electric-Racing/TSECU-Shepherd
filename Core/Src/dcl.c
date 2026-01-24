@@ -113,17 +113,23 @@ void dcl_calc_inst_limit(current_limit_algo_inputs_t curr_lim_inputs,
 		dcl = DCL_MAX_CURRENT_A;
 	}
 
+	mutex_get(&bms_algos->bms_algos_mutex);
 	bms_algos->inst_DCL = dcl;
+	mutex_put(&bms_algos->bms_algos_mutex);
 }
 
 void dcl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 {
+	mutex_get(&bms_algos->bms_algos_mutex);
+	float inst_dcl = bms_algos->inst_DCL;
+	mutex_put(&bms_algos->bms_algos_mutex);
+
 	// Default applied DCL is the instantaneous limit
-	float applied_dcl = bms_algos->inst_DCL;
+	float applied_dcl = inst_dcl;
 
 	// Check if pulse operation is allowed
-	bool is_pulse_allowed = (bms_algos->inst_DCL >=
-				 (DCL_MAX_CURRENT_A - PULSE_ENABLE_MARGIN_A));
+	bool is_pulse_allowed = float_is_equal(inst_dcl, DCL_MAX_CURRENT_A,
+					       PULSE_ENABLE_MARGIN_A);
 
 	if (is_pulse_allowed == true) {
 		// clang-format off
@@ -133,7 +139,7 @@ void dcl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 				// Apply pulse current while monitoring entry condition
 				applied_dcl = DCL_MAX_PULSE_CURRENT_A;
 				
-				if (pack_current > (DCL_MAX_CURRENT_A + DCL_TRIGGER_HYST_A)) {
+				if (pack_current > (DCL_MAX_CURRENT_A + CURRENT_TRIGGER_HYST_A)) {
 					
 					// Start debounce for pulse entry
 					if (is_timer_active(&dcl_ctrl.t_above) == false) {
@@ -158,7 +164,7 @@ void dcl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 				// Apply pulse current during active pulse
 				applied_dcl = DCL_MAX_PULSE_CURRENT_A;
 
-				if (pack_current < (DCL_MAX_CURRENT_A - DCL_TRIGGER_HYST_A)) {
+				if (pack_current < DCL_MAX_CURRENT_A) {
 
 					// Start debounce for early pulse exit
 					if (is_timer_active(&dcl_ctrl.t_below) == false) {
@@ -240,6 +246,8 @@ void dcl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 	// Track pulse eligibility edge
 	dcl_ctrl.pulse_allowed = is_pulse_allowed;
 
+	mutex_get(&bms_algos->bms_algos_mutex);
 	// Publish applied discharge current limit
 	bms_algos->cont_DCL = applied_dcl;
+	mutex_put(&bms_algos->bms_algos_mutex);
 }

@@ -203,6 +203,8 @@ typedef struct {
 	float cont_CCL;
 	float inst_DCL;
 	float inst_CCL;
+
+	mutex_t bms_algos_mutex;
 } bms_algos_t;
 
 /**
