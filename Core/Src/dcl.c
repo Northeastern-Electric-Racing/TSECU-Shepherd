@@ -128,8 +128,8 @@ void dcl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 	float applied_dcl = inst_dcl;
 
 	// Check if pulse operation is allowed
-	bool is_pulse_allowed = float_is_equal(inst_dcl, DCL_MAX_CURRENT_A,
-					       PULSE_ENABLE_MARGIN_A);
+	bool is_pulse_allowed =
+		(inst_dcl >= (DCL_MAX_CURRENT_A - PULSE_ENABLE_MARGIN_A));
 
 	if (is_pulse_allowed == true) {
 		// clang-format off

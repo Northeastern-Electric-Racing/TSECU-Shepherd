@@ -7,6 +7,7 @@
 #include "control.h"
 #include "hv_plate.h"
 #include "isospi_recovery.h"
+#include "current_limit_algo_utils.h"
 #include "dcl.h"
 #include "ccl.h"
 #include "main.h"
@@ -236,6 +237,7 @@ void vHvPlateData(ULONG thread_input)
 	hv_plate_t *hv_plate = hv_plate_args->hv_plate;
 	analyzer_t *analyzer = hv_plate_args->analyzer;
 	bms_algos_t *bms_algos = hv_plate_args->bms_algos;
+	state_machine_t *state_machine = hv_plate_args->state_machine;
 
 	dcl_init(COOLDOWN_ON_FULL_PULSE);
 	ccl_init(COOLDOWN_ON_FULL_PULSE);
@@ -250,9 +252,17 @@ void vHvPlateData(ULONG thread_input)
 		// received
 		update_soc(analyzer, hv_plate);
 
-		// Calculate continous DCL and CCL
-		dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
-		ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
+		/* Check whether pulse operation needs to be disabled due to charging state or faults */
+		if (disable_pulse(state_machine)) {
+			mutex_get(&bms_algos->bms_algos_mutex);
+			bms_algos->cont_DCL = bms_algos->inst_DCL;
+			bms_algos->cont_CCL = bms_algos->inst_CCL;
+			mutex_put(&bms_algos->bms_algos_mutex);
+		} else {
+			// Calculate continous DCL and CCL
+			dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
+			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
+		}
 
 		// read voltages
 		hv_plate->ts_volts = get_ts_voltage(hv_plate->ic, &hspi2);

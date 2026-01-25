@@ -333,6 +333,7 @@ typedef struct {
 	hv_plate_t *hv_plate;
 	analyzer_t *analyzer;
 	bms_algos_t *bms_algos;
+	state_machine_t *state_machine;
 } hv_plate_args_t;
 
 /**

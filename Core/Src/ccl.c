@@ -100,20 +100,20 @@ void ccl_calc_inst_limit(current_limit_algo_inputs_t curr_lim_inputs,
 {
 	float ccl_min_temp = ccl_from_temp(curr_lim_inputs.min_temp);
 	float ccl_max_temp = ccl_from_temp(curr_lim_inputs.max_temp);
-	float ccl_temp = fminf(ccl_min_temp, ccl_max_temp);
+	float ccl_temp = fmaxf(ccl_min_temp, ccl_max_temp);
 
 	float ccl_ocv = ccl_from_cell_volt(curr_lim_inputs.max_ocv);
 
-	float ccl = fminf(ccl_temp, ccl_ocv);
+	float ccl = fmaxf(ccl_temp, ccl_ocv);
 
-	if (ccl < 0.0f) {
+	if (ccl > 0.0f) {
 		ccl = 0.0f;
-	} else if (ccl > CCL_MAX_CURRENT_A) {
+	} else if (ccl < CCL_MAX_CURRENT_A) {
 		ccl = CCL_MAX_CURRENT_A;
 	}
 
 	mutex_get(&bms_algos->bms_algos_mutex);
-	bms_algos->inst_CCL = ccl;
+	bms_algos->inst_CCL = fabsf(ccl);
 	mutex_put(&bms_algos->bms_algos_mutex);
 }
 
@@ -126,9 +126,12 @@ void ccl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 	// Default applied CCL is the instantaneous limit
 	float applied_ccl = inst_ccl;
 
+	/* Normalize current sign for CCL logic */
+	inst_ccl = -inst_ccl;
+
 	// Check if pulse operation is allowed
-	bool is_pulse_allowed = float_is_equal(inst_ccl, CCL_MAX_CURRENT_A,
-					       PULSE_ENABLE_MARGIN_A);
+	bool is_pulse_allowed =
+		(inst_ccl <= (CCL_MAX_CURRENT_A + PULSE_ENABLE_MARGIN_A));
 
 	if (is_pulse_allowed == true) {
 		// clang-format off
@@ -247,6 +250,6 @@ void ccl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 
 	mutex_get(&bms_algos->bms_algos_mutex);
 	// Publish applied charge current limit
-	bms_algos->cont_CCL = applied_ccl;
+	bms_algos->cont_CCL = fabsf(applied_ccl);
 	mutex_put(&bms_algos->bms_algos_mutex);
 }

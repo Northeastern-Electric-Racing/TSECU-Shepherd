@@ -2,6 +2,7 @@
 #define CURRENT_LIMIT_ALGO_UTILS_H
 
 #include <stdbool.h>
+#include "datastructs.h"
 
 /* Default epsilon for generic float comparisons */
 #define FLOAT_EPSILON (0.0001f)
@@ -35,5 +36,19 @@ bool float_is_equal(float a, float b, float eps);
  * @return Interpolated y-value.
  */
 float linear_interpolate(float x, float x1, float x2, float y1, float y2);
+
+/**
+ * @brief Determine whether pulse operation shall be disabled.
+ *
+ * This function evaluates system state and fault conditions to decide
+ * whether pulse operation must be inhibited. Pulse operation is disabled
+ * when the system is in the charging state, a critical fault is active,
+ * or a segment communication fault is present.
+ *
+ * @param state_machine  Pointer to the system state machine struct.
+ *
+ * @return true if pulse operation shall be disabled, false otherwise.
+ */
+bool disable_pulse(state_machine_t *const state_machine);
 
 #endif // CURRENT_LIMIT_ALGO_UTILS_H
