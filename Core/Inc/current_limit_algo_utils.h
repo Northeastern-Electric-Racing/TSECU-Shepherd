@@ -4,23 +4,6 @@
 #include <stdbool.h>
 #include "datastructs.h"
 
-/* Default epsilon for generic float comparisons */
-#define FLOAT_EPSILON (0.0001f)
-
-/**
- * @brief Check if two floating-point values are equal within a tolerance.
- *
- * Two floating-point values are considered equal if the absolute difference
- * between them is less than or equal to the specified tolerance.
- *
- * @param a   First value
- * @param b   Second value
- * @param eps Allowed absolute difference
- *
- * @return true if values are equal within tolerance, false otherwise
- */
-bool float_is_equal(float a, float b, float eps);
-
 /**
  * @brief Performs linear interpolation between two points.
  *
