@@ -100,20 +100,20 @@ void ccl_calc_inst_limit(current_limit_algo_inputs_t curr_lim_inputs,
 {
 	float ccl_min_temp = ccl_from_temp(curr_lim_inputs.min_temp);
 	float ccl_max_temp = ccl_from_temp(curr_lim_inputs.max_temp);
-	float ccl_temp = fmaxf(ccl_min_temp, ccl_max_temp);
+	float ccl_temp = fminf(ccl_min_temp, ccl_max_temp);
 
 	float ccl_ocv = ccl_from_cell_volt(curr_lim_inputs.max_ocv);
 
-	float ccl = fmaxf(ccl_temp, ccl_ocv);
+	float ccl = fminf(ccl_temp, ccl_ocv);
 
-	if (ccl > 0.0f) {
+	if (ccl < 0.0f) {
 		ccl = 0.0f;
-	} else if (ccl < CCL_MAX_CURRENT_A) {
+	} else if (ccl > CCL_MAX_CURRENT_A) {
 		ccl = CCL_MAX_CURRENT_A;
 	}
 
 	mutex_get(&bms_algos->bms_algos_mutex);
-	bms_algos->inst_CCL = fabsf(ccl);
+	bms_algos->inst_CCL = ccl;
 	mutex_put(&bms_algos->bms_algos_mutex);
 }
 
@@ -126,12 +126,9 @@ void ccl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 	// Default applied CCL is the instantaneous limit
 	float applied_ccl = inst_ccl;
 
-	/* Normalize current sign for CCL logic */
-	inst_ccl = -inst_ccl;
-
 	// Check if pulse operation is allowed
 	bool is_pulse_allowed =
-		(inst_ccl <= (CCL_MAX_CURRENT_A + PULSE_ENABLE_MARGIN_A));
+		(inst_ccl >= (CCL_MAX_CURRENT_A - PULSE_ENABLE_MARGIN_A));
 
 	if (is_pulse_allowed == true) {
 		// clang-format off
@@ -141,23 +138,30 @@ void ccl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 				// Apply pulse current while monitoring entry condition
 				applied_ccl = CCL_MAX_PULSE_CURRENT_A;
 				
-				if (pack_current < (CCL_MAX_CURRENT_A - CURRENT_TRIGGER_HYST_A)) {
+				// Evaluate CCL pulse logic only for negative (charging) current
+				if (pack_current < 0.0f)
+				{
+					float pack_current_abs_val = fabsf(pack_current);
+
+					// Use absolute value of current for CCL threshold comparisons 
+					if (pack_current_abs_val > (CCL_MAX_CURRENT_A + CURRENT_TRIGGER_HYST_A)) {
 					
-					// Start debounce for pulse entry
-					if (is_timer_active(&ccl_ctrl.t_above) == false) {
+						// Start debounce for pulse entry
+						if (is_timer_active(&ccl_ctrl.t_above) == false) {
 
-						start_timer(&ccl_ctrl.t_above, TRIGGER_DEBOUNCE_MS);
+							start_timer(&ccl_ctrl.t_above, TRIGGER_DEBOUNCE_MS);
 
-					} else if (is_timer_expired(&ccl_ctrl.t_above) == true) {	// Enter pulse after debounce expires
+						} else if (is_timer_expired(&ccl_ctrl.t_above) == true) {	// Enter pulse after debounce expires
 
-						ccl_ctrl.state = CURRENT_LIMIT_STATE_PULSE;
-						start_timer(&ccl_ctrl.pulse_timer, CCL_PULSE_DURATION_MS);
-					}
+							ccl_ctrl.state = CURRENT_LIMIT_STATE_PULSE;
+							start_timer(&ccl_ctrl.pulse_timer, CCL_PULSE_DURATION_MS);
+						}
 
-				} else {
+					} else {
 
-					// Cancel debounce if condition clears
-					cancel_timer(&ccl_ctrl.t_above);
+						// Cancel debounce if condition clears
+						cancel_timer(&ccl_ctrl.t_above);
+					}	
 				}
 				break;
 
@@ -165,43 +169,50 @@ void ccl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 
 				// Apply pulse current during active pulse
 				applied_ccl = CCL_MAX_PULSE_CURRENT_A;
+				
+				// Evaluate CCL pulse logic only for negative (charging) current
+				if (pack_current < 0.0f)
+				{
+					float pack_current_abs_value = fabsf(pack_current);
 
-				if (pack_current > CCL_MAX_CURRENT_A) {
+					// Use absolute value of current for CCL threshold comparisons 
+					if (pack_current_abs_value < CCL_MAX_CURRENT_A) {
 
-					// Start debounce for early pulse exit
-					if (is_timer_active(&ccl_ctrl.t_below) == false) {
+						// Start debounce for early pulse exit
+						if (is_timer_active(&ccl_ctrl.t_below) == false) {
 
-						start_timer(&ccl_ctrl.t_below, QUIET_DEBOUNCE_MS);
+							start_timer(&ccl_ctrl.t_below, QUIET_DEBOUNCE_MS);
 
-					} else if (is_timer_expired(&ccl_ctrl.t_below) == true) {	// Handle early pulse exit after debounce
+						} else if (is_timer_expired(&ccl_ctrl.t_below) == true) {	// Handle early pulse exit after debounce
 
-						switch (ccl_ctrl.cooldown_mode)
-						{
-							case COOLDOWN_ON_FULL_PULSE:
-								// Return to rest without cooldown
-								ccl_ctrl.state = CURRENT_LIMIT_STATE_REST;
-								applied_ccl = CCL_MAX_PULSE_CURRENT_A;
-								break;
-							case COOLDOWN_ALWAYS:
-								// Enter cooldown on early exit
-								ccl_ctrl.state = CURRENT_LIMIT_STATE_COOLDOWN;
-								applied_ccl = CCL_COOLDOWN_CURRENT_A;
-								start_timer(&ccl_ctrl.cooldown_timer, CCL_COOLDOWN_DURATION_MS);
-								break;
-							default:
-								// Fallback to rest state
-								ccl_ctrl.state = CURRENT_LIMIT_STATE_REST;
-								break;
+							switch (ccl_ctrl.cooldown_mode)
+							{
+								case COOLDOWN_ON_FULL_PULSE:
+									// Return to rest without cooldown
+									ccl_ctrl.state = CURRENT_LIMIT_STATE_REST;
+									applied_ccl = CCL_MAX_PULSE_CURRENT_A;
+									break;
+								case COOLDOWN_ALWAYS:
+									// Enter cooldown on early exit
+									ccl_ctrl.state = CURRENT_LIMIT_STATE_COOLDOWN;
+									applied_ccl = CCL_COOLDOWN_CURRENT_A;
+									start_timer(&ccl_ctrl.cooldown_timer, CCL_COOLDOWN_DURATION_MS);
+									break;
+								default:
+									// Fallback to rest state
+									ccl_ctrl.state = CURRENT_LIMIT_STATE_REST;
+									break;
+							}
+
+							cancel_timer(&ccl_ctrl.t_below);
+							cancel_timer(&ccl_ctrl.pulse_timer);
 						}
 
+					} else {
+
+						// Cancel debounce if condition clears
 						cancel_timer(&ccl_ctrl.t_below);
-						cancel_timer(&ccl_ctrl.pulse_timer);
 					}
-
-				} else {
-
-					// Cancel debounce if condition clears
-					cancel_timer(&ccl_ctrl.t_below);
 				}
 
 				// Exit pulse and enter cooldown after maximum allowed pulse duration
@@ -250,6 +261,6 @@ void ccl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 
 	mutex_get(&bms_algos->bms_algos_mutex);
 	// Publish applied charge current limit
-	bms_algos->cont_CCL = fabsf(applied_ccl);
+	bms_algos->cont_CCL = applied_ccl;
 	mutex_put(&bms_algos->bms_algos_mutex);
 }

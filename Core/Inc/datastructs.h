@@ -199,6 +199,7 @@ typedef struct {
  * @brief data retrieved from BMS algorithms
  */
 typedef struct {
+	// All current limit values are positive
 	float cont_DCL;
 	float cont_CCL;
 	float inst_DCL;
