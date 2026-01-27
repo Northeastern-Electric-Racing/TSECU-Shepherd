@@ -1,5 +1,6 @@
 #include "ccl.h"
 #include "timer.h"
+#include "c_utils.h"
 #include "current_limit_algo_utils.h"
 #include "current_limit_algo_config.h"
 
@@ -77,13 +78,16 @@ static float ccl_from_cell_volt(float ocv)
 	return ccl;
 }
 
-void ccl_init(pulse_cooldown_mode_t cd_mode)
+void ccl_init(pulse_cooldown_mode_t cooldown_mode)
 {
-	if (cd_mode != COOLDOWN_ALWAYS && cd_mode != COOLDOWN_ON_FULL_PULSE) {
-		printf("[CCL] Invalid cooldown mode!! Using default mode [COOLDOWN_ALWAYS]");
+	if (cooldown_mode != COOLDOWN_ALWAYS &&
+	    cooldown_mode != COOLDOWN_ON_FULL_PULSE) {
+		PRINTLN_WARNING(
+			"[CCL] Invalid cooldown mode (%d). Defaulting to COOLDOWN_ALWAYS",
+			cooldown_mode);
 		ccl_ctrl.cooldown_mode = COOLDOWN_ALWAYS;
 	} else {
-		ccl_ctrl.cooldown_mode = cd_mode;
+		ccl_ctrl.cooldown_mode = cooldown_mode;
 	}
 
 	ccl_ctrl.state = CURRENT_LIMIT_STATE_REST;

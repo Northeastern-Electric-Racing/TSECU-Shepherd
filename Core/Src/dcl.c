@@ -1,5 +1,6 @@
 #include "dcl.h"
 #include "timer.h"
+#include "c_utils.h"
 #include "current_limit_algo_utils.h"
 #include "current_limit_algo_config.h"
 
@@ -81,7 +82,9 @@ void dcl_init(pulse_cooldown_mode_t cooldown_mode)
 {
 	if (cooldown_mode != COOLDOWN_ALWAYS &&
 	    cooldown_mode != COOLDOWN_ON_FULL_PULSE) {
-		printf("[DCL] Invalid cooldown mode!! Using default mode [COOLDOWN_ALWAYS]");
+		PRINTLN_WARNING(
+			"[DCL] Invalid cooldown mode (%d). Defaulting to COOLDOWN_ALWAYS",
+			cooldown_mode);
 		dcl_ctrl.cooldown_mode = COOLDOWN_ALWAYS;
 	} else {
 		dcl_ctrl.cooldown_mode = cooldown_mode;
