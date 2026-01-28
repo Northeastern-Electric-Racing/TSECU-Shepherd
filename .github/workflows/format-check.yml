@@ -11,6 +11,7 @@ jobs:
       with:
         submodules: recursive
         token: ${{ secrets.PAT_TOKEN }}
+        fetch-depth: 0
     - name: Run clang-format style check for C/C++ sources
       uses: Northeastern-Electric-Racing/clang-format-action@main
       with:
