@@ -7,6 +7,9 @@
 #include "control.h"
 #include "hv_plate.h"
 #include "isospi_recovery.h"
+#include "current_limit_algo_utils.h"
+#include "dcl.h"
+#include "ccl.h"
 #include "main.h"
 #include "precharge_routine.h"
 #include "segment.h"
@@ -233,7 +236,11 @@ void vHvPlateData(ULONG thread_input)
 
 	hv_plate_t *hv_plate = hv_plate_args->hv_plate;
 	analyzer_t *analyzer = hv_plate_args->analyzer;
+	bms_algos_t *bms_algos = hv_plate_args->bms_algos;
+	state_machine_t *state_machine = hv_plate_args->state_machine;
 
+	dcl_init(COOLDOWN_ON_FULL_PULSE);
+	ccl_init(COOLDOWN_ON_FULL_PULSE);
 	init_hv_plate_chip(*hv_plate->ic);
 	tx_thread_sleep(TICKS_TO_MS(500));
 
@@ -244,6 +251,18 @@ void vHvPlateData(ULONG thread_input)
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
 		update_soc(analyzer, hv_plate);
+
+		/* Check whether pulse operation needs to be disabled due to charging state or faults */
+		if (disable_pulse(state_machine)) {
+			mutex_get(&bms_algos->bms_algos_mutex);
+			bms_algos->cont_DCL = bms_algos->inst_DCL;
+			bms_algos->cont_CCL = bms_algos->inst_CCL;
+			mutex_put(&bms_algos->bms_algos_mutex);
+		} else {
+			// Calculate continous DCL and CCL
+			dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
+			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
+		}
 
 		// read voltages
 		hv_plate->ts_volts = get_ts_voltage(hv_plate->ic, &hspi2);
@@ -287,8 +306,23 @@ void vPrecharge(ULONG args)
 
 void vBMSAlgorithms(ULONG thread_input)
 {
+	bms_algos_args_t *bms_algos_args = (bms_algos_args_t *)thread_input;
+
+	bms_algos_t *bms_algos = bms_algos_args->bms_algos;
+	sanitizer_t *sanitizer = bms_algos_args->sanitizer;
+	analyzer_t *analyzer = bms_algos_args->analyzer;
+
 	for (;;) {
-		// TODO: implement algo thread
+		current_limit_algo_inputs_t algo_inputs = {
+			.max_ocv = analyzer->max_ocv.val,
+			.min_ocv = analyzer->min_ocv.val,
+			.max_temp = sanitizer->max_sanitized_temp.val,
+			.min_temp = sanitizer->min_sanitized_temp.val
+		};
+
+		dcl_calc_inst_limit(algo_inputs, bms_algos);
+		ccl_calc_inst_limit(algo_inputs, bms_algos);
+
 		tx_thread_sleep(MS_TO_TICKS(500));
 	}
 }
