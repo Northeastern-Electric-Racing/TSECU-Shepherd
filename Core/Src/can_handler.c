@@ -1,30 +1,30 @@
 #include "can_handler.h"
+#include "datastructs.h"
+#include "shep_queues.h"
+#include "state_machine.h"
+#include "u_tx_general.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "datastructs.h"
-#include "state_machine.h"
-#include "shep_queues.h"
-#include "u_tx_general.h"
 
 #define CAN_MSG_QUEUE_SIZE 50 /* messages */
 
 can_t *can1;
 
 static uint16_t can1_id_list_standard[4] = {
-	//CANID_X,
+	// CANID_X,
 	DTI_CURRENT_CANID,
 };
 
 static uint32_t can1_id_list_extended[2] = {
-	//CANID_X,
+	// CANID_X,
 	CHARGERBOX_CANID
 };
 
 uint8_t init_can(FDCAN_HandleTypeDef *hcan)
 {
 	return can_filter_init(hcan, can1, can1_id_list_standard,
-				can1_id_list_extended);
+			       can1_id_list_extended);
 }
 
 void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs)
@@ -43,7 +43,8 @@ void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs)
 
 			/* Check size */
 			if (rx_header.DataLength > 8) {
-				printf("[main.c/HAL_FDCAN_RxFifo0Callback()] ERROR: Recieved message is larger than 8 bytes.\n");
+				printf("[main.c/HAL_FDCAN_RxFifo0Callback()] ERROR: Recieved message "
+				       "is larger than 8 bytes.\n");
 				return;
 			}
 
@@ -55,14 +56,14 @@ void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs)
 
 uint8_t queue_can_msg(can_msg_t can_msg)
 {
-	return queue_send(&can_outgoing, &can_msg);
+	return queue_send(&can_outgoing, &can_msg, TX_WAIT_FOREVER);
 }
 
 /**
  * @brief Parses the DTI can message for pack current
- * 
- * @param msg 
- * @return float 
+ *
+ * @param msg
+ * @return float
  */
 float parse_dti_current(can_msg_t msg)
 {

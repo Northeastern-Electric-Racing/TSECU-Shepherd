@@ -1,12 +1,13 @@
 
 #include "segment.h"
-#include "c_utils.h"
-#include "serialPrintResult.h"
 #include "adi6830_interation.h"
+#include "c_utils.h"
+#include "isospi_recovery.h"
+#include "serialPrintResult.h"
 
 /**
  * @brief Initialize a chip with our default values.
- * 
+ *
  * @param chip Pointer to chip to initialize.
  */
 void init_chip(cell_asic *chip)
@@ -46,9 +47,6 @@ void init_chip(cell_asic *chip)
 	set_gpio_pull(chip, GPO9, GPO_SET);
 	set_gpio_pull(chip, GPO10, GPO_SET);
 
-	// Not an endpoint in the daisy chain
-	set_comm_break(chip, COMM_BK_OFF);
-
 	set_iir_corner_freq(chip, IIR_FPA16);
 
 	// Init config B
@@ -77,12 +75,32 @@ void segment_init(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 		init_chip(&chips[chip]);
 	}
 
+	// One-time init for isoSPI line and comm_break.
+	static bool is_first_init = true;
+
+	/* 
+	 * These fields are later controlled by isoSPI recovery to
+	 * manage communication on each line after an isoSPI break,
+	 * so re-inits from segment_restart() must not overwrite them.
+	 */
+	if (is_first_init) {
+		for (int chip = 0; chip < NUM_CHIPS; chip++) {
+			// Set chip to primary isoSPI line A
+			set_iso_spi_line(&chips[chip], ISOSPI_LINE_A);
+
+			// Not an endpoint in the daisy chain
+			set_comm_break(&chips[chip], COMM_BK_OFF);
+		}
+
+		is_first_init = false;
+	}
+
 	write_config_regs(chips, hspi);
 
 	// disable balancing on init
 	mute_chips(chips, hspi);
 
-	start_c_adc_conv(hspi);
+	start_c_adc_conv(chips, hspi);
 }
 
 void segment_mute(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
@@ -117,7 +135,8 @@ void segment_adc_comparison(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			if (NER_GET_BIT(chips[chip].statc.cs_flt, cell)) {
-				printf("ADC VOLTAGE DISCREPANCY ERROR\nChip %d, Cell %d\nC-ADC: %f, S-ADC: %f\n",
+				printf("ADC VOLTAGE DISCREPANCY ERROR\nChip %d, Cell %d\nC-ADC: %f, "
+				       "S-ADC: %f\n",
 				       chip + 1, cell + 1,
 				       getVoltage(
 					       chips[chip].fcell.fc_codes[cell]),
@@ -132,16 +151,16 @@ void segment_adc_comparison(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 void segment_monitor_flts(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
-		//printf("CHIP %d :", chip);
+		// printf("CHIP %d :", chip);
 		printf("MUTE: %d, %d\n", chip, chips[chip].rx_cfga.mute_st);
 		if (chips[chip].statc.cs_flt > 0) {
-			//printf("C VS S MISMATCH on cells ");
+			// printf("C VS S MISMATCH on cells ");
 			for (int i = 0; i < 16; i++) {
 				if (NER_GET_BIT(chips[chip].statc.cs_flt, i)) {
 					//	printf("%d, ", i);
 				}
 			}
-			//printf("\n");
+			// printf("\n");
 		}
 		if (chips[chip].statc.va_ov) {
 			printf("A OV FLT c%d\n", chip);
@@ -181,7 +200,8 @@ void segment_monitor_flts(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 			printf("SMED? FLT c%d\n", chip);
 		}
 	}
-	// clear them.  they will still be in memory for usage until this function or read_status_registers is called
+	// clear them.  they will still be in memory for usage until this function or
+	// read_status_registers is called
 	write_clear_flags(chips, hspi);
 }
 
@@ -217,8 +237,8 @@ void segment_retrieve_charging_data(cell_asic chips[NUM_CHIPS],
 	read_config_register_a(chips, hspi);
 	read_config_register_b(chips, hspi);
 
-	//segment_adc_comparison(bmsdata);
-	// check our fault flags
+	// segment_adc_comparison(bmsdata);
+	//  check our fault flags
 	segment_monitor_flts(chips, hspi);
 }
 
@@ -235,8 +255,8 @@ void segment_retrieve_debug_data(cell_asic chips[NUM_CHIPS],
 	read_config_register_a(chips, hspi);
 	read_config_register_b(chips, hspi);
 
-	//segment_adc_comparison(bmsdata);
-	// check our fault flags
+	// segment_adc_comparison(bmsdata);
+	//  check our fault flags
 	segment_monitor_flts(chips, hspi);
 
 	read_s_voltage_registers(chips, hspi);
@@ -282,7 +302,7 @@ void segment_disable_balancing(cell_asic chips[NUM_CHIPS],
 
 void segment_enable_balancing(cell_asic chips[NUM_CHIPS],
 			      SPI_HandleTypeDef *hspi)
-{ // TODO verify balancing safe
+{
 	unmute_chips(chips, hspi);
 }
 
@@ -312,7 +332,6 @@ void segment_configure_balancing(
 	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP],
 	SPI_HandleTypeDef *hspi)
 {
-	// TODO: Test
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			set_cell_discharge(&chips[chip], cell,

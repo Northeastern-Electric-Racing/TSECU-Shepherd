@@ -1,0 +1,11 @@
+
+:cmock:
+  :mock_prefix: mock_   
+  :plugins:
+    - :ignore
+    - :ignore_arg
+    - :callback
+    - :expect
+    - :expect_any_args
+  :treat_as_array:
+    discharge_config

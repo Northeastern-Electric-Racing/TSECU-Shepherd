@@ -5,7 +5,7 @@
 
 /**
  * @brief Callback to be called when a message is received on CAN line 1.
- * 
+ *
  * @param hcan Pointer to struct representing CAN hardware.
  */
 #define NUM_INBOUND_CAN1_IDS 1
@@ -32,10 +32,14 @@
 #define CELL_TEMP_SIZE		   8
 #define SEGMENT_TEMP_CANID	   0x85
 #define SEGMENT_TEMP_SIZE	   5
+#define ISOSPI_STS_CANID	   0x86
+#define ISOSPI_STS_SIZE		   4
 #define SEGMENT_AVERAGE_VOLT_CANID 0x90
 #define SEGMENT_AVERAGE_VOLT_SIZE  8
 #define SEGMENT_TOTAL_VOLT_CANID   0x91
 #define SEGMENT_TOTAL_VOLT_SIZE	   8
+#define SEGMENT_DELTA_VOLT_CANID   0x92
+#define SEGMENT_DELTA_VOLT_SIZE	   8
 #define FAULT_CANID		   0x703 // TODO: cleanup
 #define FAULT_SIZE		   5
 #define NOISE_CANID		   0x88
@@ -63,6 +67,11 @@
 #define ALPHA_STAT_B_CANID 0x6FF
 #define ALPHA_STAT_B_SIZE  8
 
+#define CONTROL_CANID	      0x700
+#define CONTROL_SIZE	      1
+#define CALYPSO_CONTROL_CANID 0x500
+#define CALYPSO_CONTROL_SIZE  1
+
 #define DEBUG_SIZE	  8
 #define FAULT_TIMER_CANID 0x6F9
 #define FAULT_TIMER_SIZE  4
@@ -71,7 +80,7 @@ void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs);
 
 /**
  * @brief Place a CAN message in a queue.
- * 
+ *
  * @param msg CAN message to be sent.
  * @return int8_t Error code.
  */
@@ -80,7 +89,7 @@ uint8_t queue_can_msg(can_msg_t can_msg);
 /**
  * @brief Initialize CAN lines.
  * @param pointer to FDCAN handler
- * 
+ *
  * @return error code
  */
 uint8_t init_can(FDCAN_HandleTypeDef *hcan);

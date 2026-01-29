@@ -25,19 +25,36 @@ typedef struct {
 typedef struct {
 	int error_reading;
 
+	bool alpha;
+	/* whether the chip is an alpha or beta */ // TODO initialize properly
+
 	/* These are calculated during the analysis of data */
 
 	/* Cell temperature in celsius */
-	float cell_temp[NUM_CELLS];
-	float cell_resistance[NUM_CELLS];
-	float open_cell_voltage[NUM_CELLS];
-	float cell_voltages[NUM_CELLS];
+	float cell_temp[NUM_CELLS_PER_CHIP];
+	float cell_resistance[NUM_CELLS_PER_CHIP];
+	float open_cell_voltage[NUM_CELLS_PER_CHIP];
+	float cell_voltages[NUM_CELLS_PER_CHIP];
 
-	/* For temperatures of on-board therms. */
+	/* Maximum temperature of on-board therms.*/
 	float on_board_temp;
 
 	/// temperature of the die
 	float die_temp;
+
+	/* Chip and Cell Diagnostic Data */
+	bool is_balancing[NUM_CELLS_PER_CHIP];
+	bool cs_fault[NUM_CELLS_PER_CHIP];
+
+	float vpv;
+	float vmv;
+	float v_res;
+	float vref2;
+	float v_analog;
+	float v_digital;
+
+	stc_ flt_reg;
+
 } chipdata_t;
 
 /**
@@ -49,44 +66,215 @@ typedef struct {
 	uint8_t cellNum;
 } crit_cellval_t;
 
+/**
+ * @brief A therm_state_t is a struct of a (float, bool).
+ * - Last recorded temperature of a cell.
+ * - Whether the cell temperature can be used (i.e. whether the measurement is bad).
+ */
+typedef struct {
+	float last_temp;
+	bool valid;
+} therm_state_t;
+
+/**
+ * @brief States the BMS can be in
+ */
 typedef enum {
-    BOOT,
-    READY,
-    CHARGING,
-    FAULTED,
-    NUM_STATES,
+	BOOT,
+	READY,
+	CHARGING,
+	BALANCING,
+	FAULTED,
+	NUM_STATES,
 } state_t;
 
 /**
- * @brief stores all data related to the bms
+ * @brief Data needed for the therm temp sanitizer
  */
 typedef struct {
-	/* chip_data and chips are parallel arrays. */
+	therm_state_t sanitized_therms[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+	crit_cellval_t max_sanitized_temp;
+	crit_cellval_t min_sanitized_temp;
+
+} sanitizer_t;
+
+/**
+ * @brief data read from the ADBMS2950 on our HV Plate
+ */
+typedef struct {
+	cell_asic_2950 *ic; // ADBMS2950 struct
+	float ts_volts; // TS Voltage (V)
+	float batt_volts; // BATT Voltage (V)
+	float shunt_temp; // Temperature of shunt resistor (C)
+	float pack_current; // Current read through the shunt
+} hv_plate_t;
+
+/**
+ * @brief data read from the ADBMS6830 chips on our segments
+ */
+typedef struct {
+	/* Array of structs containing raw data from and configurations for the ADBMS6830 chips */
+	cell_asic chips[NUM_CHIPS];
+
+	// the current discharge configuration the state machine wants
+	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+} acc_data_t;
+
+/**
+ * @brief ISO SPI communication state machine states.
+ */
+typedef enum {
+	ISOSPI_STATE_NORMAL = 0x01U,
+	ISOSPI_BREAK_DETECTED = 0x02U,
+	ISOSPI_STATE_VERIFYING = 0x03U,
+	ISOSPI_RECOVERY_SUCCESS = 0x04U,
+	ISOSPI_RECOVERY_FAILED = 0x05U
+} isospi_comm_state_t;
+
+/**
+ * @brief ISO SPI break detection and recovery status structure.
+ */
+typedef struct {
+	isospi_comm_state_t state;
+	uint8_t break_chip;
+	uint8_t verification_attempts;
+	uint8_t recovery_successful;
+	uint8_t fault_latched;
+} isospi_status_t;
+
+/**
+ * @brief data needed for processing raw data
+ */
+typedef struct {
+	mutex_t analyzer_mutex;
 
 	/* Array of data from all chips in the system */
 	chipdata_t chip_data[NUM_CHIPS];
 
-	/* Array of structs containing raw data from and configurations for the ADBMS6830 chips */
-	cell_asic chips[NUM_CHIPS];
-	cell_asic_2950 plate_chip;
+	/* Max, min, and avg thermistor readings */
+	crit_cellval_t max_temp;
+	crit_cellval_t min_temp;
+	float avg_temp;
 
-	float pack_current;
-	float pack_voltage;
+	// the board temperature
+	float internal_temp;
+
+	/* Max, min, and avg voltage of the cells */
+	crit_cellval_t max_voltage;
+	crit_cellval_t min_voltage;
+	float avg_voltage;
+	float delt_voltage;
+
+	// OCV timer
+	nertimer_t ocvTimer;
+
+	/* Max, min, average OCV readings */
+	crit_cellval_t max_ocv;
+	crit_cellval_t min_ocv;
+	float avg_ocv;
+	float delt_ocv;
 	float pack_ocv;
 	float pack_res;
 
-	float cont_DCL;
-	float cont_CCL;
-	float soc;
+	// the highest current chip temperature, for faulting
+	crit_chipval_t max_chiptemp;
 
+	/* semgent temperature averages */
 	float segment_average_temps[NUM_SEGMENTS];
 	/* OCV average voltages */
 	float segment_average_volts[NUM_SEGMENTS];
 	/* Total voltages for each segment */
 	float segment_total_volts[NUM_SEGMENTS];
+	/* Delta voltages for each segment */
+	float segment_delt_volts[NUM_SEGMENTS];
 
-	// the board temperature
-	float internal_temp;
+	/* Voltage of pack */
+	float pack_voltage;
+
+	/* SoC of the Pack*/
+	float soc;
+} analyzer_t;
+
+/**
+ * @brief data retrieved from BMS algorithms
+ */
+typedef struct {
+	// All current limit values are positive
+	float cont_DCL;
+	float cont_CCL;
+	float inst_DCL;
+	float inst_CCL;
+
+	mutex_t bms_algos_mutex;
+} bms_algos_t;
+
+/**
+ * @brief Cooldown behavior selection for pulse-based current limiting.
+ *
+ * Defines when a cooldown period is enforced after a pulse.
+ */
+typedef enum {
+	COOLDOWN_ON_FULL_PULSE = 0, // Cooldown only after full pulse
+	COOLDOWN_ALWAYS // Cooldown after any pulse exit
+} pulse_cooldown_mode_t;
+
+/**
+ * @brief State machine states for the pulse-based current limit algorithm.
+ *
+ * Represents the high-level operating phase of the limiter.
+ */
+typedef enum {
+	CURRENT_LIMIT_STATE_REST = 0, // Limiter idle
+	CURRENT_LIMIT_STATE_PULSE, // Pulse active
+	CURRENT_LIMIT_STATE_COOLDOWN // Cooldown active
+} current_limit_algo_state_t;
+
+/**
+ * @brief Input values for the current limit algorithms.
+ *
+ * This structure contains only the operating-point inputs required by the
+ * algorithm. It is algorithm-owned and does not represent system state.
+ */
+typedef struct {
+	float min_temp;
+	float max_temp;
+	float min_ocv;
+	float max_ocv;
+} current_limit_algo_inputs_t;
+
+/**
+ * @brief Internal control and state for pulse-based current limiting.
+ *
+ * Holds the algorithm state machine, timers, and configuration needed to
+ * manage pulse and cooldown behavior. This structure is owned and maintained
+ * by the current limit algorithm.
+ */
+typedef struct {
+	// Current limiter state
+	current_limit_algo_state_t state;
+
+	// Cooldown behavior mode
+	pulse_cooldown_mode_t cooldown_mode;
+
+	// Pulse duration timer
+	nertimer_t pulse_timer;
+
+	// Above and below threshold debounce timer
+	nertimer_t t_above;
+	nertimer_t t_below;
+
+	// Cooldown duration timer
+	nertimer_t cooldown_timer;
+
+	// Pulse allowed flag
+	bool pulse_allowed;
+} current_limit_pulse_ctrl_t;
+
+/**
+ * @brief data for determine the current BMS State
+ */
+typedef struct {
+	state_t bms_state;
 
 	/**
 	 * @brief Note that this is a 32 bit integer, so there are 32 max possible fault codes
@@ -95,65 +283,97 @@ typedef struct {
 	uint32_t fault_code_crit;
 	uint32_t fault_code_noncrit;
 
-	/* Max, min, and avg thermistor readings */
-	crit_cellval_t max_temp;
-	crit_cellval_t min_temp;
-	float avg_temp;
+	// charge settling timers
+	nertimer_t charger_settle_countup_timer;
+	nertimer_t charge_settle_countdown_timer;
 
-	// the highest current chip temperature, for faulting
-	crit_chipval_t max_chiptemp;
+	// charging message timer for telemetry
+	nertimer_t charger_message_timer;
 
-	/* Max and min cell resistances */
-	crit_cellval_t max_res;
-	crit_cellval_t min_res;
+	mutex_t state_mutex;
 
-	/* Max, min, and avg voltage of the cells */
-	crit_cellval_t max_voltage;
-	crit_cellval_t min_voltage;
-	float avg_voltage;
-	float delt_voltage;
+} state_machine_t;
 
-	crit_cellval_t max_ocv;
-	crit_cellval_t min_ocv;
-	float avg_ocv;
-	float delt_ocv;
+/* Task Args */
 
-	// the current discharge configuration the state machine wants
-	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
-	// whether balancing should be on, or muted
-	bool should_balance;
+/**
+ * @brief args for vStateMachine
+ */
+typedef struct {
+	state_machine_t *state_machine;
+	analyzer_t *analyzer;
+	hv_plate_t *
+		hv_plate; // TODO add hv plate interal data to analyzer to remove hv_plate
+	acc_data_t *acc_data;
+	bms_algos_t *bms_algos;
+	sanitizer_t *sanitizer;
+} state_machine_args_t;
 
-	/// whether the charger is connected, synonymous with being in the state of CHARGING, and therefore irreversible
-	bool is_charger_connected;
-	/// whether the state machine has determined its time to charge
-	bool is_charging_enabled;
+/**
+ * @brief args for vAnalyzer
+ */
+typedef struct {
+	analyzer_t *analyzer;
+	state_machine_t *state_machine;
+	acc_data_t *acc_data;
+	hv_plate_t *hv_plate;
+} analyzer_args_t;
 
-    state_t current_state;
-} bms_t;
+/**
+ * @brief args for vGetSegmentData
+ */
+typedef struct {
+	acc_data_t *acc_data;
+	state_machine_t *state_machine;
+} acc_data_args_t;
 
+/**
+ * @brief args for vHvPlate
+ */
+typedef struct {
+	hv_plate_t *hv_plate;
+	analyzer_t *analyzer;
+	bms_algos_t *bms_algos;
+	state_machine_t *state_machine;
+} hv_plate_args_t;
+
+/**
+ * @brief args for vSanitizer
+ */
+typedef struct {
+	sanitizer_t *sanitizer;
+	analyzer_t *analyzer;
+} sanitizer_args_t;
+
+/**
+ * @brief args for vBmsAlgorithms
+ */
+typedef struct {
+	sanitizer_t *sanitizer;
+	analyzer_t *analyzer;
+	bms_algos_t *bms_algos;
+} bms_algos_args_t;
+
+/* Task args end */
+
+/**
+ * @brief Fault codes
+ */
 enum {
 	FAULTS_CLEAR = 0x0,
 
 	/* Shepherd BMS faults */
-	CELLS_NOT_BALANCING		            = 0x1,
-	CELL_VOLTAGE_TOO_HIGH	            = 0x2,
-	CELL_VOLTAGE_TOO_LOW	            = 0x4,
-	PACK_TOO_HOT			            = 0x8,
-	OPEN_WIRING_FAULT		            = 0x10, /* cell tap wire is either weakly connected or not connected */
-	INTERNAL_SOFTWARE_FAULT             = 0x20, /* general software fault */
-	INTERNAL_THERMAL_ERROR              = 0x40, /* internal hardware fault reulting from too hot of onboard temps */
-	INTERNAL_CELL_COMM_FAULT            = 0x80, /* this is due to an invalid CRC from retrieving values */
-	CURRENT_SENSOR_FAULT	            = 0x100,
-	CHARGE_READING_MISMATCH             = 0x200, /* charge voltage when not supposed to be charging*/
-	LOW_CELL_VOLTAGE				    = 0x400, /* voltage of a cell falls below 90 mV */
-	WEAK_PACK_FAULT					    = 0x800,
-	EXTERNAL_CAN_FAULT				    = 0x1000,
-	DISCHARGE_LIMIT_ENFORCEMENT_FAULT   = 0x2000,
-	CHARGER_SAFETY_RELAY			    = 0x4000,
-	BATTERY_THERMISTOR				    = 0x8000,
-	CHARGER_CAN_FAULT				    = 0x10000,
-	CHARGE_LIMIT_ENFORCEMENT_FAULT	    = 0x20000,
-	DIE_TEMP_MAXIMUM_FAULT       	    = 0x40000,
+	CELLS_NOT_BALANCING = 0x1,
+	CELL_VOLTAGE_TOO_HIGH = 0x2,
+	CELL_VOLTAGE_TOO_LOW = 0x4,
+	PACK_TOO_HOT = 0x8,
+	WEAK_PACK_FAULT = 0x10,
+	EXTERNAL_CAN_FAULT = 0x20,
+	DISCHARGE_LIMIT_ENFORCEMENT_FAULT = 0x40,
+	CHARGE_LIMIT_ENFORCEMENT_FAULT = 0x80,
+	DIE_TEMP_MAXIMUM_FAULT = 0x100,
+	HV_PLATE_COMMS_FAULT = 0x200,
+	SEGMENT_COMMS_FAULT = 0x400,
 
 	MAX_FAULTS = 0x80000000 /* Maximum allowable fault code */
 };

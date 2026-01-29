@@ -38,6 +38,7 @@ extern "C" {
 /* USER CODE BEGIN ET */
 extern IWDG_HandleTypeDef hiwdg;
 extern SPI_HandleTypeDef hspi2;
+extern TIM_HandleTypeDef htim3;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -72,6 +73,8 @@ void Error_Handler(void);
 #define SPI3_CS_GPIO_Port GPIOA
 #define ACC_SENSE_Pin GPIO_PIN_0
 #define ACC_SENSE_GPIO_Port GPIOB
+#define TSIP_SENSE_Pin GPIO_PIN_1
+#define TSIP_SENSE_GPIO_Port GPIOB
 #define PHY_IRQ_Pin GPIO_PIN_7
 #define PHY_IRQ_GPIO_Port GPIOE
 #define PHY_RESET_Pin GPIO_PIN_10
@@ -88,7 +91,7 @@ void Error_Handler(void);
 #define FAULT_MCU_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
- 
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
