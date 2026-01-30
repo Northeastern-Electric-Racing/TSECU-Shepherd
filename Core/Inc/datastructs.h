@@ -299,6 +299,13 @@ typedef struct {
 
 /* Task Args */
 
+typedef struct {
+	hv_plate_t *hv_plate;
+	analyzer_t *analyzer;
+	bms_algos_t *bms_algos;
+	acc_data_t *acc_data;
+} default_task_args_t;
+
 /**
  * @brief args for vStateMachine
  */

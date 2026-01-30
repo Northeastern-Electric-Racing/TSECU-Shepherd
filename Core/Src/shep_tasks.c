@@ -23,14 +23,83 @@
 #include "u_tx_general.h"
 #include "u_tx_threads.h"
 
+const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
+			   acc_data_t *acc_data, bms_algos_t *bms_algos)
+{
+#ifdef DEBUG_HV_PLATE
+	PRINTLN_INFO("HV Plate Data:");
+	PRINTLN_INFO("TS Voltage: %.3f V", hv_plate->ts_volts);
+	PRINTLN_INFO("BATT Voltage: %.3f V", hv_plate->batt_volts);
+	PRINTLN_INFO("Shunt Temp: %.2f C", hv_plate->shunt_temp);
+	PRINTLN_INFO("Pack Current: %.3f A", hv_plate->pack_current);
+#endif
+
+#ifdef DEBUG_VOLTAGES
+	PRINTLN_INFO("Min, Max, Avg, Delta Voltages: %f, %f, %f, %f\n",
+		     analyzer->min_voltage.val, analyzer->max_voltage.val,
+		     analyzer->avg_voltage, analyzer->delt_voltage);
+
+	PRINTLN_INFO("Raw Cell Voltages:");
+	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			PRINTLN_INFO(
+				"%.2f\t",
+				analyzer->chip_data[c].cell_voltages[cell]);
+		}
+		printf("\n");
+	}
+
+	PRINTLN_INFO("Raw Cell OCV:");
+	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			PRINTLN_INFO(
+				"%.2f\t",
+				analyzer->chip_data[c].open_cell_voltage[cell]);
+		}
+		printf("\n");
+	}
+#endif
+
+#ifdef DEBUG_TEMPS
+	PRINTLN_INFO("Therm Temps:");
+	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			PRINTLN_INFO("%.1f\t",
+				     analyzer->chip_data[c].cell_temp[cell]);
+		}
+		printf("\n");
+	}
+	PRINTLN_INFO("CHIP TEMPS: \n");
+	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+		PRINTLN_INFO("%.1f\t", analyzer->chip_data[c].die_temp);
+	}
+	printf("\n");
+#endif
+
+#ifdef DEBUG_ALGOS
+	PRINTLN_INFO("Cont CCL: %.2f A, Const DCL: %.2f A\n",
+		     bms_algos->cont_CCL, bms_algos->cont_DCL);
+
+	PRINTLN_INFO("Inst CCL: %.2f A, Inst DCL: %.2f A\n",
+		     bms_algos->inst_CCL, bms_algos->inst_DCL);
+#endif
+}
+
 void vDefaultTask(ULONG thread_input)
 {
+	default_task_args_t *default_task_args =
+		(default_task_args_t *)thread_input;
+	analyzer_t *analyzer = default_task_args->analyzer;
+	acc_data_t *acc_data = default_task_args->acc_data;
+	hv_plate_t *hv_plate = default_task_args->hv_plate;
+	bms_algos_t *bms_algos = default_task_args->bms_algos;
+
 	bool alt = true;
 
 	/* Infinite loop */
 	for (;;) {
 #ifdef DEBUG_STATS
-// print_bms_stats(&bmsdata);
+		print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
 #endif
 
 		if (alt) {
@@ -419,6 +488,13 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	sanitizer_t *sanitizer = (sanitizer_t *)malloc(sizeof(sanitizer_t));
 	bms_algos_t *bms_algos = (bms_algos_t *)malloc(sizeof(bms_algos_t));
 
+	default_task_args_t *default_task_args =
+		(default_task_args_t *)malloc(sizeof(default_task_args_t));
+	default_task_args->analyzer = analyzer;
+	default_task_args->acc_data = acc_data;
+	default_task_args->hv_plate = hv_plate;
+	default_task_args->bms_algos = bms_algos;
+
 	analyzer_args_t *analyzer_args =
 		(analyzer_args_t *)malloc(sizeof(analyzer_args_t));
 	analyzer_args->acc_data = acc_data;
@@ -465,6 +541,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.size = 2048, /* Stack Size (in bytes) */
 		.priority = 2, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
+		.thread_input = (ULONG)default_task_args, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 		.auto_start = TX_AUTO_START, /* Auto Start */
 		.function = vDefaultTask /* Thread Function */
