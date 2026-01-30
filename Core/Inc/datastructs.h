@@ -107,6 +107,9 @@ typedef struct {
 	float batt_volts; // BATT Voltage (V)
 	float shunt_temp; // Temperature of shunt resistor (C)
 	float pack_current; // Current read through the shunt
+
+	uint16_t conversion_count; // Number of conversions taken for current measurement
+	uint16_t last_total_converion_count;
 } hv_plate_t;
 
 /**

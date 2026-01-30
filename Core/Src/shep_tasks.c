@@ -241,12 +241,15 @@ void vHvPlateData(ULONG thread_input)
 
 	dcl_init(COOLDOWN_ON_FULL_PULSE);
 	ccl_init(COOLDOWN_ON_FULL_PULSE);
-	init_hv_plate_chip(*hv_plate->ic);
+
+	// initialize HV Plate struct and start conversions
+	init_hv_plate(hv_plate, hv_plate->ic, ACCI_8);
+
 	tx_thread_sleep(TICKS_TO_MS(500));
 
 	for (;;) {
 		// get the current reading from the pack
-		hv_plate->pack_current = get_pack_current(hv_plate->ic, &hspi2);
+		get_pack_current_and_batt_voltage(hv_plate->ic);
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
@@ -265,11 +268,11 @@ void vHvPlateData(ULONG thread_input)
 		}
 
 		// read voltages
-		hv_plate->ts_volts = get_ts_voltage(hv_plate->ic, &hspi2);
-		hv_plate->batt_volts = get_batt_voltage(hv_plate->ic, &hspi2);
+		get_ts_voltage(hv_plate->ic);
+		get_batt_voltage(hv_plate->ic);
 
 		// read shunt temperature
-		hv_plate->shunt_temp = get_shunt_temp(hv_plate->ic, &hspi2);
+		get_shunt_temp(hv_plate->ic);
 
 		tx_thread_sleep(MS_TO_TICKS(100));
 	}
@@ -412,6 +415,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	state_machine_t *state_machine =
 		(state_machine_t *)malloc(sizeof(state_machine_t));
 	hv_plate_t *hv_plate = (hv_plate_t *)malloc(sizeof(hv_plate_t));
+	cell_asic_2950 hv_plate_ic;
+	hv_plate->ic = &hv_plate_ic;
 	sanitizer_t *sanitizer = (sanitizer_t *)malloc(sizeof(sanitizer_t));
 	bms_algos_t *bms_algos = (bms_algos_t *)malloc(sizeof(bms_algos_t));
 
