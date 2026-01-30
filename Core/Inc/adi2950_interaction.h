@@ -5,20 +5,44 @@
 #include "adi_bms_2950data.h"
 #include "stm32xx_hal.h"
 
+/**
+ * Begins continuous ADC conversions with redundancy
+ * 
+ * @param ic Pointer to the adbms2950 data structure.
+ */
 void start_adc_conversions(cell_asic_2950 *ic);
 
-void set_accumulation_count(cell_asic_2950 *ic, ACCI count);
 /**
- * @brief Reads the battery voltage registers from the adbms2950.
+ * @brief Sets the accumulation count for current and voltage measurements.
+ * 
  * @param ic Pointer to the adbms2950 data structure.
- * @param hspi Pointer to the SPI interface handle.
+ * @param count Accumulation count to set.
+ */
+void set_accumulation_count(cell_asic_2950 *ic, ACCI count);
+
+/**
+ * @brief Reads the accumulated current and battery voltage registers from the adbms2950.
+ * @param ic Pointer to the adbms2950 data structure.
  */
 void read_accumulated_current_vbat_registers(cell_asic_2950 *ic);
 
+/**
+ * @brief Reads V7 and V9 redundant pair voltage registers.
+ * @param ic Pointer to the adbms2950 data structure.
+ */
 void read_v7_v9_registers(cell_asic_2950 *ic);
 
+/**
+ * @brief Reads V2 and V3 redundant pair voltage registers.
+ * @param ic Pointer to the adbms2950 data structure.
+ */
 void read_v2_v3_registers(cell_asic_2950 *ic);
 
+/**
+ * @brief Reads the conversion count registerm for total number of ADC conversions.
+ * @param ic Pointer to the adbms2950 data structure.
+ * @return uint16_t The current conversion count.
+ */
 uint16_t read_conversion_count_registers(cell_asic_2950 *ic);
 
 /**

@@ -9,6 +9,12 @@
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 #define HV_CTRL_GPO	 GPIO4_2950
 
+/**
+ * @brief Initializes an hv plate struct
+ * 
+ * @param hv_plate pointer to hv plate data struct
+ * @param conversion_count accumulation count for current and voltage measurements
+ */
 void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count);
 
 /**
