@@ -99,7 +99,7 @@ void vDefaultTask(ULONG thread_input)
 	/* Infinite loop */
 	for (;;) {
 #ifdef DEBUG_STATS
-print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
+		print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
 #endif
 
 		if (alt) {
