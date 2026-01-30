@@ -15,12 +15,9 @@ static float get_voltage_conversion(int data)
 	return voltage;
 }
 
-void init_hv_plate(hv_plate_t *hv_plate, cell_asic_2950 *ic,
-		       ACCI conversion_count)
+void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 {
-	hv_plate->ic = ic;
-	switch (conversion_count)
-	{
+	switch (conversion_count) {
 	case ACCI_8:
 		hv_plate->conversion_count = 8;
 		break;
@@ -28,10 +25,11 @@ void init_hv_plate(hv_plate_t *hv_plate, cell_asic_2950 *ic,
 		hv_plate->conversion_count = 16;
 		break;
 	case ACCI_32:
-		hv_plate->conversion_count = 32;	
+		hv_plate->conversion_count = 32;
 		break;
 	default:
-		PRINTLN_WARNING("Unsupported accumulation count, defaulting to 8");
+		PRINTLN_WARNING(
+			"Unsupported accumulation count, defaulting to 8");
 		hv_plate->conversion_count = 8;
 		break;
 	}
@@ -48,8 +46,9 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate)
 		read_conversion_count_registers(hv_plate->ic);
 	// check if the adequate number of conversions have been
 	// made before determining if acculmulated current is valid current reading is valid
-	if ((num_conversitions - hv_plate->last_total_converion_count) / hv_plate->conversion_count >= 1) {
-		
+	if ((num_conversitions - hv_plate->last_total_converion_count) /
+		    hv_plate->conversion_count >=
+	    1) {
 		hv_plate->batt_volts =
 			get_voltage_conversion(hv_plate->ic->vbacc.vb1acc) /
 			hv_plate->conversion_count;
@@ -64,11 +63,12 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate)
 
 void get_ts_voltage(hv_plate_t *hv_plate)
 {
-	read_vr_registers(hv_plate->ic);
+	read_v2_v3_registers(hv_plate->ic);
 	// NOTE: TS+ is output to both V2 and V3
-	float avg_volts = (get_voltage_conversion(hv_plate->ic->vr.v_codes[1]) + // V2
-			   get_voltage_conversion(hv_plate->ic->vr.v_codes[2])) / // V3
-			  2;
+	float avg_volts =
+		(get_voltage_conversion(hv_plate->ic->vr.v_codes[1]) + // V2
+		 get_voltage_conversion(hv_plate->ic->vr.v_codes[2])) / // V3
+		2;
 	hv_plate->ts_volts = avg_volts;
 }
 
@@ -76,9 +76,10 @@ void get_shunt_temp(hv_plate_t *hv_plate)
 {
 	read_v7_v9_registers(hv_plate->ic);
 	// NOTE: TS+ is output to both V2 and V3
-	float avg_volts = (get_voltage_conversion(hv_plate->ic->vr.v_codes[9]) + // V7A
-			   get_voltage_conversion(hv_plate->ic->vr.v_codes[11])) / // V9B
-			  2;
+	float avg_volts =
+		(get_voltage_conversion(hv_plate->ic->vr.v_codes[9]) + // V7A
+		 get_voltage_conversion(hv_plate->ic->vr.v_codes[11])) / // V9B
+		2;
 
 	hv_plate->shunt_temp = avg_volts; // TODO: convert to temp
 }

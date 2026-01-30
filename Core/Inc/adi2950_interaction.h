@@ -5,6 +5,8 @@
 #include "adi_bms_2950data.h"
 #include "stm32xx_hal.h"
 
+void start_adc_conversions(cell_asic_2950 *ic);
+
 void set_accumulation_count(cell_asic_2950 *ic, ACCI count);
 /**
  * @brief Reads the battery voltage registers from the adbms2950.
@@ -12,9 +14,6 @@ void set_accumulation_count(cell_asic_2950 *ic, ACCI count);
  * @param hspi Pointer to the SPI interface handle.
  */
 void read_accumulated_current_vbat_registers(cell_asic_2950 *ic);
-
-void init_hv_plate(hv_plate_t *hv_plate, cell_asic_2950 *ic,
-		       ACCI conversion_count);
 
 void read_v7_v9_registers(cell_asic_2950 *ic);
 

@@ -243,13 +243,13 @@ void vHvPlateData(ULONG thread_input)
 	ccl_init(COOLDOWN_ON_FULL_PULSE);
 
 	// initialize HV Plate struct and start conversions
-	init_hv_plate(hv_plate, hv_plate->ic, ACCI_8);
+	init_hv_plate(hv_plate, ACCI_8);
 
 	tx_thread_sleep(TICKS_TO_MS(500));
 
 	for (;;) {
 		// get the current reading from the pack
-		get_pack_current_and_batt_voltage(hv_plate->ic);
+		get_pack_current_and_batt_voltage(hv_plate);
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
@@ -267,12 +267,11 @@ void vHvPlateData(ULONG thread_input)
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
 
-		// read voltages
-		get_ts_voltage(hv_plate->ic);
-		get_batt_voltage(hv_plate->ic);
+		// read ts voltage
+		get_ts_voltage(hv_plate);
 
 		// read shunt temperature
-		get_shunt_temp(hv_plate->ic);
+		get_shunt_temp(hv_plate);
 
 		tx_thread_sleep(MS_TO_TICKS(100));
 	}
