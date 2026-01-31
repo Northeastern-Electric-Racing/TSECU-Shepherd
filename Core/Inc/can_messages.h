@@ -163,9 +163,8 @@ void send_cell_data_message(bool alpha, float temperature, float voltage_a,
  * @param vmv Voltage between S1N and V-.
  * @param flt_reg The fault register of the chip (statc)
  */
-void send_status_a_message(uint8_t chip,
-			   float die_temperature, float vpv, float vmv,
-			   stc_ *flt_reg);
+void send_status_a_message(uint8_t chip, float die_temperature, float vpv,
+			   float vmv, stc_ *flt_reg);
 
 /**
  * @brief Send message containing ADBMS6830 diagnostic data.

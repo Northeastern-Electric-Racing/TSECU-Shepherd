@@ -643,16 +643,20 @@ void send_isospi_status_message(const isospi_status_t *status)
 	queue_can_msg(msg);
 }
 
-void send_onboard_therm_message(chipdata_t *chip_data) {
+void send_onboard_therm_message(chipdata_t *chip_data)
+{
 	struct __attribute__((__packed__)) {
 		uint16_t therm1_temp;
 		uint16_t therm2_temp;
 		uint16_t therm3_temp;
 	} msg_data;
 
-	msg_data.therm1_temp = (uint16_t)(chip_data->on_board_temp[0] * 100) / 100;
-	msg_data.therm2_temp = (uint16_t)(chip_data->on_board_temp[1] * 100) / 100;
-	msg_data.therm3_temp = (uint16_t)(chip_data->on_board_temp[2] * 100) / 100;
+	msg_data.therm1_temp =
+		(uint16_t)(chip_data->on_board_temp[0] * 100) / 100;
+	msg_data.therm2_temp =
+		(uint16_t)(chip_data->on_board_temp[1] * 100) / 100;
+	msg_data.therm3_temp =
+		(uint16_t)(chip_data->on_board_temp[2] * 100) / 100;
 
 	can_msg_t msg = { .id = ONBOARD_THERM_CANID,
 			  .len = ONBOARD_THERM_CANID,
