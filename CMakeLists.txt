@@ -95,6 +95,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/dcl.c"
     "Core/Src/ccl.c"
     "Core/Src/control.c"
+    "Core/Src/traceout_app.c"
 )
 
 # Add include paths
@@ -109,6 +110,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/adbms/adbms2950/program/inc"
     "Core/Inc"
     "Drivers/Embedded-Base/threadX/inc"
+    "Drivers/Embedded-Base/threadX/traceX/inc"
 )
 
 # Add project symbols (macros)
