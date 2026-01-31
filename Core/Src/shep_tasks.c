@@ -301,6 +301,8 @@ void vGetSegmentData(ULONG thread_input)
 
 void vHvPlateData(ULONG thread_input)
 {
+	const hv_plate_task_delay = 100; // in ms
+
 	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
 
 	hv_plate_t *hv_plate = hv_plate_args->hv_plate;
@@ -318,7 +320,7 @@ void vHvPlateData(ULONG thread_input)
 
 	for (;;) {
 		// get the current reading from the pack
-		get_pack_current_and_batt_voltage(hv_plate);
+		get_pack_current_and_batt_voltage(hv_plate, hv_plate_task_delay);
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
@@ -342,7 +344,7 @@ void vHvPlateData(ULONG thread_input)
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
 
-		tx_thread_sleep(MS_TO_TICKS(100));
+		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
 	}
 }
 

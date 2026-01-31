@@ -39,16 +39,27 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 	start_adc_conversions(hv_plate->ic);
 }
 
-void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate)
+void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
+				       uint16_t request_rate)
 {
+	snap_2950(hv_plate->ic);
+	const uint16_t expected_conversions =
+		request_rate / hv_plate->conversion_count;
+
 	read_accumulated_current_vbat_registers(hv_plate->ic);
 	uint16_t num_conversitions =
 		read_conversion_count_registers(hv_plate->ic);
+
+	// indicates that the I1CNT register wrapped around
+	if (num_conversitions < hv_plate->last_total_converion_count) {
+		hv_plate->last_total_converion_count = 0;
+	}
+
 	// check if the adequate number of conversions have been
 	// made before determining if acculmulated current is valid current reading is valid
 	if ((num_conversitions - hv_plate->last_total_converion_count) /
 		    hv_plate->conversion_count >=
-	    1) {
+	    expected_conversions) {
 		hv_plate->batt_volts =
 			get_voltage_conversion(hv_plate->ic->vbacc.vb1acc) /
 			hv_plate->conversion_count;
@@ -59,6 +70,7 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate)
 
 		hv_plate->last_total_converion_count = num_conversitions;
 	}
+	unsnap_2950(hv_plate->ic);
 }
 
 void get_ts_voltage(hv_plate_t *hv_plate)

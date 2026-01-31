@@ -5,6 +5,16 @@
 
 #define TOTAL_IC_2950 1
 
+void snap_2950(cell_asic_2950 *ic)
+{
+	spiSendCmd2950(TOTAL_IC_2950, ic, SNAP2950);
+}
+
+void unsnap_2950(cell_asic_2950 *ic)
+{
+	spiSendCmd2950(TOTAL_IC_2950, ic, UNSNAP2950);
+}
+
 void start_adc_conversions(cell_asic_2950 *ic)
 {
 	cmd_description command;
