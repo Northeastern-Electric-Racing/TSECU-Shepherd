@@ -320,7 +320,8 @@ void vHvPlateData(ULONG thread_input)
 
 	for (;;) {
 		// get the current reading from the pack
-		get_pack_current_and_batt_voltage(hv_plate, hv_plate_task_delay);
+		get_pack_current_and_batt_voltage(hv_plate,
+						  hv_plate_task_delay);
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
