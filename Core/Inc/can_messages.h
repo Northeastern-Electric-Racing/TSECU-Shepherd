@@ -202,7 +202,7 @@ void send_isospi_status_message(const isospi_status_t *status);
  */
 void send_onboard_therm_message(chipdata_t *chip_data);
 
-
+/**
  * @brief Send PWM duty cycle signals over CAN.
  *
  * @param pointer to signals

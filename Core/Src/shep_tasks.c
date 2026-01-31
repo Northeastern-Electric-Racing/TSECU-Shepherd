@@ -306,7 +306,7 @@ void vGetSegmentData(ULONG thread_input)
 
 void vHvPlateData(ULONG thread_input)
 {
-	const hv_plate_task_delay = 100; // in ms
+	const uint16_t hv_plate_task_delay = 100; // in ms
 
 	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
 
