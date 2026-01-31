@@ -209,7 +209,7 @@ void vAnalyzer(ULONG thread_input)
 	for (;;) {
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
-		// NOTE: All functions that modify chip data are externall mutexed
+		// NOTE: All functions that modify chip data are externally mutexed
 		mutex_get(&analyzer->analyzer_mutex);
 
 		// calculate base values for later safety calcs
@@ -239,6 +239,8 @@ void vAnalyzer(ULONG thread_input)
 
 void vGetSegmentData(ULONG thread_input)
 {
+	const uint16_t balancing_delay = 75;
+
 	acc_data_args_t *acc_data_args = (acc_data_args_t *)thread_input;
 
 	acc_data_t *acc_data = acc_data_args->acc_data;
@@ -248,23 +250,26 @@ void vGetSegmentData(ULONG thread_input)
 
 	isospi_break_detection_init(acc_data->chips);
 
-	// must delay after init for some reason, or else ADC doesnt start up (-3.45
-	// or something)
+	// must delay after init for ADC to start up
 	tx_thread_sleep(MS_TO_TICKS(500));
+
+	state_t prev_state = BOOT;
+	state_t current_state = BOOT;
 
 	for (;;) {
 		segment_mute(acc_data->chips, &hspi2);
 
-		if (get_current_state(state_machine) == CHARGING) {
-			tx_thread_sleep(75);
-			// must delay to let settle after balancing has halted, or else cells read
-			// high
+		prev_state = current_state;
+		current_state = get_current_state(state_machine);
+
+		if (prev_state == BALANCING && current_state == CHARGING) {
+			tx_thread_sleep(MS_TO_TICKS(
+				balancing_delay)); // delay after balancing to let cells settle
 		}
 
-		if (get_current_state(state_machine) == CHARGING) {
+		if (current_state == CHARGING || current_state == BALANCING) {
 			// in charging, debug data is required to get things like die temp
 			segment_retrieve_charging_data(acc_data->chips, &hspi2);
-
 			isospi_handle_state(acc_data->chips, state_machine,
 					    &hspi2);
 
@@ -284,7 +289,7 @@ void vGetSegmentData(ULONG thread_input)
 			}
 		}
 
-		if (get_current_state(state_machine) == CHARGING) {
+		if (current_state == CHARGING || current_state == BALANCING) {
 			segment_unmute(acc_data->chips, &hspi2);
 		}
 
