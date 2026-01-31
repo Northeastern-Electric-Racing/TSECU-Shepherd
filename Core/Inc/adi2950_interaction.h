@@ -6,38 +6,71 @@
 #include "stm32xx_hal.h"
 
 /**
- * @brief Reads the current measurement registers from the adbms2950.
+ * Snaps registers of ADBMS2950
+ * 
  * @param ic Pointer to the adbms2950 data structure.
- * @param hspi Pointer to the SPI interface handle.
  */
-void read_current_registers(cell_asic_2950 ic, SPI_HandleTypeDef *hspi);
+void snap_2950(cell_asic_2950 *ic);
 
 /**
- * @brief Reads the battery voltage registers from the adbms2950.
+ * Unsnaps registers of ADBMS2950
+ * 
  * @param ic Pointer to the adbms2950 data structure.
- * @param hspi Pointer to the SPI interface handle.
  */
-void read_vbat_regsisters(cell_asic_2950 ic, SPI_HandleTypeDef *hspi);
+void unsnap_2950(cell_asic_2950 *ic);
+
+/**
+ * Begins continuous ADC conversions with redundancy
+ * 
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void start_adc_conversions(cell_asic_2950 *ic);
+
+/**
+ * @brief Sets the accumulation count for current and voltage measurements.
+ * 
+ * @param ic Pointer to the adbms2950 data structure.
+ * @param count Accumulation count to set.
+ */
+void set_accumulation_count(cell_asic_2950 *ic, ACCI count);
+
+/**
+ * @brief Reads the accumulated current and battery voltage registers from the adbms2950.
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void read_accumulated_current_vbat_registers(cell_asic_2950 *ic);
+
+/**
+ * @brief Reads V7 and V9 redundant pair voltage registers.
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void read_v7_v9_registers(cell_asic_2950 *ic);
+
+/**
+ * @brief Reads V2 and V3 redundant pair voltage registers.
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void read_v2_v3_registers(cell_asic_2950 *ic);
+
+/**
+ * @brief Reads the conversion count registerm for total number of ADC conversions.
+ * @param ic Pointer to the adbms2950 data structure.
+ * @return uint16_t The current conversion count.
+ */
+uint16_t read_conversion_count_registers(cell_asic_2950 *ic);
 
 /**
  * @brief Sets the state of a gpo pin.
  * @param ic Pointer to the adbms2950 data structure.
  * @param gpo GPO to set
  */
-void set_gpo(cell_asic_2950 ic, GPO_2950 gpo);
+void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo);
 
 /**
  * @brief Resets a gpo pin.
  * @param ic Pointer to the adbms2950 data structure.
  * @param gpo GPO to reset
  */
-void reset_gpo(cell_asic_2950 ic, GPO_2950 gpo);
-
-/**
- * @brief Reads the voltage registers from the ADBMS2950.
- * @param ic Pointer to the adbms2950 data structure.
- * @param hspi Pointer to the SPI interface handle.
- */
-void read_vr_registers(cell_asic_2950 ic, SPI_HandleTypeDef *hspi);
+void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo);
 
 #endif

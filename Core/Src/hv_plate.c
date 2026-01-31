@@ -15,114 +15,83 @@ static float get_voltage_conversion(int data)
 	return voltage;
 }
 
-void init_hv_plate_chip(cell_asic_2950 ic)
+void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 {
-	// TODO: iron out config (mostly taken from adi code)
-	ic.tx_cfga.gpo1c = PULLED_UP_TRISTATED;
-	ic.tx_cfga.gpo2c = PULLED_UP_TRISTATED;
-	ic.tx_cfga.gpo3c = PULLED_UP_TRISTATED;
-	ic.tx_cfga.gpo4c = PULLED_UP_TRISTATED;
-	ic.tx_cfga.gpo5c = PULLED_UP_TRISTATED;
-	ic.tx_cfga.gpo6c = PULLED_UP_TRISTATED;
+	switch (conversion_count) {
+	case ACCI_8:
+		hv_plate->conversion_count = 8;
+		break;
+	case ACCI_16:
+		hv_plate->conversion_count = 16;
+		break;
+	case ACCI_32:
+		hv_plate->conversion_count = 32;
+		break;
+	default:
+		PRINTLN_WARNING(
+			"Unsupported accumulation count, defaulting to 8");
+		hv_plate->conversion_count = 8;
+		break;
+	}
+	hv_plate->last_total_converion_count = 0;
 
-	ic.tx_cfga.gpo1od = PUSH_PULL;
-	ic.tx_cfga.gpo2od = PUSH_PULL;
-	ic.tx_cfga.gpo3od = PUSH_PULL;
-	ic.tx_cfga.gpo4od = PUSH_PULL;
-	ic.tx_cfga.gpo5od = PUSH_PULL;
-	ic.tx_cfga.gpo6od = PUSH_PULL;
-
-	ic.tx_cfga.vs1 = VSM_SGND;
-	ic.tx_cfga.vs2 = VSM_SGND;
-	ic.tx_cfga.vs3 = VSMV_SGND;
-	ic.tx_cfga.vs4 = VSMV_SGND;
-	ic.tx_cfga.vs5 = VSMV_SGND;
-	ic.tx_cfga.vs6 = VSMV_SGND;
-	ic.tx_cfga.vs7 = VSMV_SGND;
-	ic.tx_cfga.vs8 = VSMV_SGND;
-	ic.tx_cfga.vs9 = VSMV_SGND;
-	ic.tx_cfga.vs10 = VSMV_SGND;
-
-	ic.tx_cfga.injosc = INJOSC0_NORMAL;
-	ic.tx_cfga.injmon = INJMON0_NORMAL;
-	ic.tx_cfga.injts = NO_THSD;
-	ic.tx_cfga.injecc = NO_ECC;
-	ic.tx_cfga.injtm = NO_TMODE;
-
-	ic.tx_cfga.soak = SOAK_DISABLE;
-	ic.tx_cfga.ocen = OC_DISABLE;
-	ic.tx_cfga.gpio1fe = FAULT_STATUS_DISABLE;
-	ic.tx_cfga.spi3w = FOUR_WIRE;
-
-	ic.tx_cfga.acci = ACCI_8;
-	ic.tx_cfga.commbk = COMMBK_OFF;
-	ic.tx_cfga.vb1mux = SINGLE_ENDED_SGND;
-	ic.tx_cfga.vb2mux = SINGLE_ENDED_SGND;
-
-	// CFGB
-	ic.tx_cfgb.gpio1c = PULL_DOWN_OFF;
-	ic.tx_cfgb.gpio2c = PULL_DOWN_OFF;
-	ic.tx_cfgb.gpio3c = PULL_DOWN_OFF;
-	ic.tx_cfgb.gpio4c = PULL_DOWN_OFF;
-
-	ic.tx_cfgb.oc1th = 0x0;
-	ic.tx_cfgb.oc2th = 0x0;
-	ic.tx_cfgb.oc3th = 0x0;
-
-	ic.tx_cfgb.oc1ten = NORMAL_INPUT;
-	ic.tx_cfgb.oc2ten = NORMAL_INPUT;
-	ic.tx_cfgb.oc3ten = NORMAL_INPUT;
-
-	ic.tx_cfgb.ocdgt = OCDGT0_1oo1;
-	ic.tx_cfgb.ocdp = OCDP0_NORMAL;
-	ic.tx_cfgb.reften = NORMAL_INPUT;
-	ic.tx_cfgb.octsel = OCTSEL0_OCxADC_P140_REFADC_M20;
-
-	ic.tx_cfgb.ocod = PUSH_PULL;
-	ic.tx_cfgb.oc1gc = GAIN_1;
-	ic.tx_cfgb.oc2gc = GAIN_1;
-	ic.tx_cfgb.oc3gc = GAIN_1;
-	ic.tx_cfgb.ocmode = OCMODE0_DISABLED2950;
-	ic.tx_cfgb.ocax = OCABX_ACTIVE_HIGH;
-	ic.tx_cfgb.ocbx = OCABX_ACTIVE_HIGH;
-
-	ic.tx_cfgb.diagsel = DIAGSEL0_IAB_VBAT;
-	ic.tx_cfgb.gpio2eoc = EOC_DISABLED2950;
+	set_accumulation_count(hv_plate->ic, conversion_count);
+	start_adc_conversions(hv_plate->ic);
 }
 
-float get_pack_current(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
+void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
+				       uint16_t request_rate)
 {
-	read_current_registers(*ic, hspi);
-	return get_current_conversion(ic->i.i1);
+	snap_2950(hv_plate->ic);
+	const uint16_t expected_conversions =
+		request_rate / hv_plate->conversion_count;
+
+	read_accumulated_current_vbat_registers(hv_plate->ic);
+	uint16_t num_conversitions =
+		read_conversion_count_registers(hv_plate->ic);
+
+	// indicates that the I1CNT register wrapped around
+	if (num_conversitions < hv_plate->last_total_converion_count) {
+		hv_plate->last_total_converion_count = 0;
+	}
+
+	// check if the adequate number of conversions have been
+	// made before determining if acculmulated current is valid current reading is valid
+	if ((num_conversitions - hv_plate->last_total_converion_count) /
+		    hv_plate->conversion_count >=
+	    expected_conversions) {
+		hv_plate->batt_volts =
+			get_voltage_conversion(hv_plate->ic->vbacc.vb1acc) /
+			hv_plate->conversion_count;
+
+		hv_plate->pack_current =
+			get_current_conversion(hv_plate->ic->iacc.i1acc) /
+			hv_plate->conversion_count;
+
+		hv_plate->last_total_converion_count = num_conversitions;
+	}
+	unsnap_2950(hv_plate->ic);
 }
 
-float get_batt_voltage(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
+void get_ts_voltage(hv_plate_t *hv_plate)
 {
-	read_vbat_regsisters(*ic, hspi);
-	float avg_volts = (get_voltage_conversion(ic->vbat.vbat1) +
-			   get_voltage_conversion(ic->vbat.vbat2)) /
-			  2;
-	return avg_volts;
-}
-
-float get_ts_voltage(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
-{
-	read_vr_registers(*ic, hspi);
-	// TODO: validate reading V2 and V3
+	read_v2_v3_registers(hv_plate->ic);
 	// NOTE: TS+ is output to both V2 and V3
-	float avg_volts = (get_voltage_conversion(ic->vr.v_codes[1]) + // V2
-			   get_voltage_conversion(ic->vr.v_codes[2])) / // V3
-			  2;
-	return avg_volts; // TODO convert to temp
+	float avg_volts =
+		(get_voltage_conversion(hv_plate->ic->vr.v_codes[1]) + // V2
+		 get_voltage_conversion(hv_plate->ic->vr.v_codes[2])) / // V3
+		2;
+	hv_plate->ts_volts = avg_volts;
 }
 
-float get_shunt_temp(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi)
+void get_shunt_temp(hv_plate_t *hv_plate)
 {
-	read_vr_registers(*ic, hspi);
-	// TODO: validate reading V7 and V9
-	// NOTE: Temperature is output to both V7 and V9
-	float avg_volts = (get_voltage_conversion(ic->vr.v_codes[9]) + // V7A
-			   get_voltage_conversion(ic->vr.v_codes[11])) / // V9B
-			  2;
-	return avg_volts;
+	read_v7_v9_registers(hv_plate->ic);
+	// NOTE: TS+ is output to both V2 and V3
+	float avg_volts =
+		(get_voltage_conversion(hv_plate->ic->vr.v_codes[9]) + // V7A
+		 get_voltage_conversion(hv_plate->ic->vr.v_codes[11])) / // V9B
+		2;
+
+	hv_plate->shunt_temp = avg_volts; // TODO: convert to temp
 }
