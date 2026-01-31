@@ -1,32 +1,105 @@
 
-#include "u_tx_threads.h"
-#include "u_tx_debug.h"
-#include "u_tx_general.h"
-#include "u_tx_can.h"
-#include "shep_queues.h"
-#include "can_messages.h"
 #include "shep_tasks.h"
-#include "timer.h"
-#include "state_machine.h"
 #include "can_handler.h"
-#include "u_tx_flags.h"
-#include "segment.h"
-#include "main.h"
-#include "hv_plate.h"
-#include "compute.h"
+#include "can_messages.h"
 #include "cell_temp_sanitizer.h"
-#include "precharge_routine.h"
+#include "compute.h"
+#include "control.h"
+#include "hv_plate.h"
 #include "isospi_recovery.h"
+#include "current_limit_algo_utils.h"
+#include "dcl.h"
+#include "ccl.h"
+#include "main.h"
+#include "precharge_routine.h"
+#include "segment.h"
+#include "shep_queues.h"
 #include "soc.h"
+#include "state_machine.h"
+#include "timer.h"
+#include "u_tx_can.h"
+#include "u_tx_debug.h"
+#include "u_tx_flags.h"
+#include "u_tx_general.h"
+#include "u_tx_threads.h"
+
+const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
+			   acc_data_t *acc_data, bms_algos_t *bms_algos)
+{
+#ifdef DEBUG_HV_PLATE
+	PRINTLN_INFO("HV Plate Data:");
+	PRINTLN_INFO("TS Voltage: %.3f V", hv_plate->ts_volts);
+	PRINTLN_INFO("BATT Voltage: %.3f V", hv_plate->batt_volts);
+	PRINTLN_INFO("Shunt Temp: %.2f C", hv_plate->shunt_temp);
+	PRINTLN_INFO("Pack Current: %.3f A", hv_plate->pack_current);
+#endif
+
+#ifdef DEBUG_VOLTAGES
+	PRINTLN_INFO("Min, Max, Avg, Delta Voltages: %f, %f, %f, %f\n",
+		     analyzer->min_voltage.val, analyzer->max_voltage.val,
+		     analyzer->avg_voltage, analyzer->delt_voltage);
+
+	PRINTLN_INFO("Raw Cell Voltages:");
+	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			PRINTLN_INFO(
+				"%.2f\t",
+				analyzer->chip_data[c].cell_voltages[cell]);
+		}
+		printf("\n");
+	}
+
+	PRINTLN_INFO("Raw Cell OCV:");
+	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			PRINTLN_INFO(
+				"%.2f\t",
+				analyzer->chip_data[c].open_cell_voltage[cell]);
+		}
+		printf("\n");
+	}
+#endif
+
+#ifdef DEBUG_TEMPS
+	PRINTLN_INFO("Therm Temps:");
+	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			PRINTLN_INFO("%.1f\t",
+				     analyzer->chip_data[c].cell_temp[cell]);
+		}
+		printf("\n");
+	}
+	PRINTLN_INFO("CHIP TEMPS: \n");
+	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+		PRINTLN_INFO("%.1f\t", analyzer->chip_data[c].die_temp);
+	}
+	printf("\n");
+#endif
+
+#ifdef DEBUG_ALGOS
+	PRINTLN_INFO("Cont CCL: %.2f A, Const DCL: %.2f A\n",
+		     bms_algos->cont_CCL, bms_algos->cont_DCL);
+
+	PRINTLN_INFO("Inst CCL: %.2f A, Inst DCL: %.2f A\n",
+		     bms_algos->inst_CCL, bms_algos->inst_DCL);
+#endif
+}
 
 void vDefaultTask(ULONG thread_input)
 {
+	default_task_args_t *default_task_args =
+		(default_task_args_t *)thread_input;
+	analyzer_t *analyzer = default_task_args->analyzer;
+	acc_data_t *acc_data = default_task_args->acc_data;
+	hv_plate_t *hv_plate = default_task_args->hv_plate;
+	bms_algos_t *bms_algos = default_task_args->bms_algos;
+
 	bool alt = true;
 
 	/* Infinite loop */
 	for (;;) {
 #ifdef DEBUG_STATS
-//print_bms_stats(&bmsdata);
+		print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
 #endif
 
 		if (alt) {
@@ -59,7 +132,8 @@ void vStateMachine(ULONG thread_input)
 		sm_handle_state(state_machine_args);
 
 		if (is_timer_expired(&telem_timer)) {
-			// these are unimportant telemetry messages so they can be sent infrequently
+			// these are unimportant telemetry messages so they can be sent
+			// infrequently
 			send_bms_status_message( // TODO: can be moved to CAN dispatch
 				analyzer->avg_temp,
 				analyzer->internal_temp, // TODO: we never set internal temp
@@ -90,6 +164,9 @@ void vCanReceive(ULONG thred_input)
 			case DTI_CURRENT_CANID:
 				// TODO process charger can message
 				break;
+			case CALYPSO_CONTROL_CANID:
+				control_message_fans(message);
+				break;
 			default:
 				break;
 			}
@@ -110,7 +187,8 @@ void vCanDispatch(ULONG thread_input)
 			status = can_send_msg(can1, &message);
 			if (status != U_SUCCESS) {
 				PRINTLN_WARNING(
-					"Failed to send message (on can1) after removing from outgoing queue (Message ID: %ld) - Status %d",
+					"Failed to send message (on can1) after removing from "
+					"outgoing queue (Message ID: %ld) - Status %d",
 					message.id, status);
 			}
 		}
@@ -131,7 +209,7 @@ void vAnalyzer(ULONG thread_input)
 	for (;;) {
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
-		// NOTE: All functions that modify chip data are externall mutexed
+		// NOTE: All functions that modify chip data are externally mutexed
 		mutex_get(&analyzer->analyzer_mutex);
 
 		// calculate base values for later safety calcs
@@ -161,6 +239,8 @@ void vAnalyzer(ULONG thread_input)
 
 void vGetSegmentData(ULONG thread_input)
 {
+	const uint16_t balancing_delay = 75;
+
 	acc_data_args_t *acc_data_args = (acc_data_args_t *)thread_input;
 
 	acc_data_t *acc_data = acc_data_args->acc_data;
@@ -170,21 +250,26 @@ void vGetSegmentData(ULONG thread_input)
 
 	isospi_break_detection_init(acc_data->chips);
 
-	// must delay after init for some reason, or else ADC doesnt start up (-3.45 or something)
+	// must delay after init for ADC to start up
 	tx_thread_sleep(MS_TO_TICKS(500));
+
+	state_t prev_state = BOOT;
+	state_t current_state = BOOT;
 
 	for (;;) {
 		segment_mute(acc_data->chips, &hspi2);
 
-		if (get_current_state(state_machine) == CHARGING) {
-			tx_thread_sleep(75);
-			// must delay to let settle after balancing has halted, or else cells read high
+		prev_state = current_state;
+		current_state = get_current_state(state_machine);
+
+		if (prev_state == BALANCING && current_state == CHARGING) {
+			tx_thread_sleep(MS_TO_TICKS(
+				balancing_delay)); // delay after balancing to let cells settle
 		}
 
-		if (get_current_state(state_machine) == CHARGING) {
+		if (current_state == CHARGING || current_state == BALANCING) {
 			// in charging, debug data is required to get things like die temp
 			segment_retrieve_charging_data(acc_data->chips, &hspi2);
-
 			isospi_handle_state(acc_data->chips, state_machine,
 					    &hspi2);
 
@@ -204,7 +289,7 @@ void vGetSegmentData(ULONG thread_input)
 			}
 		}
 
-		if (get_current_state(state_machine) == CHARGING) {
+		if (current_state == CHARGING || current_state == BALANCING) {
 			segment_unmute(acc_data->chips, &hspi2);
 		}
 
@@ -221,29 +306,51 @@ void vGetSegmentData(ULONG thread_input)
 
 void vHvPlateData(ULONG thread_input)
 {
+	const hv_plate_task_delay = 100; // in ms
+
 	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
 
 	hv_plate_t *hv_plate = hv_plate_args->hv_plate;
 	analyzer_t *analyzer = hv_plate_args->analyzer;
+	bms_algos_t *bms_algos = hv_plate_args->bms_algos;
+	state_machine_t *state_machine = hv_plate_args->state_machine;
 
-	init_hv_plate_chip(*hv_plate->ic);
+	dcl_init(COOLDOWN_ON_FULL_PULSE);
+	ccl_init(COOLDOWN_ON_FULL_PULSE);
+
+	// initialize HV Plate struct and start conversions
+	init_hv_plate(hv_plate, ACCI_8);
+
 	tx_thread_sleep(TICKS_TO_MS(500));
 
 	for (;;) {
 		// get the current reading from the pack
-		hv_plate->pack_current = get_pack_current(hv_plate->ic, &hspi2);
+		get_pack_current_and_batt_voltage(hv_plate,
+						  hv_plate_task_delay);
 
-		// updates the SoC value in the analyzer struct based on the pack current received
+		// updates the SoC value in the analyzer struct based on the pack current
+		// received
 		update_soc(analyzer, hv_plate);
 
-		// read voltages
-		hv_plate->ts_volts = get_ts_voltage(hv_plate->ic, &hspi2);
-		hv_plate->batt_volts = get_batt_voltage(hv_plate->ic, &hspi2);
+		/* Check whether pulse operation needs to be disabled due to charging state or faults */
+		if (disable_pulse(state_machine)) {
+			mutex_get(&bms_algos->bms_algos_mutex);
+			bms_algos->cont_DCL = bms_algos->inst_DCL;
+			bms_algos->cont_CCL = bms_algos->inst_CCL;
+			mutex_put(&bms_algos->bms_algos_mutex);
+		} else {
+			// Calculate continous DCL and CCL
+			dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
+			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
+		}
+
+		// read ts voltage
+		get_ts_voltage(hv_plate);
 
 		// read shunt temperature
-		hv_plate->shunt_temp = get_shunt_temp(hv_plate->ic, &hspi2);
+		get_shunt_temp(hv_plate);
 
-		tx_thread_sleep(MS_TO_TICKS(100));
+		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
 	}
 }
 
@@ -278,9 +385,46 @@ void vPrecharge(ULONG args)
 
 void vBMSAlgorithms(ULONG thread_input)
 {
+	bms_algos_args_t *bms_algos_args = (bms_algos_args_t *)thread_input;
+
+	bms_algos_t *bms_algos = bms_algos_args->bms_algos;
+	sanitizer_t *sanitizer = bms_algos_args->sanitizer;
+	analyzer_t *analyzer = bms_algos_args->analyzer;
+
 	for (;;) {
-		// TODO: implement algo thread
+		current_limit_algo_inputs_t algo_inputs = {
+			.max_ocv = analyzer->max_ocv.val,
+			.min_ocv = analyzer->min_ocv.val,
+			.max_temp = sanitizer->max_sanitized_temp.val,
+			.min_temp = sanitizer->min_sanitized_temp.val
+		};
+
+		dcl_calc_inst_limit(algo_inputs, bms_algos);
+		ccl_calc_inst_limit(algo_inputs, bms_algos);
+
 		tx_thread_sleep(MS_TO_TICKS(500));
+	}
+}
+
+void vControl(ULONG thread_input)
+{
+	analyzer_t *analyzer = (analyzer_t *)thread_input;
+
+	// Initialize peripherals for control
+	bool failed = !control_init_peripherals();
+	if (failed) {
+		printf("Failed to initialize one or more peripherals.\n");
+	}
+
+	for (;;) {
+		mutex_get(&analyzer->analyzer_mutex);
+		float pack_high_temp = analyzer->max_temp.val;
+		control_fan(pack_high_temp);
+		mutex_put(&analyzer->analyzer_mutex);
+
+		send_control_signals(control_device_signals);
+
+		tx_thread_sleep(MS_TO_TICKS(50));
 	}
 }
 
@@ -346,13 +490,22 @@ void vDebug(ULONG thread_input)
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 {
 	/* Init Interfaces Start */
-	acc_data_t *acc_data = (acc_data_t *)malloc(sizeof(acc_data));
+	acc_data_t *acc_data = (acc_data_t *)malloc(sizeof(acc_data_t));
 	analyzer_t *analyzer = (analyzer_t *)malloc(sizeof(analyzer_t));
 	state_machine_t *state_machine =
 		(state_machine_t *)malloc(sizeof(state_machine_t));
 	hv_plate_t *hv_plate = (hv_plate_t *)malloc(sizeof(hv_plate_t));
+	cell_asic_2950 hv_plate_ic;
+	hv_plate->ic = &hv_plate_ic;
 	sanitizer_t *sanitizer = (sanitizer_t *)malloc(sizeof(sanitizer_t));
 	bms_algos_t *bms_algos = (bms_algos_t *)malloc(sizeof(bms_algos_t));
+
+	default_task_args_t *default_task_args =
+		(default_task_args_t *)malloc(sizeof(default_task_args_t));
+	default_task_args->analyzer = analyzer;
+	default_task_args->acc_data = acc_data;
+	default_task_args->hv_plate = hv_plate;
+	default_task_args->bms_algos = bms_algos;
 
 	analyzer_args_t *analyzer_args =
 		(analyzer_args_t *)malloc(sizeof(analyzer_args_t));
@@ -400,6 +553,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.size = 2048, /* Stack Size (in bytes) */
 		.priority = 2, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
+		.thread_input = (ULONG)default_task_args, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 		.auto_start = TX_AUTO_START, /* Auto Start */
 		.function = vDefaultTask /* Thread Function */
@@ -491,6 +645,17 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vBMSAlgorithms, /* Thread Function */
 	};
 
+	thread_t _control_thread = {
+		.name = "Control Thread", /* Name */
+		.size = 2048, /* Stack Size (in bytes) */
+		.priority = 4, /* Priority */
+		.threshold = 0, /* Preemption Threshold */
+		.thread_input = (ULONG)analyzer, /* Thread Args */
+		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+		.auto_start = TX_AUTO_START, /* Auto Start */
+		.function = vControl, /* Thread Function */
+	};
+
 	thread_t _debug_thread = {
 		.name = "BMS Debug Mode Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
@@ -515,6 +680,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 		    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");

@@ -6,44 +6,38 @@
 #include "stm32xx_hal.h"
 #include "adi_bms_2950data.h"
 
-#define HV_CTRL_GPO GPIO4_2950
+#define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
+#define HV_CTRL_GPO	 GPIO4_2950
 
 /**
- * @brief initializes the adbms2950
- * @param ic adbms2950 data struct
+ * @brief Initializes an hv plate struct
+ * 
+ * @param hv_plate pointer to hv plate data struct
+ * @param conversion_count accumulation count for current and voltage measurements
  */
-void init_hv_plate_chip(cell_asic_2950 ic);
+void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count);
 
 /**
  * @brief Gets the pack current reading from the adbms2950
  * 
- * @param ic pointer to adbms data struct
- * @param hspi pointer to spi handler 
+ * @param hv_plate pointer to hv plate data struct
+ * @param reques_rate the rate at which this function is called in milliseconds
  */
-float get_pack_current(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi);
-
-/**
- * @brief Gets the batt volatage reading from the adbms2950
- * 
- * @param ic pointer to adbms data struct
- * @param hspi pointer to spi handler 
- */
-float get_batt_voltage(cell_asic_2950 *bmsdata, SPI_HandleTypeDef *hspi);
+void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
+				       uint16_t request_rate);
 
 /**
  * @brief Gets the TS voltage from the adbms2950
  * 
- * @param ic pointer to adbms data struct
- * @param hspi pointer to spi handler 
+ * @param hv_p'ate pointer to hv plate data struct
  */
-float get_ts_voltage(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi);
+void get_ts_voltage(hv_plate_t *hv_plate);
 
 /**
  * @brief Gets the current temperature of the shunt resistor
  * 
- * @param ic pointer to adbms data struct
- * @param hspi pointer to spi handler  
+ * @param hv_p'ate pointer to hv splate data struct
  */
-float get_shunt_temp(cell_asic_2950 *ic, SPI_HandleTypeDef *hspi);
+void get_shunt_temp(hv_plate_t *hv_plate);
 
 #endif
