@@ -124,6 +124,8 @@ void vStateMachine(ULONG thread_input)
 	state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
 
+	create_mutex(&state_machine->state_mutex);
+
 	nertimer_t telem_timer;
 	// sends unimportant telemetry messages every 500ms
 	start_timer(&telem_timer, 500);
@@ -390,6 +392,8 @@ void vBMSAlgorithms(ULONG thread_input)
 	bms_algos_t *bms_algos = bms_algos_args->bms_algos;
 	sanitizer_t *sanitizer = bms_algos_args->sanitizer;
 	analyzer_t *analyzer = bms_algos_args->analyzer;
+
+	create_mutex(&bms_algos->bms_algos_mutex);
 
 	for (;;) {
 		current_limit_algo_inputs_t algo_inputs = {
