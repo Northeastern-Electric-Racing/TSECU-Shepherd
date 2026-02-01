@@ -434,15 +434,15 @@ void vPeripherals(ULONG thread_input)
 		(peripherals_args_t *)thread_input;
 
 	peripherals_t *peripherals = peripherals_args->peripherals;
-	imu_data_t *imu_data = peripherals->imu_data;
+	imu_data_t imu_data = peripherals->imu_data;
 
 	create_mutex(&peripherals->peripherals_mutex);
 
 	for (;;) {
 		mutex_get(&peripherals->peripherals_mutex);
 
-		imu_getAcceleration(&imu_data->accel_data);
-		imu_getAngularRate(&imu_data->ang_rate_data);
+		imu_getAcceleration(&imu_data.accel_data);
+		imu_getAngularRate(&imu_data.ang_rate_data);
 
 		mutex_put(&peripherals->peripherals_mutex);
 
@@ -566,7 +566,6 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		(peripherals_args_t *)malloc(sizeof(peripherals_args_t));
 	peripherals_args->peripherals =
 		(peripherals_t *)malloc(sizeof(peripherals_t));
-	peripherals_args->peripherals->imu_data = (imu_data_t *)malloc(sizeof(imu_data_t));
 
 	/* Init Interfaces End */
 
