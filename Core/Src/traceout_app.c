@@ -24,18 +24,6 @@ extern UART_HandleTypeDef huart4;
 /* Aligned for cache-line safety */
 __attribute__((aligned(32))) static UCHAR s_trace_buffer[TRACE_BUFFER_SIZE];
 
-/*************** Platform Hooks ***************/
-
-/**
- * @brief Enable CPU cycle counter for TraceX timestamps.
- */
-void tracex_enable_cycle_counter(void)
-{
-	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-	DWT->CYCCNT = 0U;
-	DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-}
-
 /*************** HAL Callbacks ***************/
 
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin)
