@@ -58,7 +58,8 @@ void send_fault_status_message(uint32_t fault_code_crit,
  *
  * @return Returns a fault if we are not able to send
  */
-void send_bms_status_message(float avg_temp, float internal_temp, int bms_state);
+void send_bms_status_message(float avg_temp, float internal_temp,
+			     int bms_state);
 
 /**
  * @brief sends shutdown control message

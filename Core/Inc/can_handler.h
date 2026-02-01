@@ -51,17 +51,17 @@
 #define CHARGERBOX_CANID	   0x18FF50E5
 #define DTI_CURRENT_CANID	   0x436
 
-#define OVERFLOW_CANID	   0x6F1
-#define OVERFLOW_SIZE	   6
-#define PEC_ERROR_CANID	   0x6F2
-#define PEC_ERROR_SIZE	   3
-#define ALPHA_CELL_CANID   0x6FA
-#define BETA_CELL_CANID	   0x6FB
-#define CELL_MSG_SIZE	   7
-#define STAT_A_CANID 0x6FC
-#define STAT_A_SIZE  7
-#define STAT_B_CANID 0x6FF
-#define STAT_B_SIZE  8
+#define OVERFLOW_CANID	 0x6F1
+#define OVERFLOW_SIZE	 6
+#define PEC_ERROR_CANID	 0x6F2
+#define PEC_ERROR_SIZE	 3
+#define ALPHA_CELL_CANID 0x6FA
+#define BETA_CELL_CANID	 0x6FB
+#define CELL_MSG_SIZE	 7
+#define STAT_A_CANID	 0x6FC
+#define STAT_A_SIZE	 7
+#define STAT_B_CANID	 0x6FF
+#define STAT_B_SIZE	 8
 
 #define CONTROL_CANID	      0x700
 #define CONTROL_SIZE	      1
