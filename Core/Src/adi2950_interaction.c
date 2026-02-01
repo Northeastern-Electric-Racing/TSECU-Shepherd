@@ -1,4 +1,3 @@
-
 #include "adi2950_interaction.h"
 #include "pal.h"
 #include "u_tx_debug.h"
@@ -20,6 +19,14 @@ void start_adc_conversions(cell_asic_2950 *ic)
 	cmd_description command;
 	adBms2950_Adi1(TOTAL_IC_2950, ic, RD_ON2950, OPT8_C, &command);
 	Delay_ms2950(ADI1_delay_ms);
+}
+
+void start_aux_adc_conversions(cell_asic_2950 *ic)
+{
+	adBmsWakeupIc2950(TOTAL_IC_2950);
+	spiSendCmd2950(TOTAL_IC_2950, ic, sADX);
+	// Poll on conversion to block thread
+	ic[0].pladc_count = adBmsPollAdc2950(TOTAL_IC_2950, ic, PLX);
 }
 
 void set_accumulation_count(cell_asic_2950 *ic, ACCI count)
@@ -63,6 +70,23 @@ void read_v2_v3_registers(cell_asic_2950 *ic)
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1A, GPV1, A_2950);
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
+	}
+}
+
+void read_aux_registers(cell_asic_2950 *ic)
+{
+	adBmsWakeupIc2950(TOTAL_IC_2950);
+	spiSendCmd2950(TOTAL_IC_2950, ic, sADX);
+	// Poll on conversion to block thread
+	ic[0].pladc_count = adBmsPollAdc2950(TOTAL_IC_2950, ic, PLX);
+
+	// Read all relevant register groups
+	adBmsReadData2950(TOTAL_IC_2950, ic, RDXA, Aux2950, A_2950);
+	adBmsReadData2950(TOTAL_IC_2950, ic, RDXB, Aux2950, B_2950);
+	adBmsReadData2950(TOTAL_IC_2950, ic, RDXC, Aux2950, C_2950);
+
+	if (ic->cccrc.aux_pec != 0) {
+		PRINTLN_ERROR("PEC Error in reading auxiliary registers");
 	}
 }
 

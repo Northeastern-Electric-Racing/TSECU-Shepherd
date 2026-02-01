@@ -27,6 +27,13 @@ void unsnap_2950(cell_asic_2950 *ic);
 void start_adc_conversions(cell_asic_2950 *ic);
 
 /**
+ * Runs ADC conversions for aux adc once.
+ * 
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void run_aux_adc_conversions(cell_asic_2950 *ic);
+
+/**
  * @brief Sets the accumulation count for current and voltage measurements.
  * 
  * @param ic Pointer to the adbms2950 data structure.
@@ -51,6 +58,12 @@ void read_v7_v9_registers(cell_asic_2950 *ic);
  * @param ic Pointer to the adbms2950 data structure.
  */
 void read_v2_v3_registers(cell_asic_2950 *ic);
+
+/**
+ * @brief Reads all aux register groups. (NOTE: Must call run_aux_adc_conversions before for updated data)
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void read_aux_registers(cell_asic_2950 *ic);
 
 /**
  * @brief Reads the conversion count registerm for total number of ADC conversions.
