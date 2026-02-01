@@ -73,8 +73,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/threadX/src/u_tx_flags.c"
     "Drivers/Embedded-Base/threadX/src/u_tx_threads.c"
     "Drivers/Embedded-Base/threadX/src/u_tx_can.c"
-    "Drivers/Embedded-Base/threadX/traceX/src/tracex.c"
-    "Drivers/Embedded-Base/threadX/traceX/src/traceout.c"
+    "Drivers/Embedded-Base/traceX/src/tracex.c"
+    "Drivers/Embedded-Base/traceX/src/traceout.c"
     "Drivers/Embedded-Base/middleware/src/c_utils.c"
     "Drivers/Embedded-Base/platforms/stm32h563/src/fdcan.c"
     "Drivers/Embedded-Base/middleware/src/timer.c"
@@ -112,7 +112,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/adbms/adbms2950/program/inc"
     "Core/Inc"
     "Drivers/Embedded-Base/threadX/inc"
-    "Drivers/Embedded-Base/threadX/traceX/inc"
+    "Drivers/Embedded-Base/traceX/inc"
 )
 
 # Add project symbols (macros)
