@@ -305,7 +305,7 @@ typedef struct {
 
 typedef struct {
 	mutex_t peripherals_mutex;
-	imu_data_t *imu_data;
+	imu_data_t imu_data;
 } peripherals_t;
 
 /* Task Args */
