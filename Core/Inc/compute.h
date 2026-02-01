@@ -5,6 +5,8 @@
 #include <stdbool.h>
 
 #include "stm32h5xx.h"
+#include "u_tx_threads.h"
+#include "lsm6dsv_reg.h"
 
 #define CURRENT_SENSOR_PIN_L A1
 #define CURRENT_SENSOR_PIN_H A0
@@ -15,6 +17,28 @@
 #define CHARGER_BAUD	     250000U
 #define MC_BAUD		     1000000U
 #define MAX_ADC_RESOLUTION   4095 // 12 bit ADC
+
+typedef struct {
+	float x;
+	float y;
+	float z;
+} vector3_t;
+
+int imu_init(void);
+
+/**
+ * Gets the IMU's accerlation reading.
+ * @param data
+ * @return Status
+ */
+int imu_getAcceleration(vector3_t *data);
+
+/**
+ * Gets the IMU's angular rate reading.
+ * @param data
+ * @return Status
+ */
+int imu_getAngularRate(vector3_t *data);
 
 /**
  * @brief updates fault relay
