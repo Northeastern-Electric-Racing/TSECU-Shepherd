@@ -196,20 +196,17 @@ void send_fault_status_message(uint32_t fault_code_crit,
 	queue_can_msg(fault_msg);
 }
 
-void send_bms_status_message(float avg_temp, float temp_internal, int bms_state,
-			     bool balance)
+void send_bms_status_message(float avg_temp, float temp_internal, int bms_state)
 {
 	struct __attribute__((__packed__)) {
 		uint8_t state;
 		int8_t temp_avg;
 		uint8_t temp_internal;
-		uint8_t balance;
 	} bms_status_msg_data;
 
 	bms_status_msg_data.temp_avg = (int8_t)(avg_temp);
 	bms_status_msg_data.state = (uint8_t)(bms_state);
 	bms_status_msg_data.temp_internal = (uint8_t)(temp_internal);
-	bms_status_msg_data.balance = (uint8_t)(balance);
 
 	can_msg_t msg = { .id = BMS_STATUS_CANID,
 			  .len = BMS_STATUS_SIZE,
@@ -467,16 +464,6 @@ void send_cell_data_message(bool alpha, float temperature, float voltage_a,
 	// patch bc 0 to 4
 	chip_ID /= 2;
 
-
-	// if (alpha) {
-	// 	printf("ALPHA: c%d\n", chip_ID);
-	// } else {
-	// 	printf("BETA: c%d\n", chip_ID);
-	// }
-	// printf("TEMP %d: %f\n", cell_a, temperature);
-	// printf("VOLT %d: %f  b%d\n", cell_a, voltage_a, discharging_a);
-	// printf("VOLT %d: %f  b%d\n", cell_b, voltage_b, discharging_b);
-
 	/* Multiply data by scaling factor before converuting to int */
 	temperature *= 10;
 	voltage_a *= 1000;
@@ -510,7 +497,7 @@ void send_status_a_message(uint8_t chip,
 				 float die_temperature, float vpv, float vmv,
 				 stc_ *flt_reg)
 {
-	can_msg_t msg = { .id = ALPHA_STAT_A_CANID, .len = ALPHA_STAT_A_SIZE, .data = { 0 } };
+	can_msg_t msg = { .id = STAT_A_CANID, .len = STAT_A_SIZE, .data = { 0 } };
 
 	die_temperature *= 100;
 	vpv *= 100;
@@ -525,8 +512,7 @@ void send_status_a_message(uint8_t chip,
 	bitstream_add(&alpha_status_a_message, chip, 4);	// Chip ID (4 bits)
 	bitstream_add(&alpha_status_a_message, die_temperature, 13);	// Die Temp (13 bits)
 	bitstream_add(&alpha_status_a_message, vpv, 13);				// Vpv (13 bits)
-	// TODO : VMV could be negative, how is that gonna work?
-	bitstream_add(&alpha_status_a_message, vmv, 13);					// Vmv (8 bits)			// Vpv (5 bits)
+	bitstream_add_signed(&alpha_status_a_message, vmv, 13);					// Vmv (8 bits)			// Vpv (5 bits)
 	bitstream_add(&alpha_status_a_message, flt_reg->va_ov, 1);		// VA_OV (1 bit)
 	bitstream_add(&alpha_status_a_message, flt_reg->va_uv, 1);		// VA_UV (1 bit)
 	bitstream_add(&alpha_status_a_message, flt_reg->vd_ov, 1);		// VD_OV (1 bit)
@@ -540,7 +526,7 @@ void send_status_a_message(uint8_t chip,
 	bitstream_add(&alpha_status_a_message, flt_reg->oscchk, 1);	 	// OSCCHK (1 bit)
 
 	memcpy(msg.data,
-		&bitstream_data, ALPHA_STAT_A_SIZE);
+		&bitstream_data, STAT_A_SIZE);
 
 	handle_bitstream_overflow(&alpha_status_a_message, msg.id);
 
@@ -551,7 +537,7 @@ void send_status_a_message(uint8_t chip,
 void send_status_b_message(float v_res, uint8_t chip, float vref2,
 				 float v_analog, float v_digital, stc_ *flt_reg)
 {
-	can_msg_t msg = { .id = ALPHA_STAT_B_CANID, .len = ALPHA_STAT_B_SIZE, .data = { 0 } };
+	can_msg_t msg = { .id = STAT_B_CANID, .len = STAT_B_SIZE, .data = { 0 } };
 
 	// printf("Vres %f\n", v_res);
 	// printf("Vref2 %f\n", vref2);
@@ -578,7 +564,7 @@ void send_status_b_message(float v_res, uint8_t chip, float vref2,
 	bitstream_add(&alpha_status_b_message, flt_reg->otp2_med, 1);	// OTP2_MED (1 bit)
 	bitstream_add(&alpha_status_b_message, 0, 6);					// Extra (6 bits)
 
-	memcpy(msg.data, &bitstream_data, ALPHA_STAT_B_SIZE);
+	memcpy(msg.data, &bitstream_data, STAT_B_SIZE);
 
 	handle_bitstream_overflow(&alpha_status_b_message, msg.id);
 
@@ -643,14 +629,16 @@ void send_isospi_status_message(const isospi_status_t *status)
 	queue_can_msg(msg);
 }
 
-void send_onboard_therm_message(chipdata_t *chip_data)
+void send_onboard_therm_message(uint8_t chip_id, chipdata_t *chip_data)
 {
 	struct __attribute__((__packed__)) {
+		uint8_t chip_id;
 		uint16_t therm1_temp;
 		uint16_t therm2_temp;
 		uint16_t therm3_temp;
 	} msg_data;
 
+	msg_data.chip_id = chip_id;
 	msg_data.therm1_temp =
 		(uint16_t)(chip_data->on_board_temp[0] * 100) / 100;
 	msg_data.therm2_temp =
@@ -659,7 +647,7 @@ void send_onboard_therm_message(chipdata_t *chip_data)
 		(uint16_t)(chip_data->on_board_temp[2] * 100) / 100;
 
 	can_msg_t msg = { .id = ONBOARD_THERM_CANID,
-			  .len = ONBOARD_THERM_CANID,
+			  .len = ONBOARD_THERM_SIZE,
 			  .data = { 0 } };
 
 	memcpy(msg.data, &msg_data, sizeof(msg_data));

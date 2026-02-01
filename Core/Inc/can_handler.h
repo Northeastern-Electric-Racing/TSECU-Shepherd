@@ -18,7 +18,7 @@
 #define ACC_STATUS_CANID	   0x80
 #define ACC_STATUS_SIZE		   8
 #define BMS_STATUS_CANID	   0x81
-#define BMS_STATUS_SIZE		   4
+#define BMS_STATUS_SIZE		   3
 #define FAULT_STATUS_CANID	   0x89
 #define FAULT_STATUS_SIZE	   8
 #define SHUTDOWN_CTRL_CANID	   0x82
@@ -41,7 +41,7 @@
 #define SEGMENT_DELTA_VOLT_CANID   0x92
 #define SEGMENT_DELTA_VOLT_SIZE	   8
 #define ONBOARD_THERM_CANID	   0x93
-#define ONBOARD_THERM_SIZE	   6
+#define ONBOARD_THERM_SIZE	   7
 #define FAULT_CANID		   0x703 // TODO: cleanup
 #define FAULT_SIZE		   5
 #define NOISE_CANID		   0x88
@@ -58,16 +58,10 @@
 #define ALPHA_CELL_CANID   0x6FA
 #define BETA_CELL_CANID	   0x6FB
 #define CELL_MSG_SIZE	   7
-#define BETA_STAT_A_CANID  0x6FD
-#define BETA_STAT_A_SIZE   8
-#define BETA_STAT_B_CANID  0x6FE
-#define BETA_STAT_B_SIZE   8
-#define BETA_STAT_C_CANID  0x6F0
-#define BETA_STAT_C_SIZE   3
-#define ALPHA_STAT_A_CANID 0x6FC
-#define ALPHA_STAT_A_SIZE  7
-#define ALPHA_STAT_B_CANID 0x6FF
-#define ALPHA_STAT_B_SIZE  8
+#define STAT_A_CANID 0x6FC
+#define STAT_A_SIZE  7
+#define STAT_B_CANID 0x6FF
+#define STAT_B_SIZE  8
 
 #define CONTROL_CANID	      0x700
 #define CONTROL_SIZE	      1
