@@ -6,6 +6,7 @@
 #include "datastructs.h"
 #include "main.h"
 #include <sht30.h>
+#include "lsm6dsv_reg.h"
 
 #define IMU_CS_GPIO_Port SPI6_CS_GPIO_Port
 #define IMU_CS_Pin	 SPI6_CS_Pin

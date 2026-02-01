@@ -55,6 +55,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     "Drivers/Embedded-Base/middleware/src/bitstream.c"
+    "Drivers/Embedded-Base/general/src/lsm6dsv_reg.c"
     "Drivers/adbms/adbms6830/program/src/mcuWrapper.c"
     "Drivers/adbms/adbms6830/program/src/serialPrintResult.c"
     "Drivers/adbms/adbms6830/lib/src/adBms6830ParseCreate.c"

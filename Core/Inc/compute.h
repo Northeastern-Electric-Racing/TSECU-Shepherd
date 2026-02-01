@@ -6,7 +6,6 @@
 
 #include "stm32h5xx.h"
 #include "u_tx_threads.h"
-#include "lsm6dsv_reg.h"
 
 #define CURRENT_SENSOR_PIN_L A1
 #define CURRENT_SENSOR_PIN_H A0
