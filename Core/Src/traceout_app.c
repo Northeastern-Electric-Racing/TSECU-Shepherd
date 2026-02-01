@@ -14,8 +14,8 @@
 
 /*************** Configuration ***************/
 
-#define TRACE_BUFFER_SIZE    (256U * 1024U)
-#define TRACEOUT_TRIGGER_PIN GPIO_PIN_8
+#define TRACE_BUFFER_SIZE    (256U * TRACEOUT_CHUNK_BYTES)
+#define TRACEOUT_TRIGGER_PIN TRACEX_TRIG_Pin
 
 extern UART_HandleTypeDef huart4;
 

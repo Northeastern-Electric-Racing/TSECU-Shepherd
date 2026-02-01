@@ -29,6 +29,7 @@
 #include "u_tx_flags.h"
 #include "shep_queues.h"
 #include "traceout_app.h"
+#include "tracex.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -71,6 +72,7 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
   /* USER CODE BEGIN App_ThreadX_Init */
 #if (ENABLE_TRACEX)
   TraceOut_AppInit();
+  tracex_start();
 #endif
   CATCH_ERROR(queues_init(byte_pool), U_SUCCESS);
 	CATCH_ERROR(shep_threads_init(byte_pool), U_SUCCESS);
