@@ -256,7 +256,7 @@ void segment_retrieve_debug_data(cell_asic chips[NUM_CHIPS],
 	read_config_register_b(chips, hspi);
 
 	// segment_adc_comparison(bmsdata);
-	//  check our fault flags
+	// check our fault flags
 	segment_monitor_flts(chips, hspi);
 
 	read_s_voltage_registers(chips, hspi);
