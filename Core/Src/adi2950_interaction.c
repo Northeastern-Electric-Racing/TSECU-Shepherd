@@ -21,14 +21,6 @@ void start_adc_conversions(cell_asic_2950 *ic)
 	Delay_ms2950(ADI1_delay_ms);
 }
 
-void start_aux_adc_conversions(cell_asic_2950 *ic)
-{
-	adBmsWakeupIc2950(TOTAL_IC_2950);
-	spiSendCmd2950(TOTAL_IC_2950, ic, sADX);
-	// Poll on conversion to block thread
-	ic[0].pladc_count = adBmsPollAdc2950(TOTAL_IC_2950, ic, PLX);
-}
-
 void set_accumulation_count(cell_asic_2950 *ic, ACCI count)
 {
 	ic->tx_cfga.acci = count;
@@ -73,9 +65,16 @@ void read_v2_v3_registers(cell_asic_2950 *ic)
 	}
 }
 
+void read_flag_register(cell_asic_2950 *ic)
+{
+	adBmsReadData2950(TOTAL_IC_2950, ic, RDFLAG, Flag, FLAG_NOERR);
+	if (ic->cccrc.flag_pec != 0) {
+		PRINTLN_ERROR("PEC Error in reading flag register");
+	}
+}
+
 void read_aux_registers(cell_asic_2950 *ic)
 {
-	adBmsWakeupIc2950(TOTAL_IC_2950);
 	spiSendCmd2950(TOTAL_IC_2950, ic, sADX);
 	// Poll on conversion to block thread
 	ic[0].pladc_count = adBmsPollAdc2950(TOTAL_IC_2950, ic, PLX);
@@ -88,6 +87,7 @@ void read_aux_registers(cell_asic_2950 *ic)
 	if (ic->cccrc.aux_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading auxiliary registers");
 	}
+	spiSendCmd2950(TOTAL_IC_2950, ic, CLRVX);
 }
 
 void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)

@@ -99,6 +99,24 @@ typedef struct {
 } sanitizer_t;
 
 /**
+ * @brief Flags from adbms_2950 chip
+ */
+typedef struct {
+	uint8_t vreguv : 1;
+	uint8_t vregov : 1;
+	uint8_t vdduv : 1;
+	uint8_t vdiguv : 1;
+	uint8_t vdigov : 1;
+	uint8_t vde : 1;
+	uint8_t vdel : 1;
+	uint8_t oscflt : 1;
+	uint8_t noclk : 1;
+	uint8_t spiflt : 1;
+	uint8_t thsd : 1;
+	uint8_t reset : 1;
+} adbms_2950_flags_t;
+
+/**
  * @brief data read from the ADBMS2950 on our HV Plate
  */
 typedef struct {
@@ -107,9 +125,19 @@ typedef struct {
 	float batt_volts; // BATT Voltage (V)
 	float shunt_temp; // Temperature of shunt resistor (C)
 	float pack_current; // Current read through the shunt (A)
-
 	uint16_t conversion_count; // Number of conversions taken for each voltage and current measurement
 	uint16_t last_total_converion_count; // previously read total conversion count
+	adbms_2950_flags_t adbms_flags; // Relevant flags from flag register
+	// AUX ADC values
+	float vreg; // VREG power supply pin (V)
+	float tmp1; // Primary internal temperature sensor (C)
+	float vref1p25; // VREF1P25 reference pin (V)
+	float epad; // Exposed pad (V)
+	float vdig; // Internal digital 3V supply (V)
+	float vdd; // VDD power supply pin (V)
+	float tmp2; // Secondary internal temperature sensor (C)
+	float vdiv; // Divided VREF1 Voltage (V)
+	uint16_t osccnt; // Oscillator count
 } hv_plate_t;
 
 /**
@@ -363,6 +391,14 @@ typedef struct {
 	analyzer_t *analyzer;
 	bms_algos_t *bms_algos;
 } bms_algos_args_t;
+
+/**
+ * @brief args for vDebug
+ */
+typedef struct {
+	analyzer_t *analyzer;
+	hv_plate_t *hv_plate;
+} debug_args_t;
 
 /* Task args end */
 
