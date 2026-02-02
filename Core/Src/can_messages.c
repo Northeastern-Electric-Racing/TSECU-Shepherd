@@ -724,7 +724,10 @@ void send_hv_plate_diagnostic_data(const hv_plate_t *hv_plate)
 
 	// Send first msg
 	bitstream_init(&bitstream, bitstream_data, 8);
-	bitstream_add(&bitstream, *((uint32_t *)&hv_plate->adbms_flags), 12);
+	uint16_t flag_data;
+	memcpy(&flag_data, &hv_plate->adbms_flags,
+	       sizeof(hv_plate->adbms_flags));
+	bitstream_add(&bitstream, flag_data, 12);
 	bitstream_add(&bitstream, vreg, 12);
 	bitstream_add(&bitstream, tmp1, 12);
 	bitstream_add(&bitstream, vref1p25, 12);
