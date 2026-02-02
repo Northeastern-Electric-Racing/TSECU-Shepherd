@@ -184,7 +184,7 @@ int imu_init(void)
 		return U_ERROR;
 	}
 
-	PRINTLN_INFO("Ran peripherals_init().");
+	PRINTLN_INFO("Ran imu_init().");
 	return U_SUCCESS;
 }
 

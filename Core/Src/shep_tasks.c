@@ -436,6 +436,11 @@ void vPeripherals(ULONG thread_input)
 	peripherals_t *peripherals = peripherals_args->peripherals;
 	imu_data_t imu_data = peripherals->imu_data;
 
+	bool failed = !imu_init();
+	if (failed) {
+		printf("Failed to initialize imu.\n");
+	}
+
 	create_mutex(&peripherals->peripherals_mutex);
 
 	for (;;) {
