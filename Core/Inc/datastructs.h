@@ -101,19 +101,22 @@ typedef struct {
 /**
  * @brief Flags from adbms_2950 chip
  */
-typedef struct {
-	uint8_t vreguv : 1;
-	uint8_t vregov : 1;
-	uint8_t vdduv : 1;
-	uint8_t vdiguv : 1;
-	uint8_t vdigov : 1;
-	uint8_t vde : 1;
-	uint8_t vdel : 1;
-	uint8_t oscflt : 1;
-	uint8_t noclk : 1;
-	uint8_t spiflt : 1;
-	uint8_t thsd : 1;
-	uint8_t reset : 1;
+typedef union {
+	struct {
+		uint8_t vreguv : 1;
+		uint8_t vregov : 1;
+		uint8_t vdduv : 1;
+		uint8_t vdiguv : 1;
+		uint8_t vdigov : 1;
+		uint8_t vde : 1;
+		uint8_t vdel : 1;
+		uint8_t oscflt : 1;
+		uint8_t noclk : 1;
+		uint8_t spiflt : 1;
+		uint8_t thsd : 1;
+		uint8_t reset : 1;
+	} flags;
+	uint16_t raw;
 } adbms_2950_flags_t;
 
 /**
