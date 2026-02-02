@@ -314,7 +314,7 @@ void vGetSegmentData(ULONG thread_input)
 
 void vHvPlateData(ULONG thread_input)
 {
-	const hv_plate_task_delay = 100; // in ms
+	const int hv_plate_task_delay = 100; // in ms
 	const uint16_t diagnostic_read_frequency = 5000; // 5s
 	nertimer_t diagnostic_read_timer;
 

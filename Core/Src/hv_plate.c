@@ -102,18 +102,18 @@ void get_flags(hv_plate_t *hv_plate)
 {
 	read_flag_register(hv_plate->ic);
 	cell_asic_2950 *ic = hv_plate->ic;
-	hv_plate->flags.vreguv = ic->flag.vreguv;
-	hv_plate->flags.vregov = ic->flag.vregov;
-	hv_plate->flags.vdduv = ic->flag.vdduv;
-	hv_plate->flags.vdiguv = ic->flag.vdiguv;
-	hv_plate->flags.vdigov = ic->flag.vdigov;
-	hv_plate->flags.vde = ic->flag.vde;
-	hv_plate->flags.vdel = ic->flag.vdel;
-	hv_plate->flags.oscflt = ic->flag.oscflt;
-	hv_plate->flags.noclk = ic->flag.noclk;
-	hv_plate->flags.spiflt = ic->flag.spiflt;
-	hv_plate->flags.thsd = ic->flag.thsd;
-	hv_plate->flags.reset = ic->flag.reset;
+	hv_plate->adbms_flags.vreguv = ic->flag.vreguv;
+	hv_plate->adbms_flags.vregov = ic->flag.vregov;
+	hv_plate->adbms_flags.vdduv = ic->flag.vdduv;
+	hv_plate->adbms_flags.vdiguv = ic->flag.vdiguv;
+	hv_plate->adbms_flags.vdigov = ic->flag.vdigov;
+	hv_plate->adbms_flags.vde = ic->flag.vde;
+	hv_plate->adbms_flags.vdel = ic->flag.vdel;
+	hv_plate->adbms_flags.oscflt = ic->flag.oscflt;
+	hv_plate->adbms_flags.noclk = ic->flag.noclk;
+	hv_plate->adbms_flags.spiflt = ic->flag.spiflt;
+	hv_plate->adbms_flags.thsd = ic->flag.thsd;
+	hv_plate->adbms_flags.reset = ic->flag.reset;
 }
 
 void get_aux_adc_data(hv_plate_t *hv_plate)
