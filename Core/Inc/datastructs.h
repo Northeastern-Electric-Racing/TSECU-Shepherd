@@ -8,6 +8,7 @@
 #include "u_tx_mutex.h"
 #include "adBms6830Data.h"
 #include "adi_bms_2950data.h"
+#include "compute.h"
 #include "timer.h"
 
 /**
@@ -297,6 +298,16 @@ typedef struct {
 
 } state_machine_t;
 
+typedef struct {
+	vector3_t accel_data;
+	vector3_t ang_rate_data;
+} imu_data_t;
+
+typedef struct {
+	mutex_t peripherals_mutex;
+	imu_data_t imu_data;
+} peripherals_t;
+
 /* Task Args */
 
 typedef struct {
@@ -363,6 +374,10 @@ typedef struct {
 	analyzer_t *analyzer;
 	bms_algos_t *bms_algos;
 } bms_algos_args_t;
+
+typedef struct {
+	peripherals_t *peripherals;
+} peripherals_args_t;
 
 /* Task args end */
 
