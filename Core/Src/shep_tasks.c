@@ -32,6 +32,14 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	PRINTLN_INFO("BATT Voltage: %.3f V", hv_plate->batt_volts);
 	PRINTLN_INFO("Shunt Temp: %.2f C", hv_plate->shunt_temp);
 	PRINTLN_INFO("Pack Current: %.3f A", hv_plate->pack_current);
+	PRINTLN_INFO("VREG: %.3f V", hv_plate->vreg);
+	PRINTLN_INFO("VREF1P25: %.3f V", hv_plate->vref1p25);
+	PRINTLN_INFO("EPAD: %.3f V", hv_plate->epad);
+	PRINTLN_INFO("VDIG: %.3f V", hv_plate->vdig);
+	PRINTLN_INFO("VDD: %.3f V", hv_plate->vdd);
+	PRINTLN_INFO("VDIV: %.3f V", hv_plate->vdiv);
+	PRINTLN_INFO("Primary Internal Temperature: %.3f C", hv_plate->tmp1);
+	PRINTLN_INFO("Secondary Internal Temperature: %.3f C", hv_plate->tmp1);
 #endif
 
 #ifdef DEBUG_VOLTAGES
@@ -304,7 +312,9 @@ void vGetSegmentData(ULONG thread_input)
 
 void vHvPlateData(ULONG thread_input)
 {
-	const uint16_t hv_plate_task_delay = 100; // in ms
+	const int hv_plate_task_delay = 100; // in ms
+	const uint16_t diagnostic_read_frequency = 5000; // 5s
+	nertimer_t diagnostic_read_timer;
 
 	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
 
@@ -321,6 +331,7 @@ void vHvPlateData(ULONG thread_input)
 
 	tx_thread_sleep(TICKS_TO_MS(500));
 
+	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 	for (;;) {
 		// get the current reading from the pack
 		get_pack_current_and_batt_voltage(hv_plate,
@@ -347,6 +358,18 @@ void vHvPlateData(ULONG thread_input)
 
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
+
+		if (is_timer_expired(&diagnostic_read_timer)) {
+			// read flags
+			get_flags(hv_plate);
+			read_aux_registers(hv_plate->ic);
+			start_timer(&diagnostic_read_timer,
+				    diagnostic_read_frequency);
+			// Restart continuous conversion
+			start_adc_conversions(hv_plate->ic);
+			// Send can message
+			send_hv_plate_diagnostic_data(hv_plate);
+		}
 
 		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
 	}
@@ -421,6 +444,33 @@ void vControl(ULONG thread_input)
 		mutex_put(&analyzer->analyzer_mutex);
 
 		send_control_signals(control_device_signals);
+
+		tx_thread_sleep(MS_TO_TICKS(50));
+	}
+}
+
+void vPeripherals(ULONG thread_input)
+{
+	peripherals_args_t *peripherals_args =
+		(peripherals_args_t *)thread_input;
+
+	peripherals_t *peripherals = peripherals_args->peripherals;
+	imu_data_t imu_data = peripherals->imu_data;
+
+	bool failed = !imu_init();
+	if (failed) {
+		printf("Failed to initialize imu.\n");
+	}
+
+	create_mutex(&peripherals->peripherals_mutex);
+
+	for (;;) {
+		mutex_get(&peripherals->peripherals_mutex);
+
+		imu_getAcceleration(&imu_data.accel_data);
+		imu_getAngularRate(&imu_data.ang_rate_data);
+
+		mutex_put(&peripherals->peripherals_mutex);
 
 		tx_thread_sleep(MS_TO_TICKS(50));
 	}
@@ -541,6 +591,11 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	bms_algos_args->sanitizer = sanitizer;
 	bms_algos_args->bms_algos = bms_algos;
 
+	peripherals_args_t *peripherals_args =
+		(peripherals_args_t *)malloc(sizeof(peripherals_args_t));
+	peripherals_args->peripherals =
+		(peripherals_t *)malloc(sizeof(peripherals_t));
+
 	/* Init Interfaces End */
 
 	/* Task Definitions Start */
@@ -653,6 +708,17 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vControl, /* Thread Function */
 	};
 
+	thread_t _peripherals_thread = {
+		.name = "Peripherals Thread", /* Name */
+		.size = 2048, /* Stack Size (in bytes) */
+		.priority = 6, /* Priority */
+		.threshold = 0, /* Preemption Threshold */
+		.thread_input = (ULONG)peripherals_args, /* Thread Args */
+		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+		.auto_start = TX_AUTO_START, /* Auto Start */
+		.function = vPeripherals, /* Thread Function */
+	};
+
 	thread_t _debug_thread = {
 		.name = "BMS Debug Mode Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
@@ -678,6 +744,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");

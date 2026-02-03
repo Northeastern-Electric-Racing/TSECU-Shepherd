@@ -40,4 +40,18 @@ void get_ts_voltage(hv_plate_t *hv_plate);
  */
 void get_shunt_temp(hv_plate_t *hv_plate);
 
+/**
+ * @brief Gets flags from adbms2950
+ * 
+ * @param hv_p'ate pointer to hv splate data struct
+ */
+void get_flags(hv_plate_t *hv_plate);
+
+/**
+ * @brief Gets all diagnostic data from aux adc
+ * 
+ * @param hv_p'ate pointer to hv splate data struct
+ */
+void get_aux_adc_data(hv_plate_t *hv_plate);
+
 #endif

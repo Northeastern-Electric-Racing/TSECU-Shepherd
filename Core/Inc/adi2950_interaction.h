@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include "adi_bms_2950data.h"
-#include "stm32xx_hal.h"
 
 /**
  * Snaps registers of ADBMS2950
@@ -51,6 +50,18 @@ void read_v7_v9_registers(cell_asic_2950 *ic);
  * @param ic Pointer to the adbms2950 data structure.
  */
 void read_v2_v3_registers(cell_asic_2950 *ic);
+
+/**
+ * @brief Reads flag register.
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void read_flag_register(cell_asic_2950 *ic);
+
+/**
+ * @brief Reads all aux register groups. (NOTE: Must restart continuous conversion after)
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void read_aux_registers(cell_asic_2950 *ic);
 
 /**
  * @brief Reads the conversion count registerm for total number of ADC conversions.

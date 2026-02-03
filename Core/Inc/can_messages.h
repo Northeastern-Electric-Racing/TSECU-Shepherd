@@ -207,4 +207,11 @@ void send_onboard_therm_message(uint8_t chip_id, chipdata_t *chip_data);
  */
 void send_control_signals(const uint8_t *signals);
 
+/**
+ * @brief Send HV plate diagnostic data over CAN.
+ *
+ * @param pointer to signals
+ */
+void send_hv_plate_diagnostic_data(const hv_plate_t *hv_plate);
+
 #endif

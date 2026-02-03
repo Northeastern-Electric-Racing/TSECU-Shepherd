@@ -3,6 +3,8 @@
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 
+#define microV(x) ((x * 1e-6))
+
 static float get_current_conversion(uint32_t data)
 {
 	float current = 1e-6 * ((int32_t)(data << (32 - 24)) >> (32 - 24));
@@ -11,7 +13,7 @@ static float get_current_conversion(uint32_t data)
 
 static float get_voltage_conversion(int data)
 {
-	float voltage = 100e-6 * (int16_t)data;
+	float voltage = microV(100) * (int16_t)data;
 	return voltage;
 }
 
@@ -76,9 +78,9 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 void get_ts_voltage(hv_plate_t *hv_plate)
 {
 	read_v2_v3_registers(hv_plate->ic);
-	// NOTE: TS+ is output to both V2 and V3
+	// note: ts+ is output to both v2 and v3
 	float avg_volts =
-		(get_voltage_conversion(hv_plate->ic->vr.v_codes[1]) + // V2
+		(get_voltage_conversion(hv_plate->ic->vr.v_codes[1]) + // v2
 		 get_voltage_conversion(hv_plate->ic->vr.v_codes[2])) / // V3
 		2;
 	hv_plate->ts_volts = avg_volts;
@@ -94,4 +96,44 @@ void get_shunt_temp(hv_plate_t *hv_plate)
 		2;
 
 	hv_plate->shunt_temp = avg_volts; // TODO: convert to temp
+}
+
+void get_flags(hv_plate_t *hv_plate)
+{
+	read_flag_register(hv_plate->ic);
+	cell_asic_2950 *ic = hv_plate->ic;
+	hv_plate->adbms_flags.flags.vreguv = ic->flag.vreguv;
+	hv_plate->adbms_flags.flags.vregov = ic->flag.vregov;
+	hv_plate->adbms_flags.flags.vdduv = ic->flag.vdduv;
+	hv_plate->adbms_flags.flags.vdiguv = ic->flag.vdiguv;
+	hv_plate->adbms_flags.flags.vdigov = ic->flag.vdigov;
+	hv_plate->adbms_flags.flags.vde = ic->flag.vde;
+	hv_plate->adbms_flags.flags.vdel = ic->flag.vdel;
+	hv_plate->adbms_flags.flags.oscflt = ic->flag.oscflt;
+	hv_plate->adbms_flags.flags.noclk = ic->flag.noclk;
+	hv_plate->adbms_flags.flags.spiflt = ic->flag.spiflt;
+	hv_plate->adbms_flags.flags.thsd = ic->flag.thsd;
+	hv_plate->adbms_flags.flags.reset = ic->flag.reset;
+}
+
+void get_aux_adc_data(hv_plate_t *hv_plate)
+{
+	read_aux_registers(hv_plate->ic);
+
+	cell_asic_2950 *ic = hv_plate->ic;
+	// Read voltage results into struct
+	hv_plate->vreg = get_voltage_conversion(ic->auxa.vreg);
+	hv_plate->vref1p25 = get_voltage_conversion(ic->auxa.vref1p25);
+	hv_plate->epad = get_voltage_conversion(ic->auxb.epad);
+	// Different conversions for vreg and vdd
+	hv_plate->vreg = ic->auxb.epad * microV(240);
+	hv_plate->vdd = ic->auxb.vdd * microV(1000);
+	hv_plate->vdiv = get_voltage_conversion(ic->auxc.vdiv);
+
+	hv_plate->tmp1 = (ic->auxa.tmp1 / 61.8f) - 250;
+	hv_plate->tmp2 = (ic->auxc.tmp2 / 20.5f) - 267;
+
+	hv_plate->osccnt = ic->auxc.osccnt;
+	// Start continuous conversion again
+	start_adc_conversions(ic);
 }
