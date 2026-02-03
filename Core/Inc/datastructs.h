@@ -407,14 +407,6 @@ typedef struct {
 } bms_algos_args_t;
 
 /**
- * @brief args for vDebug
- */
-typedef struct {
-	analyzer_t *analyzer;
-	hv_plate_t *hv_plate;
-} debug_args_t;
-
-/**
  * @brief args for peripheral thread 
  */
 typedef struct {

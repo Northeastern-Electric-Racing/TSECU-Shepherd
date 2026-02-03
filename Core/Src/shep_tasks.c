@@ -480,14 +480,13 @@ void vPeripherals(ULONG thread_input)
 
 void vDebug(ULONG thread_input)
 {
-	debug_args_t *debug_args = (debug_args_t *)thread_input;
+	analyzer_t *analyzer = (analyzer_t *)thread_input;
 
 	for (;;) {
 		get_flag(DEBUG_FLAG, TX_WAIT_FOREVER);
 
 		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-			chipdata_t *chip_data =
-				get_chip_data(debug_args->analyzer, chip);
+			chipdata_t *chip_data = get_chip_data(analyzer, chip);
 			for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP;
 			     cell += 2) {
 				// Sends two cells per messages
@@ -590,10 +589,6 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	bms_algos_args->analyzer = analyzer;
 	bms_algos_args->sanitizer = sanitizer;
 	bms_algos_args->bms_algos = bms_algos;
-
-	debug_args_t *debug_args = (debug_args_t *)malloc(sizeof(debug_args_t));
-	debug_args->analyzer = analyzer;
-	debug_args->hv_plate = hv_plate;
   
 	peripherals_args_t *peripherals_args =
 		(peripherals_args_t *)malloc(sizeof(peripherals_args_t));
@@ -728,7 +723,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.size = 2048, /* Stack Size (in bytes) */
 		.priority = 4, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)debug_args, /* Thread Args */
+		.thread_input = (ULONG)analyzer, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 		.auto_start = TX_AUTO_START, /* Auto Start */
 		.function = vDebug, /* Thread Function */
