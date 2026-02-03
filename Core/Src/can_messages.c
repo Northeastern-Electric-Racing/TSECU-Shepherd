@@ -697,3 +697,49 @@ void send_control_signals(const uint8_t *signals)
 	memcpy(msg.data, &msg_data, sizeof(msg_data));
 	queue_can_msg(msg);
 }
+
+/**
+ * @brief Send HV plate diagnostic data over CAN.
+ *
+ * @param pointer to signals
+ */
+void send_hv_plate_diagnostic_data(const hv_plate_t *hv_plate)
+{
+	can_msg_t msg = { .id = HV_PLATE_DIAGNOSTIC_CANID,
+			  .len = HV_PLATE_DIAGNOSTIC_SIZE,
+			  .data = { 0 } };
+
+	// Lower resolution of data
+	float vreg = hv_plate->vreg * 100;
+	float tmp1 = hv_plate->tmp1 * 100;
+	float vref1p25 = hv_plate->vref1p25 * 100;
+	float epad = hv_plate->epad * 100;
+	float vdig = hv_plate->vdig * 100;
+	float vdd = hv_plate->vdd * 100;
+	float tmp2 = hv_plate->tmp2 * 100;
+	float vdiv = hv_plate->vdiv * 100;
+
+	bitstream_t bitstream;
+	uint8_t bitstream_data[8];
+
+	// Send first msg
+	bitstream_init(&bitstream, bitstream_data, 8);
+	bitstream_add(&bitstream, hv_plate->adbms_flags.raw, 12);
+	bitstream_add(&bitstream, vreg, 12);
+	bitstream_add(&bitstream, tmp1, 12);
+	bitstream_add(&bitstream, vref1p25, 12);
+	bitstream_add(&bitstream, hv_plate->osccnt, 16);
+	memcpy(msg.data, &bitstream_data, HV_PLATE_DIAGNOSTIC_SIZE);
+	queue_can_msg(msg);
+
+	// Send second message
+	msg.id++;
+	bitstream_init(&bitstream, bitstream_data, 8);
+	bitstream_add(&bitstream, epad, 12);
+	bitstream_add(&bitstream, vdig, 12);
+	bitstream_add(&bitstream, vdd, 12);
+	bitstream_add(&bitstream, tmp2, 12);
+	bitstream_add(&bitstream, vdiv, 12);
+	memcpy(msg.data, &bitstream_data, HV_PLATE_DIAGNOSTIC_SIZE);
+	queue_can_msg(msg);
+}

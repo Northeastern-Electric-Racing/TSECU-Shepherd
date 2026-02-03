@@ -205,4 +205,11 @@ void send_isospi_status_message(const isospi_status_t *status);
  */
 void send_control_signals(const uint8_t *signals);
 
+/**
+ * @brief Send HV plate diagnostic data over CAN.
+ *
+ * @param pointer to signals
+ */
+void send_hv_plate_diagnostic_data(const hv_plate_t *hv_plate);
+
 #endif

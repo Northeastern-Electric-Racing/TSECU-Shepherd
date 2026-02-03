@@ -1,4 +1,3 @@
-
 #include "adi2950_interaction.h"
 #include "pal.h"
 #include "u_tx_debug.h"
@@ -64,6 +63,31 @@ void read_v2_v3_registers(cell_asic_2950 *ic)
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
 	}
+}
+
+void read_flag_register(cell_asic_2950 *ic)
+{
+	adBmsReadData2950(TOTAL_IC_2950, ic, RDFLAG, Flag, FLAG_NOERR);
+	if (ic->cccrc.flag_pec != 0) {
+		PRINTLN_ERROR("PEC Error in reading flag register");
+	}
+}
+
+void read_aux_registers(cell_asic_2950 *ic)
+{
+	spiSendCmd2950(TOTAL_IC_2950, ic, sADX);
+	// Poll on conversion to block thread
+	ic[0].pladc_count = adBmsPollAdc2950(TOTAL_IC_2950, ic, PLX);
+
+	// Read all relevant register groups
+	adBmsReadData2950(TOTAL_IC_2950, ic, RDXA, Aux2950, A_2950);
+	adBmsReadData2950(TOTAL_IC_2950, ic, RDXB, Aux2950, B_2950);
+	adBmsReadData2950(TOTAL_IC_2950, ic, RDXC, Aux2950, C_2950);
+
+	if (ic->cccrc.aux_pec != 0) {
+		PRINTLN_ERROR("PEC Error in reading auxiliary registers");
+	}
+	spiSendCmd2950(TOTAL_IC_2950, ic, CLRVX);
 }
 
 void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
