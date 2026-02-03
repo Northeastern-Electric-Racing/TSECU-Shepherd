@@ -451,6 +451,33 @@ void vControl(ULONG thread_input)
 	}
 }
 
+void vPeripherals(ULONG thread_input)
+{
+	peripherals_args_t *peripherals_args =
+		(peripherals_args_t *)thread_input;
+
+	peripherals_t *peripherals = peripherals_args->peripherals;
+	imu_data_t imu_data = peripherals->imu_data;
+
+	bool failed = !imu_init();
+	if (failed) {
+		printf("Failed to initialize imu.\n");
+	}
+
+	create_mutex(&peripherals->peripherals_mutex);
+
+	for (;;) {
+		mutex_get(&peripherals->peripherals_mutex);
+
+		imu_getAcceleration(&imu_data.accel_data);
+		imu_getAngularRate(&imu_data.ang_rate_data);
+
+		mutex_put(&peripherals->peripherals_mutex);
+
+		tx_thread_sleep(MS_TO_TICKS(50));
+	}
+}
+
 void vDebug(ULONG thread_input)
 {
 	debug_args_t *debug_args = (debug_args_t *)thread_input;
@@ -567,6 +594,11 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	debug_args_t *debug_args = (debug_args_t *)malloc(sizeof(debug_args_t));
 	debug_args->analyzer = analyzer;
 	debug_args->hv_plate = hv_plate;
+  
+	peripherals_args_t *peripherals_args =
+		(peripherals_args_t *)malloc(sizeof(peripherals_args_t));
+	peripherals_args->peripherals =
+		(peripherals_t *)malloc(sizeof(peripherals_t));
 
 	/* Init Interfaces End */
 
@@ -680,6 +712,17 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vControl, /* Thread Function */
 	};
 
+	thread_t _peripherals_thread = {
+		.name = "Peripherals Thread", /* Name */
+		.size = 2048, /* Stack Size (in bytes) */
+		.priority = 6, /* Priority */
+		.threshold = 0, /* Preemption Threshold */
+		.thread_input = (ULONG)peripherals_args, /* Thread Args */
+		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+		.auto_start = TX_AUTO_START, /* Auto Start */
+		.function = vPeripherals, /* Thread Function */
+	};
+
 	thread_t _debug_thread = {
 		.name = "BMS Debug Mode Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
@@ -705,6 +748,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");
