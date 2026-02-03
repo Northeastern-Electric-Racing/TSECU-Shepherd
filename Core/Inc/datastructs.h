@@ -413,7 +413,6 @@ typedef struct {
 	peripherals_t *peripherals;
 } peripherals_args_t;
 
-
 /* Task args end */
 
 /**

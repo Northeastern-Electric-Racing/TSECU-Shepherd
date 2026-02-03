@@ -589,7 +589,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	bms_algos_args->analyzer = analyzer;
 	bms_algos_args->sanitizer = sanitizer;
 	bms_algos_args->bms_algos = bms_algos;
-  
+
 	peripherals_args_t *peripherals_args =
 		(peripherals_args_t *)malloc(sizeof(peripherals_args_t));
 	peripherals_args->peripherals =
