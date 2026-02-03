@@ -55,12 +55,11 @@ void send_fault_status_message(uint32_t fault_code_crit,
  * @param avg_temp
  * @param internal_temp
  * @param bms_state
- * @param balance
  *
  * @return Returns a fault if we are not able to send
  */
-void send_bms_status_message(float avg_temp, float internal_temp, int bms_state,
-			     bool balance);
+void send_bms_status_message(float avg_temp, float internal_temp,
+			     int bms_state);
 
 /**
  * @brief sends shutdown control message
@@ -120,8 +119,6 @@ void send_cell_temp_message(crit_cellval_t max_temp, crit_cellval_t min_temp,
  */
 void send_segment_temp_message(analyzer_t *analyzer);
 
-void send_fault_message(uint8_t status, int16_t curr, int16_t in_dcl);
-
 void send_fault_timer_message(uint8_t start_stop, uint32_t fault_code,
 			      float data_1);
 
@@ -139,7 +136,7 @@ void send_debug_message(uint8_t debug0, uint8_t debug1, uint16_t debug2,
 /**
  * @brief Send a message containing cell data.
  *
- * @param alpha If this message contains alpha cell data. False sends a beta cell message.
+ * @param alpha If this message contains alpha cell data
  * @param temperature Temperature in Celsius. Has a maximum value of 80 degrees celsius.
  * @param voltage_a The voltage of cell A.
  * @param voltage_b The voltage of cell B.
@@ -159,16 +156,14 @@ void send_cell_data_message(bool alpha, float temperature, float voltage_a,
 /**
  * @brief Send message containing ADBMS6830 diagnostic data and onboard therm data.
  *
- * @param segment_temp Temperature reading from on-board therm.
  * @param chip ID of the chip.
  * @param die_temperature Temperature of the ADBMS6830 die.
  * @param vpv The voltage from V+ to V-.
  * @param vmv Voltage between S1N and V-.
  * @param flt_reg The fault register of the chip (statc)
  */
-void send_status_a_message(float segment_temp, uint8_t chip,
-			   float die_temperature, float vpv, float vmv,
-			   stc_ *flt_reg);
+void send_status_a_message(uint8_t chip, float die_temperature, float vpv,
+			   float vmv, stc_ *flt_reg);
 
 /**
  * @brief Send message containing ADBMS6830 diagnostic data.
@@ -197,6 +192,13 @@ void send_pec_error_message(uint8_t chip_num, uint16_t pec_count);
  * @param status Pointer to isospi_status_t structure.
  */
 void send_isospi_status_message(const isospi_status_t *status);
+
+/**
+ * @brief Sends chip onboard therms over CAN.
+ * 
+ * @param chip_data chip to send therm data from
+ */
+void send_onboard_therm_message(uint8_t chip_id, chipdata_t *chip_data);
 
 /**
  * @brief Send PWM duty cycle signals over CAN.

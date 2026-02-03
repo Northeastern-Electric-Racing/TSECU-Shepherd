@@ -142,12 +142,10 @@ void vStateMachine(ULONG thread_input)
 		if (is_timer_expired(&telem_timer)) {
 			// these are unimportant telemetry messages so they can be sent
 			// infrequently
-			send_bms_status_message( // TODO: can be moved to CAN dispatch
+			send_bms_status_message(
 				analyzer->avg_temp,
 				analyzer->internal_temp, // TODO: we never set internal temp
-				get_current_state(state_machine),
-				get_current_state(state_machine) ==
-					BALANCING); //  TODO: remove is balancing
+				get_current_state(state_machine));
 			send_fault_status_message(
 				state_machine->fault_code_crit,
 				state_machine->fault_code_noncrit);
@@ -515,8 +513,7 @@ void vDebug(ULONG thread_input)
 				tx_thread_sleep(10); // TODO: enhance timing
 			}
 
-			send_status_a_message(chip_data->on_board_temp, chip,
-					      chip_data->die_temp,
+			send_status_a_message(chip, chip_data->die_temp,
 					      chip_data->vpv, chip_data->vmv,
 					      &chip_data->flt_reg);
 
@@ -528,7 +525,11 @@ void vDebug(ULONG thread_input)
 					      chip_data->v_digital,
 					      &chip_data->flt_reg);
 
-			tx_thread_sleep(30); // TODO: enhance timing
+			tx_thread_sleep(30); // TODO: enhance timings
+
+			send_onboard_therm_message(chip, chip_data);
+
+			tx_thread_sleep(30); // TODO: enhance timings
 		}
 	}
 }

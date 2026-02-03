@@ -58,13 +58,12 @@ void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 		}
 
 		// Calculate onboard therm temps and chip temps
-		analyzer->chip_data[chip].on_board_temp = fmaxf(
-			fmaxf(calc_cell_temp(getVoltage(
-				      acc_data->chips[chip].raux.ra_codes[2])),
-			      calc_cell_temp(getVoltage(
-				      acc_data->chips[chip].raux.ra_codes[3]))),
-			calc_cell_temp(getVoltage(
-				acc_data->chips[chip].raux.ra_codes[4])));
+		analyzer->chip_data[chip].on_board_temp[0] = calc_cell_temp(
+			getVoltage(acc_data->chips[chip].raux.ra_codes[2]));
+		analyzer->chip_data[chip].on_board_temp[1] = calc_cell_temp(
+			getVoltage(acc_data->chips[chip].raux.ra_codes[3]));
+		analyzer->chip_data[chip].on_board_temp[2] = calc_cell_temp(
+			getVoltage(acc_data->chips[chip].raux.ra_codes[4]));
 
 		/* set the die temp */
 		// conversion rate from datasheet, Table 105.  also in driver src
