@@ -22,7 +22,6 @@ endif()
 set(CMAKE_PROJECT_NAME TSECU-Shepherd)
 
 # NER Include toolchain file
-include("cmake/gcc-arm-none-eabi.cmake")
 
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -36,6 +35,8 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/art")
     file(READ "${CMAKE_SOURCE_DIR}/art" ASCII_ART)
     message("${ASCII_ART}")
 endif()
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -u _printf_float")
 
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)

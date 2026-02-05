@@ -95,6 +95,8 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 
 void vDefaultTask(ULONG thread_input)
 {
+	PRINTLN_INFO("Starting Default thread...");
+
 	default_task_args_t *default_task_args =
 		(default_task_args_t *)thread_input;
 	analyzer_t *analyzer = default_task_args->analyzer;
@@ -205,6 +207,9 @@ void vCanDispatch(ULONG thread_input)
 
 void vAnalyzer(ULONG thread_input)
 {
+
+	PRINTLN_INFO("Starting Analyzer Thread...");
+
 	analyzer_args_t *analyzer_args = (analyzer_args_t *)thread_input;
 
 	analyzer_t *analyzer = analyzer_args->analyzer;
@@ -246,7 +251,9 @@ void vAnalyzer(ULONG thread_input)
 }
 
 void vGetSegmentData(ULONG thread_input)
-{
+{	
+	PRINTLN_INFO("Starting GetSegmentData thread...");
+
 	const uint16_t balancing_delay = 75;
 
 	acc_data_args_t *acc_data_args = (acc_data_args_t *)thread_input;
@@ -314,6 +321,8 @@ void vGetSegmentData(ULONG thread_input)
 
 void vHvPlateData(ULONG thread_input)
 {
+	PRINTLN_INFO("Starting HV Plate thread...");
+
 	const int hv_plate_task_delay = 100; // in ms
 	const uint16_t diagnostic_read_frequency = 5000; // 5s
 	nertimer_t diagnostic_read_timer;
@@ -341,9 +350,10 @@ void vHvPlateData(ULONG thread_input)
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
-		update_soc(analyzer, hv_plate);
+		//update_soc(analyzer, hv_plate);
 
 		/* Check whether pulse operation needs to be disabled due to charging state or faults */
+		/*
 		if (disable_pulse(state_machine)) {
 			mutex_get(&bms_algos->bms_algos_mutex);
 			bms_algos->cont_DCL = bms_algos->inst_DCL;
@@ -354,6 +364,7 @@ void vHvPlateData(ULONG thread_input)
 			dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
+		*/	
 
 		// read ts voltage
 		get_ts_voltage(hv_plate);
@@ -379,6 +390,7 @@ void vHvPlateData(ULONG thread_input)
 
 void vSanitizer(ULONG thread_input)
 {
+	PRINTLN_INFO("Starting Sanitizer thread...");
 	sanitizer_args_t *sanitizer_args = (sanitizer_args_t *)thread_input;
 
 	sanitizer_t *sanitizer = sanitizer_args->sanitizer;
@@ -394,6 +406,8 @@ void vSanitizer(ULONG thread_input)
 
 void vPrecharge(ULONG args)
 {
+	PRINTLN_INFO("Starting Precharge thread...");
+
 	hv_plate_t *hv_plate = (hv_plate_t *)args;
 
 	prechargeconfig_t precharge_config;
@@ -408,6 +422,8 @@ void vPrecharge(ULONG args)
 
 void vBMSAlgorithms(ULONG thread_input)
 {
+	PRINTLN_INFO("Starting BMS Algorithms thread...");
+
 	bms_algos_args_t *bms_algos_args = (bms_algos_args_t *)thread_input;
 
 	bms_algos_t *bms_algos = bms_algos_args->bms_algos;
@@ -433,6 +449,8 @@ void vBMSAlgorithms(ULONG thread_input)
 
 void vControl(ULONG thread_input)
 {
+	PRINTLN_INFO("Starting Control thread...");
+
 	analyzer_t *analyzer = (analyzer_t *)thread_input;
 
 	// Initialize peripherals for control
@@ -455,16 +473,13 @@ void vControl(ULONG thread_input)
 
 void vPeripherals(ULONG thread_input)
 {
+	PRINTLN_INFO("Starting Peripherals thread...");
+
 	peripherals_args_t *peripherals_args =
 		(peripherals_args_t *)thread_input;
 
 	peripherals_t *peripherals = peripherals_args->peripherals;
 	imu_data_t imu_data = peripherals->imu_data;
-
-	bool failed = !imu_init();
-	if (failed) {
-		printf("Failed to initialize imu.\n");
-	}
 
 	create_mutex(&peripherals->peripherals_mutex);
 
@@ -482,6 +497,9 @@ void vPeripherals(ULONG thread_input)
 
 void vDebug(ULONG thread_input)
 {
+
+	PRINTLN_INFO("Starting Debug thread...");
+
 	analyzer_t *analyzer = (analyzer_t *)thread_input;
 
 	for (;;) {
@@ -599,6 +617,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		(peripherals_args_t *)malloc(sizeof(peripherals_args_t));
 	peripherals_args->peripherals =
 		(peripherals_t *)malloc(sizeof(peripherals_t));
+
+	PRINTLN_INFO("FINISHED INITIALIZING INTERFACES");
 
 	/* Init Interfaces End */
 
@@ -734,22 +754,24 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vDebug, /* Thread Function */
 	};
 
+	PRINTLN_INFO("RUNNING THREADS");
+
 	/* Task Definitions End */
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
+	//	    U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
 		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
+	//	    U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");
 	return U_SUCCESS;

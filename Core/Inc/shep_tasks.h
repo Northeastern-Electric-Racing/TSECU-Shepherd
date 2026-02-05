@@ -9,7 +9,7 @@
 #define SANITIZER_FLAG 0x2
 #define DEBUG_FLAG     0x4
 
-// #define DEBUG_HV_PLATE
+#define DEBUG_HV_PLATE
 // #define DEBUG_VOLTAGES
 // #define DEBUG_TEMPS
 // #define DEBUG_AlGOS

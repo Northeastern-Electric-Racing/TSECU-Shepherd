@@ -24,8 +24,10 @@ void start_adc_conversions(cell_asic_2950 *ic)
 void set_accumulation_count(cell_asic_2950 *ic, ACCI count)
 {
 	ic->tx_cfga.acci = count;
+	adBmsWakeupIc2950(1);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
 	if (ic->cccrc.cfgr_pec != 0) {
+		PRINTLN_ERROR("PEC: %d", ic->cccrc.cfgr_pec);
 		PRINTLN_ERROR("PEC Error in writing Accumulation Count");
 	}
 }

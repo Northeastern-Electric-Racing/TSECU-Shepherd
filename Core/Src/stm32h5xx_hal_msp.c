@@ -213,7 +213,7 @@ void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef* hfdcan)
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_FDCAN;
-    PeriphClkInitStruct.FdcanClockSelection = RCC_FDCANCLKSOURCE_PLL1Q;
+    PeriphClkInitStruct.FdcanClockSelection = RCC_FDCANCLKSOURCE_HSE;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();
@@ -756,22 +756,13 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     /* Peripheral clock enable */
     __HAL_RCC_SPI6_CLK_ENABLE();
 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_GPIOG_CLK_ENABLE();
     /**SPI6 GPIO Configuration
-    PA0     ------> SPI6_NSS
     PC12     ------> SPI6_SCK
     PG12     ------> SPI6_MISO
     PG14     ------> SPI6_MOSI
     */
-    GPIO_InitStruct.Pin = SPI6_CS_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF5_SPI6;
-    HAL_GPIO_Init(SPI6_CS_GPIO_Port, &GPIO_InitStruct);
-
     GPIO_InitStruct.Pin = GPIO_PIN_12;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -903,13 +894,10 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
     __HAL_RCC_SPI6_CLK_DISABLE();
 
     /**SPI6 GPIO Configuration
-    PA0     ------> SPI6_NSS
     PC12     ------> SPI6_SCK
     PG12     ------> SPI6_MISO
     PG14     ------> SPI6_MOSI
     */
-    HAL_GPIO_DeInit(SPI6_CS_GPIO_Port, SPI6_CS_Pin);
-
     HAL_GPIO_DeInit(GPIOC, GPIO_PIN_12);
 
     HAL_GPIO_DeInit(GPIOG, GPIO_PIN_12|GPIO_PIN_14);

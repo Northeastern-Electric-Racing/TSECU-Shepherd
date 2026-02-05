@@ -38,6 +38,7 @@ extern "C" {
 /* USER CODE BEGIN ET */
 extern IWDG_HandleTypeDef hiwdg;
 extern SPI_HandleTypeDef hspi2;
+extern SPI_HandleTypeDef hspi6;
 extern TIM_HandleTypeDef htim3;
 /* USER CODE END ET */
 
@@ -61,6 +62,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define SPI4_CS_Pin GPIO_PIN_4
+#define SPI4_CS_GPIO_Port GPIOE
 #define TS_MINUS_SENSE_Pin GPIO_PIN_0
 #define TS_MINUS_SENSE_GPIO_Port GPIOC
 #define TS_PLUS_SENSE_Pin GPIO_PIN_3
@@ -83,7 +86,6 @@ void Error_Handler(void);
 #define PHY_GPIO_GPIO_Port GPIOE
 #define TRACEX_TRIG_Pin GPIO_PIN_8
 #define TRACEX_TRIG_GPIO_Port GPIOD
-#define TRACEX_TRIG_EXTI_IRQn EXTI8_IRQn
 #define FAN_PWM0_Pin GPIO_PIN_7
 #define FAN_PWM0_GPIO_Port GPIOC
 #define FAN_PWM1_Pin GPIO_PIN_8
