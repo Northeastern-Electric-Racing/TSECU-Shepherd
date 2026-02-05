@@ -4,15 +4,12 @@
 #include "shep_tasks.h"
 #include "can_handler.h"
 #include "can_messages.h"
-#include "ccl.h"
 #include "cell_temp_sanitizer.h"
 #include "compute.h"
 #include "control.h"
 #include "bms_algos.h"
 #include "dcl.h"
-#include "ethernet.h"
-#include "hv_plate.h"
-#include "isospi_recovery.h"
+#include "ccl.h"
 #include "main.h"
 #include "precharge_routine.h"
 #include "segment.h"
@@ -131,6 +128,60 @@ void vDefaultTask(ULONG thread_input)
 	}
 }
 
+void vControl(ULONG thread_input)
+{
+	PRINTLN_INFO("Starting Control thread...");
+
+	analyzer_t *analyzer = (analyzer_t *)thread_input;
+
+	PRINTLN_INFO("Starting Control thread...");
+
+	// Initialize peripherals for control
+	bool failed = !control_init_peripherals();
+	if (failed) {
+		PRINTLN_ERROR(
+			"Failed to initialize one or more peripherals.\n");
+	}
+
+	for (;;) {
+		mutex_get(&analyzer->analyzer_mutex);
+		float pack_high_temp = analyzer->max_temp.val;
+		control_fan(pack_high_temp);
+		mutex_put(&analyzer->analyzer_mutex);
+
+		send_control_signals(control_device_signals);
+
+		tx_thread_sleep(MS_TO_TICKS(100));
+	}
+}
+
+void vPeripherals(ULONG thread_input)
+{
+	PRINTLN_INFO("Starting Peripherals thread...");
+
+	peripherals_args_t *peripherals_args =
+		(peripherals_args_t *)thread_input;
+
+	peripherals_t *peripherals = peripherals_args->peripherals;
+	imu_data_t imu_data = peripherals->imu_data;
+
+	bool failed = imu_init();
+	if (failed) {
+		printf("Failed to initialize imu.\n");
+	}
+
+	for (;;) {
+		mutex_get(&peripherals->peripherals_mutex);
+
+		imu_getAcceleration(&imu_data.accel_data);
+		imu_getAngularRate(&imu_data.ang_rate_data);
+
+		mutex_put(&peripherals->peripherals_mutex);
+
+		tx_thread_sleep(MS_TO_TICKS(50));
+	}
+}
+
 void vDebug(ULONG thread_input)
 {
 	PRINTLN_INFO("Starting Debug thread...");
@@ -203,8 +254,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	hv_plate->ic = &hv_plate_ic;
 	sanitizer_t *sanitizer = (sanitizer_t *)malloc(sizeof(sanitizer_t));
 	bms_algos_t *bms_algos = (bms_algos_t *)malloc(sizeof(bms_algos_t));
-	peripherals_t *peripherals =
-		(peripherals_t *)malloc(sizeof(peripherals_t));
+	peripherals_t *peripherals = (peripherals_t *)malloc(sizeof(peripherals_t));
 
 	default_task_args_t *default_task_args =
 		(default_task_args_t *)malloc(sizeof(default_task_args_t));

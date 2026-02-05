@@ -91,6 +91,7 @@ static void count_pec_errors(cell_asic chips[NUM_CHIPS])
 
 			// Accumulate PEC errors only after startup mask timer ends
 
+
 			if (!is_startup_pec_mask_active()) {
 				// Saturate at MAX_PEC_ERROR_ACCUM
 				if ((MAX_PEC_ERROR_ACCUM -
