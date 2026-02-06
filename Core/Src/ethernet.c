@@ -1,6 +1,5 @@
 #include "ethernet.h"
 
-/* Callback for when a ethernet message is recieved. */
 void _ethernet_recieve(ethernet_message_t message)
 {
 	/* Send the message to the incoming ethernet queue. */
@@ -13,8 +12,7 @@ void _ethernet_recieve(ethernet_message_t message)
 	}
 }
 
-/* Initializes ethernet. */
-int ethernet1_init(void)
+uint8_t ethernet1_init(void)
 {
 	/* PHY_RESET Pin has to be set HIGH for the PHY to function. */
 	HAL_GPIO_WritePin(PHY_RESET_GPIO_Port, PHY_RESET_Pin, GPIO_PIN_SET);
@@ -23,7 +21,6 @@ int ethernet1_init(void)
 	return ethernet_init(COMPUTE, nx_stm32_eth_driver, _ethernet_recieve);
 }
 
-/* Processes received ethernet messages. */
 void ethernet_inbox(ethernet_message_t *message)
 {
 	switch (message->message_id) {

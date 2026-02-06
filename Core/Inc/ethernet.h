@@ -6,11 +6,24 @@
 #include "main.h"
 #include "shep_queues.h"
 
-/**
- * @brief 
+/** 
+ * @brief Initializes ethernet.
+ *
+ * @return Status. 
  */
-int ethernet1_init(void);
+uint8_t ethernet1_init(void);
+
+/**
+ * @brief Processes received ethernet messages.
+ *
+ */
 void ethernet_inbox(ethernet_message_t *message);
+
+/**
+ * @brief Queue message over ethernet
+ *
+ * @return Status.
+ */
 uint8_t queue_eth_msg(ethernet_message_t eth_msg);
 
 #endif
