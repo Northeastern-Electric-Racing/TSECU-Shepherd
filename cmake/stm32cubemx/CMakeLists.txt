@@ -255,6 +255,10 @@ set(ThreadX_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_object_register.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_object_unregister.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_user_event_insert.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/../netxduo/common/src/nx_trace_event_insert.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/../netxduo/common/src/nx_trace_event_update.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/../netxduo/common/src/nx_trace_object_register.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/../netxduo/common/src/nx_trace_object_unregister.c
 )
 set(NetXDuo_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/netxduo/common/drivers/ethernet/nx_stm32_eth_driver.c

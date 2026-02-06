@@ -818,7 +818,9 @@
 /* Specifies the maximum number of multicast groups that can be joined.
    The default value is 7 and is defined in nx_api.h. The application can
    override the default by defining the value before nx_api.h is included. */
-#define NX_MAX_MULTICAST_GROUPS		 			256
+/*
+#define NX_MAX_MULTICAST_GROUPS     			7
+*/
 
 /*****************************************************************************/
 /******************* Configuration options for ARP/RARP **********************/
