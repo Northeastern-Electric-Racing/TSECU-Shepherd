@@ -243,6 +243,18 @@ set(ThreadX_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/txe_timer_deactivate.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/txe_timer_delete.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/txe_timer_info_get.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_buffer_full_notify.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_disable.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_enable.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_event_filter.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_event_unfilter.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_initialize.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_interrupt_control.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_isr_enter_insert.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_isr_exit_insert.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_object_register.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_object_unregister.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/common/src/tx_trace_user_event_insert.c
 )
 set(NetXDuo_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/netxduo/common/drivers/ethernet/nx_stm32_eth_driver.c

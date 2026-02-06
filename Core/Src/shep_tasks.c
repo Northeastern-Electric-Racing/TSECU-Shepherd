@@ -33,6 +33,14 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	PRINTLN_INFO("BATT Voltage: %.3f V", hv_plate->batt_volts);
 	PRINTLN_INFO("Shunt Temp: %.2f C", hv_plate->shunt_temp);
 	PRINTLN_INFO("Pack Current: %.3f A", hv_plate->pack_current);
+	PRINTLN_INFO("VREG: %.3f V", hv_plate->vreg);
+	PRINTLN_INFO("VREF1P25: %.3f V", hv_plate->vref1p25);
+	PRINTLN_INFO("EPAD: %.3f V", hv_plate->epad);
+	PRINTLN_INFO("VDIG: %.3f V", hv_plate->vdig);
+	PRINTLN_INFO("VDD: %.3f V", hv_plate->vdd);
+	PRINTLN_INFO("VDIV: %.3f V", hv_plate->vdiv);
+	PRINTLN_INFO("Primary Internal Temperature: %.3f C", hv_plate->tmp1);
+	PRINTLN_INFO("Secondary Internal Temperature: %.3f C", hv_plate->tmp1);
 #endif
 
 #ifdef DEBUG_VOLTAGES
@@ -125,6 +133,8 @@ void vStateMachine(ULONG thread_input)
 	state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
 
+	create_mutex(&state_machine->state_mutex);
+
 	nertimer_t telem_timer;
 	// sends unimportant telemetry messages every 500ms
 	start_timer(&telem_timer, 500);
@@ -135,12 +145,10 @@ void vStateMachine(ULONG thread_input)
 		if (is_timer_expired(&telem_timer)) {
 			// these are unimportant telemetry messages so they can be sent
 			// infrequently
-			send_bms_status_message( // TODO: can be moved to CAN dispatch
+			send_bms_status_message(
 				analyzer->avg_temp,
 				analyzer->internal_temp, // TODO: we never set internal temp
-				get_current_state(state_machine),
-				get_current_state(state_machine) ==
-					BALANCING); //  TODO: remove is balancing
+				get_current_state(state_machine));
 			send_fault_status_message(
 				state_machine->fault_code_crit,
 				state_machine->fault_code_noncrit);
@@ -340,7 +348,9 @@ void vGetSegmentData(ULONG thread_input)
 
 void vHvPlateData(ULONG thread_input)
 {
-	const hv_plate_task_delay = 100; // in ms
+	const int hv_plate_task_delay = 100; // in ms
+	const uint16_t diagnostic_read_frequency = 5000; // 5s
+	nertimer_t diagnostic_read_timer;
 
 	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
 
@@ -357,6 +367,7 @@ void vHvPlateData(ULONG thread_input)
 
 	tx_thread_sleep(TICKS_TO_MS(500));
 
+	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 	for (;;) {
 		// get the current reading from the pack
 		get_pack_current_and_batt_voltage(hv_plate,
@@ -383,6 +394,18 @@ void vHvPlateData(ULONG thread_input)
 
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
+
+		if (is_timer_expired(&diagnostic_read_timer)) {
+			// read flags
+			get_flags(hv_plate);
+			read_aux_registers(hv_plate->ic);
+			start_timer(&diagnostic_read_timer,
+				    diagnostic_read_frequency);
+			// Restart continuous conversion
+			start_adc_conversions(hv_plate->ic);
+			// Send can message
+			send_hv_plate_diagnostic_data(hv_plate);
+		}
 
 		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
 	}
@@ -424,6 +447,8 @@ void vBMSAlgorithms(ULONG thread_input)
 	bms_algos_t *bms_algos = bms_algos_args->bms_algos;
 	sanitizer_t *sanitizer = bms_algos_args->sanitizer;
 	analyzer_t *analyzer = bms_algos_args->analyzer;
+
+	create_mutex(&bms_algos->bms_algos_mutex);
 
 	for (;;) {
 		current_limit_algo_inputs_t algo_inputs = {
@@ -526,8 +551,7 @@ void vDebug(ULONG thread_input)
 				tx_thread_sleep(10); // TODO: enhance timing
 			}
 
-			send_status_a_message(chip_data->on_board_temp, chip,
-					      chip_data->die_temp,
+			send_status_a_message(chip, chip_data->die_temp,
 					      chip_data->vpv, chip_data->vmv,
 					      &chip_data->flt_reg);
 
@@ -539,7 +563,11 @@ void vDebug(ULONG thread_input)
 					      chip_data->v_digital,
 					      &chip_data->flt_reg);
 
-			tx_thread_sleep(30); // TODO: enhance timing
+			tx_thread_sleep(30); // TODO: enhance timings
+
+			send_onboard_therm_message(chip, chip_data);
+
+			tx_thread_sleep(30); // TODO: enhance timings
 		}
 	}
 }
