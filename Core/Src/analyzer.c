@@ -11,27 +11,22 @@
 /**
  * @brief Map cells to therms (ra codes).  Note beta has only 6 therms.
  */
-const int THERM_MAP[NUM_CELLS_PER_CHIP] = { 0, 0, 1, 1, 2, 2, 3,
-					    3, 4, 4, 5, 5, 6 };
+const int THERM_MAP[NUM_CELLS_PER_CHIP] = { 0, 0, 1, 1, 5, 5, 6,
+					    6, 7, 7, 8, 8, 9 };
 
 // clang-format on
 
 /**
- * @brief Calculate the cell temperature of a 10,000 ohm NTP resistor (model
- * 103)
+ * @brief Calculate the cell temperature of a 10,000 ohm NTP resistor (model 103)
  *
  * @param res The resistance of the resistor
  * @return float The temperature
  */
 static float calc_temp(float res)
 {
-	float coef = res / 10000.0;
-	// achieved via passing ThermCalcs.xlsx into
-	// https://www.standardsapplied.com/nonlinear-curve-fitting-calculator.html
-	return -1149.531863 * (pow(coef, 1.0 / 8)) +
-	       658.9396848 * (pow(coef, 1.0 / 4)) +
-	       -87.8102815 * (pow(coef, 1.0 / 2)) + 2.034216235 * coef +
-	       601.008351;
+	// achieved via math --  See BMS 25 Mapping and Calcs
+	return ((298.15 * 3462.28) / (298.15 * logf(res / 10100) + 3462.28)) -
+	       273.15;
 }
 
 /**
@@ -42,19 +37,7 @@ static float calc_temp(float res)
  */
 static float calc_cell_temp(float voltage)
 {
-	float res = (5600 * (3 - voltage)) / voltage;
-	return calc_temp(res);
-}
-
-/**
- * @brief Calculate a cell temperature of onboard therm
- *
- * @param voltage the voltage read by ADC
- * @return float The temperature in degrees C
- */
-static float calc_cell_temp_onboard(float voltage)
-{
-	float res = (5600 * (5 - voltage)) / voltage;
+	float res = (10000 * (3 - voltage)) / voltage;
 	return calc_temp(res);
 }
 
@@ -75,12 +58,12 @@ void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 		}
 
 		// Calculate onboard therm temps and chip temps
-		analyzer->chip_data[chip].on_board_temp =
-			(calc_cell_temp_onboard(getVoltage(
-				 acc_data->chips[chip].raux.ra_codes[6])) +
-			 calc_cell_temp_onboard(getVoltage(
-				 acc_data->chips[chip].raux.ra_codes[7]))) /
-			2;
+		analyzer->chip_data[chip].on_board_temp[0] = calc_cell_temp(
+			getVoltage(acc_data->chips[chip].raux.ra_codes[2]));
+		analyzer->chip_data[chip].on_board_temp[1] = calc_cell_temp(
+			getVoltage(acc_data->chips[chip].raux.ra_codes[3]));
+		analyzer->chip_data[chip].on_board_temp[2] = calc_cell_temp(
+			getVoltage(acc_data->chips[chip].raux.ra_codes[4]));
 
 		/* set the die temp */
 		// conversion rate from datasheet, Table 105.  also in driver src

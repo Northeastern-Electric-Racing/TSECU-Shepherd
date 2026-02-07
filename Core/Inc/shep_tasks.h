@@ -9,7 +9,12 @@
 #define SANITIZER_FLAG 0x2
 #define DEBUG_FLAG     0x4
 
-/* Initializes all ThreadX threads. 
+// #define DEBUG_HV_PLATE
+// #define DEBUG_VOLTAGES
+// #define DEBUG_TEMPS
+// #define DEBUG_AlGOS
+
+/* Initializes all ThreadX threads.
 *  Calls to create_thread() should go in here
 */
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool);
@@ -59,5 +64,10 @@ void vSanitizer(ULONG thread_input);
  * @brief Task for performing DCL and CCL algorithms
  */
 void vBMSAlgorithms(ULONG thread_input);
+
+/**
+ * @brief Task for controlling fan
+ */
+void vControl(ULONG thread_input);
 
 #endif

@@ -8,6 +8,7 @@
 #include "u_tx_mutex.h"
 #include "adBms6830Data.h"
 #include "adi_bms_2950data.h"
+#include "compute.h"
 #include "timer.h"
 
 /**
@@ -36,8 +37,8 @@ typedef struct {
 	float open_cell_voltage[NUM_CELLS_PER_CHIP];
 	float cell_voltages[NUM_CELLS_PER_CHIP];
 
-	/* For temperatures of on-board therms.*/
-	float on_board_temp;
+	/* Maximum temperature of on-board therms.*/
+	float on_board_temp[NUM_ONBOARD_THERMS_PER_CHIP];
 
 	/// temperature of the die
 	float die_temp;
@@ -88,12 +89,42 @@ typedef enum {
 	NUM_STATES,
 } state_t;
 
+typedef enum {
+	FAULT_TIMER_STOPPED,
+	FAULT_TIMER_STARTED,
+	FAULT_TIMER_EXPIRED,
+} fault_timer_status_t;
+
 /**
  * @brief Data needed for the therm temp sanitizer
  */
 typedef struct {
 	therm_state_t sanitized_therms[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+	crit_cellval_t max_sanitized_temp;
+	crit_cellval_t min_sanitized_temp;
+
 } sanitizer_t;
+
+/**
+ * @brief Flags from adbms_2950 chip
+ */
+typedef union {
+	struct {
+		uint8_t vreguv : 1;
+		uint8_t vregov : 1;
+		uint8_t vdduv : 1;
+		uint8_t vdiguv : 1;
+		uint8_t vdigov : 1;
+		uint8_t vde : 1;
+		uint8_t vdel : 1;
+		uint8_t oscflt : 1;
+		uint8_t noclk : 1;
+		uint8_t spiflt : 1;
+		uint8_t thsd : 1;
+		uint8_t reset : 1;
+	} flags;
+	uint16_t raw;
+} adbms_2950_flags_t;
 
 /**
  * @brief data read from the ADBMS2950 on our HV Plate
@@ -103,7 +134,20 @@ typedef struct {
 	float ts_volts; // TS Voltage (V)
 	float batt_volts; // BATT Voltage (V)
 	float shunt_temp; // Temperature of shunt resistor (C)
-	float pack_current; // Current read through the shunt
+	float pack_current; // Current read through the shunt (A)
+	uint16_t conversion_count; // Number of conversions taken for each voltage and current measurement
+	uint16_t last_total_converion_count; // previously read total conversion count
+	adbms_2950_flags_t adbms_flags; // Relevant flags from flag register
+	// AUX ADC values
+	float vreg; // VREG power supply pin (V)
+	float tmp1; // Primary internal temperature sensor (C)
+	float vref1p25; // VREF1P25 reference pin (V)
+	float epad; // Exposed pad (V)
+	float vdig; // Internal digital 3V supply (V)
+	float vdd; // VDD power supply pin (V)
+	float tmp2; // Secondary internal temperature sensor (C)
+	float vdiv; // Divided VREF1 Voltage (V)
+	uint16_t osccnt; // Oscillator count
 } hv_plate_t;
 
 /**
@@ -196,9 +240,76 @@ typedef struct {
  * @brief data retrieved from BMS algorithms
  */
 typedef struct {
+	// All current limit values are positive
 	float cont_DCL;
 	float cont_CCL;
+	float inst_DCL;
+	float inst_CCL;
+
+	mutex_t bms_algos_mutex;
 } bms_algos_t;
+
+/**
+ * @brief Cooldown behavior selection for pulse-based current limiting.
+ *
+ * Defines when a cooldown period is enforced after a pulse.
+ */
+typedef enum {
+	COOLDOWN_ON_FULL_PULSE = 0, // Cooldown only after full pulse
+	COOLDOWN_ALWAYS // Cooldown after any pulse exit
+} pulse_cooldown_mode_t;
+
+/**
+ * @brief State machine states for the pulse-based current limit algorithm.
+ *
+ * Represents the high-level operating phase of the limiter.
+ */
+typedef enum {
+	CURRENT_LIMIT_STATE_REST = 0, // Limiter idle
+	CURRENT_LIMIT_STATE_PULSE, // Pulse active
+	CURRENT_LIMIT_STATE_COOLDOWN // Cooldown active
+} current_limit_algo_state_t;
+
+/**
+ * @brief Input values for the current limit algorithms.
+ *
+ * This structure contains only the operating-point inputs required by the
+ * algorithm. It is algorithm-owned and does not represent system state.
+ */
+typedef struct {
+	float min_temp;
+	float max_temp;
+	float min_ocv;
+	float max_ocv;
+} current_limit_algo_inputs_t;
+
+/**
+ * @brief Internal control and state for pulse-based current limiting.
+ *
+ * Holds the algorithm state machine, timers, and configuration needed to
+ * manage pulse and cooldown behavior. This structure is owned and maintained
+ * by the current limit algorithm.
+ */
+typedef struct {
+	// Current limiter state
+	current_limit_algo_state_t state;
+
+	// Cooldown behavior mode
+	pulse_cooldown_mode_t cooldown_mode;
+
+	// Pulse duration timer
+	nertimer_t pulse_timer;
+
+	// Above and below threshold debounce timer
+	nertimer_t t_above;
+	nertimer_t t_below;
+
+	// Cooldown duration timer
+	nertimer_t cooldown_timer;
+
+	// Pulse allowed flag
+	bool pulse_allowed;
+} current_limit_pulse_ctrl_t;
 
 /**
  * @brief data for determine the current BMS State
@@ -224,7 +335,24 @@ typedef struct {
 
 } state_machine_t;
 
+typedef struct {
+	vector3_t accel_data;
+	vector3_t ang_rate_data;
+} imu_data_t;
+
+typedef struct {
+	mutex_t peripherals_mutex;
+	imu_data_t imu_data;
+} peripherals_t;
+
 /* Task Args */
+
+typedef struct {
+	hv_plate_t *hv_plate;
+	analyzer_t *analyzer;
+	bms_algos_t *bms_algos;
+	acc_data_t *acc_data;
+} default_task_args_t;
 
 /**
  * @brief args for vStateMachine
@@ -236,6 +364,7 @@ typedef struct {
 		hv_plate; // TODO add hv plate interal data to analyzer to remove hv_plate
 	acc_data_t *acc_data;
 	bms_algos_t *bms_algos;
+	sanitizer_t *sanitizer;
 } state_machine_args_t;
 
 /**
@@ -262,6 +391,8 @@ typedef struct {
 typedef struct {
 	hv_plate_t *hv_plate;
 	analyzer_t *analyzer;
+	bms_algos_t *bms_algos;
+	state_machine_t *state_machine;
 } hv_plate_args_t;
 
 /**
@@ -280,6 +411,13 @@ typedef struct {
 	analyzer_t *analyzer;
 	bms_algos_t *bms_algos;
 } bms_algos_args_t;
+
+/**
+ * @brief args for peripheral thread 
+ */
+typedef struct {
+	peripherals_t *peripherals;
+} peripherals_args_t;
 
 /* Task args end */
 
