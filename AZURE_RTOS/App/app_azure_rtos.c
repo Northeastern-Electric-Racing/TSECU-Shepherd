@@ -55,6 +55,14 @@
 __ALIGN_BEGIN static UCHAR tx_byte_pool_buffer[TX_APP_MEM_POOL_SIZE] __ALIGN_END;
 static TX_BYTE_POOL tx_app_byte_pool;
 
+/* USER CODE BEGIN NX_Pool_Buffer */
+/* USER CODE END NX_Pool_Buffer */
+#if defined ( __ICCARM__ )
+#pragma data_alignment=4
+#endif
+__ALIGN_BEGIN static UCHAR  nx_byte_pool_buffer[NX_APP_MEM_POOL_SIZE] __ALIGN_END;
+static TX_BYTE_POOL nx_app_byte_pool;
+
 #endif
 
 /* Private function prototypes -----------------------------------------------*/
@@ -101,6 +109,34 @@ VOID tx_application_define(VOID *first_unused_memory)
     /* USER CODE BEGIN  App_ThreadX_Init_Success */
 
     /* USER CODE END  App_ThreadX_Init_Success */
+
+  }
+
+  if (tx_byte_pool_create(&nx_app_byte_pool, "Nx App memory pool", nx_byte_pool_buffer, NX_APP_MEM_POOL_SIZE) != TX_SUCCESS)
+  {
+    /* USER CODE BEGIN NX_Byte_Pool_Error */
+
+    /* USER CODE END NX_Byte_Pool_Error */
+  }
+  else
+  {
+    /* USER CODE BEGIN NX_Byte_Pool_Success */
+
+    /* USER CODE END NX_Byte_Pool_Success */
+
+    memory_ptr = (VOID *)&nx_app_byte_pool;
+    status = MX_NetXDuo_Init(memory_ptr);
+    if (status != NX_SUCCESS)
+    {
+      /* USER CODE BEGIN  MX_NetXDuo_Init_Error */
+      while(1)
+      {
+      }
+      /* USER CODE END  MX_NetXDuo_Init_Error */
+    }
+    /* USER CODE BEGIN  MX_NetXDuo_Init_Success */
+
+    /* USER CODE END MX_NetXDuo_Init_Success */
 
   }
 
