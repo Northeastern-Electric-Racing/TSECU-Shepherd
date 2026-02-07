@@ -69,6 +69,7 @@ SPI_HandleTypeDef hspi6;
 
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim5;
 
 /* USER CODE BEGIN PV */
