@@ -13,6 +13,11 @@
 #if (ENABLE_TRACEX)
 
 /**
+ * @brief Enable CPU cycle counter for TraceX timestamps.
+ */
+void tracex_enable_cycle_counter(void);
+
+/**
  * @brief Initialize TraceX output for the application.
  *
  * Sets up the trace buffer, transport, and required MCU features.
