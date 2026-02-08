@@ -74,6 +74,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/threadX/src/u_tx_flags.c"
     "Drivers/Embedded-Base/threadX/src/u_tx_threads.c"
     "Drivers/Embedded-Base/threadX/src/u_tx_can.c"
+    "Drivers/Embedded-Base/NetX/src/nxd_ptp_client.c"
+    "Drivers/Embedded-Base/NetX/src/u_nx_debug.c"
+    "Drivers/Embedded-Base/NetX/src/u_nx_ethernet.c"
     "Drivers/Embedded-Base/traceX/src/tracex.c"
     "Drivers/Embedded-Base/traceX/src/traceout.c"
     "Drivers/Embedded-Base/middleware/src/c_utils.c"
@@ -84,6 +87,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/analyzer.c"
     "Core/Src/can_handler.c"
     "Core/Src/can_messages.c"
+    "Core/Src/ethernet.c"
     "Core/Src/charging.c"
     "Core/Src/compute.c"
     "Core/Src/hv_plate.c"
@@ -113,6 +117,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/adbms/adbms2950/program/inc"
     "Core/Inc"
     "Drivers/Embedded-Base/threadX/inc"
+    "Drivers/Embedded-Base/NetX/inc"
+    "NetXDuo"
     "Drivers/Embedded-Base/traceX/inc"
 )
 
