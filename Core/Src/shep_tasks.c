@@ -120,8 +120,8 @@ void vDefaultTask(ULONG thread_input)
 
 		alt = !alt;
 
-		HAL_IWDG_Refresh(&hiwdg);
-		tx_thread_sleep(MS_TO_TICKS(500));
+		//HAL_IWDG_Refresh(&hiwdg);
+		tx_thread_sleep(MS_TO_TICKS(200));
 	}
 }
 
@@ -194,7 +194,8 @@ void vCanDispatch(ULONG thread_input)
 		/* Process incoming messages */
 		while (queue_receive(&can_outgoing, &message,
 				     TX_WAIT_FOREVER) == U_SUCCESS) {
-			status = can_send_msg(can1, &message);
+			//status = can_send_msg(can1, &message);
+			status = HAL_OK;
 			if (status != U_SUCCESS) {
 				PRINTLN_WARNING(
 					"Failed to send message (on can1) after removing from "
@@ -756,21 +757,21 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	PRINTLN_INFO("RUNNING THREADS");
 
-	/* Task Definitions End */
+	/* Task Definitions End */	
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
 	//	    U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
-		    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
+	//	    U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 	//	    U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");

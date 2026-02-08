@@ -99,9 +99,10 @@ static void count_pec_errors(cell_asic chips[NUM_CHIPS])
 				printf("\n");
 			}
 
-			send_pec_error_message(chip, pec_error_count);
+			//send_pec_error_message(chip, pec_error_count);
 
 			// Accumulate PEC errors only after startup mask timer ends
+			/*
 			if (!is_startup_pec_mask_active()) {
 				// Saturate at MAX_PEC_ERROR_ACCUM
 				if ((MAX_PEC_ERROR_ACCUM -
@@ -114,10 +115,11 @@ static void count_pec_errors(cell_asic chips[NUM_CHIPS])
 						pec_error_count; // cleared in detect_isospi_break()
 				}
 			}
+			*/
 		}
 
 		// Reset PEC counters for next round
-		memset(&(chips[chip].cccrc), 0, sizeof(chips[chip].cccrc));
+		//memset(&(chips[chip].cccrc), 0, sizeof(chips[chip].cccrc));
 	}
 }
 
