@@ -61,6 +61,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define SPI4_CS_Pin GPIO_PIN_4
+#define SPI4_CS_GPIO_Port GPIOE
 #define TS_MINUS_SENSE_Pin GPIO_PIN_0
 #define TS_MINUS_SENSE_GPIO_Port GPIOC
 #define TS_PLUS_SENSE_Pin GPIO_PIN_3
@@ -88,8 +90,8 @@ void Error_Handler(void);
 #define FAN_PWM0_GPIO_Port GPIOC
 #define FAN_PWM1_Pin GPIO_PIN_8
 #define FAN_PWM1_GPIO_Port GPIOC
-#define SP1_CS_Pin GPIO_PIN_10
-#define SP1_CS_GPIO_Port GPIOG
+#define SPI1_CS_Pin GPIO_PIN_10
+#define SPI1_CS_GPIO_Port GPIOG
 #define FAULT_MCU_Pin GPIO_PIN_15
 #define FAULT_MCU_GPIO_Port GPIOG
 

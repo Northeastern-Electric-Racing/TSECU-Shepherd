@@ -5,9 +5,11 @@
 #include "tx_api.h"
 #include "datastructs.h"
 
-#define ANALYZER_FLAG  0x1
-#define SANITIZER_FLAG 0x2
-#define DEBUG_FLAG     0x4
+#define ANALYZER_FLAG  (1U << 0)
+#define SANITIZER_FLAG (1U << 1)
+#define DEBUG_FLAG     (1U << 2)
+#define SPI_LINE_A_DMA_RX_CPLT_FLAG (1U << 3)
+#define SPI_LINE_B_DMA_RX_CPLT_FLAG (1U << 4)
 
 // #define DEBUG_HV_PLATE
 // #define DEBUG_VOLTAGES
