@@ -10,6 +10,7 @@
 #include "adi_bms_2950data.h"
 #include "compute.h"
 #include "timer.h"
+#include "sht30.h"
 
 /**
  * @brief Stores critical values for the pack (across all chips), and where that critical value can be found
@@ -352,6 +353,7 @@ typedef struct {
 typedef struct {
 	mutex_t peripherals_mutex;
 	imu_data_t imu_data;
+	sht30_t sht30;
 } peripherals_t;
 
 /* Task Args */
