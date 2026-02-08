@@ -49,6 +49,18 @@ static void uart_tx_start(const uint8_t *data, uint16_t len)
 
 /*************** Public API ***************/
 
+void tracex_enable_cycle_counter(void)
+{
+	/* Enable trace and debug block so DWT can be used */
+	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+
+	/* Reset the cycle counter */
+	DWT->CYCCNT = 0U;
+
+	/* Start the DWT cycle counter */
+	DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
 void TraceOut_AppInit(void)
 {
 	tracex_init(s_trace_buffer, sizeof(s_trace_buffer));
