@@ -70,9 +70,9 @@ void handle_ready(state_machine_args_t *state_machine_args)
 
 void init_charging(state_machine_args_t *state_machine_args)
 {
-	cancel_timer(&state_machine_args->state_machine
-			      ->charger_settle_countup_timer);
-	return;
+	state_machine_args->state_machine->charging_stage = LONG_CHARGE_UP;
+	start_timer(&state_machine_args->state_machine->charging_stage_timer,
+		    15 * 60 * 1000); // 15 minutes
 }
 
 void init_balancing(state_machine_args_t *state_machine_args)
@@ -288,10 +288,10 @@ bool sm_fault_eval(fault_eval_t *item)
     }
 	// clang-format on
 
-	bool fault_present = ((condition1 && condition2) ||
-			      (condition1 && (item->optype_2 == NOP)));
+	bool fault_present = (condition1 && condition2) ||
+			     (condition1 && item->optype_2 == NOP);
 
-	if ((!(is_timer_active(&item->timer))) && !fault_present) {
+	if (!is_timer_active(&item->timer) && !fault_present) {
 		return false;
 	}
 
@@ -329,39 +329,96 @@ bool sm_fault_eval(fault_eval_t *item)
 	return true;
 }
 
-/* charger settle countup =  1 minute pause to let readings settle and get good
- * OCV */
-/* charger settle countdown = 5 minute interval between 1 minute settle pauses */
+/* This charging algorithm has 3 stages
+* 1. Charge up until the high cell non OCV max voltage is > 4.19, pause for 1 minute every 15 minutes, repeat
+* 3. Charge up until the high cell     OCV max voltage is > 4.19, pause for 1 minute every 20 seconds, repeat
+* 4. Stop charging :)
+*/
 bool sm_charging_check(state_machine_args_t *state_machine_args)
 {
-	// dont charge during the countup
-	if (!is_timer_expired(&state_machine_args->state_machine
-				       ->charge_settle_countdown_timer) &&
-	    is_timer_active(&state_machine_args->state_machine
-				     ->charge_settle_countdown_timer)) {
+	state_machine_t *state_machine = state_machine_args->state_machine;
+	analyzer_t *analyzer = state_machine_args->analyzer;
+
+	nertimer_t *state_timer =
+		&state_machine_args->state_machine->charging_stage_timer;
+
+	charge_stage_t next_stage = state_machine->charging_stage;
+
+	// TODO: MUTEX GET
+	if (analyzer->max_ocv.val > MAX_CHARGE_VOLT_FLT ||
+	    analyzer->max_voltage.val > MAX_CHARGE_VOLT_FLT) {
+		state_machine->charging_stage = FAULT;
 		return false;
 	}
 
-	// if we are counting down (the normal charging time)
-	if (is_timer_active(&state_machine_args->state_machine
-				     ->charge_settle_countdown_timer)) {
-		// if we need to stop charging, start the pause timer and stop charging immediately
-		if (is_timer_expired(
-			    &state_machine_args->state_machine
-				     ->charge_settle_countdown_timer)) {
-			start_timer(&state_machine_args->state_machine
-					     ->charge_settle_countdown_timer,
-				    CHARGE_SETL_TIMEOUT);
-			return false;
-		} else
-			return true;
-	} else {
-		// start the countdown timer if it is inactive, meaning we went from pause --> unpause
-		start_timer(&state_machine_args->state_machine
-				     ->charge_settle_countdown_timer,
-			    CHARGE_SETL_TIMEUP);
-		return true;
+	// clang-format off
+	switch (state_machine->charging_stage) {
+		case LONG_CHARGE_UP:
+			if (analyzer->max_voltage.val > MAX_CHARGE_VOLT ||
+			    is_timer_expired(state_timer)) {
+				next_stage = LONG_SETTLE;
+			}
+			break;
+		case LONG_SETTLE:
+			if (is_timer_expired(state_timer)) {
+				if (analyzer->max_voltage.val < MAX_CHARGE_VOLT) {
+					next_stage = LONG_CHARGE_UP; // continue charging
+				} else {
+					next_stage = SHORT_CHARGE_UP;
+				}
+			}
+			break;
+		case SHORT_CHARGE_UP:
+			if (analyzer->max_ocv.val > MAX_CHARGE_VOLT ||
+			    is_timer_expired(state_timer)) {
+				next_stage = SHORT_SETTLE;
+			}
+			break;
+		case SHORT_SETTLE:
+			if (is_timer_expired(state_timer)) {
+				if (analyzer->max_ocv.val < MAX_CHARGE_VOLT) {
+					next_stage = SHORT_CHARGE_UP; // continue charging
+				} else {
+					next_stage = DONE;
+				}
+			}
+			break;
+		case DONE:
+			return false; // done charging
+		case FAULT:
+			return false; // stuck faulting until restart
 	}
+	// TODO: MUTEX RELEASE
+
+	// Transitioning stages, start the corresponding timer lengths
+	if (next_stage != state_machine->charging_stage) {
+		switch (next_stage) {
+			case LONG_CHARGE_UP:
+				start_timer(state_timer, 15 * 60 * 1000); // 15 minutes
+				break;
+			case SHORT_CHARGE_UP:
+				start_timer(state_timer, 20 * 1000); // 20 seconds
+				break;
+
+			case LONG_SETTLE:
+			case SHORT_SETTLE:
+				start_timer(state_timer, 60 * 1000); // 1 minute
+				break;
+
+			// cases return earlier or arent possible
+			case DONE:
+			case FAULT:
+				break;
+		}
+
+		state_machine->charging_stage = next_stage;
+	}
+	// clang-format on
+
+	/* if not charging stage, dont charge
+	 * (LONG_SETTLE, SHORT_SETTLE, DONE, FAULT) */
+	return state_machine->charging_stage == LONG_CHARGE_UP ||
+	       state_machine->charging_stage == SHORT_CHARGE_UP;
 }
 
 // check if balancing is allowed
@@ -376,9 +433,9 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 	if (analyzer->delt_voltage <= MAX_DELTA_V)
 		return false;
 
-	// Do not balance during the countup.
-	if (is_timer_active(&state_machine->charger_settle_countup_timer) &&
-	    !is_timer_expired(&state_machine->charger_settle_countup_timer)) {
+	// Do not balance during settling.
+	if (state_machine->charging_stage != LONG_SETTLE &&
+	    state_machine->charging_stage != SHORT_SETTLE) {
 		return false;
 	}
 
