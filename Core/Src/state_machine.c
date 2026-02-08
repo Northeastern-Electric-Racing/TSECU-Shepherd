@@ -331,8 +331,8 @@ bool sm_fault_eval(fault_eval_t *item)
 
 /* This charging algorithm has 3 stages
 * 1. Charge up until the high cell non OCV max voltage is > 4.19, pause for 1 minute every 15 minutes, repeat
-* 3. Charge up until the high cell     OCV max voltage is > 4.19, pause for 1 minute every 20 seconds, repeat
-* 4. Stop charging :)
+* 2. Charge up until the high cell     OCV max voltage is > 4.19, pause for 1 minute every 20 seconds, repeat
+* 3. Stop charging :)
 */
 bool sm_charging_check(state_machine_args_t *state_machine_args)
 {
