@@ -150,6 +150,7 @@ void segment_adc_comparison(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 
 void segment_monitor_flts(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
+	return;
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		// printf("CHIP %d :", chip);
 		printf("MUTE: %d, %d\n", chip, chips[chip].rx_cfga.mute_st);
