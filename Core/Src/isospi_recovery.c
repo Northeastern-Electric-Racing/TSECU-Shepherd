@@ -242,25 +242,25 @@ void isospi_handle_state(cell_asic chips[NUM_CHIPS],
 			 state_machine_t *state_mach, SPI_HandleTypeDef *hspi)
 {
 	switch (isospi_status.state) {
-	case ISOSPI_STATE_NORMAL:
-		if (isospi_status.recovery_successful == 0U) {
-			isospi_detect_break(chips, state_mach);
-		} else {
-			// After the first recovery is successful, any further breaks cannot be corrected.
-			reset_all_pec_error_sums(chips);
-		}
-		break;
+		case ISOSPI_STATE_NORMAL:
+			if (isospi_status.recovery_successful == 0U) {
+				isospi_detect_break(chips, state_mach);
+			} else {
+				// After the first recovery is successful, any further breaks cannot be corrected.
+				reset_all_pec_error_sums(chips);
+			}
+			break;
 
-	case ISOSPI_BREAK_DETECTED:
-		send_isospi_status_message(&isospi_status);
-		printf("[isoSPI] Recovery Started\n\r");
-		isospi_recover_break(chips, hspi);
-		isospi_status.state = ISOSPI_STATE_VERIFYING;
-		break;
+		case ISOSPI_BREAK_DETECTED:
+			send_isospi_status_message(&isospi_status);
+			printf("[isoSPI] Recovery Started\n\r");
+			isospi_recover_break(chips, hspi);
+			isospi_status.state = ISOSPI_STATE_VERIFYING;
+			break;
 
-	case ISOSPI_STATE_VERIFYING:
-		send_isospi_status_message(&isospi_status);
-		// clang-format off
+		case ISOSPI_STATE_VERIFYING:
+			send_isospi_status_message(&isospi_status);
+			// clang-format off
 		if (isospi_status.verification_attempts >= ISOSPI_VERIFICATION_READS) {
 			printf("[isoSPI] Verification failed after max attempts\n\r");
 			isospi_status.state = ISOSPI_RECOVERY_FAILED;
@@ -276,33 +276,34 @@ void isospi_handle_state(cell_asic chips[NUM_CHIPS],
 			}
 			isospi_status.verification_attempts++;
 		}
-		// clang-format on
-		break;
+			// clang-format on
+			break;
 
-	case ISOSPI_RECOVERY_SUCCESS:
-		send_isospi_status_message(&isospi_status);
-
-		// Clear all faults return to normal operation state
-		printf("[isoSPI] Recovery Complete, Fault Cleared\n\r");
-		clear_segment_comms_fault(state_mach);
-		isospi_status.state = ISOSPI_STATE_NORMAL;
-		break;
-
-	case ISOSPI_RECOVERY_FAILED:
-		// Run recovery failed fault logic only once to avoid repeating logs and CAN messages
-		if (!isospi_status.fault_latched) {
+		case ISOSPI_RECOVERY_SUCCESS:
 			send_isospi_status_message(&isospi_status);
-			printf("[isoSPI] Recovery Failed. Non-critical Fault Latched\n\r");
 
-			isospi_status.recovery_successful = 0U;
-			isospi_status.fault_latched = 1U;
-		}
+			// Clear all faults return to normal operation state
+			printf("[isoSPI] Recovery Complete, Fault Cleared\n\r");
+			clear_segment_comms_fault(state_mach);
+			isospi_status.state = ISOSPI_STATE_NORMAL;
+			break;
 
-		reset_all_pec_error_sums(chips);
-		break;
+		case ISOSPI_RECOVERY_FAILED:
+			// Run recovery failed fault logic only once to avoid repeating logs and CAN messages
+			if (!isospi_status.fault_latched) {
+				send_isospi_status_message(&isospi_status);
+				printf("[isoSPI] Recovery Failed. Non-critical Fault Latched\n\r");
 
-	default:
-		printf("[isoSPI] Invalid state: %d\n\r", isospi_status.state);
-		break;
+				isospi_status.recovery_successful = 0U;
+				isospi_status.fault_latched = 1U;
+			}
+
+			reset_all_pec_error_sums(chips);
+			break;
+
+		default:
+			printf("[isoSPI] Invalid state: %d\n\r",
+			       isospi_status.state);
+			break;
 	}
 }

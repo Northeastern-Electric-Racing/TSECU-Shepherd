@@ -24,20 +24,20 @@ uint8_t ethernet1_init(void)
 void ethernet_inbox(ethernet_message_t *message)
 {
 	switch (message->message_id) {
-	case 0x01:
-		// do thing
-		break;
-	case 0x02:
-		// do thing
-		break;
-	case 0x03:
-		// etc
-		break;
-	default:
-		PRINTLN_ERROR(
-			"Unknown Ethernet Message Recieved (Message ID: %d).",
-			message->message_id);
-		break;
+		case 0x01:
+			// do thing
+			break;
+		case 0x02:
+			// do thing
+			break;
+		case 0x03:
+			// etc
+			break;
+		default:
+			PRINTLN_ERROR(
+				"Unknown Ethernet Message Recieved (Message ID: %d).",
+				message->message_id);
+			break;
 	}
 }
 
