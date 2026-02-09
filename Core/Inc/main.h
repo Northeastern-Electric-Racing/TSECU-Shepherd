@@ -72,8 +72,6 @@ void Error_Handler(void);
 #define SPI6_CS_GPIO_Port GPIOA
 #define SPI2_CS_Pin GPIO_PIN_3
 #define SPI2_CS_GPIO_Port GPIOA
-#define SPI3_CS_Pin GPIO_PIN_4
-#define SPI3_CS_GPIO_Port GPIOA
 #define ACC_SENSE_Pin GPIO_PIN_0
 #define ACC_SENSE_GPIO_Port GPIOB
 #define TSIP_SENSE_Pin GPIO_PIN_1

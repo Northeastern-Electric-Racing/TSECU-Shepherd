@@ -121,6 +121,7 @@ void vDefaultTask(ULONG thread_input)
 		alt = !alt;
 
 		//HAL_IWDG_Refresh(&hiwdg);
+		// tx_thread_sleep(MS_TO_TICKS(2000));
 		tx_thread_sleep(MS_TO_TICKS(200));
 	}
 }
@@ -208,6 +209,7 @@ void vCanDispatch(ULONG thread_input)
 
 void vAnalyzer(ULONG thread_input)
 {
+
 	PRINTLN_INFO("Starting Analyzer Thread...");
 
 	analyzer_args_t *analyzer_args = (analyzer_args_t *)thread_input;
@@ -251,7 +253,7 @@ void vAnalyzer(ULONG thread_input)
 }
 
 void vGetSegmentData(ULONG thread_input)
-{
+{	
 	PRINTLN_INFO("Starting GetSegmentData thread...");
 
 	const uint16_t balancing_delay = 75;
@@ -364,7 +366,7 @@ void vHvPlateData(ULONG thread_input)
 			dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
-		*/
+		*/	
 
 		// read ts voltage
 		get_ts_voltage(hv_plate);
@@ -497,6 +499,7 @@ void vPeripherals(ULONG thread_input)
 
 void vDebug(ULONG thread_input)
 {
+
 	PRINTLN_INFO("Starting Debug thread...");
 
 	analyzer_t *analyzer = (analyzer_t *)thread_input;
@@ -755,7 +758,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	PRINTLN_INFO("RUNNING THREADS");
 
-	/* Task Definitions End */
+	/* Task Definitions End */	
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
 	//	    U_SUCCESS);
