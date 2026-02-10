@@ -350,7 +350,7 @@ typedef struct {
 	vector3_t ang_rate_data;
 } imu_data_t;
 
-typedef struct {
+typedef struct peripherals_t {
 	mutex_t peripherals_mutex;
 	imu_data_t imu_data;
 	sht30_t sht30;
