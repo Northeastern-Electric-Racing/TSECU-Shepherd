@@ -120,6 +120,8 @@ void vDefaultTask(ULONG thread_input)
 
 		alt = !alt;
 
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, alt);
+
 		//HAL_IWDG_Refresh(&hiwdg);
 		// tx_thread_sleep(MS_TO_TICKS(2000));
 		tx_thread_sleep(MS_TO_TICKS(200));
@@ -265,7 +267,7 @@ void vGetSegmentData(ULONG thread_input)
 
 	segment_init(acc_data->chips, &hspi2);
 
-	isospi_break_detection_init(acc_data->chips);
+	// isospi_break_detection_init(acc_data->chips);
 
 	// must delay after init for ADC to start up
 	tx_thread_sleep(MS_TO_TICKS(500));
@@ -279,45 +281,46 @@ void vGetSegmentData(ULONG thread_input)
 		prev_state = current_state;
 		current_state = get_current_state(state_machine);
 
-		if (prev_state == BALANCING && current_state == CHARGING) {
-			tx_thread_sleep(MS_TO_TICKS(
-				balancing_delay)); // delay after balancing to let cells settle
-		}
+		// if (prev_state == BALANCING && current_state == CHARGING) {
+		// 	tx_thread_sleep(MS_TO_TICKS(
+		// 		balancing_delay)); // delay after balancing to let cells settle
+		// }
 
-		if (current_state == CHARGING || current_state == BALANCING) {
-			// in charging, debug data is required to get things like die temp
-			segment_retrieve_charging_data(acc_data->chips, &hspi2);
-			isospi_handle_state(acc_data->chips, state_machine,
-					    &hspi2);
+		// if (current_state == CHARGING || current_state == BALANCING) {
+		// 	// in charging, debug data is required to get things like die temp
+		// 	segment_retrieve_charging_data(acc_data->chips, &hspi2);
+		// 	// isospi_handle_state(acc_data->chips, state_machine,
+		// 	// 		    &hspi2);
 
-		} else {
+		// } else {
 			// snap before getting data
 			segment_snap(acc_data->chips, &hspi2);
 			segment_retrieve_active_data(acc_data->chips, &hspi2);
 			// unsnap after getting data
 			segment_unsnap(acc_data->chips, &hspi2);
 
-			isospi_handle_state(acc_data->chips, state_machine,
-					    &hspi2);
+			// isospi_handle_state(acc_data->chips, state_machine,
+			// 		    &hspi2);
 
 			if (DEBUG_MODE_ENABLED) {
 				segment_retrieve_debug_data(acc_data->chips,
 							    &hspi2);
 			}
-		}
+		// }
 
-		if (current_state == CHARGING || current_state == BALANCING) {
-			segment_unmute(acc_data->chips, &hspi2);
-		}
+		// if (current_state == CHARGING || current_state == BALANCING) {
+		// 	segment_unmute(acc_data->chips, &hspi2);
+		// }
 
-		if (get_current_state(state_machine) == BALANCING) {
-			segment_configure_balancing(
-				acc_data->chips, acc_data->discharge_config,
-				&hspi2); // TODO: Move to state machine
-		}
+		// if (get_current_state(state_machine) == BALANCING) {
+		// 	segment_configure_balancing(
+		// 		acc_data->chips, acc_data->discharge_config,
+		// 		&hspi2); // TODO: Move to state machine
+		// }
 
 		set_flag(ANALYZER_FLAG);
-		tx_thread_sleep(MS_TO_TICKS(100));
+		tx_thread_sleep(MS_TO_TICKS(1000));
+		printf("Tick");
 	}
 }
 
@@ -762,8 +765,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
 	//	    U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
