@@ -23,6 +23,7 @@
 #include "u_tx_flags.h"
 #include "u_tx_general.h"
 #include "u_tx_threads.h"
+#include "compute.h"
 
 const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 			   acc_data_t *acc_data, bms_algos_t *bms_algos)
@@ -496,9 +497,12 @@ void vPeripherals(ULONG thread_input)
 	imu_data_t imu_data = peripherals->imu_data;
 
 	bool failed = !imu_init();
+
 	if (failed) {
 		printf("Failed to initialize imu.\n");
 	}
+
+	init_compute(peripherals);
 
 	create_mutex(&peripherals->peripherals_mutex);
 
@@ -507,6 +511,9 @@ void vPeripherals(ULONG thread_input)
 
 		imu_getAcceleration(&imu_data.accel_data);
 		imu_getAngularRate(&imu_data.ang_rate_data);
+		tempsensor_getTemperatureAndHumdidty(
+			peripherals, &peripherals->sht30.temp,
+			&peripherals->sht30.humidity);
 
 		mutex_put(&peripherals->peripherals_mutex);
 

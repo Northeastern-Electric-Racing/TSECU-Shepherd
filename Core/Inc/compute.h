@@ -23,6 +23,8 @@ typedef struct {
 	float z;
 } vector3_t;
 
+typedef struct peripherals_t peripherals_t;
+
 int imu_init(void);
 
 /**
@@ -50,5 +52,11 @@ void compute_set_fault(bool fault_state);
  * @brief Checks if the shutdown circuit is open.
  */
 bool read_shutdown();
+
+/**
+* @brief Initializes peripherals for compute thread.
+ *
+ */
+void init_compute(peripherals_t *peripherals);
 
 #endif // COMPUTE_H
