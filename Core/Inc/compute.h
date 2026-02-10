@@ -55,8 +55,20 @@ bool read_shutdown();
 
 /**
 * @brief Initializes peripherals for compute thread.
+* @param peripherals Pointer to peripherals struct
  *
  */
 void init_compute(peripherals_t *peripherals);
+
+/**
+ * @brief Reads SHT30 temperature and humidity into the provided outputs.
+ * @param peripherals Pointer to peripherals struct
+ * @param temperature Pointer to float to store temperature
+ * @param humidity Pointer to float to store humidity
+ * @return Status
+ */
+int tempsensor_getTemperatureAndHumdidty(peripherals_t *peripherals,
+					 float *temperature,
+					 float *humidity);
 
 #endif // COMPUTE_H
