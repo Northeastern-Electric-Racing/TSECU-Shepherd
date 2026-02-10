@@ -168,17 +168,17 @@ void vCanReceive(ULONG thred_input)
 		while (queue_receive(&can_incoming, &message,
 				     TX_WAIT_FOREVER) == U_SUCCESS) {
 			switch (message.id) {
-			case CHARGERBOX_CANID:
-				// TODO process charger can message
-				break;
-			case DTI_CURRENT_CANID:
-				// TODO process charger can message
-				break;
-			case CALYPSO_CONTROL_CANID:
-				control_message_fans(message);
-				break;
-			default:
-				break;
+				case CHARGERBOX_CANID:
+					// TODO process charger can message
+					break;
+				case DTI_CURRENT_CANID:
+					// TODO process charger can message
+					break;
+				case CALYPSO_CONTROL_CANID:
+					control_message_fans(message);
+					break;
+				default:
+					break;
 			}
 		}
 	}

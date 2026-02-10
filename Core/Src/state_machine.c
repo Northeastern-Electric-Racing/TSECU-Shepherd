@@ -262,31 +262,55 @@ bool sm_fault_eval(fault_eval_t *item)
 	bool condition1;
 	bool condition2;
 
-	// clang-format off
-    switch (item->optype_1)
-    {
-        case GT: condition1 = item->data_1 > item->lim_1; break;
-        case LT: condition1 = item->data_1 < item->lim_1; break;
-        case GE: condition1 = item->data_1 >= item->lim_1; break;
-        case LE: condition1 = item->data_1 <= item->lim_1; break;
-        case EQ: condition1 = item->data_1 == item->lim_1; break;
-		case NEQ: condition1 = item->data_1 != item->lim_1; break;
-        case NOP: condition1 = false;
-		default: condition1 = false;
-    }
+	switch (item->optype_1) {
+		case GT:
+			condition1 = item->data_1 > item->lim_1;
+			break;
+		case LT:
+			condition1 = item->data_1 < item->lim_1;
+			break;
+		case GE:
+			condition1 = item->data_1 >= item->lim_1;
+			break;
+		case LE:
+			condition1 = item->data_1 <= item->lim_1;
+			break;
+		case EQ:
+			condition1 = item->data_1 == item->lim_1;
+			break;
+		case NEQ:
+			condition1 = item->data_1 != item->lim_1;
+			break;
+		case NOP:
+			condition1 = false;
+		default:
+			condition1 = false;
+	}
 
-    switch (item->optype_2)
-    {
-        case GT: condition2 = item->data_2 > item->lim_2; break;
-        case LT: condition2 = item->data_2 < item->lim_2; break;
-        case GE: condition2 = item->data_2 >= item->lim_2; break;
-        case LE: condition2 = item->data_2 <= item->lim_2; break;
-        case EQ: condition2 = item->data_2 == item->lim_2; break;
-		case NEQ: condition2 = item->data_2 != item->lim_2; break;
-        case NOP: condition2 = false;
-		default: condition2 = false;
-    }
-	// clang-format on
+	switch (item->optype_2) {
+		case GT:
+			condition2 = item->data_2 > item->lim_2;
+			break;
+		case LT:
+			condition2 = item->data_2 < item->lim_2;
+			break;
+		case GE:
+			condition2 = item->data_2 >= item->lim_2;
+			break;
+		case LE:
+			condition2 = item->data_2 <= item->lim_2;
+			break;
+		case EQ:
+			condition2 = item->data_2 == item->lim_2;
+			break;
+		case NEQ:
+			condition2 = item->data_2 != item->lim_2;
+			break;
+		case NOP:
+			condition2 = false;
+		default:
+			condition2 = false;
+	}
 
 	bool fault_present = (condition1 && condition2) ||
 			     (condition1 && item->optype_2 == NOP);
@@ -351,7 +375,6 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 		return false;
 	}
 
-	// clang-format off
 	switch (state_machine->charging_stage) {
 		case LONG_CHARGE_UP:
 			if (analyzer->max_voltage.val > MAX_CHARGE_VOLT ||
@@ -361,8 +384,10 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 			break;
 		case LONG_SETTLE:
 			if (is_timer_expired(state_timer)) {
-				if (analyzer->max_voltage.val < MAX_CHARGE_VOLT) {
-					next_stage = LONG_CHARGE_UP; // continue charging
+				if (analyzer->max_voltage.val <
+				    MAX_CHARGE_VOLT) {
+					next_stage =
+						LONG_CHARGE_UP; // continue charging
 				} else {
 					next_stage = SHORT_CHARGE_UP;
 				}
@@ -377,7 +402,8 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 		case SHORT_SETTLE:
 			if (is_timer_expired(state_timer)) {
 				if (analyzer->max_ocv.val < MAX_CHARGE_VOLT) {
-					next_stage = SHORT_CHARGE_UP; // continue charging
+					next_stage =
+						SHORT_CHARGE_UP; // continue charging
 				} else {
 					next_stage = DONE;
 				}
@@ -394,10 +420,12 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 	if (next_stage != state_machine->charging_stage) {
 		switch (next_stage) {
 			case LONG_CHARGE_UP:
-				start_timer(state_timer, 15 * 60 * 1000); // 15 minutes
+				start_timer(state_timer,
+					    15 * 60 * 1000); // 15 minutes
 				break;
 			case SHORT_CHARGE_UP:
-				start_timer(state_timer, 20 * 1000); // 20 seconds
+				start_timer(state_timer,
+					    20 * 1000); // 20 seconds
 				break;
 
 			case LONG_SETTLE:
@@ -413,7 +441,6 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 
 		state_machine->charging_stage = next_stage;
 	}
-	// clang-format on
 
 	/* if not charging stage, dont charge
 	 * (LONG_SETTLE, SHORT_SETTLE, DONE, FAULT) */

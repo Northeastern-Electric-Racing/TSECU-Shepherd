@@ -93,26 +93,26 @@ void read_aux_registers(cell_asic_2950 *ic)
 void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 {
 	switch (gpo) {
-	case GPO1_2950:
-		ic->tx_cfga.gpo1c = PULLED_DOWN;
-		break;
-	case GPO2_2950:
-		ic->tx_cfga.gpo2c = PULLED_DOWN;
-		break;
-	case GPO3_2950:
-		ic->tx_cfga.gpo3c = PULLED_DOWN;
-		break;
-	case GPO4_2950:
-		ic->tx_cfga.gpo4c = PULLED_DOWN;
-		break;
-	case GPO5_2950:
-		ic->tx_cfga.gpo5c = PULLED_DOWN;
-		break;
-	case GPO6_2950:
-		ic->tx_cfga.gpo6c = PULLED_DOWN;
-		break;
-	default:
-		break;
+		case GPO1_2950:
+			ic->tx_cfga.gpo1c = PULLED_DOWN;
+			break;
+		case GPO2_2950:
+			ic->tx_cfga.gpo2c = PULLED_DOWN;
+			break;
+		case GPO3_2950:
+			ic->tx_cfga.gpo3c = PULLED_DOWN;
+			break;
+		case GPO4_2950:
+			ic->tx_cfga.gpo4c = PULLED_DOWN;
+			break;
+		case GPO5_2950:
+			ic->tx_cfga.gpo5c = PULLED_DOWN;
+			break;
+		case GPO6_2950:
+			ic->tx_cfga.gpo6c = PULLED_DOWN;
+			break;
+		default:
+			break;
 	}
 
 	adBmsWakeupIc2950(TOTAL_IC_2950);
@@ -126,26 +126,26 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 {
 	switch (gpo) {
-	case GPO1_2950:
-		ic->tx_cfga.gpo1c = PULLED_UP_TRISTATED;
-		break;
-	case GPO2_2950:
-		ic->tx_cfga.gpo2c = PULLED_UP_TRISTATED;
-		break;
-	case GPO3_2950:
-		ic->tx_cfga.gpo3c = PULLED_UP_TRISTATED;
-		break;
-	case GPO4_2950:
-		ic->tx_cfga.gpo4c = PULLED_UP_TRISTATED;
-		break;
-	case GPO5_2950:
-		ic->tx_cfga.gpo5c = PULLED_UP_TRISTATED;
-		break;
-	case GPO6_2950:
-		ic->tx_cfga.gpo6c = PULLED_UP_TRISTATED;
-		break;
-	default:
-		break;
+		case GPO1_2950:
+			ic->tx_cfga.gpo1c = PULLED_UP_TRISTATED;
+			break;
+		case GPO2_2950:
+			ic->tx_cfga.gpo2c = PULLED_UP_TRISTATED;
+			break;
+		case GPO3_2950:
+			ic->tx_cfga.gpo3c = PULLED_UP_TRISTATED;
+			break;
+		case GPO4_2950:
+			ic->tx_cfga.gpo4c = PULLED_UP_TRISTATED;
+			break;
+		case GPO5_2950:
+			ic->tx_cfga.gpo5c = PULLED_UP_TRISTATED;
+			break;
+		case GPO6_2950:
+			ic->tx_cfga.gpo6c = PULLED_UP_TRISTATED;
+			break;
+		default:
+			break;
 	}
 
 	adBmsWakeupIc2950(TOTAL_IC_2950);
