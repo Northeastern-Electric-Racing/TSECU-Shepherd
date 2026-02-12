@@ -18,7 +18,6 @@
 #define MC_BAUD		     1000000U
 #define MAX_ADC_RESOLUTION   4095 // 12 bit ADC
 
-
 int imu_init(void);
 
 /**
@@ -61,7 +60,6 @@ void init_compute(peripherals_t *peripherals);
  * @return Status
  */
 int tempsensor_getTemperatureAndHumdidty(peripherals_t *peripherals,
-					 float *temperature,
-					 float *humidity);
+					 float *temperature, float *humidity);
 
 #endif // COMPUTE_H

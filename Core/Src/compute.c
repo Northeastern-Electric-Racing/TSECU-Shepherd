@@ -297,18 +297,19 @@ bool read_shutdown()
 }
 
 int tempsensor_getTemperatureAndHumdidty(peripherals_t *peripherals,
-					float *temperature,
-					float *humidity)
+					 float *temperature, float *humidity)
 {
-    CATCH_ERROR(mutex_get(&peripherals->peripherals_mutex), U_SUCCESS);
-    int status = sht30_get_temp_humid(&peripherals->sht30);
-    CATCH_ERROR(mutex_put(&peripherals->peripherals_mutex), U_SUCCESS);
-    if (status != 0) {
-        PRINTLN_ERROR("Failed to read SHT30 temperature/humidity (Status: %d).", status);
-        return U_ERROR;
-    }
+	CATCH_ERROR(mutex_get(&peripherals->peripherals_mutex), U_SUCCESS);
+	int status = sht30_get_temp_humid(&peripherals->sht30);
+	CATCH_ERROR(mutex_put(&peripherals->peripherals_mutex), U_SUCCESS);
+	if (status != 0) {
+		PRINTLN_ERROR(
+			"Failed to read SHT30 temperature/humidity (Status: %d).",
+			status);
+		return U_ERROR;
+	}
 
-    *temperature = peripherals->sht30.temp;
-    *humidity = peripherals->sht30.humidity;
-    return U_SUCCESS;
+	*temperature = peripherals->sht30.temp;
+	*humidity = peripherals->sht30.humidity;
+	return U_SUCCESS;
 }
