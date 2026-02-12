@@ -6,6 +6,7 @@
 
 #include "stm32h5xx.h"
 #include "u_tx_threads.h"
+#include "datastructs.h"
 
 #define CURRENT_SENSOR_PIN_L A1
 #define CURRENT_SENSOR_PIN_H A0
@@ -17,13 +18,6 @@
 #define MC_BAUD		     1000000U
 #define MAX_ADC_RESOLUTION   4095 // 12 bit ADC
 
-typedef struct {
-	float x;
-	float y;
-	float z;
-} vector3_t;
-
-typedef struct peripherals_t peripherals_t;
 
 int imu_init(void);
 
@@ -56,8 +50,7 @@ bool read_shutdown();
 /**
 * @brief Initializes peripherals for compute thread.
 * @param peripherals Pointer to peripherals struct
- *
- */
+*/
 void init_compute(peripherals_t *peripherals);
 
 /**
