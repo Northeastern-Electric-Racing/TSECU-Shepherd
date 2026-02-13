@@ -123,10 +123,8 @@ void vDefaultTask(ULONG thread_input)
 
 		//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, alt);
 
-		app_main();
-
 		//HAL_IWDG_Refresh(&hiwdg);
-		//tx_thread_sleep(MS_TO_TICKS(200));
+		tx_thread_sleep(MS_TO_TICKS(200));
 	}
 }
 
@@ -771,8 +769,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	// CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
-	//	    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
+		    U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 	//	    U_SUCCESS);

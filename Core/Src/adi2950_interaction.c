@@ -18,15 +18,18 @@ void unsnap_2950(cell_asic_2950 *ic)
 
 void start_adc_conversions(cell_asic_2950 *ic)
 {
-	adi2950_start_adi1_continuous_measurment(TOTAL_IC_2950,
-							 ic);
+	cmd_description command;
+
+	adBmsWakeupIc2950(TOTAL_IC_2950);
+	adBms2950_Adi1(TOTAL_IC_2950, ic, RD_ON2950, OPT8_C, &command);
+	Delay_ms2950(ADI1_delay_ms);
 }
 
 void set_accumulation_count(cell_asic_2950 *ic, ACCI count)
 {
 	ic->tx_cfga.acci = count;
 	adBmsWakeupIc2950(1);
-	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
+	adBmsWriteData2950(1, ic, WRCFGA2950, Config2950, A_2950);
 	if (ic->cccrc.cfgr_pec != 0) {
 		PRINTLN_ERROR("PEC: %d", ic->cccrc.cfgr_pec);
 		PRINTLN_ERROR("PEC Error in writing Accumulation Count");
@@ -86,11 +89,10 @@ void read_aux_registers(cell_asic_2950 *ic)
 	adBmsWakeupIc2950(1);
 	spiSendCmd2950(TOTAL_IC_2950, ic, sADX);
 	// Poll on conversion to block thread
-	adBmsWakeupIc2950(1);
+
 	ic[0].pladc_count = adBmsPollAdc2950(TOTAL_IC_2950, ic, PLX);
 
 	// Read all relevant register groups
-	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDXA, Aux2950, A_2950);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDXB, Aux2950, B_2950);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDXC, Aux2950, C_2950);
@@ -98,7 +100,7 @@ void read_aux_registers(cell_asic_2950 *ic)
 	if (ic->cccrc.aux_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading auxiliary registers");
 	}
-	adBmsWakeupIc2950(1);
+
 	spiSendCmd2950(TOTAL_IC_2950, ic, CLRVX);
 }
 
