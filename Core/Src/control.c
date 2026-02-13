@@ -33,12 +33,11 @@ bool control_init_peripherals(void)
 {
 	device_fan0 = (pwm_device_t){
 		.tim_handle = &htim3,
-		.channel_identifier = TIM_CHANNEL_3,
+		.channel_identifier = TIM_CHANNEL_2,
 	};
 
-	bool error = false;
-	error |= _init_pwm_device(&device_fan0);
-	return error;
+	bool status = _init_pwm_device(&device_fan0);
+	return !status;
 }
 
 void control_fan(float pack_high_temp)

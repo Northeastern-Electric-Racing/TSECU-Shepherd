@@ -120,7 +120,7 @@ void vDefaultTask(ULONG thread_input)
 		alt = !alt;
 
 		HAL_IWDG_Refresh(&hiwdg);
-		tx_thread_sleep(MS_TO_TICKS(500));
+		tx_thread_sleep(MS_TO_TICKS(200));
 	}
 }
 
@@ -132,8 +132,6 @@ void vStateMachine(ULONG thread_input)
 		(state_machine_args_t *)thread_input;
 	state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
-
-	create_mutex(&state_machine->state_mutex);
 
 	nertimer_t telem_timer;
 	// sends unimportant telemetry messages every 500ms
@@ -183,7 +181,7 @@ void vCanReceive(ULONG thred_input)
 	}
 }
 
-extern can_t *can1; // TODO: pass can1 directly into thread
+extern can_t can1;
 void vCanDispatch(ULONG thread_input)
 {
 	can_msg_t message;
@@ -193,12 +191,14 @@ void vCanDispatch(ULONG thread_input)
 		/* Process incoming messages */
 		while (queue_receive(&can_outgoing, &message,
 				     TX_WAIT_FOREVER) == U_SUCCESS) {
-			status = can_send_msg(can1, &message);
+			status = can_send_msg(&can1, &message);
 			if (status != U_SUCCESS) {
 				PRINTLN_WARNING(
 					"Failed to send message (on can1) after removing from "
 					"outgoing queue (Message ID: %ld) - Status %d",
 					message.id, status);
+			} else {
+				PRINTLN_INFO("Sent CAN message with ID: %ld", message.id);
 			}
 		}
 	}
@@ -245,8 +245,6 @@ void vAnalyzer(ULONG thread_input)
 	acc_data_t *acc_data = analyzer_args->acc_data;
 	state_machine_t *state_machine = analyzer_args->state_machine;
 	hv_plate_t *hv_plate = analyzer_args->hv_plate;
-
-	create_mutex(&analyzer->analyzer_mutex);
 
 	for (;;) {
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
@@ -448,8 +446,6 @@ void vBMSAlgorithms(ULONG thread_input)
 	sanitizer_t *sanitizer = bms_algos_args->sanitizer;
 	analyzer_t *analyzer = bms_algos_args->analyzer;
 
-	create_mutex(&bms_algos->bms_algos_mutex);
-
 	for (;;) {
 		current_limit_algo_inputs_t algo_inputs = {
 			.max_ocv = analyzer->max_ocv.val,
@@ -469,10 +465,12 @@ void vControl(ULONG thread_input)
 {
 	analyzer_t *analyzer = (analyzer_t *)thread_input;
 
+	PRINTLN_INFO("Starting Control thread...");
+
 	// Initialize peripherals for control
 	bool failed = !control_init_peripherals();
 	if (failed) {
-		printf("Failed to initialize one or more peripherals.\n");
+		PRINTLN_ERROR("Failed to initialize one or more peripherals.\n");
 	}
 
 	for (;;) {
@@ -483,7 +481,7 @@ void vControl(ULONG thread_input)
 
 		send_control_signals(control_device_signals);
 
-		tx_thread_sleep(MS_TO_TICKS(50));
+		tx_thread_sleep(MS_TO_TICKS(100));
 	}
 }
 
@@ -788,26 +786,30 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vDebug, /* Thread Function */
 	};
 
+	create_mutex(&analyzer->analyzer_mutex);
+	create_mutex(&state_machine->state_mutex);
+	create_mutex(&bms_algos->bms_algos_mutex);
+
 	/* Task Definitions End */
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
+	//	    U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
-		    U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
+	// 	    U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
+	//	    U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
+	//	    U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
+	//	    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");
 	return U_SUCCESS;
