@@ -28,6 +28,7 @@ void start_adc_conversions(cell_asic_2950 *ic)
 void set_accumulation_count(cell_asic_2950 *ic, ACCI count)
 {
 	ic->tx_cfga.acci = count;
+	ic->tx_cfga.gpo4od = OPEN_DRAIN;
 	adBmsWakeupIc2950(1);
 	adBmsWriteData2950(1, ic, WRCFGA2950, Config2950, A_2950);
 	if (ic->cccrc.cfgr_pec != 0) {
@@ -131,7 +132,6 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 
 	adBmsWakeupIc2950(TOTAL_IC_2950);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDCFGA2950, Config2950, A_2950);
 	if (ic->cccrc.cfgr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in writing GPO configuration");
 	}
@@ -164,8 +164,6 @@ void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 
 	adBmsWakeupIc2950(TOTAL_IC_2950);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDCFGA2950, Config2950, A_2950);
-
 	if (ic->cccrc.cfgr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in writing GPO configuration");
 	}

@@ -345,10 +345,21 @@ void vHvPlateData(ULONG thread_input)
 	// initialize HV Plate struct and start conversions
 	init_hv_plate(hv_plate, ACCI_8);
 
+	uint16_t count = 0;
+	bool set = false;
+
 	tx_thread_sleep(MS_TO_TICKS(500));
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 	for (;;) {
+
+		PRINTLN_INFO("COUNT: %d", count);
+		if (count >= 50 && !set) {
+			set_gpo(hv_plate->ic, GPO4_2950);
+			PRINTLN_INFO("GPO IS SET");
+			set = true;
+		}
+
 		// get the current reading from the pack
 		get_pack_current_and_batt_voltage(hv_plate,
 						  hv_plate_task_delay);
@@ -389,6 +400,7 @@ void vHvPlateData(ULONG thread_input)
 			send_hv_plate_diagnostic_data(hv_plate);
 		}
 
+		count++;
 		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
 	}
 }
@@ -415,13 +427,13 @@ void vPrecharge(ULONG args)
 
 	hv_plate_t *hv_plate = (hv_plate_t *)args;
 
-	prechargeconfig_t precharge_config;
-	precharge_init(&precharge_config, hv_plate, 0.9f,
-		       200 /* ms debounce time */);
+	//prechargeconfig_t precharge_config;
+	//precharge_init(&precharge_config, hv_plate, 0.9f,
+	//	       200 /* ms debounce time */);
 
 	for (;;) {
-		handle_precharge(&precharge_config);
-		tx_thread_sleep(MS_TO_TICKS(50)); // TODO; fix thread timing
+		//handle_precharge(&precharge_config);
+		tx_thread_sleep(MS_TO_TICKS(100)); // TODO; fix thread timing
 	}
 }
 
@@ -766,7 +778,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	//CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
 	//	    U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
-	// CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),

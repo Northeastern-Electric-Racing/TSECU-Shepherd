@@ -36,8 +36,9 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 		break;
 	}
 	hv_plate->last_total_converion_count = 0;
-
+	
 	set_accumulation_count(hv_plate->ic, conversion_count);
+	reset_gpo(hv_plate->ic, HV_CTRL_GPO);
 	start_adc_conversions(hv_plate->ic);
 }
 
@@ -73,7 +74,7 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 			get_current_conversion(hv_plate->ic->i_vbacc.i1acc) /
 			hv_plate->conversion_count;
 
-		PRINTLN_INFO("PACK CURRENT: %2f", hv_plate->pack_current);
+		//PRINTLN_INFO("PACK CURRENT: %2f", hv_plate->pack_current);
 
 		hv_plate->last_total_converion_count = num_conversitions;
 	}
