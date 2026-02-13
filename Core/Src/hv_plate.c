@@ -66,6 +66,7 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 			get_voltage_conversion(hv_plate->ic->vbacc.vb1acc) /
 			hv_plate->conversion_count;
 
+		PRINTLN_INFO("ACCUMULTED CURRENT REGISTERS: %d",  hv_plate->ic->iacc.i1acc);
 		hv_plate->pack_current =
 			get_current_conversion(hv_plate->ic->iacc.i1acc) /
 			hv_plate->conversion_count;

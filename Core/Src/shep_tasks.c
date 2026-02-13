@@ -22,6 +22,7 @@
 #include "u_tx_flags.h"
 #include "u_tx_general.h"
 #include "u_tx_threads.h"
+#include "application.h"
 
 const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 			   acc_data_t *acc_data, bms_algos_t *bms_algos)
@@ -120,11 +121,12 @@ void vDefaultTask(ULONG thread_input)
 
 		alt = !alt;
 
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, alt);
+		//HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, alt);
+
+		app_main();
 
 		//HAL_IWDG_Refresh(&hiwdg);
-		// tx_thread_sleep(MS_TO_TICKS(2000));
-		tx_thread_sleep(MS_TO_TICKS(200));
+		//tx_thread_sleep(MS_TO_TICKS(200));
 	}
 }
 
@@ -221,13 +223,13 @@ void vAnalyzer(ULONG thread_input)
 	state_machine_t *state_machine = analyzer_args->state_machine;
 	hv_plate_t *hv_plate = analyzer_args->hv_plate;
 
-	create_mutex(&analyzer->analyzer_mutex);
+	//create_mutex(&analyzer->analyzer_mutex);
 
 	for (;;) {
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
 		// NOTE: All functions that modify chip data are externally mutexed
-		mutex_get(&analyzer->analyzer_mutex);
+		//mutex_get(&analyzer->analyzer_mutex);
 
 		// calculate base values for later safety calcs
 		calc_cell_temps(analyzer, acc_data);
@@ -238,7 +240,7 @@ void vAnalyzer(ULONG thread_input)
 		calc_cell_resistances(analyzer, acc_data, hv_plate);
 		update_chip_status(analyzer, acc_data);
 
-		mutex_put(&analyzer->analyzer_mutex);
+		//mutex_put(&analyzer->analyzer_mutex);
 
 		set_flag(DEBUG_FLAG);
 
@@ -339,13 +341,13 @@ void vHvPlateData(ULONG thread_input)
 	bms_algos_t *bms_algos = hv_plate_args->bms_algos;
 	state_machine_t *state_machine = hv_plate_args->state_machine;
 
-	dcl_init(COOLDOWN_ON_FULL_PULSE);
-	ccl_init(COOLDOWN_ON_FULL_PULSE);
+	//dcl_init(COOLDOWN_ON_FULL_PULSE);
+	//	ccl_init(COOLDOWN_ON_FULL_PULSE);
 
 	// initialize HV Plate struct and start conversions
 	init_hv_plate(hv_plate, ACCI_8);
 
-	tx_thread_sleep(TICKS_TO_MS(500));
+	tx_thread_sleep(MS_TO_TICKS(500));
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 	for (;;) {
@@ -765,10 +767,10 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
 	//	    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	// CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
 	//	    U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);

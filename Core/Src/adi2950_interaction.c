@@ -6,19 +6,20 @@
 
 void snap_2950(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
 	spiSendCmd2950(TOTAL_IC_2950, ic, SNAP2950);
 }
 
 void unsnap_2950(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
 	spiSendCmd2950(TOTAL_IC_2950, ic, UNSNAP2950);
 }
 
 void start_adc_conversions(cell_asic_2950 *ic)
 {
-	cmd_description command;
-	adBms2950_Adi1(TOTAL_IC_2950, ic, RD_ON2950, OPT8_C, &command);
-	Delay_ms2950(ADI1_delay_ms);
+	adi2950_start_adi1_continuous_measurment(TOTAL_IC_2950,
+							 ic);
 }
 
 void set_accumulation_count(cell_asic_2950 *ic, ACCI count)
@@ -34,6 +35,7 @@ void set_accumulation_count(cell_asic_2950 *ic, ACCI count)
 
 uint16_t read_conversion_count_registers(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDFLAG, Flag, NONE2950);
 	return ic->flag.i1cnt;
 	if (ic->cccrc.flag_pec != 0) {
@@ -43,6 +45,7 @@ uint16_t read_conversion_count_registers(cell_asic_2950 *ic)
 
 void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDIVB1ACC, AccIvbat,
 			  NONE2950); /* Accumulated Battery Voltage Group*/
 	if (ic->cccrc.avgivbat_pec != 0) {
@@ -52,7 +55,8 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 }
 
 void read_v7_v9_registers(cell_asic_2950 *ic)
-{
+{	
+	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1D, GPV1, D_2950);
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
@@ -61,6 +65,7 @@ void read_v7_v9_registers(cell_asic_2950 *ic)
 
 void read_v2_v3_registers(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1A, GPV1, A_2950);
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
@@ -69,6 +74,7 @@ void read_v2_v3_registers(cell_asic_2950 *ic)
 
 void read_flag_register(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDFLAG, Flag, FLAG_NOERR);
 	if (ic->cccrc.flag_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading flag register");
@@ -77,11 +83,14 @@ void read_flag_register(cell_asic_2950 *ic)
 
 void read_aux_registers(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
 	spiSendCmd2950(TOTAL_IC_2950, ic, sADX);
 	// Poll on conversion to block thread
+	adBmsWakeupIc2950(1);
 	ic[0].pladc_count = adBmsPollAdc2950(TOTAL_IC_2950, ic, PLX);
 
 	// Read all relevant register groups
+	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDXA, Aux2950, A_2950);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDXB, Aux2950, B_2950);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDXC, Aux2950, C_2950);
@@ -89,6 +98,7 @@ void read_aux_registers(cell_asic_2950 *ic)
 	if (ic->cccrc.aux_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading auxiliary registers");
 	}
+	adBmsWakeupIc2950(1);
 	spiSendCmd2950(TOTAL_IC_2950, ic, CLRVX);
 }
 
