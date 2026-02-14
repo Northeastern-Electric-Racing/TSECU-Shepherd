@@ -119,7 +119,7 @@ void vDefaultTask(ULONG thread_input)
 			print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
 		#endif
 
-		queue_eth_msg(eth_msg);
+		//queue_eth_msg(eth_msg);
 
 		if (alt) {
 			printf(".\n");
@@ -663,7 +663,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		(peripherals_t *)malloc(sizeof(peripherals_t));
 
 
-    assert(!ethernet1_init());
+    //assert(!ethernet1_init());
 
 	PRINTLN_INFO("FINISHED INITIALIZING INTERFACES");
 
@@ -846,7 +846,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 	//	    U_SUCCESS);
-	// CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
