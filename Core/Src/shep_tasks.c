@@ -2,6 +2,7 @@
 #include "shep_tasks.h"
 #include "can_handler.h"
 #include "can_messages.h"
+#include "ethernet.h"
 #include "cell_temp_sanitizer.h"
 #include "compute.h"
 #include "control.h"
@@ -171,17 +172,17 @@ void vCanReceive(ULONG thred_input)
 		while (queue_receive(&can_incoming, &message,
 				     TX_WAIT_FOREVER) == U_SUCCESS) {
 			switch (message.id) {
-			case CHARGERBOX_CANID:
-				// TODO process charger can message
-				break;
-			case DTI_CURRENT_CANID:
-				// TODO process charger can message
-				break;
-			case CALYPSO_CONTROL_CANID:
-				control_message_fans(message);
-				break;
-			default:
-				break;
+				case CHARGERBOX_CANID:
+					// TODO process charger can message
+					break;
+				case DTI_CURRENT_CANID:
+					// TODO process charger can message
+					break;
+				case CALYPSO_CONTROL_CANID:
+					control_message_fans(message);
+					break;
+				default:
+					break;
 			}
 		}
 	}
@@ -204,6 +205,39 @@ void vCanDispatch(ULONG thread_input)
 					"Failed to send message (on can1) after removing from "
 					"outgoing queue (Message ID: %ld) - Status %d",
 					message.id, status);
+			}
+		}
+	}
+}
+
+void vEthernetIncoming(ULONG thread_input)
+{
+	while (1) {
+		ethernet_message_t message;
+		/* Process incoming messages */
+		while (queue_receive(&eth_incoming, &message,
+				     TX_WAIT_FOREVER) == U_SUCCESS) {
+			ethernet_inbox(&message);
+		}
+	}
+}
+
+void vEthernetOutgoing(ULONG thread_input)
+{
+	while (1) {
+		ethernet_message_t message;
+		uint8_t status;
+		/* Send outgoing messages */
+		while (queue_receive(&eth_outgoing, &message,
+				     TX_WAIT_FOREVER) == U_SUCCESS) {
+			status = ethernet_send_message(&message);
+			if (status != U_SUCCESS) {
+				PRINTLN_WARNING(
+					"Failed to send Ethernet message after removing from outgoing queue (Message ID: %d).",
+					message.message_id);
+				// u_TODO - maybe add the message back into the queue if it fails to send? not sure if this is a good idea tho
+			} else {
+				PRINTLN_INFO("Sent ethernet message!");
 			}
 		}
 	}
@@ -651,6 +685,16 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vStateMachine /* Thread Function */
 	};
 
+	thread_t _can_receive_thread = {
+		.name = "Can Receive Thread", /* Name */
+		.size = 2048, /* Stack Size (in bytes) */
+		.priority = 2, /* Priority */
+		.threshold = 0, /* Preemption Threshold */
+		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+		.auto_start = TX_AUTO_START, /* Auto Start */
+		.function = vCanReceive /* Thread Function */
+	};
+
 	thread_t _can_dispatch_thread = {
 		.name = "CAN Dispatch Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
@@ -661,14 +705,24 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vCanDispatch /* Thread Function */
 	};
 
-	thread_t _can_receive_thread = {
-		.name = "Can Receive Thread", /* Name */
+	thread_t _ethernet_incoming_thread = {
+		.name = "Ethernet Incoming Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 2, /* Priority */
+		.priority = 1, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vCanReceive /* Thread Function */
+		.function = vEthernetIncoming /* Thread Function */
+	};
+
+	thread_t _ethernet_outgoing_thread = {
+		.name = "Ethernet Outgoing Thread", /* Name */
+		.size = 2048, /* Stack Size (in bytes) */
+		.priority = 1, /* Priority */
+		.threshold = 0, /* Preemption Threshold */
+		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+		.auto_start = TX_AUTO_START, /* Auto Start */
+		.function = vEthernetOutgoing /* Thread Function */
 	};
 
 	thread_t _analyzer_thread = {
@@ -768,6 +822,10 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	// CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
+		    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
+		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
 	//	    U_SUCCESS);

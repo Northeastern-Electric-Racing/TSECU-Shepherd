@@ -40,6 +40,16 @@ void vCanReceive(ULONG thred_input);
 void vCanDispatch(ULONG thread_input);
 
 /**
+ * @brief Task Handling listening and reacting to Ethernet messages
+ */
+void vEthernetIncoming(ULONG thread_input);
+
+/**
+ * @brief Task for handling emitting Ethernet messages
+ */
+void vEthernetOutgoing(ULONG thread_input);
+
+/**
  * @brief Analyzer Task for processing raw chip data from segments
  */
 void vAnalyzer(ULONG thread_input);

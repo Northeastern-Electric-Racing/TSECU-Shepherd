@@ -311,6 +311,15 @@ typedef struct {
 	bool pulse_allowed;
 } current_limit_pulse_ctrl_t;
 
+typedef enum {
+	LONG_CHARGE_UP,
+	LONG_SETTLE,
+	SHORT_CHARGE_UP,
+	SHORT_SETTLE,
+	DONE,
+	FAULT
+} charge_stage_t;
+
 /**
  * @brief data for determine the current BMS State
  */
@@ -325,8 +334,8 @@ typedef struct {
 	uint32_t fault_code_noncrit;
 
 	// charge settling timers
-	nertimer_t charger_settle_countup_timer;
-	nertimer_t charge_settle_countdown_timer;
+	nertimer_t charging_stage_timer;
+	charge_stage_t charging_stage;
 
 	// charging message timer for telemetry
 	nertimer_t charger_message_timer;
