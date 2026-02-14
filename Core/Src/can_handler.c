@@ -9,7 +9,7 @@
 
 #define CAN_MSG_QUEUE_SIZE 50 /* messages */
 
-can_t *can1;
+can_t can1;
 
 static uint16_t can1_id_list_standard[4] = {
 	// CANID_X,
@@ -23,9 +23,14 @@ static uint32_t can1_id_list_extended[2] = {
 
 uint8_t init_can(FDCAN_HandleTypeDef *hcan)
 {
-	return can_filter_init(hcan, can1, can1_id_list_standard,
+	return can_filter_init(hcan, &can1, can1_id_list_standard,
 			       can1_id_list_extended);
 }
+
+static uint8_t receive_can_msg(can_msg_t can_msg)
+{
+	return queue_send(&can_incoming, &can_msg, TX_NO_WAIT);
+} 
 
 void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs)
 {
@@ -49,14 +54,14 @@ void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs)
 			}
 
 			/* Send message to incoming CAN queue */
-			queue_can_msg(message);
+			receive_can_msg(message);
 		}
 	}
 }
 
 uint8_t queue_can_msg(can_msg_t can_msg)
 {
-	return queue_send(&can_outgoing, &can_msg, TX_WAIT_FOREVER);
+	return queue_send(&can_outgoing, &can_msg, TX_NO_WAIT);
 }
 
 /**
