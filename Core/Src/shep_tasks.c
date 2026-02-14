@@ -109,10 +109,6 @@ void vDefaultTask(ULONG thread_input)
 
 	/* Infinite loop */
 	for (;;) {
-#ifdef DEBUG_STATS
-		print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
-#endif
-
 		if (alt) {
 			printf(".\n");
 		} else {
@@ -282,11 +278,12 @@ void vAnalyzer(ULONG thread_input)
 		send_cell_temp_message(analyzer->max_temp, analyzer->min_temp,
 				       analyzer->avg_temp);
 		send_segment_temp_message(analyzer);
+
 	}
 }
 
 void vGetSegmentData(ULONG thread_input)
-{	
+{
 	PRINTLN_INFO("Starting GetSegmentData thread...");
 
 	const uint16_t balancing_delay = 75;
@@ -301,7 +298,7 @@ void vGetSegmentData(ULONG thread_input)
 	// isospi_break_detection_init(acc_data->chips);
 
 	// must delay after init for ADC to start up
-	tx_thread_sleep(MS_TO_TICKS(500));
+	tx_thread_sleep(MS_TO_TICKS(200));
 
 	state_t prev_state = BOOT;
 	state_t current_state = BOOT;
@@ -350,8 +347,7 @@ void vGetSegmentData(ULONG thread_input)
 		// }
 
 		set_flag(ANALYZER_FLAG);
-		tx_thread_sleep(MS_TO_TICKS(1000));
-		printf("Tick");
+		tx_thread_sleep(MS_TO_TICKS(750));
 	}
 }
 
@@ -400,7 +396,7 @@ void vHvPlateData(ULONG thread_input)
 			dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
-		*/	
+		*/
 
 		// read ts voltage
 		get_ts_voltage(hv_plate);
@@ -814,29 +810,30 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	create_mutex(&state_machine->state_mutex);
 	create_mutex(&bms_algos->bms_algos_mutex);
 
+    PRINTLN_INFO("RUNNING THREADS");
+
 	/* Task Definitions End */
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
 	//	    U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 
-  PRINTLN_INFO("RUNNING THREADS");
 
-	CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
-		    U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
+	// 	    U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
+	// 	    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
 	//	    U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 	//	    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");
 	return U_SUCCESS;

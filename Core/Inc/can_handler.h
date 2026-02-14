@@ -74,8 +74,6 @@
 #define FAULT_TIMER_CANID 0x6F9
 #define FAULT_TIMER_SIZE  4
 
-extern can_t can1;
-
 void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs);
 
 /**
