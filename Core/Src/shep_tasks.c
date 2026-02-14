@@ -1,4 +1,6 @@
 
+#include <assert.h>
+
 #include "shep_tasks.h"
 #include "can_handler.h"
 #include "can_messages.h"
@@ -18,6 +20,7 @@
 #include "soc.h"
 #include "state_machine.h"
 #include "timer.h"
+#include "u_nx_ethernet.h"
 #include "u_tx_can.h"
 #include "u_tx_debug.h"
 #include "u_tx_flags.h"
@@ -107,8 +110,17 @@ void vDefaultTask(ULONG thread_input)
 
 	bool alt = true;
 
+	uint8_t message = 211;
+	ethernet_message_t eth_msg = ethernet_create_message(0x02, TPU, &message, sizeof(message));
+
 	/* Infinite loop */
 	for (;;) {
+        #ifdef DEBUG_STATS
+			print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
+		#endif
+
+		queue_eth_msg(eth_msg);
+
 		if (alt) {
 			printf(".\n");
 		} else {
@@ -650,6 +662,9 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	peripherals_args->peripherals =
 		(peripherals_t *)malloc(sizeof(peripherals_t));
 
+
+    assert(!ethernet1_init());
+
 	PRINTLN_INFO("FINISHED INITIALIZING INTERFACES");
 
 	/* Init Interfaces End */
@@ -821,10 +836,10 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 
 
-	// CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
-	// 	    U_SUCCESS);
-	// CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
-	// 	    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
+	 	    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
+	 	    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
 	//	    U_SUCCESS);
