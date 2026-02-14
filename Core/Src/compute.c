@@ -93,7 +93,7 @@ static int32_t _lsm6dsv_write(void *spi_handle, uint8_t reg,
 	return 0;
 }
 
-static const stmdev_ctx_t imu = { .handle = &hspi2,
+static const stmdev_ctx_t imu = { .handle = &hspi6,
 				  .read_reg = _lsm6dsv_read,
 				  .write_reg = _lsm6dsv_write };
 

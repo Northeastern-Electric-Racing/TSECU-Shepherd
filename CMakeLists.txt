@@ -36,6 +36,8 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/art")
     message("${ASCII_ART}")
 endif()
 
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -u _printf_float")
+
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
 

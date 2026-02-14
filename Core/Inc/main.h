@@ -36,8 +36,9 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-extern IWDG_HandleTypeDef hiwdg;
+//extern IWDG_HandleTypeDef hiwdg;
 extern SPI_HandleTypeDef hspi2;
+extern SPI_HandleTypeDef hspi6;
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim4;
 /* USER CODE END ET */
@@ -62,6 +63,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define SPI4_CS_Pin GPIO_PIN_4
+#define SPI4_CS_GPIO_Port GPIOE
 #define TS_MINUS_SENSE_Pin GPIO_PIN_0
 #define TS_MINUS_SENSE_GPIO_Port GPIOC
 #define TS_PLUS_SENSE_Pin GPIO_PIN_3
