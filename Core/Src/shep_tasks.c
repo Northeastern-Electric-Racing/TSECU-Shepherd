@@ -515,6 +515,9 @@ void vPeripherals(ULONG thread_input)
 			peripherals, &peripherals->sht30.temp,
 			&peripherals->sht30.humidity);
 
+		PRINTLN_INFO("SHT30 Temp Sensor Reading: %.2f C", peripherals->sht30.temp);
+		PRINTLN_INFO("SHT30 Temp Humidity Sensor Reading: %.2f %%", peripherals->sht30.humidity);
+
 		mutex_put(&peripherals->peripherals_mutex);
 
 		tx_thread_sleep(MS_TO_TICKS(50));
