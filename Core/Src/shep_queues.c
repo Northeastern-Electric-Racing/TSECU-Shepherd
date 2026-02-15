@@ -24,7 +24,7 @@ queue_t eth_incoming = {
 	.name = "Incoming Ethernet Queue", /* Name of the queue. */
 	.message_size = sizeof(
 		ethernet_message_t), /* Size of each queue message, in bytes. */
-	.capacity = 10 /* Number of messages the queue can hold. */
+	.capacity = 100 /* Number of messages the queue can hold. */
 };
 
 /* Outgoing CAN Queue */
@@ -32,7 +32,7 @@ queue_t eth_outgoing = {
 	.name = "Outgoing Ethernet Queue", /* Name of the queue. */
 	.message_size = sizeof(
 		ethernet_message_t), /* Size of each queue message, in bytes. */
-	.capacity = 10 /* Number of messages the queue can hold. */
+	.capacity = 100 /* Number of messages the queue can hold. */
 };
 
 /* Initializes all ThreadX queues.

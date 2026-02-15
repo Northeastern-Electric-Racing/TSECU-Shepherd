@@ -220,6 +220,20 @@ void ETH_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles Ethernet Wakeup global interrupt.
+  */
+void ETH_WKUP_IRQHandler(void)
+{
+  /* USER CODE BEGIN ETH_WKUP_IRQn 0 */
+
+  /* USER CODE END ETH_WKUP_IRQn 0 */
+  HAL_ETH_IRQHandler(&heth);
+  /* USER CODE BEGIN ETH_WKUP_IRQn 1 */
+
+  /* USER CODE END ETH_WKUP_IRQn 1 */
+}
+
+/**
   * @brief This function handles FDCAN2 interrupt 0.
   */
 void FDCAN2_IT0_IRQHandler(void)

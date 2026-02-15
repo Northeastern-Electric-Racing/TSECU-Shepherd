@@ -29,7 +29,8 @@ uint8_t init_can(FDCAN_HandleTypeDef *hcan)
 
 static uint8_t receive_can_msg(can_msg_t can_msg)
 {
-	return queue_send(&can_incoming, &can_msg, TX_NO_WAIT);
+	//return queue_send(&can_incoming, &can_msg, TX_NO_WAIT);
+	return 0;
 } 
 
 void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs)

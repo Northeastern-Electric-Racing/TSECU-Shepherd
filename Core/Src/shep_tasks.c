@@ -110,16 +110,19 @@ void vDefaultTask(ULONG thread_input)
 
 	bool alt = true;
 
+    assert(!ethernet1_init());
+
 	uint8_t message = 211;
 	ethernet_message_t eth_msg = ethernet_create_message(0x02, TPU, &message, sizeof(message));
+
 
 	/* Infinite loop */
 	for (;;) {
         #ifdef DEBUG_STATS
-			print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
+			//print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
 		#endif
 
-		//queue_eth_msg(eth_msg);
+		queue_eth_msg(eth_msg);
 
 		if (alt) {
 			printf(".\n");
@@ -129,10 +132,7 @@ void vDefaultTask(ULONG thread_input)
 
 		alt = !alt;
 
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, alt);
-
 		//HAL_IWDG_Refresh(&hiwdg);
-		// tx_thread_sleep(MS_TO_TICKS(2000));
 		tx_thread_sleep(MS_TO_TICKS(200));
 	}
 }
@@ -663,7 +663,6 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		(peripherals_t *)malloc(sizeof(peripherals_t));
 
 
-    //assert(!ethernet1_init());
 
 	PRINTLN_INFO("FINISHED INITIALIZING INTERFACES");
 
@@ -821,9 +820,9 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vDebug, /* Thread Function */
 	};
 
-	create_mutex(&analyzer->analyzer_mutex);
-	create_mutex(&state_machine->state_mutex);
-	create_mutex(&bms_algos->bms_algos_mutex);
+	//create_mutex(&analyzer->analyzer_mutex);
+	//create_mutex(&state_machine->state_mutex);
+	//create_mutex(&bms_algos->bms_algos_mutex);
 
     PRINTLN_INFO("RUNNING THREADS");
 
@@ -831,24 +830,24 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
 	//	    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 
 
 	CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
 	 	    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
 	 	    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
 	//	    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 	//	    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
 	//CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");
 	return U_SUCCESS;
