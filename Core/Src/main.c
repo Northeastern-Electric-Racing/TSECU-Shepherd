@@ -297,7 +297,7 @@ static void MX_ETH_Init(void)
   MACAddr[2] = 0xE1;
   MACAddr[3] = 0x00;
   MACAddr[4] = 0x00;
-  MACAddr[5] = 0x00;
+  MACAddr[5] = 0x01;
   heth.Init.MACAddr = &MACAddr[0];
   heth.Init.MediaInterface = HAL_ETH_RMII_MODE;
   heth.Init.TxDesc = DMATxDscrTab;

@@ -115,7 +115,6 @@ void vDefaultTask(ULONG thread_input)
 	uint8_t message = 211;
 	ethernet_message_t eth_msg = ethernet_create_message(0x02, TPU, &message, sizeof(message));
 
-
 	/* Infinite loop */
 	for (;;) {
         #ifdef DEBUG_STATS

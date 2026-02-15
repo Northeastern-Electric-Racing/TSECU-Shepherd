@@ -132,7 +132,8 @@ int32_t nx_eth_phy_get_link_state(void)
 
   /* USER CODE BEGIN LINK_STATE_1 */
     uint8_t link_state;
-    int32_t ret = LAN8670_Get_Link_State(&lan8670, &link_state); // NOTE: This should always return 1, since the LAN8670 doesn't support link status indication.
+    int32_t ret = LAN8670_Get_Link_State(&lan8670, &link_state);
+    // NOTE: This should always return 1, since the LAN8670 doesn't support link status indication.
     
     if (ret == LAN8670_STATUS_OK && link_state == 1)
     {
