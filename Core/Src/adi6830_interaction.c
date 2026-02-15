@@ -34,18 +34,6 @@ static void count_pec_errors(cell_asic chips[NUM_CHIPS])
 				   chips[chip].cccrc.pwm_pec +
 				   chips[chip].cccrc.sid_pec);
 
-		// printf("1 %d\n", chips[chip].cccrc.cfgr_pec);
-		// printf("b %d\n", chips[chip].cccrc.cell_pec);
-		// printf("2 %d\n", chips[chip].cccrc.acell_pec);
-		// printf("3 %d\n", chips[chip].cccrc.scell_pec);
-		// printf("4 %d\n", chips[chip].cccrc.fcell_pec);
-		// printf("5 %d\n", chips[chip].cccrc.aux_pec);
-		// printf("6 %d\n", chips[chip].cccrc.raux_pec);
-		// printf("7 %d\n", chips[chip].cccrc.stat_pec);
-		// printf("8 %d\n", chips[chip].cccrc.comm_pec);
-		// printf("9 %d\n", chips[chip].cccrc.pwm_pec);
-		// printf("10 %d\n\n\n", chips[chip].cccrc.sid_pec);
-	
 		if (pec_error_count > 0) {
 			printf("PEC Error: Chip %u, Count: %u\n", chip,
 			       pec_error_count);
@@ -99,10 +87,10 @@ static void count_pec_errors(cell_asic chips[NUM_CHIPS])
 				printf("\n");
 			}
 
-			//send_pec_error_message(chip, pec_error_count);
+			send_pec_error_message(chip, pec_error_count);
 
 			// Accumulate PEC errors only after startup mask timer ends
-			/*
+
 			if (!is_startup_pec_mask_active()) {
 				// Saturate at MAX_PEC_ERROR_ACCUM
 				if ((MAX_PEC_ERROR_ACCUM -
@@ -115,11 +103,10 @@ static void count_pec_errors(cell_asic chips[NUM_CHIPS])
 						pec_error_count; // cleared in detect_isospi_break()
 				}
 			}
-			*/
 		}
 
 		// Reset PEC counters for next round
-		//memset(&(chips[chip].cccrc), 0, sizeof(chips[chip].cccrc));
+		memset(&(chips[chip].cccrc), 0, sizeof(chips[chip].cccrc));
 	}
 }
 

@@ -110,16 +110,11 @@ void vDefaultTask(ULONG thread_input)
 
 	bool alt = true;
 
-	uint8_t message = 211;
-	ethernet_message_t eth_msg = ethernet_create_message(0x02, TPU, &message, sizeof(message));
-
 	/* Infinite loop */
 	for (;;) {
-        #ifdef DEBUG_STATS
-			print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
-		#endif
-
-		//queue_eth_msg(eth_msg);
+#ifdef DEBUG_STATS
+		print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
+#endif
 
 		if (alt) {
 			printf(".\n");
@@ -131,8 +126,7 @@ void vDefaultTask(ULONG thread_input)
 
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, alt);
 
-		//HAL_IWDG_Refresh(&hiwdg);
-		// tx_thread_sleep(MS_TO_TICKS(2000));
+		HAL_IWDG_Refresh(&hiwdg);
 		tx_thread_sleep(MS_TO_TICKS(200));
 	}
 }
@@ -211,7 +205,8 @@ void vCanDispatch(ULONG thread_input)
 					"outgoing queue (Message ID: %ld) - Status %d",
 					message.id, status);
 			} else {
-				PRINTLN_INFO("Sent CAN message with ID: %ld", message.id);
+				PRINTLN_INFO("Sent CAN message with ID: %ld",
+					     message.id);
 			}
 		}
 	}
@@ -252,7 +247,6 @@ void vEthernetOutgoing(ULONG thread_input)
 
 void vAnalyzer(ULONG thread_input)
 {
-
 	PRINTLN_INFO("Starting Analyzer Thread...");
 
 	analyzer_args_t *analyzer_args = (analyzer_args_t *)thread_input;
@@ -290,7 +284,6 @@ void vAnalyzer(ULONG thread_input)
 		send_cell_temp_message(analyzer->max_temp, analyzer->min_temp,
 				       analyzer->avg_temp);
 		send_segment_temp_message(analyzer);
-
 	}
 }
 
@@ -321,42 +314,41 @@ void vGetSegmentData(ULONG thread_input)
 		prev_state = current_state;
 		current_state = get_current_state(state_machine);
 
-		// if (prev_state == BALANCING && current_state == CHARGING) {
-		// 	tx_thread_sleep(MS_TO_TICKS(
-		// 		balancing_delay)); // delay after balancing to let cells settle
-		// }
+		if (prev_state == BALANCING && current_state == CHARGING) {
+			tx_thread_sleep(MS_TO_TICKS(
+				balancing_delay)); // delay after balancing to let cells settle
+		}
 
-		// if (current_state == CHARGING || current_state == BALANCING) {
-		// 	// in charging, debug data is required to get things like die temp
-		// 	segment_retrieve_charging_data(acc_data->chips, &hspi2);
-		// 	// isospi_handle_state(acc_data->chips, state_machine,
-		// 	// 		    &hspi2);
-
-		// } else {
+		if (current_state == CHARGING || current_state == BALANCING) {
+			// in charging, debug data is required to get things like die temp
+			segment_retrieve_charging_data(acc_data->chips, &hspi2);
+			isospi_handle_state(acc_data->chips, state_machine,
+					    &hspi2);
+		} else {
 			// snap before getting data
 			segment_snap(acc_data->chips, &hspi2);
 			segment_retrieve_active_data(acc_data->chips, &hspi2);
 			// unsnap after getting data
 			segment_unsnap(acc_data->chips, &hspi2);
 
-			// isospi_handle_state(acc_data->chips, state_machine,
-			// 		    &hspi2);
+			isospi_handle_state(acc_data->chips, state_machine,
+					    &hspi2);
 
 			if (DEBUG_MODE_ENABLED) {
 				segment_retrieve_debug_data(acc_data->chips,
 							    &hspi2);
 			}
-		// }
+		}
 
-		// if (current_state == CHARGING || current_state == BALANCING) {
-		// 	segment_unmute(acc_data->chips, &hspi2);
-		// }
+		if (current_state == CHARGING || current_state == BALANCING) {
+			segment_unmute(acc_data->chips, &hspi2);
+		}
 
-		// if (get_current_state(state_machine) == BALANCING) {
-		// 	segment_configure_balancing(
-		// 		acc_data->chips, acc_data->discharge_config,
-		// 		&hspi2); // TODO: Move to state machine
-		// }
+		if (get_current_state(state_machine) == BALANCING) {
+			segment_configure_balancing(
+				acc_data->chips, acc_data->discharge_config,
+				&hspi2); // TODO: Move to state machine
+		}
 
 		set_flag(ANALYZER_FLAG);
 		tx_thread_sleep(MS_TO_TICKS(750));
@@ -394,10 +386,10 @@ void vHvPlateData(ULONG thread_input)
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
-		//update_soc(analyzer, hv_plate);
+		update_soc(analyzer, hv_plate);
 
 		/* Check whether pulse operation needs to be disabled due to charging state or faults */
-		/*
+		
 		if (disable_pulse(state_machine)) {
 			mutex_get(&bms_algos->bms_algos_mutex);
 			bms_algos->cont_DCL = bms_algos->inst_DCL;
@@ -408,7 +400,6 @@ void vHvPlateData(ULONG thread_input)
 			dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
-		*/
 
 		// read ts voltage
 		get_ts_voltage(hv_plate);
@@ -500,7 +491,8 @@ void vControl(ULONG thread_input)
 	// Initialize peripherals for control
 	bool failed = !control_init_peripherals();
 	if (failed) {
-		PRINTLN_ERROR("Failed to initialize one or more peripherals.\n");
+		PRINTLN_ERROR(
+			"Failed to initialize one or more peripherals.\n");
 	}
 
 	for (;;) {
@@ -525,7 +517,10 @@ void vPeripherals(ULONG thread_input)
 	peripherals_t *peripherals = peripherals_args->peripherals;
 	imu_data_t imu_data = peripherals->imu_data;
 
-	create_mutex(&peripherals->peripherals_mutex);
+	bool failed = !imu_init();
+	if (failed) {
+		printf("Failed to initialize imu.\n");
+	}
 
 	for (;;) {
 		mutex_get(&peripherals->peripherals_mutex);
@@ -541,7 +536,6 @@ void vPeripherals(ULONG thread_input)
 
 void vDebug(ULONG thread_input)
 {
-
 	PRINTLN_INFO("Starting Debug thread...");
 
 	analyzer_t *analyzer = (analyzer_t *)thread_input;
@@ -612,6 +606,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	hv_plate->ic = &hv_plate_ic;
 	sanitizer_t *sanitizer = (sanitizer_t *)malloc(sizeof(sanitizer_t));
 	bms_algos_t *bms_algos = (bms_algos_t *)malloc(sizeof(bms_algos_t));
+	peripherals_t *peripherals = (peripherals_t *)malloc(sizeof(peripherals_t));
 
 	default_task_args_t *default_task_args =
 		(default_task_args_t *)malloc(sizeof(default_task_args_t));
@@ -659,11 +654,9 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	peripherals_args_t *peripherals_args =
 		(peripherals_args_t *)malloc(sizeof(peripherals_args_t));
-	peripherals_args->peripherals =
-		(peripherals_t *)malloc(sizeof(peripherals_t));
+	peripherals_args->peripherals = peripherals;
 
-
-    //assert(!ethernet1_init());
+	//assert(!ethernet1_init());
 
 	PRINTLN_INFO("FINISHED INITIALIZING INTERFACES");
 
@@ -824,30 +817,30 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	create_mutex(&analyzer->analyzer_mutex);
 	create_mutex(&state_machine->state_mutex);
 	create_mutex(&bms_algos->bms_algos_mutex);
+	create_mutex(&peripherals->peripherals_mutex);
 
-    PRINTLN_INFO("RUNNING THREADS");
+	PRINTLN_INFO("RUNNING THREADS");
 
 	/* Task Definitions End */
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
-	//	    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
+		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 
-
 	CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
-	 	    U_SUCCESS);
+		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
-	 	    U_SUCCESS);
+		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
-	//	    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
+		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
-	//	    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
+		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");

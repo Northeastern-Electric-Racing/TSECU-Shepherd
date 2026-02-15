@@ -36,11 +36,10 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-//extern IWDG_HandleTypeDef hiwdg;
+extern IWDG_HandleTypeDef hiwdg;
 extern SPI_HandleTypeDef hspi2;
 extern SPI_HandleTypeDef hspi6;
 extern TIM_HandleTypeDef htim3;
-extern TIM_HandleTypeDef htim4;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
