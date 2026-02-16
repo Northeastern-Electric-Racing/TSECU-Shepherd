@@ -20,20 +20,20 @@ static float get_voltage_conversion(int data)
 void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 {
 	switch (conversion_count) {
-	case ACCI_8:
-		hv_plate->conversion_count = 8;
-		break;
-	case ACCI_16:
-		hv_plate->conversion_count = 16;
-		break;
-	case ACCI_32:
-		hv_plate->conversion_count = 32;
-		break;
-	default:
-		PRINTLN_WARNING(
-			"Unsupported accumulation count, defaulting to 8");
-		hv_plate->conversion_count = 8;
-		break;
+		case ACCI_8:
+			hv_plate->conversion_count = 8;
+			break;
+		case ACCI_16:
+			hv_plate->conversion_count = 16;
+			break;
+		case ACCI_32:
+			hv_plate->conversion_count = 32;
+			break;
+		default:
+			PRINTLN_WARNING(
+				"Unsupported accumulation count, defaulting to 8");
+			hv_plate->conversion_count = 8;
+			break;
 	}
 	hv_plate->last_total_converion_count = 0;
 
