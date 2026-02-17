@@ -15,7 +15,7 @@ jobs:
     - name: Run clang-format style check for C/C++ sources
       uses: Northeastern-Electric-Racing/clang-format-action@main
       with:
-        clang-format-version: '18'
+        clang-format-version: '17'
         # only check core, embedded base covered internally
         check-path: "Core/"
         # use the clang-format from embedded base
