@@ -25,6 +25,8 @@
 #include "u_tx_debug.h"
 #include "u_tx_flags.h"
 #include "u_tx_general.h"
+#include "lan8670.h"
+#include "nx_stm32_phy_driver.h"
 #include "u_tx_threads.h"
 
 const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
@@ -129,10 +131,21 @@ void vDefaultTask(ULONG thread_input)
 			printf("..\n");
 		}
 
+
 		alt = !alt;
 
+		PRINTLN_INFO("got toteh end of the default task.");
 		//HAL_IWDG_Refresh(&hiwdg);
 		tx_thread_sleep(MS_TO_TICKS(200));
+
+		lan8670_t* lan = nx_eth_phy_get_handle();
+		uint16_t buff = 0;
+		int status = LAN8670_Read_PHY_ID1(lan, &buff);
+		PRINTLN_INFO("buff=%d.", buff);
+
+		uint8_t buff2 = 0;
+		status = LAN8670_Read_Model_Number(lan, &buff2);
+		PRINTLN_INFO("buff2=%d.", buff2);
 	}
 }
 

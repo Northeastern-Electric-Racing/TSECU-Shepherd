@@ -16,11 +16,12 @@
 /* USER CODE BEGIN Includes */
 #include "lan8670.h"
 #include "u_nx_ethernet.h"
+#include "u_tx_debug.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-static lan8670_t lan8670;
+lan8670_t lan8670;
 static lan8670_IOCtx_t lan8670_io_ctx;
 /* USER CODE END PTD */
 
@@ -60,7 +61,7 @@ int32_t nx_eth_phy_init(void)
 {
 
 /* USER CODE BEGIN PHY_INIT_0 */
-
+PRINTLN_INFO("got to this part of nx_eth_phy_init()");
 /* USER CODE END PHY_INIT_0 */
 
     int32_t ret = ETH_PHY_STATUS_OK;

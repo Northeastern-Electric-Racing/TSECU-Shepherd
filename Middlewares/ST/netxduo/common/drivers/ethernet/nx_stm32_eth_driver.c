@@ -149,6 +149,7 @@ VOID  nx_stm32_eth_driver(NX_IP_DRIVER *driver_req_ptr)
 NX_INTERFACE *interface_ptr;
 #endif /* NX_ENABLE_VLAN */
 
+  printf("got to this point in nx_stm32_eth_driver()\n");
   /* Default to successful return.  */
   driver_req_ptr -> nx_ip_driver_status =  NX_SUCCESS;
 
