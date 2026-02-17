@@ -82,7 +82,7 @@ PRINTLN_INFO("got to this part of nx_eth_phy_init()");
     }
 
     /* Initialize the LAN8670 */
-    ret = LAN8670_Init(&lan8670);
+    ret = LAN8670_Init(&lan8670, 0b00001);
     if (ret != LAN8670_STATUS_OK)
     {
         return ETH_PHY_STATUS_ERROR;

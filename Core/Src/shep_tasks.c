@@ -146,6 +146,10 @@ void vDefaultTask(ULONG thread_input)
 		uint8_t buff2 = 0;
 		status = LAN8670_Read_Model_Number(lan, &buff2);
 		PRINTLN_INFO("buff2=%d.", buff2);
+
+		uint8_t buff3 = 0;
+		status = LAN8670_Read_PHY_DevAddr(lan, &buff3);
+		PRINTLN_INFO("buff3=%d.", buff3);
 	}
 }
 
