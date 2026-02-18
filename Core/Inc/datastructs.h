@@ -8,8 +8,8 @@
 #include "u_tx_mutex.h"
 #include "adBms6830Data.h"
 #include "adi_bms_2950data.h"
-#include "compute.h"
 #include "timer.h"
+#include "sht30.h"
 
 /**
  * @brief Stores critical values for the pack (across all chips), and where that critical value can be found
@@ -102,7 +102,6 @@ typedef struct {
 	therm_state_t sanitized_therms[NUM_CHIPS][NUM_CELLS_PER_CHIP];
 	crit_cellval_t max_sanitized_temp;
 	crit_cellval_t min_sanitized_temp;
-
 } sanitizer_t;
 
 /**
@@ -344,6 +343,15 @@ typedef struct {
 
 } state_machine_t;
 
+/**
+ * Represents a 3D vector for IMU data
+ */
+typedef struct {
+	float x;
+	float y;
+	float z;
+} vector3_t;
+
 typedef struct {
 	vector3_t accel_data;
 	vector3_t ang_rate_data;
@@ -352,6 +360,7 @@ typedef struct {
 typedef struct {
 	mutex_t peripherals_mutex;
 	imu_data_t imu_data;
+	sht30_t sht30;
 } peripherals_t;
 
 /* Task Args */

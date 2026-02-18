@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "datastructs.h"
 #include "main.h"
-#include <sht30.h>
+#include "sht30.h"
 #include "lsm6dsv_reg.h"
 
 #define IMU_CS_GPIO_Port SPI6_CS_GPIO_Port
@@ -261,13 +261,13 @@ static inline uint8_t sht30_i2c_blocking_read(uint8_t *data, uint16_t command,
 				      HAL_MAX_DELAY);
 }
 
-void init_compute(compute_t *compute_ptr)
+void init_compute(peripherals_t *peripherals)
 {
-	assert(compute_ptr);
-	assert(!sht30_init(&compute_ptr->sht30, (Write_ptr)sht30_i2c_write,
+	assert(peripherals);
+	assert(!imu_init());
+	assert(!sht30_init(&peripherals->sht30, (Write_ptr)sht30_i2c_write,
 			   (Read_ptr)sht30_i2c_read,
 			   (Read_ptr)sht30_i2c_blocking_read, SHT30_I2C_ADDR));
-	compute = compute_ptr;
 }
 
 void compute_set_fault(bool fault_state)
@@ -294,4 +294,22 @@ bool read_shutdown()
 	// If the pin is high, the shutdown circuit is closed. So, return false.
 	// If the pin is low, the shutdown circuit is open. So, return true.
 	return !shutdown;
+}
+
+int tempsensor_getTemperatureAndHumdidty(peripherals_t *peripherals,
+					 float *temperature, float *humidity)
+{
+	CATCH_ERROR(mutex_get(&peripherals->peripherals_mutex), U_SUCCESS);
+	int status = sht30_get_temp_humid(&peripherals->sht30);
+	CATCH_ERROR(mutex_put(&peripherals->peripherals_mutex), U_SUCCESS);
+	if (status != 0) {
+		PRINTLN_ERROR(
+			"Failed to read SHT30 temperature/humidity (Status: %d).",
+			status);
+		return U_ERROR;
+	}
+
+	*temperature = peripherals->sht30.temp;
+	*humidity = peripherals->sht30.humidity;
+	return U_SUCCESS;
 }

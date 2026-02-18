@@ -82,6 +82,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/middleware/src/c_utils.c"
     "Drivers/Embedded-Base/platforms/stm32h563/src/fdcan.c"
     "Drivers/Embedded-Base/middleware/src/timer.c"
+    "Drivers/Embedded-Base/general/src/sht30.c"
     "Core/Src/adi2950_interaction.c"
     "Core/Src/adi6830_interaction.c"
     "Core/Src/analyzer.c"
