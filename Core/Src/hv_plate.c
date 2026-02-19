@@ -7,7 +7,7 @@
 
 static float get_current_conversion(uint32_t data)
 {
-	float current = 1e-6 * ((int32_t)(data << (32 - 24)) >> (32 - 24));
+	float current = ((int32_t)(data << (32 - 24)) >> (32 - 24));
 	return current / (float)SHUNT_RESISTANCE;
 }
 
@@ -63,11 +63,11 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 		    hv_plate->conversion_count >=
 	    expected_conversions) {
 		hv_plate->batt_volts =
-			get_voltage_conversion(hv_plate->ic->vbacc.vb1acc) /
+			get_voltage_conversion(hv_plate->ic->i_vbacc.vb1acc) /
 			hv_plate->conversion_count;
 
 		hv_plate->pack_current =
-			get_current_conversion(hv_plate->ic->iacc.i1acc) /
+			get_current_conversion(hv_plate->ic->i_vbacc.i1acc) /
 			hv_plate->conversion_count;
 
 		hv_plate->last_total_converion_count = num_conversitions;

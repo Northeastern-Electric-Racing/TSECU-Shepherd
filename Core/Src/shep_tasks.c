@@ -124,9 +124,7 @@ void vDefaultTask(ULONG thread_input)
 
 		alt = !alt;
 
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, alt);
-
-		HAL_IWDG_Refresh(&hiwdg);
+		//HAL_IWDG_Refresh(&hiwdg);
 		tx_thread_sleep(MS_TO_TICKS(200));
 	}
 }
@@ -376,7 +374,7 @@ void vHvPlateData(ULONG thread_input)
 	// initialize HV Plate struct and start conversions
 	init_hv_plate(hv_plate, ACCI_8);
 
-	tx_thread_sleep(TICKS_TO_MS(500));
+	tx_thread_sleep(MS_TO_TICKS(500));
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 	for (;;) {
@@ -384,12 +382,15 @@ void vHvPlateData(ULONG thread_input)
 		get_pack_current_and_batt_voltage(hv_plate,
 						  hv_plate_task_delay);
 
+		PRINTLN_INFO("PACK CURRENT: %2f", hv_plate->pack_current);
+
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
 		update_soc(analyzer, hv_plate);
 
 		/* Check whether pulse operation needs to be disabled due to charging state or faults */
-		
+
+			/*
 		if (disable_pulse(state_machine)) {
 			mutex_get(&bms_algos->bms_algos_mutex);
 			bms_algos->cont_DCL = bms_algos->inst_DCL;
@@ -400,6 +401,7 @@ void vHvPlateData(ULONG thread_input)
 			dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
+		*/
 
 		// read ts voltage
 		get_ts_voltage(hv_plate);
@@ -517,7 +519,7 @@ void vPeripherals(ULONG thread_input)
 	peripherals_t *peripherals = peripherals_args->peripherals;
 	imu_data_t imu_data = peripherals->imu_data;
 
-	bool failed = !imu_init();
+	bool failed = imu_init();
 	if (failed) {
 		printf("Failed to initialize imu.\n");
 	}
@@ -823,8 +825,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	/* Task Definitions End */
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
-		    U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
+	//	    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
@@ -833,7 +835,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
 		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
