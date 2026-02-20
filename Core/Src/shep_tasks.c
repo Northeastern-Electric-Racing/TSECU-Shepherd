@@ -4,15 +4,15 @@
 #include "shep_tasks.h"
 #include "can_handler.h"
 #include "can_messages.h"
-#include "ethernet.h"
+#include "ccl.h"
 #include "cell_temp_sanitizer.h"
 #include "compute.h"
 #include "control.h"
-#include "hv_plate.h"
-#include "isospi_recovery.h"
 #include "current_limit_algo_utils.h"
 #include "dcl.h"
-#include "ccl.h"
+#include "ethernet.h"
+#include "hv_plate.h"
+#include "isospi_recovery.h"
 #include "main.h"
 #include "precharge_routine.h"
 #include "segment.h"
@@ -135,7 +135,7 @@ void vStateMachine(ULONG thread_input)
 
 	state_machine_args_t *state_machine_args =
 		(state_machine_args_t *)thread_input;
-		
+
 	state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
 
@@ -234,9 +234,11 @@ void vEthernetOutgoing(ULONG thread_input)
 			status = ethernet_send_message(&message);
 			if (status != U_SUCCESS) {
 				PRINTLN_WARNING(
-					"Failed to send Ethernet message after removing from outgoing queue (Message ID: %d).",
+					"Failed to send Ethernet message after removing from "
+					"outgoing queue (Message ID: %d).",
 					message.message_id);
-				// u_TODO - maybe add the message back into the queue if it fails to send? not sure if this is a good idea tho
+				// u_TODO - maybe add the message back into the queue if it fails to
+				// send? not sure if this is a good idea tho
 			} else {
 				PRINTLN_INFO("Sent ethernet message!");
 			}
@@ -383,8 +385,6 @@ void vHvPlateData(ULONG thread_input)
 		get_pack_current_and_batt_voltage(hv_plate,
 						  hv_plate_task_delay);
 
-		PRINTLN_INFO("PACK CURRENT: %2f", hv_plate->pack_current);
-
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
 		update_soc(analyzer, hv_plate);
@@ -514,14 +514,10 @@ void vPeripherals(ULONG thread_input)
 
 	peripherals_args_t *peripherals_args =
 		(peripherals_args_t *)thread_input;
+  peripherals_t *peripherals = peripherals_args->peripherals;
 
-	peripherals_t *peripherals = peripherals_args->peripherals;
+	init_compute(peripherals);
 	imu_data_t imu_data = peripherals->imu_data;
-
-	bool failed = imu_init();
-	if (failed) {
-		printf("Failed to initialize imu.\n");
-	}
 
 	for (;;) {
 		mutex_get(&peripherals->peripherals_mutex);
@@ -607,7 +603,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	hv_plate->ic = &hv_plate_ic;
 	sanitizer_t *sanitizer = (sanitizer_t *)malloc(sizeof(sanitizer_t));
 	bms_algos_t *bms_algos = (bms_algos_t *)malloc(sizeof(bms_algos_t));
-	peripherals_t *peripherals = (peripherals_t *)malloc(sizeof(peripherals_t));
+	peripherals_t *peripherals =
+		(peripherals_t *)malloc(sizeof(peripherals_t));
 
 	default_task_args_t *default_task_args =
 		(default_task_args_t *)malloc(sizeof(default_task_args_t));
@@ -819,8 +816,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	CATCH_ERROR(create_mutex(&analyzer->analyzer_mutex), U_SUCCESS);
 	CATCH_ERROR(create_mutex(&state_machine->state_mutex), U_SUCCESS);
-	create_mutex(&bms_algos->bms_algos_mutex);
-	create_mutex(&peripherals->peripherals_mutex);
+	CATCH_ERROR(create_mutex(&bms_algos->bms_algos_mutex), U_SUCCESS);
+	CATCH_ERROR(create_mutex(&peripherals->peripherals_mutex), U_SUCCESS);
 
 	PRINTLN_INFO("RUNNING THREADS");
 

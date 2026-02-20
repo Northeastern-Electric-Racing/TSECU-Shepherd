@@ -102,6 +102,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/ccl.c"
     "Core/Src/control.c"
     "Core/Src/traceout_app.c"
+    "Drivers/Embedded-Base/general/src/sht30.c"
 )
 
 # Add include paths
