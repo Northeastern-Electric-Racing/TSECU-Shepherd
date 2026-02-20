@@ -691,7 +691,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	thread_t _can_receive_thread = {
 		.name = "Can Receive Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
+		.size = 1024, /* Stack Size (in bytes) */
 		.priority = 2, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
@@ -711,7 +711,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	thread_t _ethernet_incoming_thread = {
 		.name = "Ethernet Incoming Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
+		.size = 1024, /* Stack Size (in bytes) */
 		.priority = 1, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
@@ -836,7 +836,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
 		    U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
