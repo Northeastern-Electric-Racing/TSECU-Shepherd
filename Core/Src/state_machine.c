@@ -6,6 +6,7 @@
 #include "segment.h"
 #include "charging.h"
 #include "c_utils.h"
+#include <assert.h>
 
 const bool valid_transition_from_to[NUM_STATES][NUM_STATES] = {
 	/*   BOOT, READY, CHARGING, BALANCING, FAULTED */

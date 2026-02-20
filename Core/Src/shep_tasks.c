@@ -135,6 +135,7 @@ void vStateMachine(ULONG thread_input)
 
 	state_machine_args_t *state_machine_args =
 		(state_machine_args_t *)thread_input;
+		
 	state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
 
@@ -390,7 +391,6 @@ void vHvPlateData(ULONG thread_input)
 
 		/* Check whether pulse operation needs to be disabled due to charging state or faults */
 
-			/*
 		if (disable_pulse(state_machine)) {
 			mutex_get(&bms_algos->bms_algos_mutex);
 			bms_algos->cont_DCL = bms_algos->inst_DCL;
@@ -401,7 +401,6 @@ void vHvPlateData(ULONG thread_input)
 			dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
-		*/
 
 		// read ts voltage
 		get_ts_voltage(hv_plate);
@@ -642,6 +641,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		(hv_plate_args_t *)malloc(sizeof(hv_plate_args_t));
 	hv_plate_args->hv_plate = hv_plate;
 	hv_plate_args->analyzer = analyzer;
+	hv_plate_args->state_machine = state_machine;
+	hv_plate_args->bms_algos = bms_algos;
 
 	sanitizer_args_t *sanitizer_args =
 		(sanitizer_args_t *)malloc(sizeof(sanitizer_args_t));
@@ -668,7 +669,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	thread_t _default_thread = {
 		.name = "Default Task Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
+		.size = 1024, /* Stack Size (in bytes) */
 		.priority = 2, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)default_task_args, /* Thread Args */
@@ -679,7 +680,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	thread_t _state_machine_thread = {
 		.name = "State Machine Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
+		.size = 4096, /* Stack Size (in bytes) */
 		.priority = 4, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)state_machine_args, /* Thread Args */
@@ -720,7 +721,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	thread_t _ethernet_outgoing_thread = {
 		.name = "Ethernet Outgoing Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
+		.size = 1024, /* Stack Size (in bytes) */
 		.priority = 1, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
@@ -730,7 +731,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	thread_t _analyzer_thread = {
 		.name = "Analyzer Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
+		.size = 1024, /* Stack Size (in bytes) */
 		.priority = 6, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)analyzer_args, /* Thread Args */
@@ -816,8 +817,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vDebug, /* Thread Function */
 	};
 
-	create_mutex(&analyzer->analyzer_mutex);
-	create_mutex(&state_machine->state_mutex);
+	CATCH_ERROR(create_mutex(&analyzer->analyzer_mutex), U_SUCCESS);
+	CATCH_ERROR(create_mutex(&state_machine->state_mutex), U_SUCCESS);
 	create_mutex(&bms_algos->bms_algos_mutex);
 	create_mutex(&peripherals->peripherals_mutex);
 
@@ -825,8 +826,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	/* Task Definitions End */
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
-	//	    U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
+		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
