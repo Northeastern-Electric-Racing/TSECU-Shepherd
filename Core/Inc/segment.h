@@ -5,6 +5,7 @@
 #include "stm32h5xx.h"
 #include "adBms6830Data.h"
 #include <stdbool.h>
+#include "app_threadx.h"
 
 /**
  * @brief Initialize chips with default values.
@@ -94,5 +95,7 @@ void segment_restart(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
  * @param chips Array of chips to read.
  */
 void read_serial_id(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
+
+void vGetSegmentData(ULONG thread_input);
 
 #endif

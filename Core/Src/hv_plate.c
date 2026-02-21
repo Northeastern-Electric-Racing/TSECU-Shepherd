@@ -1,5 +1,10 @@
 #include "hv_plate.h"
 #include "adi2950_interaction.h"
+#include "dcl.h"
+#include "ccl.h"
+#include "soc.h"
+#include "can_messages.h"
+#include "current_limit_algo_utils.h"
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 
@@ -136,4 +141,73 @@ void get_aux_adc_data(hv_plate_t *hv_plate)
 	hv_plate->osccnt = ic->auxc.osccnt;
 	// Start continuous conversion again
 	start_adc_conversions(ic);
+}
+
+// HV PLATE DATA THREAD
+void vHvPlateData(ULONG thread_input)
+{
+	PRINTLN_INFO("Starting HV Plate thread...");
+
+	const int hv_plate_task_delay = 100; // in ms
+	const uint16_t diagnostic_read_frequency = 5000; // 5s
+	nertimer_t diagnostic_read_timer;
+
+	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
+
+	hv_plate_t *hv_plate = hv_plate_args->hv_plate;
+	analyzer_t *analyzer = hv_plate_args->analyzer;
+	bms_algos_t *bms_algos = hv_plate_args->bms_algos;
+	state_machine_t *state_machine = hv_plate_args->state_machine;
+
+	dcl_init(COOLDOWN_ON_FULL_PULSE);
+	ccl_init(COOLDOWN_ON_FULL_PULSE);
+
+	// initialize HV Plate struct and start conversions
+	init_hv_plate(hv_plate, ACCI_8);
+
+	tx_thread_sleep(MS_TO_TICKS(500));
+
+	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
+	for (;;) {
+		// get the current reading from the pack
+		get_pack_current_and_batt_voltage(hv_plate,
+						  hv_plate_task_delay);
+
+		// updates the SoC value in the analyzer struct based on the pack current
+		// received
+		update_soc(analyzer, hv_plate);
+
+		/* Check whether pulse operation needs to be disabled due to charging state or faults */
+
+		if (disable_pulse(state_machine)) {
+			mutex_get(&bms_algos->bms_algos_mutex);
+			bms_algos->cont_DCL = bms_algos->inst_DCL;
+			bms_algos->cont_CCL = bms_algos->inst_CCL;
+			mutex_put(&bms_algos->bms_algos_mutex);
+		} else {
+			// Calculate continous DCL and CCL
+			dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
+			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
+		}
+
+		// read ts voltage
+		get_ts_voltage(hv_plate);
+
+		// read shunt temperature
+		get_shunt_temp(hv_plate);
+
+		if (is_timer_expired(&diagnostic_read_timer)) {
+			// read flags
+			get_flags(hv_plate);
+			read_aux_registers(hv_plate->ic);
+			start_timer(&diagnostic_read_timer,
+				    diagnostic_read_frequency);
+			// Restart continuous conversion
+			start_adc_conversions(hv_plate->ic);
+			// Send can message
+			send_hv_plate_diagnostic_data(hv_plate);
+		}
+
+		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
+	}
 }

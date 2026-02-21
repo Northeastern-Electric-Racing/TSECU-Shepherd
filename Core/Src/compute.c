@@ -262,3 +262,27 @@ bool read_shutdown()
 	// If the pin is low, the shutdown circuit is open. So, return true.
 	return !shutdown;
 }
+
+// PERIPHERALS THREAD
+void vPeripherals(ULONG thread_input)
+{
+	PRINTLN_INFO("Starting Peripherals thread...");
+
+	peripherals_args_t *peripherals_args =
+		(peripherals_args_t *)thread_input;
+  peripherals_t *peripherals = peripherals_args->peripherals;
+
+	init_compute(peripherals);
+	imu_data_t imu_data = peripherals->imu_data;
+
+	for (;;) {
+		mutex_get(&peripherals->peripherals_mutex);
+
+		imu_getAcceleration(&imu_data.accel_data);
+		imu_getAngularRate(&imu_data.ang_rate_data);
+
+		mutex_put(&peripherals->peripherals_mutex);
+
+		tx_thread_sleep(MS_TO_TICKS(50));
+	}
+}

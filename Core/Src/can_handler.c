@@ -3,6 +3,7 @@
 #include "shep_queues.h"
 #include "state_machine.h"
 #include "u_tx_general.h"
+#include "control.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,4 +80,53 @@ float parse_charger_current(can_msg_t msg)
 {
 	int16_t curr = msg.data[2] << 8 | msg.data[3];
 	return ((float)curr) / 10;
+}
+
+// CAN RECIEVE THREAD
+void vCanReceive(ULONG thred_input)
+{
+	can_msg_t message;
+	for (;;) {
+		/* Process incoming messages */
+		while (queue_receive(&can_incoming, &message,
+				     TX_WAIT_FOREVER) == U_SUCCESS) {
+			switch (message.id) {
+				case CHARGERBOX_CANID:
+					// TODO process charger can message
+					break;
+				case DTI_CURRENT_CANID:
+					// TODO process charger can message
+					break;
+				case CALYPSO_CONTROL_CANID:
+					control_message_fans(message);
+					break;
+				default:
+					break;
+			}
+		}
+	}
+}
+
+// CAN DISPATCH THREAD
+void vCanDispatch(ULONG thread_input)
+{
+	can_msg_t message;
+	uint8_t status;
+
+	for (;;) {
+		/* Process incoming messages */
+		while (queue_receive(&can_outgoing, &message,
+				     TX_WAIT_FOREVER) == U_SUCCESS) {
+			status = can_send_msg(&can1, &message);
+			if (status != U_SUCCESS) {
+				PRINTLN_WARNING(
+					"Failed to send message (on can1) after removing from "
+					"outgoing queue (Message ID: %ld) - Status %d",
+					message.id, status);
+			} else {
+				PRINTLN_INFO("Sent CAN message with ID: %ld",
+					     message.id);
+			}
+		}
+	}
 }

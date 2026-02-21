@@ -484,3 +484,38 @@ void clear_segment_comms_fault(state_machine_t *state_mach)
 	state_mach->fault_code_noncrit &= ~SEGMENT_COMMS_FAULT;
 	mutex_put(&state_mach->state_mutex);
 }
+
+// STATE MACHINE THREAD
+void vStateMachine(ULONG thread_input)
+{
+	PRINTLN_INFO("Starting State Machine thread...");
+
+	state_machine_args_t *state_machine_args =
+		(state_machine_args_t *)thread_input;
+
+	state_machine_t *state_machine = state_machine_args->state_machine;
+	analyzer_t *analyzer = state_machine_args->analyzer;
+
+	nertimer_t telem_timer;
+	// sends unimportant telemetry messages every 500ms
+	start_timer(&telem_timer, 500);
+
+	for (;;) {
+		sm_handle_state(state_machine_args);
+
+		if (is_timer_expired(&telem_timer)) {
+			// these are unimportant telemetry messages so they can be sent
+			// infrequently
+			send_bms_status_message(
+				analyzer->avg_temp,
+				analyzer->internal_temp, // TODO: we never set internal temp
+				get_current_state(state_machine));
+			send_fault_status_message(
+				state_machine->fault_code_crit,
+				state_machine->fault_code_noncrit);
+			start_timer(&telem_timer, 500);
+		}
+
+		tx_thread_sleep(MS_TO_TICKS(20));
+	}
+}

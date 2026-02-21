@@ -11,6 +11,10 @@
 #include "timer.h"
 #include "sht30.h"
 
+#define ANALYZER_FLAG  0x1
+#define SANITIZER_FLAG 0x2
+#define DEBUG_FLAG     0x4
+
 /**
  * @brief Stores critical values for the pack (across all chips), and where that critical value can be found
  */

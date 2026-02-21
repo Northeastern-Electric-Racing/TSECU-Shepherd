@@ -5,6 +5,8 @@
 #include "serialPrintResult.h"
 #include "timer.h"
 #include "state_machine.h"
+#include "u_tx_flags.h"
+#include "can_messages.h"
 
 #define OCV_TIMER_DURATION 750 // in ticks
 
@@ -357,5 +359,48 @@ void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 			getVoltage(acc_data->chips[chip].statb.va),
 		chip_data->v_digital =
 			getVoltage(acc_data->chips[chip].statb.vd);
+	}
+}
+
+// ANALYZER THREAD
+void vAnalyzer(ULONG thread_input)
+{
+	PRINTLN_INFO("Starting Analyzer Thread...");
+
+	analyzer_args_t *analyzer_args = (analyzer_args_t *)thread_input;
+
+	analyzer_t *analyzer = analyzer_args->analyzer;
+	acc_data_t *acc_data = analyzer_args->acc_data;
+	state_machine_t *state_machine = analyzer_args->state_machine;
+	hv_plate_t *hv_plate = analyzer_args->hv_plate;
+
+	for (;;) {
+		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
+
+		// NOTE: All functions that modify chip data are externally mutexed
+		mutex_get(&analyzer->analyzer_mutex);
+
+		// calculate base values for later safety calcs
+		calc_cell_temps(analyzer, acc_data);
+		calc_pack_temps(analyzer, acc_data);
+		calc_cell_voltages(analyzer, acc_data, state_machine);
+		calc_open_cell_voltage(analyzer, acc_data, hv_plate);
+		calc_pack_voltage_stats(analyzer, acc_data);
+		calc_cell_resistances(analyzer, acc_data, hv_plate);
+		update_chip_status(analyzer, acc_data);
+
+		mutex_put(&analyzer->analyzer_mutex);
+
+		set_flag(DEBUG_FLAG);
+
+		// send out telemetry data sourced from the above functions
+		send_cell_voltage_message(analyzer->max_ocv, analyzer->min_ocv,
+					  analyzer->avg_ocv);
+		send_segment_average_volt_message(
+			analyzer); // TODO: Update CAN message send function defintions
+		send_segment_total_volt_message(analyzer);
+		send_cell_temp_message(analyzer->max_temp, analyzer->min_temp,
+				       analyzer->avg_temp);
+		send_segment_temp_message(analyzer);
 	}
 }

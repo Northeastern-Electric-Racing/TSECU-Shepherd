@@ -1,6 +1,8 @@
-#include "control.h"
 
+#include "control.h"
 #include "main.h"
+#include "datastructs.h"
+#include "can_messages.h"
 
 #define INIT_TIMEOUT_MS 10
 
@@ -72,3 +74,31 @@ void control_message_fans(can_msg_t msg)
 	calypso_signals[DEVICE_FAN0] = duty;
 }
 #undef _PERCENT_16
+
+// CONTROL THREAD
+void vControl(ULONG thread_input)
+{
+	PRINTLN_INFO("Starting Control thread...");
+
+	analyzer_t *analyzer = (analyzer_t *)thread_input;
+
+	PRINTLN_INFO("Starting Control thread...");
+
+	// Initialize peripherals for control
+	bool failed = !control_init_peripherals();
+	if (failed) {
+		PRINTLN_ERROR(
+			"Failed to initialize one or more peripherals.\n");
+	}
+
+	for (;;) {
+		mutex_get(&analyzer->analyzer_mutex);
+		float pack_high_temp = analyzer->max_temp.val;
+		control_fan(pack_high_temp);
+		mutex_put(&analyzer->analyzer_mutex);
+
+		send_control_signals(control_device_signals);
+
+		tx_thread_sleep(MS_TO_TICKS(100));
+	}
+}
