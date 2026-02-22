@@ -358,7 +358,7 @@ void vGetSegmentData(ULONG thread_input)
 
 	segment_init(acc_data->chips, &hspi2);
 
-	// isospi_break_detection_init(acc_data->chips);
+	isospi_break_detection_init(acc_data->chips);
 
 	// must delay after init for ADC to start up
 	tx_thread_sleep(MS_TO_TICKS(200));

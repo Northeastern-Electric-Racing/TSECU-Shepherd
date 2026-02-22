@@ -42,11 +42,13 @@ typedef void (*HandlerFunction_t)(state_machine_args_t *state_machine_args);
 typedef void (*InitFunction_t)(state_machine_args_t *state_machine_args);
 
 const InitFunction_t init_LUT[NUM_STATES] = { &init_boot, &init_ready,
-					      &init_charging, &init_faulted };
+					      &init_charging, &init_balancing,
+					      &init_faulted };
 
-const HandlerFunction_t handler_LUT[NUM_STATES] = { &handle_boot, &handle_ready,
-						    &handle_charging,
-						    &handle_faulted };
+const HandlerFunction_t handler_LUT[NUM_STATES] = {
+	&handle_boot, &handle_ready, &handle_charging,
+	&handle_balancing, &handle_faulted
+};
 
 void init_boot(state_machine_args_t *state_machine_args)
 {
@@ -497,6 +499,8 @@ void vStateMachine(ULONG thread_input)
 
 	state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
+
+	state_machine->bms_state = BOOT;
 
 	nertimer_t telem_timer;
 	// sends unimportant telemetry messages every 500ms
