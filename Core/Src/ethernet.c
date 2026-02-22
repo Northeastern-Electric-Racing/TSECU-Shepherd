@@ -1,4 +1,6 @@
 #include "ethernet.h"
+#include "u_tx_debug.h"
+#include <assert.h>
 
 void _ethernet_recieve(ethernet_message_t message)
 {
@@ -62,6 +64,10 @@ void vEthernetIncoming(ULONG thread_input)
 // ETHERNET OUTGOING THREAD
 void vEthernetOutgoing(ULONG thread_input)
 {
+
+	//assert(!ethernet1_init());
+	PRINTLN_INFO("INITIALIZED ETHERNET");
+
 	while (1) {
 		ethernet_message_t message;
 		uint8_t status;

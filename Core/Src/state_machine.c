@@ -7,6 +7,8 @@
 #include "charging.h"
 #include "c_utils.h"
 #include <assert.h>
+#include "app_threadx.h"
+#include "shep_mutexes.h"
 
 const bool valid_transition_from_to[NUM_STATES][NUM_STATES] = {
 	/*   BOOT, READY, CHARGING, BALANCING, FAULTED */
@@ -168,9 +170,9 @@ void sm_handle_state(state_machine_args_t *state_machine_args)
 state_t get_current_state(state_machine_t *state_machine)
 {
 	state_t state;
-	mutex_get(&state_machine->state_mutex);
+	mutex_get(&state_mutex);
 	state = state_machine->bms_state;
-	mutex_put(&state_machine->state_mutex);
+	mutex_put(&state_mutex);
 	return state;
 }
 
@@ -183,12 +185,12 @@ void request_transition(state_machine_args_t *state_machine_args,
 		    state_machine_args->state_machine)][next_state])
 		return;
 
-	mutex_get(&state_machine_args->state_machine->state_mutex);
+	mutex_get(&state_mutex);
 
 	state_machine_args->state_machine->bms_state = next_state;
 	init_LUT[next_state](state_machine_args);
 
-	mutex_put(&state_machine_args->state_machine->state_mutex);
+	mutex_put(&state_mutex);
 }
 
 void sm_fault_return(state_machine_args_t *state_machine_args)
@@ -473,16 +475,16 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 
 void set_segment_comms_fault(state_machine_t *state_mach)
 {
-	mutex_get(&state_mach->state_mutex);
+	mutex_get(&state_mutex);
 	state_mach->fault_code_noncrit |= SEGMENT_COMMS_FAULT;
-	mutex_put(&state_mach->state_mutex);
+	mutex_put(&state_mutex);
 }
 
 void clear_segment_comms_fault(state_machine_t *state_mach)
 {
-	mutex_get(&state_mach->state_mutex);
+	mutex_get(&state_mutex);
 	state_mach->fault_code_noncrit &= ~SEGMENT_COMMS_FAULT;
-	mutex_put(&state_mach->state_mutex);
+	mutex_put(&state_mutex);
 }
 
 // STATE MACHINE THREAD

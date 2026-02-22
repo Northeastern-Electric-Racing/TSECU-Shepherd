@@ -28,6 +28,7 @@
 #include "shep_tasks.h"
 #include "u_tx_flags.h"
 #include "shep_queues.h"
+#include "shep_mutexes.h"
 #include "traceout_app.h"
 #include "tracex.h"
 #include "compute.h"
@@ -78,8 +79,9 @@ UINT App_ThreadX_Init(VOID *memory_ptr)
 #endif
   CATCH_ERROR(queues_init(byte_pool), U_SUCCESS);
   CATCH_ERROR(flags_init(), U_SUCCESS);
-  CATCH_ERROR(imu_init(), U_SUCCESS);
+  CATCH_ERROR(mutexes_init(), U_SUCCESS);
 	CATCH_ERROR(shep_threads_init(byte_pool), U_SUCCESS);
+  
   /* USER CODE END App_ThreadX_Init */
 
   return ret;

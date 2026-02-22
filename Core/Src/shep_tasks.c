@@ -8,7 +8,7 @@
 #include "cell_temp_sanitizer.h"
 #include "compute.h"
 #include "control.h"
-#include "current_limit_algo_utils.h"
+#include "bms_algos.h"
 #include "dcl.h"
 #include "ethernet.h"
 #include "hv_plate.h"
@@ -26,6 +26,8 @@
 #include "u_tx_flags.h"
 #include "u_tx_general.h"
 #include "u_tx_threads.h"
+#include "u_tx_mutex.h"
+#include "bms_algos.h"
 
 const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 			   acc_data_t *acc_data, bms_algos_t *bms_algos)
@@ -124,33 +126,8 @@ void vDefaultTask(ULONG thread_input)
 
 		alt = !alt;
 
-		HAL_IWDG_Refresh(&hiwdg);
-		tx_thread_sleep(MS_TO_TICKS(200));
-	}
-}
-
-void vBMSAlgorithms(ULONG thread_input)
-{
-	PRINTLN_INFO("Starting BMS Algorithms thread...");
-
-	bms_algos_args_t *bms_algos_args = (bms_algos_args_t *)thread_input;
-
-	bms_algos_t *bms_algos = bms_algos_args->bms_algos;
-	sanitizer_t *sanitizer = bms_algos_args->sanitizer;
-	analyzer_t *analyzer = bms_algos_args->analyzer;
-
-	for (;;) {
-		current_limit_algo_inputs_t algo_inputs = {
-			.max_ocv = analyzer->max_ocv.val,
-			.min_ocv = analyzer->min_ocv.val,
-			.max_temp = sanitizer->max_sanitized_temp.val,
-			.min_temp = sanitizer->min_sanitized_temp.val
-		};
-
-		dcl_calc_inst_limit(algo_inputs, bms_algos);
-		ccl_calc_inst_limit(algo_inputs, bms_algos);
-
-		tx_thread_sleep(MS_TO_TICKS(500));
+		//HAL_IWDG_Refresh(&hiwdg);
+		tx_thread_sleep(MS_TO_TICKS(100));
 	}
 }
 
@@ -279,8 +256,6 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		(peripherals_args_t *)malloc(sizeof(peripherals_args_t));
 	peripherals_args->peripherals = peripherals;
 
-	//assert(!ethernet1_init());
-
 	PRINTLN_INFO("FINISHED INITIALIZING INTERFACES");
 
 	/* Init Interfaces End */
@@ -300,7 +275,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	thread_t _state_machine_thread = {
 		.name = "State Machine Thread", /* Name */
-		.size = 4096, /* Stack Size (in bytes) */
+		.size = 5120, /* Stack Size (in bytes) */
 		.priority = 4, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)state_machine_args, /* Thread Args */
@@ -321,7 +296,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	thread_t _can_dispatch_thread = {
 		.name = "CAN Dispatch Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
+		.size = 1024, /* Stack Size (in bytes) */
 		.priority = 1, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
@@ -437,17 +412,12 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vDebug, /* Thread Function */
 	};
 
-	CATCH_ERROR(create_mutex(&analyzer->analyzer_mutex), U_SUCCESS);
-	CATCH_ERROR(create_mutex(&state_machine->state_mutex), U_SUCCESS);
-	CATCH_ERROR(create_mutex(&bms_algos->bms_algos_mutex), U_SUCCESS);
-	CATCH_ERROR(create_mutex(&peripherals->peripherals_mutex), U_SUCCESS);
-
 	PRINTLN_INFO("RUNNING THREADS");
 
 	/* Task Definitions End */
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
-		    U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
+	//	    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);

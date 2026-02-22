@@ -190,8 +190,6 @@ typedef struct {
  * @brief data needed for processing raw data
  */
 typedef struct {
-	mutex_t analyzer_mutex;
-
 	/* Array of data from all chips in the system */
 	chipdata_t chip_data[NUM_CHIPS];
 
@@ -248,8 +246,6 @@ typedef struct {
 	float cont_CCL;
 	float inst_DCL;
 	float inst_CCL;
-
-	mutex_t bms_algos_mutex;
 } bms_algos_t;
 
 /**
@@ -342,9 +338,6 @@ typedef struct {
 
 	// charging message timer for telemetry
 	nertimer_t charger_message_timer;
-
-	mutex_t state_mutex;
-
 } state_machine_t;
 
 /**
@@ -362,7 +355,6 @@ typedef struct {
 } imu_data_t;
 
 typedef struct {
-	mutex_t peripherals_mutex;
 	imu_data_t imu_data;
 } peripherals_t;
 

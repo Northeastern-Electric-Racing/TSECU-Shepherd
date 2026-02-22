@@ -7,6 +7,7 @@
 #include "state_machine.h"
 #include "u_tx_flags.h"
 #include "can_messages.h"
+#include "shep_mutexes.h"
 
 #define OCV_TIMER_DURATION 750 // in ticks
 
@@ -378,7 +379,7 @@ void vAnalyzer(ULONG thread_input)
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
 		// NOTE: All functions that modify chip data are externally mutexed
-		mutex_get(&analyzer->analyzer_mutex);
+		mutex_get(&analyzer_mutex);
 
 		// calculate base values for later safety calcs
 		calc_cell_temps(analyzer, acc_data);
@@ -389,7 +390,7 @@ void vAnalyzer(ULONG thread_input)
 		calc_cell_resistances(analyzer, acc_data, hv_plate);
 		update_chip_status(analyzer, acc_data);
 
-		mutex_put(&analyzer->analyzer_mutex);
+		mutex_put(&analyzer_mutex);
 
 		set_flag(DEBUG_FLAG);
 

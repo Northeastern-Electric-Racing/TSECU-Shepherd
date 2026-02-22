@@ -97,12 +97,12 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/cell_temp_sanitizer.c"
     "Core/Src/soc.c"
     "Core/Src/isospi_recovery.c"
-    "Core/Src/current_limit_algo_utils.c"
+    "Core/Src/bms_algos.c"
     "Core/Src/dcl.c"
     "Core/Src/ccl.c"
     "Core/Src/control.c"
     "Core/Src/traceout_app.c"
-    "Drivers/Embedded-Base/general/src/sht30.c"
+    "Core/Src/shep_mutexes.c"
 )
 
 # Add include paths

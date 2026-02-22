@@ -4,7 +4,9 @@
 #include "ccl.h"
 #include "soc.h"
 #include "can_messages.h"
-#include "current_limit_algo_utils.h"
+#include "bms_algos.h"
+#include "app_threadx.h"
+#include "shep_mutexes.h"
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 
@@ -180,10 +182,10 @@ void vHvPlateData(ULONG thread_input)
 		/* Check whether pulse operation needs to be disabled due to charging state or faults */
 
 		if (disable_pulse(state_machine)) {
-			mutex_get(&bms_algos->bms_algos_mutex);
+			mutex_get(&bms_algos_mutex);
 			bms_algos->cont_DCL = bms_algos->inst_DCL;
 			bms_algos->cont_CCL = bms_algos->inst_CCL;
-			mutex_put(&bms_algos->bms_algos_mutex);
+			mutex_put(&bms_algos_mutex);
 		} else {
 			// Calculate continous DCL and CCL
 			dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);

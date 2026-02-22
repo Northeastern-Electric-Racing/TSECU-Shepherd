@@ -3,6 +3,7 @@
 #include "main.h"
 #include "datastructs.h"
 #include "can_messages.h"
+#include "shep_mutexes.h"
 
 #define INIT_TIMEOUT_MS 10
 
@@ -92,10 +93,10 @@ void vControl(ULONG thread_input)
 	}
 
 	for (;;) {
-		mutex_get(&analyzer->analyzer_mutex);
+		mutex_get(&analyzer_mutex);
 		float pack_high_temp = analyzer->max_temp.val;
 		control_fan(pack_high_temp);
-		mutex_put(&analyzer->analyzer_mutex);
+		mutex_put(&analyzer_mutex);
 
 		send_control_signals(control_device_signals);
 

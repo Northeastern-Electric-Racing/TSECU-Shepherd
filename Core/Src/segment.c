@@ -6,6 +6,7 @@
 #include "serialPrintResult.h"
 #include "u_tx_flags.h"
 #include "state_machine.h"
+#include "app_threadx.h"
 
 /**
  * @brief Initialize a chip with our default values.

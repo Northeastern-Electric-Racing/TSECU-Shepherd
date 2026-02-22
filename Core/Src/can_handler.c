@@ -3,6 +3,7 @@
 #include "shep_queues.h"
 #include "state_machine.h"
 #include "u_tx_general.h"
+#include "u_tx_debug.h"
 #include "control.h"
 #include <assert.h>
 #include <stdio.h>
@@ -10,6 +11,7 @@
 
 #define CAN_MSG_QUEUE_SIZE 50 /* messages */
 
+extern FDCAN_HandleTypeDef hfdcan2;
 can_t can1;
 
 static uint16_t can1_id_list_standard[4] = {
@@ -110,9 +112,13 @@ void vCanReceive(ULONG thred_input)
 // CAN DISPATCH THREAD
 void vCanDispatch(ULONG thread_input)
 {
+	// INITIALIZING CAN 
+	assert(!init_can(&hfdcan2));
+	PRINTLN_INFO("INITIALIZED CAN");
+
 	can_msg_t message;
 	uint8_t status;
-
+	
 	for (;;) {
 		/* Process incoming messages */
 		while (queue_receive(&can_outgoing, &message,

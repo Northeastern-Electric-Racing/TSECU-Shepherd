@@ -5,6 +5,8 @@
 #include "main.h"
 #include "sht30.h"
 #include "lsm6dsv_reg.h"
+#include "app_threadx.h"
+#include "shep_mutexes.h"
 
 #define IMU_CS_GPIO_Port SPI6_CS_GPIO_Port
 #define IMU_CS_Pin	 SPI6_CS_Pin
@@ -276,12 +278,12 @@ void vPeripherals(ULONG thread_input)
 	imu_data_t imu_data = peripherals->imu_data;
 
 	for (;;) {
-		mutex_get(&peripherals->peripherals_mutex);
+		mutex_get(&peripherals_mutex);
 
 		imu_getAcceleration(&imu_data.accel_data);
 		imu_getAngularRate(&imu_data.ang_rate_data);
 
-		mutex_put(&peripherals->peripherals_mutex);
+		mutex_put(&peripherals_mutex);
 
 		tx_thread_sleep(MS_TO_TICKS(50));
 	}
