@@ -55,3 +55,20 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 	debounce(!should_precharge, &precharge_config->close_debounce_timer,
 		 precharge_config->debounce_time, open_relay, precharge_config);
 }
+
+// PRECHARGE THREAD
+void vPrecharge(ULONG args)
+{
+	PRINTLN_INFO("Starting Precharge thread...");
+
+	hv_plate_t *hv_plate = (hv_plate_t *)args;
+
+	prechargeconfig_t precharge_config;
+	precharge_init(&precharge_config, hv_plate, 0.9f,
+		       200 /* ms debounce time */);
+
+	for (;;) {
+		handle_precharge(&precharge_config);
+		tx_thread_sleep(MS_TO_TICKS(50)); // TODO; fix thread timing
+	}
+}

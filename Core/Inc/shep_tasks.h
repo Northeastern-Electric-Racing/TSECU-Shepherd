@@ -5,10 +5,6 @@
 #include "tx_api.h"
 #include "datastructs.h"
 
-#define ANALYZER_FLAG  0x1
-#define SANITIZER_FLAG 0x2
-#define DEBUG_FLAG     0x4
-
 // #define DEBUG_HV_PLATE
 // #define DEBUG_VOLTAGES
 // #define DEBUG_TEMPS

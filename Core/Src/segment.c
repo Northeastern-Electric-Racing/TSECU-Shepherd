@@ -4,6 +4,9 @@
 #include "c_utils.h"
 #include "isospi_recovery.h"
 #include "serialPrintResult.h"
+#include "u_tx_flags.h"
+#include "state_machine.h"
+#include "app_threadx.h"
 
 /**
  * @brief Initialize a chip with our default values.
@@ -339,4 +342,73 @@ void segment_configure_balancing(
 		}
 	}
 	write_config_regs(chips, hspi);
+}
+
+// GET SEGEMENT DATA THREAD
+void vGetSegmentData(ULONG thread_input)
+{
+	PRINTLN_INFO("Starting GetSegmentData thread...");
+
+	const uint16_t balancing_delay = 75;
+
+	acc_data_args_t *acc_data_args = (acc_data_args_t *)thread_input;
+
+	acc_data_t *acc_data = acc_data_args->acc_data;
+	state_machine_t *state_machine = acc_data_args->state_machine;
+
+	segment_init(acc_data->chips, &hspi2);
+
+	isospi_break_detection_init(acc_data->chips);
+
+	// must delay after init for ADC to start up
+	tx_thread_sleep(MS_TO_TICKS(200));
+
+	state_t prev_state = BOOT;
+	state_t current_state = BOOT;
+
+	for (;;) {
+		segment_mute(acc_data->chips, &hspi2);
+
+		prev_state = current_state;
+		current_state = get_current_state(state_machine);
+
+		if (prev_state == BALANCING && current_state == CHARGING) {
+			tx_thread_sleep(MS_TO_TICKS(
+				balancing_delay)); // delay after balancing to let cells settle
+		}
+
+		if (current_state == CHARGING || current_state == BALANCING) {
+			// in charging, debug data is required to get things like die temp
+			segment_retrieve_charging_data(acc_data->chips, &hspi2);
+			isospi_handle_state(acc_data->chips, state_machine,
+					    &hspi2);
+		} else {
+			// snap before getting data
+			segment_snap(acc_data->chips, &hspi2);
+			segment_retrieve_active_data(acc_data->chips, &hspi2);
+			// unsnap after getting data
+			segment_unsnap(acc_data->chips, &hspi2);
+
+			isospi_handle_state(acc_data->chips, state_machine,
+					    &hspi2);
+
+			if (DEBUG_MODE_ENABLED) {
+				segment_retrieve_debug_data(acc_data->chips,
+							    &hspi2);
+			}
+		}
+
+		if (current_state == CHARGING || current_state == BALANCING) {
+			segment_unmute(acc_data->chips, &hspi2);
+		}
+
+		if (get_current_state(state_machine) == BALANCING) {
+			segment_configure_balancing(
+				acc_data->chips, acc_data->discharge_config,
+				&hspi2); // TODO: Move to state machine
+		}
+
+		set_flag(ANALYZER_FLAG);
+		tx_thread_sleep(MS_TO_TICKS(750));
+	}
 }

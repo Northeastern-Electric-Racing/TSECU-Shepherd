@@ -2,6 +2,7 @@
 #define _ANALYZER_H
 
 #include "datastructs.h"
+#include "app_threadx.h"
 
 /**
  * @brief Get the chip data for the given chip
@@ -49,5 +50,7 @@ void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
 * @brief Updates the cell status of balancing and S_C_faults based on raw cell data
 */
 void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data);
+
+void vAnalyzer(ULONG thread_input);
 
 #endif
