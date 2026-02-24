@@ -8,7 +8,7 @@ queue_t can_incoming = {
 	.name = "Incoming CAN Queue", /* Name of the queue. */
 	.message_size =
 		sizeof(can_msg_t), /* Size of each queue message, in bytes. */
-	.capacity = 10 /* Number of messages the queue can hold. */
+	.capacity = 100 /* Number of messages the queue can hold. */
 };
 
 /* Outgoing CAN Queue */
@@ -16,7 +16,7 @@ queue_t can_outgoing = {
 	.name = "Outgoing CAN Queue", /* Name of the queue. */
 	.message_size =
 		sizeof(can_msg_t), /* Size of each queue message, in bytes. */
-	.capacity = 10 /* Number of messages the queue can hold. */
+	.capacity = 100 /* Number of messages the queue can hold. */
 };
 
 /* Incoming CAN Queue */

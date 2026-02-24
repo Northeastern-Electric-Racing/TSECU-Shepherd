@@ -21,9 +21,6 @@ endif()
 # Set the project name
 set(CMAKE_PROJECT_NAME TSECU-Shepherd)
 
-# NER Include toolchain file
-include("cmake/gcc-arm-none-eabi.cmake")
-
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
@@ -36,6 +33,8 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/art")
     file(READ "${CMAKE_SOURCE_DIR}/art" ASCII_ART)
     message("${ASCII_ART}")
 endif()
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -u _printf_float")
 
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
@@ -82,7 +81,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/middleware/src/c_utils.c"
     "Drivers/Embedded-Base/platforms/stm32h563/src/fdcan.c"
     "Drivers/Embedded-Base/middleware/src/timer.c"
-    "Drivers/Embedded-Base/general/src/sht30.c"
     "Core/Src/adi2950_interaction.c"
     "Core/Src/adi6830_interaction.c"
     "Core/Src/analyzer.c"
@@ -99,11 +97,12 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/cell_temp_sanitizer.c"
     "Core/Src/soc.c"
     "Core/Src/isospi_recovery.c"
-    "Core/Src/current_limit_algo_utils.c"
+    "Core/Src/bms_algos.c"
     "Core/Src/dcl.c"
     "Core/Src/ccl.c"
     "Core/Src/control.c"
     "Core/Src/traceout_app.c"
+    "Core/Src/shep_mutexes.c"
 )
 
 # Add include paths

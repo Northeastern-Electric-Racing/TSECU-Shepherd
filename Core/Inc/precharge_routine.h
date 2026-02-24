@@ -1,3 +1,6 @@
+#ifndef PRECHARGE_ROUTINE_H
+#define PRECHARGE_ROUTINE_H
+
 #include "adi2950_interaction.h"
 #include "timer.h"
 #include "hv_plate.h"
@@ -28,3 +31,7 @@ void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
  * NOTE: Ment to be run in a Thread on a loop due to debounces
  */
 void handle_precharge(prechargeconfig_t *precharge_config);
+
+void vPrecharge(ULONG args);
+
+#endif

@@ -62,4 +62,6 @@ void init_compute(peripherals_t *peripherals);
 int tempsensor_getTemperatureAndHumdidty(peripherals_t *peripherals,
 					 float *temperature, float *humidity);
 
+void vPeripherals(ULONG thread_input);
+
 #endif // COMPUTE_H

@@ -3,6 +3,7 @@
 
 #include "fdcan.h"
 #include "stm32h5xx_hal.h"
+#include "app_threadx.h"
 #include <stdint.h>
 
 #define CONTROL_MIN_DUTY_FAN 20
@@ -32,5 +33,7 @@ void control_fan(float pack_high_temp);
  * @brief Send calypso message for controlling fans
  */
 void control_message_fans(can_msg_t msg);
+
+void vControl(ULONG thread_input);
 
 #endif

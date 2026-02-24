@@ -21,4 +21,6 @@ void temp_sanitizer_init(sanitizer_t *sanitizer);
  */
 void temp_sanitizer_run(sanitizer_t *sanitizer, analyzer_t *analyzer);
 
+void vSanitizer(ULONG thread_input);
+
 #endif // CEL_TEMP_SANITIZER_H

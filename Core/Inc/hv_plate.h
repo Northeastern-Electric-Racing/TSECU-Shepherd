@@ -5,6 +5,7 @@
 #include "datastructs.h"
 #include "stm32xx_hal.h"
 #include "adi_bms_2950data.h"
+#include "app_threadx.h"
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 #define HV_CTRL_GPO	 GPIO4_2950
@@ -53,5 +54,7 @@ void get_flags(hv_plate_t *hv_plate);
  * @param hv_p'ate pointer to hv splate data struct
  */
 void get_aux_adc_data(hv_plate_t *hv_plate);
+
+void vHvPlateData(ULONG thread_input);
 
 #endif

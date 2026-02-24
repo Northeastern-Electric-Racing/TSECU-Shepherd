@@ -4,3 +4,5 @@ build
 
 Tests/Mocks/*
 Tests/build
+
+.cache
