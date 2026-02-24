@@ -1,12 +1,14 @@
 #include "state_machine.h"
 #include "c_utils.h"
 #include "can_messages.h"
+#include "can_messages_tx.h"
 #include "charging.h"
 #include "compute.h"
 #include "segment.h"
 #include "charging.h"
 #include "c_utils.h"
 #include <assert.h>
+#include <stdbool.h>
 #include "app_threadx.h"
 #include "shep_mutexes.h"
 
@@ -83,8 +85,8 @@ void init_charging(state_machine_args_t *state_machine_args)
 void init_balancing(state_machine_args_t *state_machine_args)
 {
 	// disable discharge and charge from the MC
-	send_mc_discharge_message(0);
-	send_mc_charge_message(0);
+	send_max_dc_current_command(0);
+	send_max_dc_brake_current_command(0);
 	return;
 }
 
@@ -108,21 +110,21 @@ void handle_charging(state_machine_args_t *state_machine_args)
 					      ->charger_message_timer) ||
 		    !is_timer_active(&state_machine_args->state_machine
 					      ->charger_message_timer)) {
-			send_charging_message((MAX_CHARGE_VOLT *
+			send_bms_charge_message_send((MAX_CHARGE_VOLT *
 					       (NUM_CELLS_PER_CHIP * 2) *
 					       NUM_SEGMENTS),
-					      CHARGING_CURRENT, true);
+					      CHARGING_CURRENT, 0x0);
 			start_timer(&state_machine_args->state_machine
 					     ->charger_message_timer,
 				    1000);
 		}
 	} else {
-		send_charging_message(0, 0, false);
+		send_bms_charge_message_send(0, 0, 0xFF);
 	}
 
 	// disable discharge and charge from the MC
-	send_mc_discharge_message(0);
-	send_mc_charge_message(0);
+	send_max_dc_current_command(0);
+	send_max_dc_brake_current_command(0);
 
 	/* Check if we should balance */
 	if (sm_balancing_check(state_machine_args))
@@ -137,9 +139,9 @@ void charger_message_recieved(state_machine_args_t *state_machine_args)
 
 void init_faulted(state_machine_args_t *bmsdata)
 {
-	send_mc_charge_message(0);
-	send_mc_discharge_message(0);
-	send_charging_message(0, 0, false);
+    send_max_dc_current_command(0);
+	send_max_dc_brake_current_command(0);
+	send_bms_charge_message_send(0, 0, 0xFF);
 }
 
 void handle_faulted(state_machine_args_t *state_machine_args)
@@ -329,7 +331,7 @@ bool sm_fault_eval(fault_eval_t *item)
 			PRINTLN_INFO("\tFault cleared: %s\n", item->id);
 			cancel_timer(&item->timer);
 			// STOPPING TIMER MESSSAGE
-			send_fault_timer_message(FAULT_TIMER_STOPPED,
+			send_bms_fault_timers(FAULT_TIMER_STOPPED,
 						 item->code, item->data_1);
 			return false;
 		}
@@ -337,7 +339,7 @@ bool sm_fault_eval(fault_eval_t *item)
 		if (is_timer_expired(&item->timer) && fault_present) {
 			PRINTLN_INFO("\tFaulted: %s\n", item->id);
 			// FAULT TIMER EXPIRED MESSAGE
-			send_fault_timer_message(FAULT_TIMER_EXPIRED,
+			send_bms_fault_timers(FAULT_TIMER_EXPIRED,
 						 item->code, item->data_1);
 			return true;
 		}
@@ -348,7 +350,7 @@ bool sm_fault_eval(fault_eval_t *item)
 		PRINTLN_INFO("\tStarting Fault Timer: %s\n", item->id);
 		start_timer(&item->timer, item->timeout);
 		// STARTING FAULTED TIMER MESSAGE
-		send_fault_timer_message(FAULT_TIMER_STARTED, item->code,
+		send_bms_fault_timers(FAULT_TIMER_STARTED, item->code,
 					 item->data_1);
 
 		return false;
@@ -512,13 +514,14 @@ void vStateMachine(ULONG thread_input)
 		if (is_timer_expired(&telem_timer)) {
 			// these are unimportant telemetry messages so they can be sent
 			// infrequently
-			send_bms_status_message(
+			send_bms_status(
+			    get_current_state(state_machine),
 				analyzer->avg_temp,
 				analyzer->internal_temp, // TODO: we never set internal temp
-				get_current_state(state_machine));
-			send_fault_status_message(
-				state_machine->fault_code_crit,
-				state_machine->fault_code_noncrit);
+				true // TODO actually store segment_is_balancing for use here
+			    );
+			send_fault_status(
+				state_machine->fault_code_crit, state_machine->fault_code_noncrit); // TODO fix
 			start_timer(&telem_timer, 500);
 		}
 

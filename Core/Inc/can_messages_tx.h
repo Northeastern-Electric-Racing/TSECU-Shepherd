@@ -315,6 +315,13 @@ uint8_t send_alpha_chip_b_debug
 
 /**
 * Contents of this message:
+* BMS/Control/Fan/DutyCycle - Duty Cycle of Fan
+*/
+uint8_t send_fan_duty_cycle_percentage
+(uint8_t fan_duty_cycle);
+
+/**
+* Contents of this message:
 * BMS/Charging/Voltage - Voltage to charge to
 * BMS/Charging/Current - Current to charge at
 * BMS/Charging/Control - Whether to charge

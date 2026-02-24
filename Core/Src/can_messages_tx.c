@@ -1275,6 +1275,27 @@ uint8_t send_alpha_chip_b_debug
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
 
+uint8_t send_fan_duty_cycle_percentage
+(uint8_t fan_duty_cycle)
+{
+    can_msg_t msg;
+    msg.id = 0x700;
+    msg.id_is_extended = false;
+    msg.len = 1;
+
+    
+            uint8_t data = 0;
+                        uint32_t fan_duty_cycle_i = (uint32_t)(fan_duty_cycle);
+                        if(fan_duty_cycle_i > 255ULL) {fan_duty_cycle_i = 255;
+                        }
+                        data |= ((fan_duty_cycle_i) & 0xFFULL) << 0;
+            
+            msg.data[0] = data;
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
 uint8_t send_bms_charge_message_send
 (float charge_volts,float charge_current,uint8_t enable_charging)
 {

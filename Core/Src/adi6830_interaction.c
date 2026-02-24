@@ -3,7 +3,7 @@
 #include "compute.h"
 #include "mcuWrapper.h"
 #include "isospi_recovery.h"
-#include "can_messages.h"
+#include "can_messages_tx.h"
 
 #define MAX_PEC_ERROR_ACCUM (100U) // Max accumulated PECs
 
@@ -87,7 +87,7 @@ static void count_pec_errors(cell_asic chips[NUM_CHIPS])
 				printf("\n");
 			}
 
-			send_pec_error_message(chip, pec_error_count);
+			send_pec_error_count_notification_per_chip(chip, pec_error_count);
 
 			// Accumulate PEC errors only after startup mask timer ends
 

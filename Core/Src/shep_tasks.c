@@ -3,7 +3,7 @@
 
 #include "shep_tasks.h"
 #include "can_handler.h"
-#include "can_messages.h"
+#include "can_messages_tx.h"
 #include "ccl.h"
 #include "cell_temp_sanitizer.h"
 #include "compute.h"
