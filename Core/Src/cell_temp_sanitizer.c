@@ -10,6 +10,10 @@ void temp_sanitizer_init(sanitizer_t *sanitizer)
 	sanitizer->max_sanitized_temp.cellNum = 0;
 	sanitizer->max_sanitized_temp.chipIndex = 0;
 
+	sanitizer->min_sanitized_temp.val = FLT_MAX;   
+	sanitizer->min_sanitized_temp.cellNum = 0;
+	sanitizer->min_sanitized_temp.chipIndex = 0;
+
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			sanitizer->sanitized_therms[chip][cell].last_temp = 0;
@@ -17,6 +21,63 @@ void temp_sanitizer_init(sanitizer_t *sanitizer)
 		}
 	}
 }
+
+static void sanitized_max_temp(sanitizer_t *sanitizer, analyzer_t *analyzer, int chip, int cell, float cell_temp, therm_state_t *therm_state)
+{
+	
+	// update the max sanitized temp on a valid max
+	if (therm_state->valid) {
+		if (cell_temp >  
+			sanitizer->max_sanitized_temp.val) {
+			sanitizer->max_sanitized_temp.val =
+				cell_temp;
+			sanitizer->max_sanitized_temp.chipIndex =
+				chip;
+			sanitizer->max_sanitized_temp.cellNum =
+				cell;
+		}
+		// if max is no longer valid, max is reset
+	} else if (sanitizer->max_sanitized_temp.cellNum ==
+				cell &&
+			sanitizer->max_sanitized_temp.chipIndex ==
+				chip) {
+		sanitizer->max_sanitized_temp.val = FLT_MIN;
+		sanitizer->max_sanitized_temp.cellNum = 0;
+		sanitizer->max_sanitized_temp.chipIndex = 0;
+	}
+}
+
+
+
+
+
+static void sanitized_min_temp(sanitizer_t *sanitizer, analyzer_t *analyzer, int chip, int cell, float cell_temp, therm_state_t *therm_state)
+{
+
+	// update the min sanitized temp on a valid min
+	if (therm_state->valid) {
+		if (cell_temp <   // to get the lowest value
+			sanitizer->min_sanitized_temp.val) {
+			sanitizer->min_sanitized_temp.val =
+				cell_temp;
+			sanitizer->min_sanitized_temp.chipIndex =
+				chip;
+			sanitizer->min_sanitized_temp.cellNum =
+				cell;
+		}
+		// if min is no longer valid, min is reset
+	} else if (sanitizer->min_sanitized_temp.cellNum ==
+			cell &&
+		sanitizer->min_sanitized_temp.chipIndex ==
+			chip) {
+		sanitizer->min_sanitized_temp.val = FLT_MAX;
+		sanitizer->min_sanitized_temp.cellNum = 0;
+		sanitizer->min_sanitized_temp.chipIndex = 0;
+	}
+}
+		
+		
+	
 
 void temp_sanitizer_run(sanitizer_t *sanitizer, analyzer_t *analyzer)
 {
@@ -41,31 +102,15 @@ void temp_sanitizer_run(sanitizer_t *sanitizer, analyzer_t *analyzer)
 				therm_state->valid = false;
 			}
 			therm_state->last_temp = cell_temp;
-
-			// update the max sanitized temp on a valid max
-			if (therm_state->valid) {
-				if (cell_temp >
-				    sanitizer->max_sanitized_temp.val) {
-					sanitizer->max_sanitized_temp.val =
-						cell_temp;
-					sanitizer->max_sanitized_temp.chipIndex =
-						chip;
-					sanitizer->max_sanitized_temp.cellNum =
-						cell;
-				}
-				// if max is no longer valid, max is reset
-			} else if (sanitizer->max_sanitized_temp.cellNum ==
-					   cell &&
-				   sanitizer->max_sanitized_temp.chipIndex ==
-					   chip) {
-				sanitizer->max_sanitized_temp.val = FLT_MIN;
-				sanitizer->max_sanitized_temp.cellNum = 0;
-				sanitizer->max_sanitized_temp.chipIndex = 0;
-			}
+			sanitized_max_temp(sanitizer, analyzer, chip, cell, cell_temp, therm_state);
+			sanitized_min_temp(sanitizer, analyzer, chip, cell, cell_temp, therm_state);
 		}
 	}
 	first_reading = false;
+
+	
 }
+
 
 // SANITIZER THREAD
 void vSanitizer(ULONG thread_input)
@@ -83,3 +128,13 @@ void vSanitizer(ULONG thread_input)
 		tx_thread_sleep(MS_TO_TICKS(500));
 	}
 }
+
+
+	
+	
+
+
+
+
+
+
