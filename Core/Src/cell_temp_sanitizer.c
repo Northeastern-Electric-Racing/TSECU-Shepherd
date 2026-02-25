@@ -46,6 +46,8 @@ static void sanitized_max_temp(sanitizer_t *sanitizer, analyzer_t *analyzer, int
 		sanitizer->max_sanitized_temp.chipIndex = 0;
 	}
 }
+	
+	
 
 
 
