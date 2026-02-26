@@ -4,6 +4,7 @@
 #include "bms_algos.h"
 #include "current_limit_algo_config.h"
 #include "shep_mutexes.h"
+#include <math.h>
 
 /**
  * @brief CCL pulse control state and timers.

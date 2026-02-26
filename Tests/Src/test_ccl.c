@@ -1,0 +1,382 @@
+#include "unity.h"
+
+#include "ccl.h"
+#include "current_limit_algo_config.h"
+
+#include "mock_timer.h"
+#include "mock_u_tx_mutex.h"
+
+extern current_limit_pulse_ctrl_t ccl_ctrl;
+
+/* -------------------------------------------------
+ * Setup / Teardown
+ * ------------------------------------------------- */
+
+void setUp(void)
+{
+    mutex_get_IgnoreAndReturn(0);
+    mutex_put_IgnoreAndReturn(0);
+
+    cancel_timer_Ignore();
+    start_timer_Ignore();
+
+    ccl_init(COOLDOWN_ALWAYS);
+}
+
+void tearDown(void) {}
+
+/* -------------------------------------------------
+ * Instantaneous CCL – Temperature & OCV regions
+ * ------------------------------------------------- */
+
+void test_inst_ccl_temperature_and_ocv_regions(void)
+{
+    current_limit_algo_inputs_t test_inputs;
+    bms_algos_t test_algos;
+
+    /* -------- Temperature below minimum (hard clamp) -------- */
+    test_algos.inst_CCL = 0.0f;
+    test_inputs.min_temp = -5.0f;
+    test_inputs.max_temp = 20.0f;
+    test_inputs.max_ocv  = 4.0f;
+
+    ccl_calc_inst_limit(test_inputs, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MIN_CURRENT_A, test_algos.inst_CCL);
+
+    /* -------- Temperature above maximum (hard clamp) -------- */
+    test_inputs.min_temp = 25.0f;
+    test_inputs.max_temp = 70.0f;
+    test_inputs.max_ocv  = 4.0f;
+
+    ccl_calc_inst_limit(test_inputs, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MIN_CURRENT_A, test_algos.inst_CCL);
+
+    /* -------- Temperature ramp-up region -------- */
+    test_inputs.min_temp = 5.0f;     /* between TEMP_MIN and RAMP_UP_END */
+    test_inputs.max_temp = 25.0f;
+    test_inputs.max_ocv  = 4.0f;
+
+    ccl_calc_inst_limit(test_inputs, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(15.0f, test_algos.inst_CCL);
+
+    /* -------- Temperature ramp-down region -------- */
+    test_inputs.min_temp = 25.0f;
+    test_inputs.max_temp = 52.0f;    /* between RAMP_DOWN_START and TEMP_MAX */
+    test_inputs.max_ocv  = 4.0f;
+
+    ccl_calc_inst_limit(test_inputs, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(24.0f, test_algos.inst_CCL);
+
+    /* -------- OCV above maximum (hard clamp) -------- */
+    test_inputs.min_temp = 25.0f;
+    test_inputs.max_temp = 30.0f;
+    test_inputs.max_ocv  = 4.22f;
+
+    ccl_calc_inst_limit(test_inputs, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MIN_CURRENT_A, test_algos.inst_CCL);
+
+    /* -------- OCV derating region -------- */
+    test_inputs.min_temp = 25.0f;
+    test_inputs.max_temp = 30.0f;
+    test_inputs.max_ocv  = 4.12f;     /* between OCV_MIN and DERATE_THRESH */
+
+    ccl_calc_inst_limit(test_inputs, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(12.0f, test_algos.inst_CCL);
+
+    /* -------- Fully nominal region -------- */
+    test_inputs.min_temp = 25.0f;
+    test_inputs.max_temp = 30.0f;
+    test_inputs.max_ocv  = 4.0f;
+
+    ccl_calc_inst_limit(test_inputs, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_CURRENT_A, test_algos.inst_CCL);
+}
+
+/* -------------------------------------------------
+ * Continuous CCL – Pulse disabled path
+ * ------------------------------------------------- */
+
+void test_cont_ccl_follows_inst_limit_when_pulse_not_allowed(void)
+{
+    bms_algos_t test_algos;
+    float test_pack_current = 0.0f;
+    current_limit_algo_inputs_t test_inputs;
+
+    /* -------- Below pulse enable margin -------- */
+
+    test_pack_current = 30.0f;
+    test_inputs.max_ocv = 4.15f;
+    test_inputs.max_temp = 32.0f;
+    test_inputs.min_temp = 30.0f;
+
+    ccl_calc_inst_limit(test_inputs, &test_algos);
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(test_algos.inst_CCL, test_algos.cont_CCL);
+
+    /* -------- Pulse eligibility lost resets behavior -------- */
+    test_pack_current = -35.0f;
+    test_inputs.max_ocv = 3.8f;
+
+    is_timer_active_ExpectAnyArgsAndReturn(false);
+
+    ccl_calc_inst_limit(test_inputs, &test_algos);
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    test_inputs.max_temp = 5.0f;
+
+    ccl_calc_inst_limit(test_inputs, &test_algos);
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(test_algos.inst_CCL, test_algos.cont_CCL);
+}
+
+/* -------------------------------------------------
+ * Continuous CCL – REST -> PULSE -> COOLDOWN
+ * ------------------------------------------------- */
+
+void test_cont_ccl_pulse_state_transitions(void)
+{
+    bms_algos_t test_algos = {0};
+    float test_pack_current = 0.0f;
+
+    test_algos.inst_CCL = CCL_MAX_CURRENT_A;
+
+    /* -------- Early pulse exit -> COOLDOWN_ALWAYS -------- */
+
+    ccl_init(COOLDOWN_ALWAYS);
+
+    /* REST -> under max continous current */
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A - 20.0f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> over max continous current but below hysteresis */
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A + 0.3f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> over hysteresis, debounce not active */
+    is_timer_active_ExpectAnyArgsAndReturn(false);
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A + 2.0f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> debounce active but not expired */
+    is_timer_active_ExpectAnyArgsAndReturn(true);
+    is_timer_expired_ExpectAnyArgsAndReturn(false);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> debounce expired -> PULSE */
+    is_timer_active_ExpectAnyArgsAndReturn(true);
+    is_timer_expired_ExpectAnyArgsAndReturn(true);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* PULSE -> below max, t_below inactive */
+    is_timer_active_ExpectAnyArgsAndReturn(false);
+    is_timer_expired_ExpectAnyArgsAndReturn(false);
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A - 1.0f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* PULSE -> below max, t_below active but not expired */
+    is_timer_active_ExpectAnyArgsAndReturn(true);
+    is_timer_expired_ExpectAnyArgsAndReturn(false);
+    is_timer_expired_ExpectAnyArgsAndReturn(false);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* PULSE -> early exit, debounce expired */
+    is_timer_active_ExpectAnyArgsAndReturn(true);
+    is_timer_expired_ExpectAnyArgsAndReturn(true);
+    is_timer_expired_ExpectAnyArgsAndReturn(false);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_COOLDOWN_CURRENT_A, test_algos.cont_CCL);
+
+    /* COOLDOWN -> timer not expired */
+    is_timer_expired_ExpectAnyArgsAndReturn(false);
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A - 20.0f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_COOLDOWN_CURRENT_A, test_algos.cont_CCL);
+
+    /* COOLDOWN -> timer expired */
+    is_timer_expired_ExpectAnyArgsAndReturn(true);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_COOLDOWN_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> after cooldown */
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* -------- Full pulse -> COOLDOWN_ALWAYS -------- */
+
+    /* REST -> under max continuous current */
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A - 20.0f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> over hysteresis, debounce not active */
+    is_timer_active_ExpectAnyArgsAndReturn(false);
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A + 10.0f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> debounce expired -> PULSE */
+    is_timer_active_ExpectAnyArgsAndReturn(true);
+    is_timer_expired_ExpectAnyArgsAndReturn(true);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* PULSE -> pulse timer active but not expired */
+    is_timer_expired_ExpectAnyArgsAndReturn(false);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* PULSE -> pulse timer expired */
+    is_timer_expired_ExpectAnyArgsAndReturn(true);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_COOLDOWN_CURRENT_A, test_algos.cont_CCL);
+
+    /* COOLDOWN -> timer not expired */
+    is_timer_expired_ExpectAnyArgsAndReturn(false);
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A - 20.0f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_COOLDOWN_CURRENT_A, test_algos.cont_CCL);
+
+    /* COOLDOWN -> timer expired */
+    is_timer_expired_ExpectAnyArgsAndReturn(true);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_COOLDOWN_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> after cooldown */
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* -------- Early pulse exit -> COOLDOWN_ON_FULL_PULSE -------- */
+
+    ccl_init(COOLDOWN_ON_FULL_PULSE);
+
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A - 20.0f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> over hysteresis, debounce not active */
+    is_timer_active_ExpectAnyArgsAndReturn(false);
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A + 10.0f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> debounce expired -> PULSE */
+    is_timer_active_ExpectAnyArgsAndReturn(true);
+    is_timer_expired_ExpectAnyArgsAndReturn(true);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* PULSE -> below max, t_below inactive */
+    is_timer_active_ExpectAnyArgsAndReturn(false);
+    is_timer_expired_ExpectAnyArgsAndReturn(false);
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A - 5.0f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* PULSE -> early exit, debounce expired */
+    is_timer_active_ExpectAnyArgsAndReturn(true);
+    is_timer_expired_ExpectAnyArgsAndReturn(true);
+    is_timer_expired_ExpectAnyArgsAndReturn(false);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> after pulse early exit */
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* -------- Full pulse -> COOLDOWN_ON_FULL_PULSE -------- */
+
+    /* REST -> under max continuous current */
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A - 20.0f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> over hysteresis, debounce not active */
+    is_timer_active_ExpectAnyArgsAndReturn(false);
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A + 10.0f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> debounce expired -> PULSE */
+    is_timer_active_ExpectAnyArgsAndReturn(true);
+    is_timer_expired_ExpectAnyArgsAndReturn(true);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* PULSE -> pulse timer active but not expired */
+    is_timer_expired_ExpectAnyArgsAndReturn(false);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+
+    /* PULSE -> pulse timer expired */
+    is_timer_expired_ExpectAnyArgsAndReturn(true);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_COOLDOWN_CURRENT_A, test_algos.cont_CCL);
+
+    /* COOLDOWN -> timer not expired */
+    is_timer_expired_ExpectAnyArgsAndReturn(false);
+    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A - 20.0f);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_COOLDOWN_CURRENT_A, test_algos.cont_CCL);
+
+    /* COOLDOWN -> timer expired */
+    is_timer_expired_ExpectAnyArgsAndReturn(true);
+
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_COOLDOWN_CURRENT_A, test_algos.cont_CCL);
+
+    /* REST -> after cooldown */
+    ccl_calc_cont_limit(test_pack_current, &test_algos);
+    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
+}
+
+/* -------------------------------------------------
+ * Test Runner
+ * ------------------------------------------------- */
+
+int main(void)
+{
+    UNITY_BEGIN();
+
+    RUN_TEST(test_inst_ccl_temperature_and_ocv_regions);
+    RUN_TEST(test_cont_ccl_follows_inst_limit_when_pulse_not_allowed);
+    RUN_TEST(test_cont_ccl_pulse_state_transitions);
+
+    return UNITY_END();
+}
