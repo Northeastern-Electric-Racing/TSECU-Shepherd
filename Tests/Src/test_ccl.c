@@ -6,8 +6,6 @@
 #include "mock_timer.h"
 #include "mock_u_tx_mutex.h"
 
-extern current_limit_pulse_ctrl_t ccl_ctrl;
-
 /* -------------------------------------------------
  * Setup / Teardown
  * ------------------------------------------------- */
