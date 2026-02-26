@@ -1,7 +1,7 @@
 #include "unity.h"
 
 #include "dcl.h"
-#include "current_limit_algo_config.h"
+#include "test_current_limit_algo_config.h"
 
 #include "mock_timer.h"
 #include "mock_u_tx_mutex.h"
