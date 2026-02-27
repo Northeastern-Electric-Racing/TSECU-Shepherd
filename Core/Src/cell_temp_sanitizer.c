@@ -47,12 +47,6 @@ static void sanitized_max_temp(sanitizer_t *sanitizer, analyzer_t *analyzer, int
 	}
 }
 	
-	
-
-
-
-
-
 static void sanitized_min_temp(sanitizer_t *sanitizer, analyzer_t *analyzer, int chip, int cell, float cell_temp, therm_state_t *therm_state)
 {
 
@@ -78,9 +72,6 @@ static void sanitized_min_temp(sanitizer_t *sanitizer, analyzer_t *analyzer, int
 	}
 }
 		
-		
-	
-
 void temp_sanitizer_run(sanitizer_t *sanitizer, analyzer_t *analyzer)
 {
 	static bool first_reading = true;
@@ -104,13 +95,12 @@ void temp_sanitizer_run(sanitizer_t *sanitizer, analyzer_t *analyzer)
 				therm_state->valid = false;
 			}
 			therm_state->last_temp = cell_temp;
+
 			sanitized_max_temp(sanitizer, analyzer, chip, cell, cell_temp, therm_state);
 			sanitized_min_temp(sanitizer, analyzer, chip, cell, cell_temp, therm_state);
 		}
 	}
 	first_reading = false;
-
-	
 }
 
 
