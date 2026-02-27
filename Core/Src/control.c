@@ -1,6 +1,9 @@
-#include "control.h"
 
+#include "control.h"
 #include "main.h"
+#include "datastructs.h"
+#include "can_messages.h"
+#include "shep_mutexes.h"
 
 #define INIT_TIMEOUT_MS 10
 
@@ -33,12 +36,11 @@ bool control_init_peripherals(void)
 {
 	device_fan0 = (pwm_device_t){
 		.tim_handle = &htim3,
-		.channel_identifier = TIM_CHANNEL_3,
+		.channel_identifier = TIM_CHANNEL_2,
 	};
 
-	bool error = false;
-	error |= _init_pwm_device(&device_fan0);
-	return error;
+	bool status = _init_pwm_device(&device_fan0);
+	return !status;
 }
 
 void control_fan(float pack_high_temp)
@@ -73,3 +75,31 @@ void control_message_fans(can_msg_t msg)
 	calypso_signals[DEVICE_FAN0] = duty;
 }
 #undef _PERCENT_16
+
+// CONTROL THREAD
+void vControl(ULONG thread_input)
+{
+	PRINTLN_INFO("Starting Control thread...");
+
+	analyzer_t *analyzer = (analyzer_t *)thread_input;
+
+	PRINTLN_INFO("Starting Control thread...");
+
+	// Initialize peripherals for control
+	bool failed = !control_init_peripherals();
+	if (failed) {
+		PRINTLN_ERROR(
+			"Failed to initialize one or more peripherals.\n");
+	}
+
+	for (;;) {
+		mutex_get(&analyzer_mutex);
+		float pack_high_temp = analyzer->max_temp.val;
+		control_fan(pack_high_temp);
+		mutex_put(&analyzer_mutex);
+
+		send_control_signals(control_device_signals);
+
+		tx_thread_sleep(MS_TO_TICKS(100));
+	}
+}

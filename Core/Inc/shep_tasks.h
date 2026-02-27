@@ -5,14 +5,6 @@
 #include "tx_api.h"
 #include "datastructs.h"
 
-// clang-format off
-#define ANALYZER_FLAG		         (1U)
-#define SANITIZER_FLAG		         (1U << 1)
-#define DEBUG_FLAG		             (1U << 2)
-#define SPI_LINE_A_DMA_RX_CPLT_FLAG  (1U << 3)
-#define SPI_LINE_B_DMA_RX_CPLT_FLAG  (1U << 4)
-// clang-format on
-
 // #define DEBUG_HV_PLATE
 // #define DEBUG_VOLTAGES
 // #define DEBUG_TEMPS

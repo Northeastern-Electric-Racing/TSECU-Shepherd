@@ -1,5 +1,5 @@
-#ifndef CURRENT_LIMIT_ALGO_UTILS_H
-#define CURRENT_LIMIT_ALGO_UTILS_H
+#ifndef BMS_ALGOS_H
+#define BMS_ALGOS_H
 
 #include <stdbool.h>
 #include "datastructs.h"
@@ -18,4 +18,6 @@
  */
 bool disable_pulse(state_machine_t *const state_machine);
 
-#endif // CURRENT_LIMIT_ALGO_UTILS_H
+void vBMSAlgorithms(ULONG thread_input);
+
+#endif // BMS_ALGOS_H

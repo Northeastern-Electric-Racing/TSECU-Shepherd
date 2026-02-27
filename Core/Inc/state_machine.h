@@ -77,4 +77,6 @@ void set_segment_comms_fault(state_machine_t *state_mach);
  */
 void clear_segment_comms_fault(state_machine_t *state_mach);
 
+void vStateMachine(ULONG thread_input);
+
 #endif

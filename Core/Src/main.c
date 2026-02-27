@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "can_handler.h"
+#include "ethernet.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -171,7 +172,6 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
-  assert(!init_can(&hfdcan2));
   /* USER CODE END 2 */
 
   MX_ThreadX_Init();

@@ -66,3 +66,20 @@ void temp_sanitizer_run(sanitizer_t *sanitizer, analyzer_t *analyzer)
 	}
 	first_reading = false;
 }
+
+// SANITIZER THREAD
+void vSanitizer(ULONG thread_input)
+{
+	PRINTLN_INFO("Starting Sanitizer thread...");
+	sanitizer_args_t *sanitizer_args = (sanitizer_args_t *)thread_input;
+
+	sanitizer_t *sanitizer = sanitizer_args->sanitizer;
+	analyzer_t *analyzer = sanitizer_args->analyzer;
+
+	temp_sanitizer_init(sanitizer);
+
+	for (;;) {
+		temp_sanitizer_run(sanitizer, analyzer);
+		tx_thread_sleep(MS_TO_TICKS(500));
+	}
+}

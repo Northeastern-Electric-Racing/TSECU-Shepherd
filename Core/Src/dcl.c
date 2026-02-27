@@ -1,8 +1,10 @@
 #include "dcl.h"
 #include "timer.h"
 #include "c_utils.h"
-#include "current_limit_algo_utils.h"
+#include "bms_algos.h"
 #include "current_limit_algo_config.h"
+#include "shep_mutexes.h"
+#include <math.h>
 
 /**
  * @brief DCL pulse control state and timers.
@@ -116,16 +118,16 @@ void dcl_calc_inst_limit(current_limit_algo_inputs_t curr_lim_inputs,
 		dcl = DCL_MAX_CURRENT_A;
 	}
 
-	mutex_get(&bms_algos->bms_algos_mutex);
+	mutex_get(&bms_algos_mutex);
 	bms_algos->inst_DCL = dcl;
-	mutex_put(&bms_algos->bms_algos_mutex);
+	mutex_put(&bms_algos_mutex);
 }
 
 void dcl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 {
-	mutex_get(&bms_algos->bms_algos_mutex);
+	mutex_get(&bms_algos_mutex);
 	float inst_dcl = bms_algos->inst_DCL;
-	mutex_put(&bms_algos->bms_algos_mutex);
+	mutex_put(&bms_algos_mutex);
 
 	// Default applied DCL is the instantaneous limit
 	float applied_dcl = inst_dcl;
@@ -249,8 +251,8 @@ void dcl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 	// Track pulse eligibility edge
 	dcl_ctrl.pulse_allowed = is_pulse_allowed;
 
-	mutex_get(&bms_algos->bms_algos_mutex);
+	mutex_get(&bms_algos_mutex);
 	// Publish applied discharge current limit
 	bms_algos->cont_DCL = applied_dcl;
-	mutex_put(&bms_algos->bms_algos_mutex);
+	mutex_put(&bms_algos_mutex);
 }

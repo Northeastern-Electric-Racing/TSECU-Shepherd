@@ -26,4 +26,8 @@ void ethernet_inbox(ethernet_message_t *message);
  */
 uint8_t queue_eth_msg(ethernet_message_t eth_msg);
 
+void vEthernetIncoming(ULONG thread_input);
+
+void vEthernetOutgoing(ULONG thread_input);
+
 #endif

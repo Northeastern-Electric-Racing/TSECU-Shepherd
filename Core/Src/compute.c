@@ -3,8 +3,10 @@
 #include <stdlib.h>
 #include "datastructs.h"
 #include "main.h"
-#include <sht30.h>
+#include "sht30.h"
 #include "lsm6dsv_reg.h"
+#include "app_threadx.h"
+#include "shep_mutexes.h"
 
 #define IMU_CS_GPIO_Port SPI6_CS_GPIO_Port
 #define IMU_CS_Pin	 SPI6_CS_Pin
@@ -93,7 +95,7 @@ static int32_t _lsm6dsv_write(void *spi_handle, uint8_t reg,
 	return 0;
 }
 
-static const stmdev_ctx_t imu = { .handle = &hspi2,
+static const stmdev_ctx_t imu = { .handle = &hspi6,
 				  .read_reg = _lsm6dsv_read,
 				  .write_reg = _lsm6dsv_write };
 
@@ -228,46 +230,13 @@ int imu_getAngularRate(vector3_t *data)
 	return U_SUCCESS;
 }
 
-typedef struct {
-	sht30_t sht30;
-} compute_t;
-
-compute_t *compute;
 extern I2C_HandleTypeDef hi2c1;
 
-// moving the bulk of the pointers over
-static inline uint8_t sht30_i2c_write(uint8_t *data, uint8_t dev_address,
 
-				      uint8_t length)
+void init_compute(peripherals_t *peripherals)
 {
-	return HAL_I2C_Master_Transmit(&hi2c1, dev_address, data, length,
-				       HAL_MAX_DELAY);
-}
-static inline uint8_t sht30_i2c_read(uint8_t *data, uint16_t command,
-				     uint8_t dev_address, uint8_t length)
-{
-	return HAL_I2C_Mem_Read(&hi2c1, dev_address, command, sizeof(command),
-				data, length, HAL_MAX_DELAY);
-}
-static inline uint8_t sht30_i2c_blocking_read(uint8_t *data, uint16_t command,
-					      uint8_t dev_address,
-					      uint8_t length)
-{
-	uint8_t command_buffer[2] = { (command & 0xff00u) >> 8u,
-				      command & 0xffu };
-	sht30_i2c_write(command_buffer, dev_address, sizeof(command_buffer));
-	HAL_Delay(1);
-	return HAL_I2C_Master_Receive(&hi2c1, dev_address, data, length,
-				      HAL_MAX_DELAY);
-}
-
-void init_compute(compute_t *compute_ptr)
-{
-	assert(compute_ptr);
-	assert(!sht30_init(&compute_ptr->sht30, (Write_ptr)sht30_i2c_write,
-			   (Read_ptr)sht30_i2c_read,
-			   (Read_ptr)sht30_i2c_blocking_read, SHT30_I2C_ADDR));
-	compute = compute_ptr;
+	assert(peripherals);
+	assert(!imu_init());
 }
 
 void compute_set_fault(bool fault_state)
@@ -294,4 +263,28 @@ bool read_shutdown()
 	// If the pin is high, the shutdown circuit is closed. So, return false.
 	// If the pin is low, the shutdown circuit is open. So, return true.
 	return !shutdown;
+}
+
+// PERIPHERALS THREAD
+void vPeripherals(ULONG thread_input)
+{
+	PRINTLN_INFO("Starting Peripherals thread...");
+
+	peripherals_args_t *peripherals_args =
+		(peripherals_args_t *)thread_input;
+  peripherals_t *peripherals = peripherals_args->peripherals;
+
+	init_compute(peripherals);
+	imu_data_t imu_data = peripherals->imu_data;
+
+	for (;;) {
+		mutex_get(&peripherals_mutex);
+
+		imu_getAcceleration(&imu_data.accel_data);
+		imu_getAngularRate(&imu_data.ang_rate_data);
+
+		mutex_put(&peripherals_mutex);
+
+		tx_thread_sleep(MS_TO_TICKS(50));
+	}
 }

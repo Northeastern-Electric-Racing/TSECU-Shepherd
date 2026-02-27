@@ -1,8 +1,10 @@
 #include "ccl.h"
 #include "timer.h"
 #include "c_utils.h"
-#include "current_limit_algo_utils.h"
+#include "bms_algos.h"
 #include "current_limit_algo_config.h"
+#include "shep_mutexes.h"
+#include <math.h>
 
 /**
  * @brief CCL pulse control state and timers.
@@ -116,16 +118,16 @@ void ccl_calc_inst_limit(current_limit_algo_inputs_t curr_lim_inputs,
 		ccl = CCL_MAX_CURRENT_A;
 	}
 
-	mutex_get(&bms_algos->bms_algos_mutex);
+	mutex_get(&bms_algos_mutex);
 	bms_algos->inst_CCL = ccl;
-	mutex_put(&bms_algos->bms_algos_mutex);
+	mutex_put(&bms_algos_mutex);
 }
 
 void ccl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 {
-	mutex_get(&bms_algos->bms_algos_mutex);
+	mutex_get(&bms_algos_mutex);
 	float inst_ccl = bms_algos->inst_CCL;
-	mutex_put(&bms_algos->bms_algos_mutex);
+	mutex_put(&bms_algos_mutex);
 
 	// Default applied CCL is the instantaneous limit
 	float applied_ccl = inst_ccl;
@@ -263,8 +265,8 @@ void ccl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 	// Track pulse eligibility edge
 	ccl_ctrl.pulse_allowed = is_pulse_allowed;
 
-	mutex_get(&bms_algos->bms_algos_mutex);
+	mutex_get(&bms_algos_mutex);
 	// Publish applied charge current limit
 	bms_algos->cont_CCL = applied_ccl;
-	mutex_put(&bms_algos->bms_algos_mutex);
+	mutex_put(&bms_algos_mutex);
 }

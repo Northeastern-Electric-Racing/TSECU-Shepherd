@@ -8,8 +8,12 @@
 #include "u_tx_mutex.h"
 #include "adBms6830Data.h"
 #include "adi_bms_2950data.h"
-#include "compute.h"
 #include "timer.h"
+#include "sht30.h"
+
+#define ANALYZER_FLAG  0x1
+#define SANITIZER_FLAG 0x2
+#define DEBUG_FLAG     0x4
 
 /**
  * @brief Stores critical values for the pack (across all chips), and where that critical value can be found
@@ -102,7 +106,6 @@ typedef struct {
 	therm_state_t sanitized_therms[NUM_CHIPS][NUM_CELLS_PER_CHIP];
 	crit_cellval_t max_sanitized_temp;
 	crit_cellval_t min_sanitized_temp;
-
 } sanitizer_t;
 
 /**
@@ -187,8 +190,6 @@ typedef struct {
  * @brief data needed for processing raw data
  */
 typedef struct {
-	mutex_t analyzer_mutex;
-
 	/* Array of data from all chips in the system */
 	chipdata_t chip_data[NUM_CHIPS];
 
@@ -245,8 +246,6 @@ typedef struct {
 	float cont_CCL;
 	float inst_DCL;
 	float inst_CCL;
-
-	mutex_t bms_algos_mutex;
 } bms_algos_t;
 
 /**
@@ -339,10 +338,16 @@ typedef struct {
 
 	// charging message timer for telemetry
 	nertimer_t charger_message_timer;
-
-	mutex_t state_mutex;
-
 } state_machine_t;
+
+/**
+ * Represents a 3D vector for IMU data
+ */
+typedef struct {
+	float x;
+	float y;
+	float z;
+} vector3_t;
 
 typedef struct {
 	vector3_t accel_data;
@@ -350,7 +355,6 @@ typedef struct {
 } imu_data_t;
 
 typedef struct {
-	mutex_t peripherals_mutex;
 	imu_data_t imu_data;
 } peripherals_t;
 

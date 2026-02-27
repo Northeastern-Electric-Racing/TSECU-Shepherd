@@ -5,9 +5,9 @@
 static void set_precharge_relay(cell_asic_2950 *ic, bool state)
 {
 	if (state) {
-		set_gpo(*ic, HV_CTRL_GPO);
+		set_gpo(ic, HV_CTRL_GPO);
 	} else {
-		reset_gpo(*ic, HV_CTRL_GPO);
+		reset_gpo(ic, HV_CTRL_GPO);
 	}
 }
 
@@ -54,4 +54,21 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 
 	debounce(!should_precharge, &precharge_config->close_debounce_timer,
 		 precharge_config->debounce_time, open_relay, precharge_config);
+}
+
+// PRECHARGE THREAD
+void vPrecharge(ULONG args)
+{
+	PRINTLN_INFO("Starting Precharge thread...");
+
+	hv_plate_t *hv_plate = (hv_plate_t *)args;
+
+	prechargeconfig_t precharge_config;
+	precharge_init(&precharge_config, hv_plate, 0.9f,
+		       200 /* ms debounce time */);
+
+	for (;;) {
+		handle_precharge(&precharge_config);
+		tx_thread_sleep(MS_TO_TICKS(50)); // TODO; fix thread timing
+	}
 }
