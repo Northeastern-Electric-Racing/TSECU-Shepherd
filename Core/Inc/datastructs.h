@@ -125,6 +125,7 @@ typedef union {
 		uint8_t spiflt : 1;
 		uint8_t thsd : 1;
 		uint8_t reset : 1;
+		unsigned : 4;
 	} flags;
 	uint16_t raw;
 } adbms_2950_flags_t;
@@ -426,7 +427,7 @@ typedef struct {
 } bms_algos_args_t;
 
 /**
- * @brief args for peripheral thread 
+ * @brief args for peripheral thread
  */
 typedef struct {
 	peripherals_t *peripherals;

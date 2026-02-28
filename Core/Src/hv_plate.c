@@ -46,6 +46,8 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 
 	set_accumulation_count(hv_plate->ic, conversion_count);
 	start_adc_conversions(hv_plate->ic);
+
+	hv_plate->adbms_flags.raw = 0; // reset flags
 }
 
 void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
