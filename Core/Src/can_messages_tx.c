@@ -6,8 +6,8 @@
 #include "can_messages_tx.h"
 #include <stdbool.h>
 
-#include "u_queues.h"
 #include "u_tx_debug.h"
+#include "u_queues.h"
 #include "c_utils.h"
 #include "fdcan.h"
 #include "bitstream.h"
@@ -152,12 +152,12 @@ uint8_t send_pack_status
 }
 
 uint8_t send_bms_status
-(uint8_t state,float temp_average,float temp_internal,uint8_t balancing)
+(uint8_t state,float temp_average,float temp_internal)
 {
     can_msg_t msg;
     msg.id = 0x81;
     msg.id_is_extended = false;
-    msg.len = 4;
+    msg.len = 3;
 
     
             uint32_t data = 0;
@@ -175,11 +175,6 @@ uint8_t send_bms_status
                         if(temp_internal_i > 255ULL) {temp_internal_i = 255;
                         }
                         data |= ((temp_internal_i) & 0xFFULL) << 8;
-            
-                        uint32_t balancing_i = (uint32_t)(balancing);
-                        if(balancing_i > 255ULL) {balancing_i = 255;
-                        }
-                        data |= ((balancing_i) & 0xFFULL) << 0;
             
             uint32_t data_bigendian = __builtin_bswap32(data);
             memcpy(msg.data, &data_bigendian, 4);
@@ -935,199 +930,8 @@ uint8_t send_beta_cell_data_debug
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
 
-uint8_t send_beta_chip_a_debug
-(float therm_last,float voltage_last,bool discharging_last,uint8_t chip_id,float seg_temp,float die_temp,float vpv)
-{
-    can_msg_t msg;
-    msg.id = 0x6FD;
-    msg.id_is_extended = false;
-    msg.len = 8;
-
-    
-            uint64_t data = 0;
-                        uint32_t therm_last_i = (uint32_t)(therm_last*10);
-                        if(therm_last_i > 1023ULL) {therm_last_i = 1023;
-                        }
-                        data |= ((therm_last_i) & 0x3FFULL) << 54;
-            
-                        uint32_t voltage_last_i = (uint32_t)(voltage_last*1000);
-                        if(voltage_last_i > 8191ULL) {voltage_last_i = 8191;
-                        }
-                        data |= ((voltage_last_i) & 0x1FFFULL) << 41;
-            
-                        uint32_t discharging_last_i = (uint32_t)(discharging_last);
-                        if(discharging_last_i > 1ULL) {discharging_last_i = 1;
-                        }
-                        data |= ((discharging_last_i) & 0x1ULL) << 40;
-            
-                        uint32_t chip_id_i = (uint32_t)(chip_id);
-                        if(chip_id_i > 15ULL) {chip_id_i = 15;
-                        }
-                        data |= ((chip_id_i) & 0xFULL) << 36;
-            
-                        uint32_t seg_temp_i = (uint32_t)(seg_temp*10);
-                        if(seg_temp_i > 1023ULL) {seg_temp_i = 1023;
-                        }
-                        data |= ((seg_temp_i) & 0x3FFULL) << 26;
-            
-                        uint32_t die_temp_i = (uint32_t)(die_temp*100);
-                        if(die_temp_i > 8191ULL) {die_temp_i = 8191;
-                        }
-                        data |= ((die_temp_i) & 0x1FFFULL) << 13;
-            
-                        uint32_t vpv_i = (uint32_t)(vpv*100);
-                        if(vpv_i > 8191ULL) {vpv_i = 8191;
-                        }
-                        data |= ((vpv_i) & 0x1FFFULL) << 0;
-            
-            uint64_t data_bigendian = __builtin_bswap64(data);
-            memcpy(msg.data, &data_bigendian, 8);
-        
-
-    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
-}
-
-uint8_t send_beta_chip_b_debug
-(float vref2,float v_analog,float v_digital,uint8_t chip_id,float v_res,float vmv,bool cvs_last)
-{
-    can_msg_t msg;
-    msg.id = 0x6FE;
-    msg.id_is_extended = false;
-    msg.len = 8;
-
-    
-            uint64_t data = 0;
-                        uint32_t vref2_i = (uint32_t)(vref2*1000);
-                        if(vref2_i > 8191ULL) {vref2_i = 8191;
-                        }
-                        data |= ((vref2_i) & 0x1FFFULL) << 51;
-            
-                        uint32_t v_analog_i = (uint32_t)(v_analog*100);
-                        if(v_analog_i > 1023ULL) {v_analog_i = 1023;
-                        }
-                        data |= ((v_analog_i) & 0x3FFULL) << 41;
-            
-                        uint32_t v_digital_i = (uint32_t)(v_digital*100);
-                        if(v_digital_i > 1023ULL) {v_digital_i = 1023;
-                        }
-                        data |= ((v_digital_i) & 0x3FFULL) << 31;
-            
-                        uint32_t chip_id_i = (uint32_t)(chip_id);
-                        if(chip_id_i > 15ULL) {chip_id_i = 15;
-                        }
-                        data |= ((chip_id_i) & 0xFULL) << 27;
-            
-                        uint32_t v_res_i = (uint32_t)(v_res*1000);
-                        if(v_res_i > 8191ULL) {v_res_i = 8191;
-                        }
-                        data |= ((v_res_i) & 0x1FFFULL) << 14;
-            
-                        uint32_t vmv_i = (uint32_t)(vmv*1000);
-                        if(vmv_i > 8191ULL) {vmv_i = 8191;
-                        }
-                        data |= ((vmv_i) & 0x1FFFULL) << 1;
-            
-                        uint32_t cvs_last_i = (uint32_t)(cvs_last);
-                        if(cvs_last_i > 1ULL) {cvs_last_i = 1;
-                        }
-                        data |= ((cvs_last_i) & 0x1ULL) << 0;
-            
-            uint64_t data_bigendian = __builtin_bswap64(data);
-            memcpy(msg.data, &data_bigendian, 8);
-        
-
-    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
-}
-
-uint8_t send_beta_chip_c_debug
-(bool chip_id,bool va_ov,bool va_uv,bool vd_ov,bool vd_uv,bool vde,bool vdel,bool spiflt,bool sleep,bool thsd,bool tmodchk,bool oscchk,bool otp1_med,bool otp2_med)
-{
-    can_msg_t msg;
-    msg.id = 0x6F0;
-    msg.id_is_extended = false;
-    msg.len = 3;
-
-    
-            uint32_t data = 0;
-                        uint32_t chip_id_i = (uint32_t)(chip_id);
-                        if(chip_id_i > 15ULL) {chip_id_i = 15;
-                        }
-                        data |= ((chip_id_i) & 0xFULL) << 28;
-            
-                        uint32_t va_ov_i = (uint32_t)(va_ov);
-                        if(va_ov_i > 1ULL) {va_ov_i = 1;
-                        }
-                        data |= ((va_ov_i) & 0x1ULL) << 27;
-            
-                        uint32_t va_uv_i = (uint32_t)(va_uv);
-                        if(va_uv_i > 1ULL) {va_uv_i = 1;
-                        }
-                        data |= ((va_uv_i) & 0x1ULL) << 26;
-            
-                        uint32_t vd_ov_i = (uint32_t)(vd_ov);
-                        if(vd_ov_i > 1ULL) {vd_ov_i = 1;
-                        }
-                        data |= ((vd_ov_i) & 0x1ULL) << 25;
-            
-                        uint32_t vd_uv_i = (uint32_t)(vd_uv);
-                        if(vd_uv_i > 1ULL) {vd_uv_i = 1;
-                        }
-                        data |= ((vd_uv_i) & 0x1ULL) << 24;
-            
-                        uint32_t vde_i = (uint32_t)(vde);
-                        if(vde_i > 1ULL) {vde_i = 1;
-                        }
-                        data |= ((vde_i) & 0x1ULL) << 23;
-            
-                        uint32_t vdel_i = (uint32_t)(vdel);
-                        if(vdel_i > 1ULL) {vdel_i = 1;
-                        }
-                        data |= ((vdel_i) & 0x1ULL) << 22;
-            
-                        uint32_t spiflt_i = (uint32_t)(spiflt);
-                        if(spiflt_i > 1ULL) {spiflt_i = 1;
-                        }
-                        data |= ((spiflt_i) & 0x1ULL) << 21;
-            
-                        uint32_t sleep_i = (uint32_t)(sleep);
-                        if(sleep_i > 1ULL) {sleep_i = 1;
-                        }
-                        data |= ((sleep_i) & 0x1ULL) << 20;
-            
-                        uint32_t thsd_i = (uint32_t)(thsd);
-                        if(thsd_i > 1ULL) {thsd_i = 1;
-                        }
-                        data |= ((thsd_i) & 0x1ULL) << 19;
-            
-                        uint32_t tmodchk_i = (uint32_t)(tmodchk);
-                        if(tmodchk_i > 1ULL) {tmodchk_i = 1;
-                        }
-                        data |= ((tmodchk_i) & 0x1ULL) << 18;
-            
-                        uint32_t oscchk_i = (uint32_t)(oscchk);
-                        if(oscchk_i > 1ULL) {oscchk_i = 1;
-                        }
-                        data |= ((oscchk_i) & 0x1ULL) << 17;
-            
-                        uint32_t otp1_med_i = (uint32_t)(otp1_med);
-                        if(otp1_med_i > 1ULL) {otp1_med_i = 1;
-                        }
-                        data |= ((otp1_med_i) & 0x1ULL) << 16;
-            
-                        uint32_t otp2_med_i = (uint32_t)(otp2_med);
-                        if(otp2_med_i > 1ULL) {otp2_med_i = 1;
-                        }
-                        data |= ((otp2_med_i) & 0x1ULL) << 15;
-            
-            uint32_t data_bigendian = __builtin_bswap32(data);
-            memcpy(msg.data, &data_bigendian, 4);
-        
-
-    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
-}
-
-uint8_t send_alpha_chip_a_debug
-(float seg_temp,uint8_t chip_id,float die_temp,float vpv,float vmv,bool va_ov,bool va_uv,bool vd_ov,bool vd_uv,bool vde,bool vdel,bool spiflt,bool sleep,bool thsd,bool tmodchk,bool oscchk)
+uint8_t send_chip_a_debug
+(uint8_t chip_id,float die_temp,float vpv,float vmv,bool va_ov,bool va_uv,bool vd_ov,bool vd_uv,bool vde,bool vdel,bool spiflt,bool sleep,bool thsd,bool tmodchk,bool oscchk)
 {
     can_msg_t msg;
     msg.id = 0x6FC;
@@ -1136,85 +940,80 @@ uint8_t send_alpha_chip_a_debug
 
     
             uint64_t data = 0;
-                        uint32_t seg_temp_i = (uint32_t)(seg_temp*10);
-                        if(seg_temp_i > 1023ULL) {seg_temp_i = 1023;
-                        }
-                        data |= ((seg_temp_i) & 0x3FFULL) << 54;
-            
                         uint32_t chip_id_i = (uint32_t)(chip_id);
                         if(chip_id_i > 15ULL) {chip_id_i = 15;
                         }
-                        data |= ((chip_id_i) & 0xFULL) << 50;
+                        data |= ((chip_id_i) & 0xFULL) << 60;
             
                         uint32_t die_temp_i = (uint32_t)(die_temp*100);
                         if(die_temp_i > 8191ULL) {die_temp_i = 8191;
                         }
-                        data |= ((die_temp_i) & 0x1FFFULL) << 37;
+                        data |= ((die_temp_i) & 0x1FFFULL) << 47;
             
                         uint32_t vpv_i = (uint32_t)(vpv*100);
                         if(vpv_i > 8191ULL) {vpv_i = 8191;
                         }
-                        data |= ((vpv_i) & 0x1FFFULL) << 24;
+                        data |= ((vpv_i) & 0x1FFFULL) << 34;
             
                         uint32_t vmv_i = (uint32_t)(vmv*1000);
                         if(vmv_i > 8191ULL) {vmv_i = 8191;
                         }
-                        data |= ((vmv_i) & 0x1FFFULL) << 11;
+                        data |= ((vmv_i) & 0x1FFFULL) << 21;
             
                         uint32_t va_ov_i = (uint32_t)(va_ov);
                         if(va_ov_i > 1ULL) {va_ov_i = 1;
                         }
-                        data |= ((va_ov_i) & 0x1ULL) << 10;
+                        data |= ((va_ov_i) & 0x1ULL) << 20;
             
                         uint32_t va_uv_i = (uint32_t)(va_uv);
                         if(va_uv_i > 1ULL) {va_uv_i = 1;
                         }
-                        data |= ((va_uv_i) & 0x1ULL) << 9;
+                        data |= ((va_uv_i) & 0x1ULL) << 19;
             
                         uint32_t vd_ov_i = (uint32_t)(vd_ov);
                         if(vd_ov_i > 1ULL) {vd_ov_i = 1;
                         }
-                        data |= ((vd_ov_i) & 0x1ULL) << 8;
+                        data |= ((vd_ov_i) & 0x1ULL) << 18;
             
                         uint32_t vd_uv_i = (uint32_t)(vd_uv);
                         if(vd_uv_i > 1ULL) {vd_uv_i = 1;
                         }
-                        data |= ((vd_uv_i) & 0x1ULL) << 7;
+                        data |= ((vd_uv_i) & 0x1ULL) << 17;
             
                         uint32_t vde_i = (uint32_t)(vde);
                         if(vde_i > 1ULL) {vde_i = 1;
                         }
-                        data |= ((vde_i) & 0x1ULL) << 6;
+                        data |= ((vde_i) & 0x1ULL) << 16;
             
                         uint32_t vdel_i = (uint32_t)(vdel);
                         if(vdel_i > 1ULL) {vdel_i = 1;
                         }
-                        data |= ((vdel_i) & 0x1ULL) << 5;
+                        data |= ((vdel_i) & 0x1ULL) << 15;
             
                         uint32_t spiflt_i = (uint32_t)(spiflt);
                         if(spiflt_i > 1ULL) {spiflt_i = 1;
                         }
-                        data |= ((spiflt_i) & 0x1ULL) << 4;
+                        data |= ((spiflt_i) & 0x1ULL) << 14;
             
                         uint32_t sleep_i = (uint32_t)(sleep);
                         if(sleep_i > 1ULL) {sleep_i = 1;
                         }
-                        data |= ((sleep_i) & 0x1ULL) << 3;
+                        data |= ((sleep_i) & 0x1ULL) << 13;
             
                         uint32_t thsd_i = (uint32_t)(thsd);
                         if(thsd_i > 1ULL) {thsd_i = 1;
                         }
-                        data |= ((thsd_i) & 0x1ULL) << 2;
+                        data |= ((thsd_i) & 0x1ULL) << 12;
             
                         uint32_t tmodchk_i = (uint32_t)(tmodchk);
                         if(tmodchk_i > 1ULL) {tmodchk_i = 1;
                         }
-                        data |= ((tmodchk_i) & 0x1ULL) << 1;
+                        data |= ((tmodchk_i) & 0x1ULL) << 11;
             
                         uint32_t oscchk_i = (uint32_t)(oscchk);
                         if(oscchk_i > 1ULL) {oscchk_i = 1;
                         }
-                        data |= ((oscchk_i) & 0x1ULL) << 0;
+                        data |= ((oscchk_i) & 0x1ULL) << 10;
             
             uint64_t data_bigendian = __builtin_bswap64(data);
             memcpy(msg.data, &data_bigendian, 8);
@@ -1223,7 +1022,7 @@ uint8_t send_alpha_chip_a_debug
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
 
-uint8_t send_alpha_chip_b_debug
+uint8_t send_chip_b_debug
 (float vres,uint8_t chip_id,float vref2,float v_analog,float v_digital,bool otp1_med,bool opt2_med)
 {
     can_msg_t msg;
@@ -1289,6 +1088,42 @@ uint8_t send_fan_duty_cycle_percentage
                         if(fan_duty_cycle_i > 255ULL) {fan_duty_cycle_i = 255;
                         }
                         data |= ((fan_duty_cycle_i) & 0xFFULL) << 0;
+            
+            msg.data[0] = data;
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_onboard_therm_temperatures
+(uint8_t chip_id,float therm_temp_1,float therm_temp_2,float therm_temp_3)
+{
+    can_msg_t msg;
+    msg.id = 0x93;
+    msg.id_is_extended = false;
+    msg.len = 1;
+
+    
+            uint8_t data = 0;
+                        uint32_t chip_id_i = (uint32_t)(chip_id);
+                        if(chip_id_i > 1ULL) {chip_id_i = 1;
+                        }
+                        data |= ((chip_id_i) & 0x1ULL) << 7;
+            
+                        uint32_t therm_temp_1_i = (uint32_t)(therm_temp_1);
+                        if(therm_temp_1_i > 3ULL) {therm_temp_1_i = 3;
+                        }
+                        data |= ((therm_temp_1_i) & 0x3ULL) << 5;
+            
+                        uint32_t therm_temp_2_i = (uint32_t)(therm_temp_2);
+                        if(therm_temp_2_i > 3ULL) {therm_temp_2_i = 3;
+                        }
+                        data |= ((therm_temp_2_i) & 0x3ULL) << 3;
+            
+                        uint32_t therm_temp_3_i = (uint32_t)(therm_temp_3);
+                        if(therm_temp_3_i > 3ULL) {therm_temp_3_i = 3;
+                        }
+                        data |= ((therm_temp_3_i) & 0x3ULL) << 1;
             
             msg.data[0] = data;
         
