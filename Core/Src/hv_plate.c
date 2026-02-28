@@ -7,6 +7,7 @@
 #include "bms_algos.h"
 #include "app_threadx.h"
 #include "shep_mutexes.h"
+#include "application.h"
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 
@@ -20,7 +21,7 @@ static float get_current_conversion(uint32_t data)
 
 static float get_voltage_conversion(int data)
 {
-	float voltage = microV(100) * (int16_t)data;
+	float voltage = (microV(100) * data * (3600000 + 9100))/9100 ;
 	return voltage;
 }
 
@@ -161,26 +162,31 @@ void vHvPlateData(ULONG thread_input)
 	bms_algos_t *bms_algos = hv_plate_args->bms_algos;
 	state_machine_t *state_machine = hv_plate_args->state_machine;
 
-	dcl_init(COOLDOWN_ON_FULL_PULSE);
-	ccl_init(COOLDOWN_ON_FULL_PULSE);
+	//dcl_init(COOLDOWN_ON_FULL_PULSE);
+	//ccl_init(COOLDOWN_ON_FULL_PULSE);
 
 	// initialize HV Plate struct and start conversions
 	init_hv_plate(hv_plate, ACCI_8);
 
 	tx_thread_sleep(MS_TO_TICKS(500));
 
+	set_gpo(hv_plate->ic, GPO2_2950);
+
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
+
 	for (;;) {
 		// get the current reading from the pack
-		get_pack_current_and_batt_voltage(hv_plate,
-						  hv_plate_task_delay);
+		get_pack_current_and_batt_voltage(hv_plate,	hv_plate_task_delay);
+
+		PRINTLN_INFO("HV PLATE HIGH VOLTAGE: %2f", hv_plate->batt_volts);
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
-		update_soc(analyzer, hv_plate);
+		//update_soc(analyzer, hv_plate);
 
 		/* Check whether pulse operation needs to be disabled due to charging state or faults */
 
+		/*
 		if (disable_pulse(state_machine)) {
 			mutex_get(&bms_algos_mutex);
 			bms_algos->cont_DCL = bms_algos->inst_DCL;
@@ -197,6 +203,7 @@ void vHvPlateData(ULONG thread_input)
 
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
+		
 
 		if (is_timer_expired(&diagnostic_read_timer)) {
 			// read flags
@@ -209,6 +216,7 @@ void vHvPlateData(ULONG thread_input)
 			// Send can message
 			send_hv_plate_diagnostic_data(hv_plate);
 		}
+		*/
 
 		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
 	}
