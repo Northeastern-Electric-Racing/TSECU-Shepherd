@@ -105,29 +105,20 @@ uint8_t send_segment_isospi_communication_status
 
 /**
 * Contents of this message:
-* BMS/Faults/Critical/Extra - Reserved
+* BMS/Faults/Critical/DCL_Enforce - Reserved
 * BMS/Faults/Critical/CCL_Enforce - CCL is not being obeyed
-* BMS/Faults/Critical/Charger_Can - Reserved
-* BMS/Faults/Critical/Battery_Therm - Reserved
-* BMS/Faults/Critical/Charger_Safety - Reserved
-* BMS/Faults/Critical/DCL_Enforce - DCL is not being obeyed
-* BMS/Faults/Critical/External_Can - Critical failure in CAN system
-* BMS/Faults/Critical/Weak_Pack - Reserved
-* BMS/Faults/Critical/Low_Cell_Volts - Cell voltage is below datasheet minimum
-* BMS/Faults/Critical/Charge_Reading - Reserved
-* BMS/Faults/Critical/Current_Sense - Failure to read current sensor from sensor or CAN
-* BMS/Faults/Critical/IC_Comm - Reserved
-* BMS/Faults/Critical/Thermal_Err - Reserved
-* BMS/Faults/Critical/Software - Reserved
-* BMS/Faults/Critical/Open_Wire - Reserved
-* BMS/Faults/Critical/Pack_Overheat - Reserved
+* BMS/Faults/Critical/Cell_Voltage_Low - Reserved
+* BMS/Faults/Critical/Cell_Voltage_High - Reserved
+* BMS/Faults/Critical/Charging_Voltage_High - DCL is not being obeyed
+* BMS/Faults/Critical/Pack_too_hot - Reserved
+* BMS/Faults/Critical/High_die_temp - Cell voltage is below datasheet minimum
 * BMS/Faults/Critical/Cell_Undervoltage - A cell has gone below datasheet minimum
-* BMS/Faults/Critical/Cell_Overvoltage - A cell has gone above datasheet maximum
-* BMS/Faults/Critical/Cells_Not_Balancing - Reserved
+* BMS/Faults/Non-Critical/Segment_Comms_fault - Lost communications with segments
+* BMS/Faults/Non-Critical/HV_Plate_Comms_Fault - Lost communications with HV Plate
 * BMS/Faults/Non-Critical/Extra - Reserved
 */
 uint8_t send_fault_status
-(bool ccl_enforce,bool charger_can,bool battery_therm,bool charger_safety,bool dcl_enforce,bool external_can,bool weak_pack,bool low_cell_volts,bool charge_reading,bool current_sense,bool ic_comm,bool thermal_err,bool sw_err,bool open_wire,bool pack_overheat,bool cell_uv,bool cell_ov,bool cell_not_balancing);
+(bool dcl_enforce,bool ccdl_enforce,bool low_cell_volt,bool high_cell_volt,bool high_charge_volt,bool pack_hot,bool die_temp_max,bool segment_comms,bool hv_plate_comms);
 
 /**
 * Contents of this message:

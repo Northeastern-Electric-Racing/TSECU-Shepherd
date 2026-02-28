@@ -372,107 +372,62 @@ uint8_t send_segment_isospi_communication_status
 }
 
 uint8_t send_fault_status
-(bool ccl_enforce,bool charger_can,bool battery_therm,bool charger_safety,bool dcl_enforce,bool external_can,bool weak_pack,bool low_cell_volts,bool charge_reading,bool current_sense,bool ic_comm,bool thermal_err,bool sw_err,bool open_wire,bool pack_overheat,bool cell_uv,bool cell_ov,bool cell_not_balancing)
+(bool dcl_enforce,bool ccdl_enforce,bool low_cell_volt,bool high_cell_volt,bool high_charge_volt,bool pack_hot,bool die_temp_max,bool segment_comms,bool hv_plate_comms)
 {
     can_msg_t msg;
     msg.id = 0x89;
     msg.id_is_extended = false;
-    msg.len = 8;
+    msg.len = 2;
 
     
-            uint64_t data = 0;
-                        uint32_t ccl_enforce_i = (uint32_t)(ccl_enforce);
-                        if(ccl_enforce_i > 1ULL) {ccl_enforce_i = 1;
-                        }
-                        data |= ((ccl_enforce_i) & 0x1ULL) << 63;
-            
-                        uint32_t charger_can_i = (uint32_t)(charger_can);
-                        if(charger_can_i > 1ULL) {charger_can_i = 1;
-                        }
-                        data |= ((charger_can_i) & 0x1ULL) << 62;
-            
-                        uint32_t battery_therm_i = (uint32_t)(battery_therm);
-                        if(battery_therm_i > 1ULL) {battery_therm_i = 1;
-                        }
-                        data |= ((battery_therm_i) & 0x1ULL) << 61;
-            
-                        uint32_t charger_safety_i = (uint32_t)(charger_safety);
-                        if(charger_safety_i > 1ULL) {charger_safety_i = 1;
-                        }
-                        data |= ((charger_safety_i) & 0x1ULL) << 60;
-            
+            uint16_t data = 0;
                         uint32_t dcl_enforce_i = (uint32_t)(dcl_enforce);
                         if(dcl_enforce_i > 1ULL) {dcl_enforce_i = 1;
                         }
-                        data |= ((dcl_enforce_i) & 0x1ULL) << 59;
+                        data |= ((dcl_enforce_i) & 0x1ULL) << 15;
             
-                        uint32_t external_can_i = (uint32_t)(external_can);
-                        if(external_can_i > 1ULL) {external_can_i = 1;
+                        uint32_t ccdl_enforce_i = (uint32_t)(ccdl_enforce);
+                        if(ccdl_enforce_i > 1ULL) {ccdl_enforce_i = 1;
                         }
-                        data |= ((external_can_i) & 0x1ULL) << 58;
+                        data |= ((ccdl_enforce_i) & 0x1ULL) << 14;
             
-                        uint32_t weak_pack_i = (uint32_t)(weak_pack);
-                        if(weak_pack_i > 1ULL) {weak_pack_i = 1;
+                        uint32_t low_cell_volt_i = (uint32_t)(low_cell_volt);
+                        if(low_cell_volt_i > 1ULL) {low_cell_volt_i = 1;
                         }
-                        data |= ((weak_pack_i) & 0x1ULL) << 57;
+                        data |= ((low_cell_volt_i) & 0x1ULL) << 13;
             
-                        uint32_t low_cell_volts_i = (uint32_t)(low_cell_volts);
-                        if(low_cell_volts_i > 1ULL) {low_cell_volts_i = 1;
+                        uint32_t high_cell_volt_i = (uint32_t)(high_cell_volt);
+                        if(high_cell_volt_i > 1ULL) {high_cell_volt_i = 1;
                         }
-                        data |= ((low_cell_volts_i) & 0x1ULL) << 56;
+                        data |= ((high_cell_volt_i) & 0x1ULL) << 12;
             
-                        uint32_t charge_reading_i = (uint32_t)(charge_reading);
-                        if(charge_reading_i > 1ULL) {charge_reading_i = 1;
+                        uint32_t high_charge_volt_i = (uint32_t)(high_charge_volt);
+                        if(high_charge_volt_i > 1ULL) {high_charge_volt_i = 1;
                         }
-                        data |= ((charge_reading_i) & 0x1ULL) << 55;
+                        data |= ((high_charge_volt_i) & 0x1ULL) << 11;
             
-                        uint32_t current_sense_i = (uint32_t)(current_sense);
-                        if(current_sense_i > 1ULL) {current_sense_i = 1;
+                        uint32_t pack_hot_i = (uint32_t)(pack_hot);
+                        if(pack_hot_i > 1ULL) {pack_hot_i = 1;
                         }
-                        data |= ((current_sense_i) & 0x1ULL) << 54;
+                        data |= ((pack_hot_i) & 0x1ULL) << 10;
             
-                        uint32_t ic_comm_i = (uint32_t)(ic_comm);
-                        if(ic_comm_i > 1ULL) {ic_comm_i = 1;
+                        uint32_t die_temp_max_i = (uint32_t)(die_temp_max);
+                        if(die_temp_max_i > 1ULL) {die_temp_max_i = 1;
                         }
-                        data |= ((ic_comm_i) & 0x1ULL) << 53;
+                        data |= ((die_temp_max_i) & 0x1ULL) << 9;
             
-                        uint32_t thermal_err_i = (uint32_t)(thermal_err);
-                        if(thermal_err_i > 1ULL) {thermal_err_i = 1;
+                        uint32_t segment_comms_i = (uint32_t)(segment_comms);
+                        if(segment_comms_i > 1ULL) {segment_comms_i = 1;
                         }
-                        data |= ((thermal_err_i) & 0x1ULL) << 52;
+                        data |= ((segment_comms_i) & 0x1ULL) << 8;
             
-                        uint32_t sw_err_i = (uint32_t)(sw_err);
-                        if(sw_err_i > 1ULL) {sw_err_i = 1;
+                        uint32_t hv_plate_comms_i = (uint32_t)(hv_plate_comms);
+                        if(hv_plate_comms_i > 1ULL) {hv_plate_comms_i = 1;
                         }
-                        data |= ((sw_err_i) & 0x1ULL) << 51;
+                        data |= ((hv_plate_comms_i) & 0x1ULL) << 7;
             
-                        uint32_t open_wire_i = (uint32_t)(open_wire);
-                        if(open_wire_i > 1ULL) {open_wire_i = 1;
-                        }
-                        data |= ((open_wire_i) & 0x1ULL) << 50;
-            
-                        uint32_t pack_overheat_i = (uint32_t)(pack_overheat);
-                        if(pack_overheat_i > 1ULL) {pack_overheat_i = 1;
-                        }
-                        data |= ((pack_overheat_i) & 0x1ULL) << 49;
-            
-                        uint32_t cell_uv_i = (uint32_t)(cell_uv);
-                        if(cell_uv_i > 1ULL) {cell_uv_i = 1;
-                        }
-                        data |= ((cell_uv_i) & 0x1ULL) << 48;
-            
-                        uint32_t cell_ov_i = (uint32_t)(cell_ov);
-                        if(cell_ov_i > 1ULL) {cell_ov_i = 1;
-                        }
-                        data |= ((cell_ov_i) & 0x1ULL) << 47;
-            
-                        uint32_t cell_not_balancing_i = (uint32_t)(cell_not_balancing);
-                        if(cell_not_balancing_i > 1ULL) {cell_not_balancing_i = 1;
-                        }
-                        data |= ((cell_not_balancing_i) & 0x1ULL) << 46;
-            
-            uint64_t data_bigendian = __builtin_bswap64(data);
-            memcpy(msg.data, &data_bigendian, 8);
+            uint16_t data_bigendian = __builtin_bswap16(data);
+            memcpy(msg.data, &data_bigendian, 2);
         
 
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);

@@ -489,9 +489,17 @@ void vStateMachine(ULONG thread_input)
 				analyzer->internal_temp // TODO: we never set internal temp
 			);
 
-			//send_fault_status(
-			//	state_machine->fault_code_crit,
-			//	state_machine->fault_code_noncrit); // TODO fix
+			send_fault_status(
+				get_fault(DISCHARGE_LIMIT_ENFORCEMENT_FAULT),
+				get_fault(CHARGE_LIMIT_ENFORCEMENT_FAULT),
+				get_fault(CELL_VOLTAGE_TOO_LOW),
+				get_fault(CELL_VOLTAGE_TOO_HIGH),
+				get_fault(CELL_CHARGE_VOLTAGE_TOO_HIGH),
+				get_fault(PACK_TOO_HOT),
+				get_fault(DIE_TEMP_MAXIMUM_FAULT),
+				get_fault(SEGMENT_COMMS_FAULT),
+				get_fault(HV_PLATE_COMMS_FAULT));
+
 			start_timer(&telem_timer, 500);
 		}
 
@@ -612,4 +620,3 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		.is_critical = true
 	};
 }
-
