@@ -328,9 +328,6 @@ typedef struct {
 	/**
 	 * @brief Note that this is a 32 bit integer, so there are 32 max possible fault codes
 	 */
-	// uint32_t fault_code;
-	uint32_t fault_code_crit;
-	uint32_t fault_code_noncrit;
 
 	// charge settling timers
 	nertimer_t charging_stage_timer;
@@ -338,6 +335,10 @@ typedef struct {
 
 	// charging message timer for telemetry
 	nertimer_t charger_message_timer;
+
+	bool segment_comms_fault_flag;
+	bool hv_plate_comms_fault_flag;
+
 } state_machine_t;
 
 /**
@@ -437,24 +438,26 @@ typedef struct {
 /**
  * @brief Fault codes
  */
-enum {
-	FAULTS_CLEAR = 0x0,
+typedef enum {
 
-	/* Shepherd BMS faults */
-	CELLS_NOT_BALANCING = 0x1,
-	CELL_VOLTAGE_TOO_HIGH = 0x2,
-	CELL_VOLTAGE_TOO_LOW = 0x4,
-	PACK_TOO_HOT = 0x8,
-	WEAK_PACK_FAULT = 0x10,
-	EXTERNAL_CAN_FAULT = 0x20,
-	DISCHARGE_LIMIT_ENFORCEMENT_FAULT = 0x40,
-	CHARGE_LIMIT_ENFORCEMENT_FAULT = 0x80,
-	DIE_TEMP_MAXIMUM_FAULT = 0x100,
-	HV_PLATE_COMMS_FAULT = 0x200,
-	SEGMENT_COMMS_FAULT = 0x400,
+	/* SHEP CONDITIONAL FAUTS */
+	DISCHARGE_LIMIT_ENFORCEMENT_FAULT,
+	CHARGE_LIMIT_ENFORCEMENT_FAULT,
+	CELL_VOLTAGE_TOO_LOW,
+	CELL_VOLTAGE_TOO_HIGH,
+	CELL_CHARGE_VOLTAGE_TOO_HIGH,
+	CELLS_NOT_BALANCING,
+	PACK_TOO_HOT,
+	DIE_TEMP_MAXIMUM_FAULT,
 
-	MAX_FAULTS = 0x80000000 /* Maximum allowable fault code */
-};
+	HV_PLATE_COMMS_FAULT,
+	SEGMENT_COMMS_FAULT,
+
+	NUM_FAULTS, /* NUM_REACTIONARY_FAULTS = NUM_FAULTS - NUM_CONDITIONAL_FAULTS - 1 */
+
+	/* TOTAL FAULTS = NUM_FAULTS - 1 */
+
+} fault_code_t;
 
 /**
  * @brief Represents fault evaluation operators
@@ -467,7 +470,6 @@ typedef enum {
 	EQ, /* fault if {data} equal to {threshold}                 */
 	NEQ, /* fault if {data} not equal to {threshold}             */
 	NOP /* no operation, use for single threshold faults        */
-
 } fault_evalop_t;
 
 /**
@@ -482,7 +484,6 @@ typedef struct {
 	float lim_1;
 
 	int timeout;
-	int code;
 
 	fault_evalop_t optype_2;
 	float data_2;
@@ -491,5 +492,6 @@ typedef struct {
 	bool is_critical;
 	// bool is_faulted; /* note: unused field */
 } fault_eval_t;
+
 
 #endif
