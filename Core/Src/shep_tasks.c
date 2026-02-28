@@ -32,6 +32,7 @@
 const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 			   acc_data_t *acc_data, bms_algos_t *bms_algos)
 {
+    #define DEBUG_HV_PLATE
 #ifdef DEBUG_HV_PLATE
 	PRINTLN_INFO("HV Plate Data:");
 	PRINTLN_INFO("TS Voltage: %.3f V", hv_plate->ts_volts);
@@ -45,7 +46,7 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	PRINTLN_INFO("VDD: %.3f V", hv_plate->vdd);
 	PRINTLN_INFO("VDIV: %.3f V", hv_plate->vdiv);
 	PRINTLN_INFO("Primary Internal Temperature: %.3f C", hv_plate->tmp1);
-	PRINTLN_INFO("Secondary Internal Temperature: %.3f C", hv_plate->tmp1);
+	PRINTLN_INFO("Secondary Internal Temperature: %.3f C", hv_plate->tmp2);
 #endif
 
 #ifdef DEBUG_VOLTAGES
@@ -424,14 +425,14 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
 		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
+	//CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");

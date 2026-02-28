@@ -125,24 +125,22 @@ void get_flags(hv_plate_t *hv_plate)
 
 void get_aux_adc_data(hv_plate_t *hv_plate)
 {
-	read_aux_registers(hv_plate->ic);
+	poll_and_read_aux_registers(hv_plate->ic);
 
 	cell_asic_2950 *ic = hv_plate->ic;
 	// Read voltage results into struct
-	hv_plate->vreg = get_voltage_conversion(ic->auxa.vreg);
+	hv_plate->vreg = ic->auxa.vreg * microV(240);
 	hv_plate->vref1p25 = get_voltage_conversion(ic->auxa.vref1p25);
 	hv_plate->epad = get_voltage_conversion(ic->auxb.epad);
 	// Different conversions for vreg and vdd
-	hv_plate->vreg = ic->auxb.epad * microV(240);
 	hv_plate->vdd = ic->auxb.vdd * microV(1000);
 	hv_plate->vdiv = get_voltage_conversion(ic->auxc.vdiv);
+	hv_plate->vdig = ic->auxb.vdig * microV(240);
 
 	hv_plate->tmp1 = (ic->auxa.tmp1 / 61.8f) - 250;
 	hv_plate->tmp2 = (ic->auxc.tmp2 / 20.5f) - 267;
 
 	hv_plate->osccnt = ic->auxc.osccnt;
-	// Start continuous conversion again
-	start_adc_conversions(ic);
 }
 
 // HV PLATE DATA THREAD
@@ -151,7 +149,7 @@ void vHvPlateData(ULONG thread_input)
 	PRINTLN_INFO("Starting HV Plate thread...");
 
 	const int hv_plate_task_delay = 100; // in ms
-	const uint16_t diagnostic_read_frequency = 5000; // 5s
+	const uint16_t diagnostic_read_frequency = 2000; // 5s
 	nertimer_t diagnostic_read_timer;
 
 	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
@@ -201,11 +199,11 @@ void vHvPlateData(ULONG thread_input)
 		if (is_timer_expired(&diagnostic_read_timer)) {
 			// read flags
 			get_flags(hv_plate);
-			read_aux_registers(hv_plate->ic);
+			get_aux_adc_data(hv_plate);
 			start_timer(&diagnostic_read_timer,
 				    diagnostic_read_frequency);
 			// Restart continuous conversion
-			start_adc_conversions(hv_plate->ic);
+			//start_adc_conversions(hv_plate->ic);
 			// Send can message
 			send_hv_plate_diagnostic_data(hv_plate);
 		}

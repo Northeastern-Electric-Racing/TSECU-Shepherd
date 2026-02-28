@@ -75,7 +75,7 @@ void read_flag_register(cell_asic_2950 *ic)
 	}
 }
 
-void read_aux_registers(cell_asic_2950 *ic)
+void poll_and_read_aux_registers(cell_asic_2950 *ic)
 {
 	spiSendCmd2950(TOTAL_IC_2950, ic, sADX);
 	// Poll on conversion to block thread
