@@ -146,45 +146,71 @@ void vDebug(ULONG thread_input)
 			     cell += 2) {
 				// Sends two cells per messages
 				// Accounts for odd number of cells
-				send_cell_data_message(
-					chip_data->alpha,
-					chip_data->cell_temp[cell],
-					chip_data->cell_voltages[cell],
 
-					cell + 1 == NUM_CELLS_PER_CHIP ?
-						0 :
-						chip_data->cell_voltages[cell +
-									 1],
-					chip, cell, cell + 1,
-					chip_data->is_balancing[cell],
+				if (chip_data->alpha) {
+					send_alpha_cell_data_debug(
+						chip_data->cell_temp[cell],
+						chip_data->cell_voltages[cell],
 
-					cell + 1 == NUM_CELLS_PER_CHIP ?
-						0 :
-						chip_data->is_balancing[cell +
-									1],
-					chip_data->cs_fault[cell],
-					cell + 1 == NUM_CELLS_PER_CHIP ?
-						0 :
-						chip_data->cs_fault[cell + 1]);
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->cell_voltages
+								[cell + 1],
+						chip, cell, cell + 1,
+						chip_data->is_balancing[cell],
+
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->is_balancing
+								[cell + 1],
+						chip_data->cs_fault[cell],
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->cs_fault[cell +
+									    1]);
+				} else {
+					send_beta_cell_data_debug(
+						chip_data->cell_temp[cell],
+						chip_data->cell_voltages[cell],
+
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->cell_voltages
+								[cell + 1],
+						chip, cell, cell + 1,
+						chip_data->is_balancing[cell],
+
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->is_balancing
+								[cell + 1],
+						chip_data->cs_fault[cell],
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->cs_fault[cell +
+									    1]);
+				}
 
 				tx_thread_sleep(10); // TODO: enhance timing
 			}
 
-			send_status_a_message(chip, chip_data->die_temp,
-					      chip_data->vpv, chip_data->vmv,
-					      &chip_data->flt_reg);
+			//send_chip_a_debug(chip, chip_data->die_temp,
+			//		  chip_data->vpv, chip_data->vmv,
+			//		  &chip_data->flt_reg);
 
 			tx_thread_sleep(30); // TODO: enhance timing
 
-			send_status_b_message(chip_data->v_res, chip,
-					      chip_data->vref2,
-					      chip_data->v_analog,
-					      chip_data->v_digital,
-					      &chip_data->flt_reg);
+			//send_chip_b_debug(chip_data->v_res, chip,
+			//		  chip_data->vref2, chip_data->v_analog,
+			//		  chip_data->v_digital,
+			//		  &chip_data->flt_reg);
 
 			tx_thread_sleep(30); // TODO: enhance timings
 
-			send_onboard_therm_message(chip, chip_data);
+			send_onboard_therm_temperatures(
+				chip, chip_data->on_board_temp[0],
+				chip_data->on_board_temp[1],
+				chip_data->on_board_temp[2]);
 
 			tx_thread_sleep(30); // TODO: enhance timings
 		}
@@ -416,7 +442,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	/* Task Definitions End */
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
+		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);

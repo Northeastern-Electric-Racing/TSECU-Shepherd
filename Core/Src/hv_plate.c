@@ -206,8 +206,6 @@ void vHvPlateData(ULONG thread_input)
 				    diagnostic_read_frequency);
 			// Restart continuous conversion
 			start_adc_conversions(hv_plate->ic);
-			// Send can message TODO
-			send_(hv_plate);
 		}
 
 		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));

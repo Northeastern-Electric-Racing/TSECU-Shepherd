@@ -1,6 +1,5 @@
 #include "state_machine.h"
 #include "c_utils.h"
-#include "can_messages.h"
 #include "can_messages_tx.h"
 #include "charging.h"
 #include "compute.h"
@@ -47,10 +46,10 @@ const InitFunction_t init_LUT[NUM_STATES] = { &init_boot, &init_ready,
 					      &init_charging, &init_balancing,
 					      &init_faulted };
 
-const HandlerFunction_t handler_LUT[NUM_STATES] = {
-	&handle_boot, &handle_ready, &handle_charging,
-	&handle_balancing, &handle_faulted
-};
+const HandlerFunction_t handler_LUT[NUM_STATES] = { &handle_boot, &handle_ready,
+						    &handle_charging,
+						    &handle_balancing,
+						    &handle_faulted };
 
 void init_boot(state_machine_args_t *state_machine_args)
 {
@@ -111,9 +110,9 @@ void handle_charging(state_machine_args_t *state_machine_args)
 		    !is_timer_active(&state_machine_args->state_machine
 					      ->charger_message_timer)) {
 			send_bms_charge_message_send((MAX_CHARGE_VOLT *
-					       (NUM_CELLS_PER_CHIP * 2) *
-					       NUM_SEGMENTS),
-					      CHARGING_CURRENT, 0x0);
+						      (NUM_CELLS_PER_CHIP * 2) *
+						      NUM_SEGMENTS),
+						     CHARGING_CURRENT, 0x0);
 			start_timer(&state_machine_args->state_machine
 					     ->charger_message_timer,
 				    1000);
@@ -139,7 +138,7 @@ void charger_message_recieved(state_machine_args_t *state_machine_args)
 
 void init_faulted(state_machine_args_t *bmsdata)
 {
-    send_max_dc_current_command(0);
+	send_max_dc_current_command(0);
 	send_max_dc_brake_current_command(0);
 	send_bms_charge_message_send(0, 0, 0xFF);
 }
@@ -270,53 +269,53 @@ bool sm_fault_eval(fault_eval_t *item)
 	bool condition2;
 
 	switch (item->optype_1) {
-		case GT:
-			condition1 = item->data_1 > item->lim_1;
-			break;
-		case LT:
-			condition1 = item->data_1 < item->lim_1;
-			break;
-		case GE:
-			condition1 = item->data_1 >= item->lim_1;
-			break;
-		case LE:
-			condition1 = item->data_1 <= item->lim_1;
-			break;
-		case EQ:
-			condition1 = item->data_1 == item->lim_1;
-			break;
-		case NEQ:
-			condition1 = item->data_1 != item->lim_1;
-			break;
-		case NOP:
-			condition1 = false;
-		default:
-			condition1 = false;
+	case GT:
+		condition1 = item->data_1 > item->lim_1;
+		break;
+	case LT:
+		condition1 = item->data_1 < item->lim_1;
+		break;
+	case GE:
+		condition1 = item->data_1 >= item->lim_1;
+		break;
+	case LE:
+		condition1 = item->data_1 <= item->lim_1;
+		break;
+	case EQ:
+		condition1 = item->data_1 == item->lim_1;
+		break;
+	case NEQ:
+		condition1 = item->data_1 != item->lim_1;
+		break;
+	case NOP:
+		condition1 = false;
+	default:
+		condition1 = false;
 	}
 
 	switch (item->optype_2) {
-		case GT:
-			condition2 = item->data_2 > item->lim_2;
-			break;
-		case LT:
-			condition2 = item->data_2 < item->lim_2;
-			break;
-		case GE:
-			condition2 = item->data_2 >= item->lim_2;
-			break;
-		case LE:
-			condition2 = item->data_2 <= item->lim_2;
-			break;
-		case EQ:
-			condition2 = item->data_2 == item->lim_2;
-			break;
-		case NEQ:
-			condition2 = item->data_2 != item->lim_2;
-			break;
-		case NOP:
-			condition2 = false;
-		default:
-			condition2 = false;
+	case GT:
+		condition2 = item->data_2 > item->lim_2;
+		break;
+	case LT:
+		condition2 = item->data_2 < item->lim_2;
+		break;
+	case GE:
+		condition2 = item->data_2 >= item->lim_2;
+		break;
+	case LE:
+		condition2 = item->data_2 <= item->lim_2;
+		break;
+	case EQ:
+		condition2 = item->data_2 == item->lim_2;
+		break;
+	case NEQ:
+		condition2 = item->data_2 != item->lim_2;
+		break;
+	case NOP:
+		condition2 = false;
+	default:
+		condition2 = false;
 	}
 
 	bool fault_present = (condition1 && condition2) ||
@@ -331,16 +330,16 @@ bool sm_fault_eval(fault_eval_t *item)
 			PRINTLN_INFO("\tFault cleared: %s\n", item->id);
 			cancel_timer(&item->timer);
 			// STOPPING TIMER MESSSAGE
-			send_bms_fault_timers(FAULT_TIMER_STOPPED,
-						 item->code, item->data_1);
+			send_bms_fault_timers(FAULT_TIMER_STOPPED, item->code,
+					      item->data_1);
 			return false;
 		}
 
 		if (is_timer_expired(&item->timer) && fault_present) {
 			PRINTLN_INFO("\tFaulted: %s\n", item->id);
 			// FAULT TIMER EXPIRED MESSAGE
-			send_bms_fault_timers(FAULT_TIMER_EXPIRED,
-						 item->code, item->data_1);
+			send_bms_fault_timers(FAULT_TIMER_EXPIRED, item->code,
+					      item->data_1);
 			return true;
 		}
 
@@ -351,7 +350,7 @@ bool sm_fault_eval(fault_eval_t *item)
 		start_timer(&item->timer, item->timeout);
 		// STARTING FAULTED TIMER MESSAGE
 		send_bms_fault_timers(FAULT_TIMER_STARTED, item->code,
-					 item->data_1);
+				      item->data_1);
 
 		return false;
 	}
@@ -383,67 +382,66 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 	}
 
 	switch (state_machine->charging_stage) {
-		case LONG_CHARGE_UP:
-			if (analyzer->max_voltage.val > MAX_CHARGE_VOLT ||
-			    is_timer_expired(state_timer)) {
-				next_stage = LONG_SETTLE;
+	case LONG_CHARGE_UP:
+		if (analyzer->max_voltage.val > MAX_CHARGE_VOLT ||
+		    is_timer_expired(state_timer)) {
+			next_stage = LONG_SETTLE;
+		}
+		break;
+	case LONG_SETTLE:
+		if (is_timer_expired(state_timer)) {
+			if (analyzer->max_voltage.val < MAX_CHARGE_VOLT) {
+				next_stage =
+					LONG_CHARGE_UP; // continue charging
+			} else {
+				next_stage = SHORT_CHARGE_UP;
 			}
-			break;
-		case LONG_SETTLE:
-			if (is_timer_expired(state_timer)) {
-				if (analyzer->max_voltage.val <
-				    MAX_CHARGE_VOLT) {
-					next_stage =
-						LONG_CHARGE_UP; // continue charging
-				} else {
-					next_stage = SHORT_CHARGE_UP;
-				}
+		}
+		break;
+	case SHORT_CHARGE_UP:
+		if (analyzer->max_ocv.val > MAX_CHARGE_VOLT ||
+		    is_timer_expired(state_timer)) {
+			next_stage = SHORT_SETTLE;
+		}
+		break;
+	case SHORT_SETTLE:
+		if (is_timer_expired(state_timer)) {
+			if (analyzer->max_ocv.val < MAX_CHARGE_VOLT) {
+				next_stage =
+					SHORT_CHARGE_UP; // continue charging
+			} else {
+				next_stage = DONE;
 			}
-			break;
-		case SHORT_CHARGE_UP:
-			if (analyzer->max_ocv.val > MAX_CHARGE_VOLT ||
-			    is_timer_expired(state_timer)) {
-				next_stage = SHORT_SETTLE;
-			}
-			break;
-		case SHORT_SETTLE:
-			if (is_timer_expired(state_timer)) {
-				if (analyzer->max_ocv.val < MAX_CHARGE_VOLT) {
-					next_stage =
-						SHORT_CHARGE_UP; // continue charging
-				} else {
-					next_stage = DONE;
-				}
-			}
-			break;
-		case DONE:
-			return false; // done charging
-		case FAULT:
-			return false; // stuck faulting until restart
+		}
+		break;
+	case DONE:
+		return false; // done charging
+	case FAULT:
+		return false; // stuck faulting until restart
 	}
 	// TODO: MUTEX RELEASE
 
 	// Transitioning stages, start the corresponding timer lengths
 	if (next_stage != state_machine->charging_stage) {
 		switch (next_stage) {
-			case LONG_CHARGE_UP:
-				start_timer(state_timer,
-					    15 * 60 * 1000); // 15 minutes
-				break;
-			case SHORT_CHARGE_UP:
-				start_timer(state_timer,
-					    20 * 1000); // 20 seconds
-				break;
+		case LONG_CHARGE_UP:
+			start_timer(state_timer,
+				    15 * 60 * 1000); // 15 minutes
+			break;
+		case SHORT_CHARGE_UP:
+			start_timer(state_timer,
+				    20 * 1000); // 20 seconds
+			break;
 
-			case LONG_SETTLE:
-			case SHORT_SETTLE:
-				start_timer(state_timer, 60 * 1000); // 1 minute
-				break;
+		case LONG_SETTLE:
+		case SHORT_SETTLE:
+			start_timer(state_timer, 60 * 1000); // 1 minute
+			break;
 
-			// cases return earlier or arent possible
-			case DONE:
-			case FAULT:
-				break;
+		// cases return earlier or arent possible
+		case DONE:
+		case FAULT:
+			break;
 		}
 
 		state_machine->charging_stage = next_stage;
@@ -491,6 +489,10 @@ void clear_segment_comms_fault(state_machine_t *state_mach)
 	mutex_put(&state_mutex);
 }
 
+static bool get_fault() {
+	
+}
+
 // STATE MACHINE THREAD
 void vStateMachine(ULONG thread_input)
 {
@@ -515,13 +517,14 @@ void vStateMachine(ULONG thread_input)
 			// these are unimportant telemetry messages so they can be sent
 			// infrequently
 			send_bms_status(
-			    get_current_state(state_machine),
+				get_current_state(state_machine),
 				analyzer->avg_temp,
-				analyzer->internal_temp, // TODO: we never set internal temp
-				true // TODO actually store segment_is_balancing for use here
-			    );
+				analyzer->internal_temp // TODO: we never set internal temp
+			);
+
 			send_fault_status(
-				state_machine->fault_code_crit, state_machine->fault_code_noncrit); // TODO fix
+				state_machine->fault_code_crit,
+				state_machine->fault_code_noncrit); // TODO fix
 			start_timer(&telem_timer, 500);
 		}
 
