@@ -5,9 +5,9 @@
 static void set_precharge_relay(cell_asic_2950 *ic, bool state)
 {
 	if (state) {
-		set_gpo(*ic, HV_CTRL_GPO);
+		set_gpo(ic, HV_CTRL_GPO);
 	} else {
-		reset_gpo(*ic, HV_CTRL_GPO);
+		reset_gpo(ic, HV_CTRL_GPO);
 	}
 }
 
