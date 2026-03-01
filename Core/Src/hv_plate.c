@@ -87,15 +87,10 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 
 void get_ts_voltage(hv_plate_t *hv_plate)
 {
-	read_v2_v3_registers(hv_plate->ic);
+	read_v2_registers(hv_plate->ic);
 	// note: ts+ is output to both v2 and v3
-	float avg_volts =
-		(get_voltage_conversion(hv_plate->ic->vr.v_codes[1]) + // v2
-		 get_voltage_conversion(hv_plate->ic->vr.v_codes[2])) / // V3
-		2;
-	PRINTLN_INFO("V2: %d, V3: %d",
-		     get_voltage_conversion(hv_plate->ic->vr.v_codes[1]),
-		     get_voltage_conversion(hv_plate->ic->vr.v_codes[2]));
+	float avg_volts = get_voltage_conversion(hv_plate->ic->vr.v_codes[1]); // v2
+
 	hv_plate->ts_volts = ((3600000 + 4530) * avg_volts) / 4530 + 1.25;
 }
 
@@ -179,8 +174,6 @@ void vHvPlateData(ULONG thread_input)
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
-    app_main();
-
 	for (;;) {
 		// get the current reading from the pack
 		get_pack_current_and_batt_voltage(hv_plate,
@@ -191,11 +184,10 @@ void vHvPlateData(ULONG thread_input)
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
-		//update_soc(analyzer, hv_plate);
+		update_soc(analyzer, hv_plate);
 
 		/* Check whether pulse operation needs to be disabled due to charging state or faults */
 
-		/*
 		if (disable_pulse(state_machine)) {
 			mutex_get(&bms_algos_mutex);
 			bms_algos->cont_DCL = bms_algos->inst_DCL;
@@ -206,17 +198,13 @@ void vHvPlateData(ULONG thread_input)
 			dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
-		*/
 
 		// read ts voltage
 		get_ts_voltage(hv_plate);
 
-		PRINTLN_INFO("TS_VOLTS: %2f", hv_plate->ts_volts);
-
-		/*
+		
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
-		
 
 		if (is_timer_expired(&diagnostic_read_timer)) {
 			// read flags
@@ -229,7 +217,6 @@ void vHvPlateData(ULONG thread_input)
 			// Send can message
 			send_hv_plate_diagnostic_data(hv_plate);
 		}
-		*/
 
 		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
 	}

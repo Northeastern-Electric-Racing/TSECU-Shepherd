@@ -46,10 +46,10 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic);
 void read_v7_v9_registers(cell_asic_2950 *ic);
 
 /**
- * @brief Reads V2 and V3 redundant pair voltage registers.
+ * @brief Reads V2 voltage register.
  * @param ic Pointer to the adbms2950 data structure.
  */
-void read_v2_v3_registers(cell_asic_2950 *ic);
+void read_v2_registers(cell_asic_2950 *ic);
 
 /**
  * @brief Reads flag register.
