@@ -24,6 +24,7 @@ void start_adc_conversions(cell_asic_2950 *ic)
 void set_accumulation_count(cell_asic_2950 *ic, ACCI count)
 {
 	ic->tx_cfga.acci = count;
+	ic->tx_cfga.vs7 = (VSB)VSMV_SGND;
 	adBmsWakeupIc2950(1);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
 	if (ic->cccrc.cfgr_pec != 0) {
@@ -60,7 +61,7 @@ void read_v7_v9_registers(cell_asic_2950 *ic)
 	Delay_ms2950(Polling_Delay_ms2950);
 
 	adBmsWakeupIc2950(1);
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1D, GPV1, D_2950);
+	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1C, GPV1, C_2950);
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
 	}

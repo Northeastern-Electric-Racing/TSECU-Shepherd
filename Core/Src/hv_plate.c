@@ -8,6 +8,7 @@
 #include "app_threadx.h"
 #include "shep_mutexes.h"
 #include "application.h"
+#include <math.h>
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 
@@ -19,7 +20,7 @@ static float get_current_conversion(uint32_t data)
 	return current / (float)SHUNT_RESISTANCE;
 }
 
-static float get_voltage_conversion(int data)
+static float get_voltage_conversion(int16_t data)
 {
 	float voltage = microV(100) * data;
 	return voltage;
@@ -98,12 +99,14 @@ void get_shunt_temp(hv_plate_t *hv_plate)
 {
 	read_v7_v9_registers(hv_plate->ic);
 	// NOTE: TS+ is output to both V2 and V3
-	float avg_volts =
-		(get_voltage_conversion(hv_plate->ic->vr.v_codes[9]) + // V7A
-		 get_voltage_conversion(hv_plate->ic->vr.v_codes[11])) / // V9B
-		2;
+	float avg_volts = get_voltage_conversion(hv_plate->ic->vr.v_codes[6]); // V7A
 
-	hv_plate->shunt_temp = avg_volts; // TODO: convert to temp
+	PRINTLN_INFO("BEFORE V7A: %2f ------------", avg_volts);
+
+	float therm_res = (10000 * avg_volts) / (1.25 - avg_volts);
+	float shunt_temp = (298.0 * 3380.0) / (298.0 * log(therm_res/10000) + 3380);
+
+	hv_plate->shunt_temp = shunt_temp; // TODO: convert to temp
 }
 
 void get_flags(hv_plate_t *hv_plate)
@@ -162,8 +165,8 @@ void vHvPlateData(ULONG thread_input)
 	bms_algos_t *bms_algos = hv_plate_args->bms_algos;
 	state_machine_t *state_machine = hv_plate_args->state_machine;
 
-	//dcl_init(COOLDOWN_ON_FULL_PULSE);
-	//ccl_init(COOLDOWN_ON_FULL_PULSE);
+	dcl_init(COOLDOWN_ON_FULL_PULSE);
+	ccl_init(COOLDOWN_ON_FULL_PULSE);
 
 	// initialize HV Plate struct and start conversions
 	init_hv_plate(hv_plate, ACCI_8);
@@ -174,6 +177,7 @@ void vHvPlateData(ULONG thread_input)
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
+	//app_main();
 	for (;;) {
 		// get the current reading from the pack
 		get_pack_current_and_batt_voltage(hv_plate,
@@ -202,9 +206,14 @@ void vHvPlateData(ULONG thread_input)
 		// read ts voltage
 		get_ts_voltage(hv_plate);
 
+		PRINTLN_INFO("HV PLATE TS VOLTAGE: %2f",
+			     hv_plate->ts_volts);
 		
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
+
+		PRINTLN_INFO("HV PLATE SHUNT TEMP: %2f",
+			     hv_plate->shunt_temp);
 
 		if (is_timer_expired(&diagnostic_read_timer)) {
 			// read flags
