@@ -21,27 +21,27 @@ static float get_current_conversion(uint32_t data)
 
 static float get_voltage_conversion(int data)
 {
-	float voltage = (microV(100) * data * (3600000 + 9100))/9100 ;
+	float voltage = microV(100) * data;
 	return voltage;
 }
 
 void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 {
 	switch (conversion_count) {
-		case ACCI_8:
-			hv_plate->conversion_count = 8;
-			break;
-		case ACCI_16:
-			hv_plate->conversion_count = 16;
-			break;
-		case ACCI_32:
-			hv_plate->conversion_count = 32;
-			break;
-		default:
-			PRINTLN_WARNING(
-				"Unsupported accumulation count, defaulting to 8");
-			hv_plate->conversion_count = 8;
-			break;
+	case ACCI_8:
+		hv_plate->conversion_count = 8;
+		break;
+	case ACCI_16:
+		hv_plate->conversion_count = 16;
+		break;
+	case ACCI_32:
+		hv_plate->conversion_count = 32;
+		break;
+	default:
+		PRINTLN_WARNING(
+			"Unsupported accumulation count, defaulting to 8");
+		hv_plate->conversion_count = 8;
+		break;
 	}
 	hv_plate->last_total_converion_count = 0;
 
@@ -71,7 +71,9 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 		    hv_plate->conversion_count >=
 	    expected_conversions) {
 		hv_plate->batt_volts =
-			get_voltage_conversion(hv_plate->ic->i_vbacc.vb1acc) /
+			((3600000 + 9100) *
+			 get_voltage_conversion(hv_plate->ic->i_vbacc.vb1acc) /
+			 9100) /
 			hv_plate->conversion_count;
 
 		hv_plate->pack_current =
@@ -91,7 +93,10 @@ void get_ts_voltage(hv_plate_t *hv_plate)
 		(get_voltage_conversion(hv_plate->ic->vr.v_codes[1]) + // v2
 		 get_voltage_conversion(hv_plate->ic->vr.v_codes[2])) / // V3
 		2;
-	hv_plate->ts_volts = avg_volts;
+	PRINTLN_INFO("V2: %d, V3: %d",
+		     get_voltage_conversion(hv_plate->ic->vr.v_codes[1]),
+		     get_voltage_conversion(hv_plate->ic->vr.v_codes[2]));
+	hv_plate->ts_volts = ((3600000 + 4530) * avg_volts) / 4530 + 1.25;
 }
 
 void get_shunt_temp(hv_plate_t *hv_plate)
@@ -174,11 +179,15 @@ void vHvPlateData(ULONG thread_input)
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
+    app_main();
+
 	for (;;) {
 		// get the current reading from the pack
-		get_pack_current_and_batt_voltage(hv_plate,	hv_plate_task_delay);
+		get_pack_current_and_batt_voltage(hv_plate,
+						  hv_plate_task_delay);
 
-		PRINTLN_INFO("HV PLATE HIGH VOLTAGE: %2f", hv_plate->batt_volts);
+		PRINTLN_INFO("HV PLATE HIGH VOLTAGE: %2f",
+			     hv_plate->batt_volts);
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
@@ -197,10 +206,14 @@ void vHvPlateData(ULONG thread_input)
 			dcl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
+		*/
 
 		// read ts voltage
 		get_ts_voltage(hv_plate);
 
+		PRINTLN_INFO("TS_VOLTS: %2f", hv_plate->ts_volts);
+
+		/*
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
 		
