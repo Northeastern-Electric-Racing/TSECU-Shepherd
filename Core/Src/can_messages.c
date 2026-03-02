@@ -573,10 +573,12 @@ void send_status_b_message(float v_res, uint8_t chip, float vref2,
 }
 
 /**
- * @brief Sends a CAN message containing the PEC error count for a specific segment chip.
+ * @brief Sends a CAN message containing the PEC error count for a specific
+ * chip.
  *
- * @param chip_num  Index of the segment chip that reported PEC errors.
- * @param pec_count Total number of PEC errors detected for the specified segment chip.
+ * @param chip_num The index of the chip that reported PEC errors.
+ * @param pec_count The total number of PEC errors detected for the specified
+ * chip.
  */
 void send_segment_pec_error_message(uint8_t chip_num, uint16_t pec_count)
 {
@@ -595,16 +597,11 @@ void send_segment_pec_error_message(uint8_t chip_num, uint16_t pec_count)
 			  .len = SEGMENT_PEC_ERROR_SIZE,
 			  .data = { 0 } };
 
-	memcpy(msg.data, &pec_data, sizeof(pec_data));
+	memcpy(&msg.data, &pec_data, sizeof(pec_data));
 
 	queue_can_msg(msg);
 }
 
-/**
- * @brief Sends a CAN message containing the PEC error count for the HV plate.
- *
- * @param pec_count Total number of PEC errors detected for the HV plate.
- */
 void send_hv_plate_pec_error_message(const uint8_t pec_count)
 {
 	can_msg_t msg = { .id = HV_PLATE_PEC_ERROR_CANID,
