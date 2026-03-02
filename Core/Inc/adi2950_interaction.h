@@ -86,7 +86,6 @@ void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo);
 
 /**
  * @brief Counts and reports HV plate PEC errors over CAN.
- *
  * @param ic Pointer to the adbms2950 data structure.
  */
 void count_hv_plate_pec_errors(cell_asic_2950 *ic);
