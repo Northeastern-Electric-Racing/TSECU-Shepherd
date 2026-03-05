@@ -20,6 +20,8 @@
 #define P3T1755_DEV_ADDR                                                       \
   0x7 // FIXME: I don't know what a sane value for this is
 
+static peripherals_t *peripherals;
+
 int p3t_init(void);
 
 int p3t1755_getBoardTemp(float *temp_c);
