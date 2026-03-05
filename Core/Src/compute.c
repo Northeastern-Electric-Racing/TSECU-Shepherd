@@ -330,14 +330,13 @@ void vPeripherals(ULONG thread_input) {
   PRINTLN_INFO("Starting Peripherals thread...");
 
   peripherals_args_t *peripherals_args = (peripherals_args_t *)thread_input;
-  peripherals_t *peripherals = peripherals_args->peripherals;
+  peripherals = peripherals_args->peripherals;
 
   init_compute(peripherals);
   imu_data_t imu_data = peripherals->imu_data;
   board_temp_t board_temp = peripherals->board_temp;
 
   for (;;) {
-    // TODO: Call temp here
     mutex_get(&peripherals_mutex);
 
     imu_getAcceleration(&imu_data.accel_data);
