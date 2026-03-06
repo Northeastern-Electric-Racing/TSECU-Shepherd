@@ -1,15 +1,14 @@
 #include "state_machine.h"
-#include "app_threadx.h"
 #include "c_utils.h"
 #include "can_messages.h"
 #include "charging.h"
 #include "compute.h"
-#include "datastructs.h"
 #include "segment.h"
-#include "shep_mutexes.h"
+#include "charging.h"
+#include "c_utils.h"
 #include <assert.h>
-
-extern peripherals_t *peripherals;
+#include "app_threadx.h"
+#include "shep_mutexes.h"
 
 const bool valid_transition_from_to[NUM_STATES][NUM_STATES] = {
 	/*   BOOT, READY, CHARGING, BALANCING, FAULTED */
@@ -46,10 +45,10 @@ const InitFunction_t init_LUT[NUM_STATES] = { &init_boot, &init_ready,
 					      &init_charging, &init_balancing,
 					      &init_faulted };
 
-const HandlerFunction_t handler_LUT[NUM_STATES] = { &handle_boot, &handle_ready,
-						    &handle_charging,
-						    &handle_balancing,
-						    &handle_faulted };
+const HandlerFunction_t handler_LUT[NUM_STATES] = {
+	&handle_boot, &handle_ready, &handle_charging,
+	&handle_balancing, &handle_faulted
+};
 
 void init_boot(state_machine_args_t *state_machine_args)
 {
@@ -269,53 +268,53 @@ bool sm_fault_eval(fault_eval_t *item)
 	bool condition2;
 
 	switch (item->optype_1) {
-	case GT:
-		condition1 = item->data_1 > item->lim_1;
-		break;
-	case LT:
-		condition1 = item->data_1 < item->lim_1;
-		break;
-	case GE:
-		condition1 = item->data_1 >= item->lim_1;
-		break;
-	case LE:
-		condition1 = item->data_1 <= item->lim_1;
-		break;
-	case EQ:
-		condition1 = item->data_1 == item->lim_1;
-		break;
-	case NEQ:
-		condition1 = item->data_1 != item->lim_1;
-		break;
-	case NOP:
-		condition1 = false;
-	default:
-		condition1 = false;
+		case GT:
+			condition1 = item->data_1 > item->lim_1;
+			break;
+		case LT:
+			condition1 = item->data_1 < item->lim_1;
+			break;
+		case GE:
+			condition1 = item->data_1 >= item->lim_1;
+			break;
+		case LE:
+			condition1 = item->data_1 <= item->lim_1;
+			break;
+		case EQ:
+			condition1 = item->data_1 == item->lim_1;
+			break;
+		case NEQ:
+			condition1 = item->data_1 != item->lim_1;
+			break;
+		case NOP:
+			condition1 = false;
+		default:
+			condition1 = false;
 	}
 
 	switch (item->optype_2) {
-	case GT:
-		condition2 = item->data_2 > item->lim_2;
-		break;
-	case LT:
-		condition2 = item->data_2 < item->lim_2;
-		break;
-	case GE:
-		condition2 = item->data_2 >= item->lim_2;
-		break;
-	case LE:
-		condition2 = item->data_2 <= item->lim_2;
-		break;
-	case EQ:
-		condition2 = item->data_2 == item->lim_2;
-		break;
-	case NEQ:
-		condition2 = item->data_2 != item->lim_2;
-		break;
-	case NOP:
-		condition2 = false;
-	default:
-		condition2 = false;
+		case GT:
+			condition2 = item->data_2 > item->lim_2;
+			break;
+		case LT:
+			condition2 = item->data_2 < item->lim_2;
+			break;
+		case GE:
+			condition2 = item->data_2 >= item->lim_2;
+			break;
+		case LE:
+			condition2 = item->data_2 <= item->lim_2;
+			break;
+		case EQ:
+			condition2 = item->data_2 == item->lim_2;
+			break;
+		case NEQ:
+			condition2 = item->data_2 != item->lim_2;
+			break;
+		case NOP:
+			condition2 = false;
+		default:
+			condition2 = false;
 	}
 
 	bool fault_present = (condition1 && condition2) ||
@@ -360,12 +359,10 @@ bool sm_fault_eval(fault_eval_t *item)
 }
 
 /* This charging algorithm has 3 stages
- * 1. Charge up until the high cell non OCV max voltage is > 4.19, pause for 1
- * minute every 15 minutes, repeat
- * 2. Charge up until the high cell     OCV max voltage is > 4.19, pause for 1
- * minute every 20 seconds, repeat
- * 3. Stop charging :)
- */
+* 1. Charge up until the high cell non OCV max voltage is > 4.19, pause for 1 minute every 15 minutes, repeat
+* 2. Charge up until the high cell     OCV max voltage is > 4.19, pause for 1 minute every 20 seconds, repeat
+* 3. Stop charging :)
+*/
 bool sm_charging_check(state_machine_args_t *state_machine_args)
 {
 	state_machine_t *state_machine = state_machine_args->state_machine;
@@ -384,73 +381,74 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 	}
 
 	switch (state_machine->charging_stage) {
-	case LONG_CHARGE_UP:
-		if (analyzer->max_voltage.val > MAX_CHARGE_VOLT ||
-		    is_timer_expired(state_timer)) {
-			next_stage = LONG_SETTLE;
-		}
-		break;
-	case LONG_SETTLE:
-		if (is_timer_expired(state_timer)) {
-			if (analyzer->max_voltage.val < MAX_CHARGE_VOLT) {
-				next_stage =
-					LONG_CHARGE_UP; // continue charging
-			} else {
-				next_stage = SHORT_CHARGE_UP;
+		case LONG_CHARGE_UP:
+			if (analyzer->max_voltage.val > MAX_CHARGE_VOLT ||
+			    is_timer_expired(state_timer)) {
+				next_stage = LONG_SETTLE;
 			}
-		}
-		break;
-	case SHORT_CHARGE_UP:
-		if (analyzer->max_ocv.val > MAX_CHARGE_VOLT ||
-		    is_timer_expired(state_timer)) {
-			next_stage = SHORT_SETTLE;
-		}
-		break;
-	case SHORT_SETTLE:
-		if (is_timer_expired(state_timer)) {
-			if (analyzer->max_ocv.val < MAX_CHARGE_VOLT) {
-				next_stage =
-					SHORT_CHARGE_UP; // continue charging
-			} else {
-				next_stage = DONE;
+			break;
+		case LONG_SETTLE:
+			if (is_timer_expired(state_timer)) {
+				if (analyzer->max_voltage.val <
+				    MAX_CHARGE_VOLT) {
+					next_stage =
+						LONG_CHARGE_UP; // continue charging
+				} else {
+					next_stage = SHORT_CHARGE_UP;
+				}
 			}
-		}
-		break;
-	case DONE:
-		return false; // done charging
-	case FAULT:
-		return false; // stuck faulting until restart
+			break;
+		case SHORT_CHARGE_UP:
+			if (analyzer->max_ocv.val > MAX_CHARGE_VOLT ||
+			    is_timer_expired(state_timer)) {
+				next_stage = SHORT_SETTLE;
+			}
+			break;
+		case SHORT_SETTLE:
+			if (is_timer_expired(state_timer)) {
+				if (analyzer->max_ocv.val < MAX_CHARGE_VOLT) {
+					next_stage =
+						SHORT_CHARGE_UP; // continue charging
+				} else {
+					next_stage = DONE;
+				}
+			}
+			break;
+		case DONE:
+			return false; // done charging
+		case FAULT:
+			return false; // stuck faulting until restart
 	}
 	// TODO: MUTEX RELEASE
 
 	// Transitioning stages, start the corresponding timer lengths
 	if (next_stage != state_machine->charging_stage) {
 		switch (next_stage) {
-		case LONG_CHARGE_UP:
-			start_timer(state_timer,
-				    15 * 60 * 1000); // 15 minutes
-			break;
-		case SHORT_CHARGE_UP:
-			start_timer(state_timer,
-				    20 * 1000); // 20 seconds
-			break;
+			case LONG_CHARGE_UP:
+				start_timer(state_timer,
+					    15 * 60 * 1000); // 15 minutes
+				break;
+			case SHORT_CHARGE_UP:
+				start_timer(state_timer,
+					    20 * 1000); // 20 seconds
+				break;
 
-		case LONG_SETTLE:
-		case SHORT_SETTLE:
-			start_timer(state_timer, 60 * 1000); // 1 minute
-			break;
+			case LONG_SETTLE:
+			case SHORT_SETTLE:
+				start_timer(state_timer, 60 * 1000); // 1 minute
+				break;
 
-		// cases return earlier or arent possible
-		case DONE:
-		case FAULT:
-			break;
+			// cases return earlier or arent possible
+			case DONE:
+			case FAULT:
+				break;
 		}
 
 		state_machine->charging_stage = next_stage;
 	}
 
 	/* if not charging stage, dont charge
-   * (LONG_SETTLE, SHORT_SETTLE, DONE, FAULT) */
+	 * (LONG_SETTLE, SHORT_SETTLE, DONE, FAULT) */
 	return state_machine->charging_stage == LONG_CHARGE_UP ||
 	       state_machine->charging_stage == SHORT_CHARGE_UP;
 }
@@ -512,9 +510,6 @@ void vStateMachine(ULONG thread_input)
 		sm_handle_state(state_machine_args);
 
 		if (is_timer_expired(&telem_timer)) {
-			analyzer->internal_temp =
-				peripherals->board_temp.temp_c;
-
 			// these are unimportant telemetry messages so they can be sent
 			// infrequently
 			send_bms_status_message(
