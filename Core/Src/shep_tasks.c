@@ -25,6 +25,7 @@
 #include "u_tx_threads.h"
 #include "u_tx_mutex.h"
 #include "bms_algos.h"
+#include "ethernet.h"
 
 const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 			   acc_data_t *acc_data, bms_algos_t *bms_algos)

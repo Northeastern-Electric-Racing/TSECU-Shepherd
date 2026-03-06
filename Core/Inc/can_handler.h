@@ -2,6 +2,7 @@
 #define CAN_HANDLER_H
 
 #include "u_tx_can.h"
+#include "app_threadx.h"
 
 /**
  * @brief Callback to be called when a message is received on CAN line 1.
@@ -91,5 +92,10 @@ uint8_t queue_can_msg(can_msg_t can_msg);
  * @return error code
  */
 uint8_t init_can(FDCAN_HandleTypeDef *hcan);
+
+void vCanDispatch(ULONG thread_input);
+
+void vCanReceive(ULONG thread_input);
+
 
 #endif // CAN_HANDLER_H

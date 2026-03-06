@@ -20,8 +20,6 @@
 #define P3T1755_DEV_ADDR                                                       \
   0x7 // FIXME: I don't know what a sane value for this is
 
-static peripherals_t *peripherals;
-
 int p3t_init(void);
 
 int p3t1755_getBoardTemp(float *temp_c);
@@ -59,16 +57,6 @@ bool read_shutdown();
  * @param peripherals Pointer to peripherals struct
  */
 void init_compute(peripherals_t *peripherals);
-
-/**
- * @brief Reads SHT30 temperature and humidity into the provided outputs.
- * @param peripherals Pointer to peripherals struct
- * @param temperature Pointer to float to store temperature
- * @param humidity Pointer to float to store humidity
- * @return Status
- */
-int tempsensor_getTemperatureAndHumdidty(peripherals_t *peripherals,
-                                         float *temperature, float *humidity);
 
 void vPeripherals(ULONG thread_input);
 

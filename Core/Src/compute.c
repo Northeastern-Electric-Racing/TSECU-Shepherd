@@ -318,7 +318,6 @@ int imu_getAngularRate(vector3_t *data)
 
 void init_compute(peripherals_t *peripherals)
 {
-	assert(peripherals);
 	assert(!imu_init());
 	assert(!p3t_init());
 }
@@ -356,18 +355,16 @@ void vPeripherals(ULONG thread_input)
 
 	peripherals_args_t *peripherals_args =
 		(peripherals_args_t *)thread_input;
-	peripherals = peripherals_args->peripherals;
+	peripherals_t *peripherals = peripherals_args->peripherals;
 
 	init_compute(peripherals);
-	imu_data_t imu_data = peripherals->imu_data;
-	board_temp_t board_temp = peripherals->board_temp;
 
 	for (;;) {
 		mutex_get(&peripherals_mutex);
 
-		imu_getAcceleration(&imu_data.accel_data);
-		imu_getAngularRate(&imu_data.ang_rate_data);
-		p3t1755_getBoardTemp(&board_temp.temp_c);
+		imu_getAcceleration(&peripherals->imu_data.accel_data);
+		imu_getAngularRate(&peripherals->imu_data.ang_rate_data);
+		p3t1755_getBoardTemp(&peripherals->board_temp.temp_c);
 
 		mutex_put(&peripherals_mutex);
 
