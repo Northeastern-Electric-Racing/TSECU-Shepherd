@@ -10,15 +10,14 @@
 
 #define CURRENT_SENSOR_PIN_L A1
 #define CURRENT_SENSOR_PIN_H A0
-#define MEAS_5VREF_PIN A7
-#define FAULT_PIN 2
-#define CHARGE_SAFETY_RELAY 4
-#define CHARGE_DETECT 5
-#define CHARGER_BAUD 250000U
-#define MC_BAUD 1000000U
-#define MAX_ADC_RESOLUTION 4095 // 12 bit ADC
-#define P3T1755_DEV_ADDR                                                       \
-  0x7 // FIXME: I don't know what a sane value for this is
+#define MEAS_5VREF_PIN	     A7
+#define FAULT_PIN	     2
+#define CHARGE_SAFETY_RELAY  4
+#define CHARGE_DETECT	     5
+#define CHARGER_BAUD	     250000U
+#define MC_BAUD		     1000000U
+#define MAX_ADC_RESOLUTION   4095 // 12 bit ADC
+#define P3T1755_DEV_ADDR     0x48
 
 int p3t_init(void);
 

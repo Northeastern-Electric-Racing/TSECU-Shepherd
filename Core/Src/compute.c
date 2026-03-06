@@ -19,15 +19,13 @@
 extern I2C_HandleTypeDef hi2c1;
 
 // NOTE: that this is a blocking call
-static int32_t _p3t1755_read(uint16_t dev_addr, uint16_t reg, uint16_t *data)
+static int32_t _p3t1755_read(uint16_t dev_addr, uint16_t reg, uint8_t *data, uint8_t length)
 {
 	// QUESTION: can I depend on hi2c1 being initalized here?
 	HAL_StatusTypeDef status = HAL_I2C_Master_Receive(
-		&hi2c1, dev_addr, data, sizeof(data) / *data,
+		&hi2c1, dev_addr, data, length,
 		p3t1755_110MS_CONVERSION_TIME);
 	// QUESTION: Is the 110ms conversion time a good timeout value?
-	// QUESTION: There is a warning between the uint16_t and uint8_t pointer
-	// conversion. Which library do I trust here?
 
 	if (status != HAL_OK) {
 		PRINTLN_ERROR(
@@ -40,10 +38,10 @@ static int32_t _p3t1755_read(uint16_t dev_addr, uint16_t reg, uint16_t *data)
 }
 
 // NOTE:  this is a blocking call
-static int32_t _p3t1755_write(uint16_t dev_addr, uint16_t reg, uint16_t *data)
+static int32_t _p3t1755_write(uint16_t dev_addr, uint16_t reg, uint8_t *data, uint8_t length)
 {
 	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(
-		&hi2c1, dev_addr, data, sizeof(data) / *data,
+		&hi2c1, dev_addr, data, length,
 		p3t1755_110MS_CONVERSION_TIME);
 	if (status != HAL_OK) {
 		PRINTLN_ERROR(
@@ -145,7 +143,7 @@ static int32_t _lsm6dsv_write(void *spi_handle, uint8_t reg,
 	return 0;
 }
 
-static const p3t1755_t p3t = { P3T1755_DEV_ADDR, _p3t1755_write,
+static p3t1755_t p3t = { P3T1755_DEV_ADDR, _p3t1755_write,
 			       _p3t1755_read };
 int p3t_init(void)
 {

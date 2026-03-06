@@ -23,7 +23,6 @@ set(CMAKE_PROJECT_NAME TSECU-Shepherd)
 
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Core project settings
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
