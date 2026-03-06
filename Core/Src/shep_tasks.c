@@ -128,59 +128,6 @@ void vDefaultTask(ULONG thread_input)
 	}
 }
 
-void vControl(ULONG thread_input)
-{
-	PRINTLN_INFO("Starting Control thread...");
-
-	analyzer_t *analyzer = (analyzer_t *)thread_input;
-
-	PRINTLN_INFO("Starting Control thread...");
-
-	// Initialize peripherals for control
-	bool failed = !control_init_peripherals();
-	if (failed) {
-		PRINTLN_ERROR(
-			"Failed to initialize one or more peripherals.\n");
-	}
-
-	for (;;) {
-		mutex_get(&analyzer->analyzer_mutex);
-		float pack_high_temp = analyzer->max_temp.val;
-		control_fan(pack_high_temp);
-		mutex_put(&analyzer->analyzer_mutex);
-
-		send_control_signals(control_device_signals);
-
-		tx_thread_sleep(MS_TO_TICKS(100));
-	}
-}
-
-void vPeripherals(ULONG thread_input)
-{
-	PRINTLN_INFO("Starting Peripherals thread...");
-
-	peripherals_args_t *peripherals_args =
-		(peripherals_args_t *)thread_input;
-
-	peripherals_t *peripherals = peripherals_args->peripherals;
-	imu_data_t imu_data = peripherals->imu_data;
-
-	bool failed = imu_init();
-	if (failed) {
-		printf("Failed to initialize imu.\n");
-	}
-
-	for (;;) {
-		mutex_get(&peripherals->peripherals_mutex);
-
-		imu_getAcceleration(&imu_data.accel_data);
-		imu_getAngularRate(&imu_data.ang_rate_data);
-
-		mutex_put(&peripherals->peripherals_mutex);
-
-		tx_thread_sleep(MS_TO_TICKS(50));
-	}
-}
 
 void vDebug(ULONG thread_input)
 {
