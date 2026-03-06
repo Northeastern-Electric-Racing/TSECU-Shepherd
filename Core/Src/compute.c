@@ -147,7 +147,6 @@ static p3t1755_t p3t = { P3T1755_DEV_ADDR, _p3t1755_write,
 			       _p3t1755_read };
 int p3t_init(void)
 {
-	// TODO: determine write_fn, read, _p3t1755_devaddr
 	p3t1755_init(&p3t, p3t.write, p3t.read, P3T1755_DEV_ADDR);
 	uint8_t defalt_two_bit = 0b00000001;
 	int status = p3t1755_configure(&p3t, 0, 1, 0, defalt_two_bit,
