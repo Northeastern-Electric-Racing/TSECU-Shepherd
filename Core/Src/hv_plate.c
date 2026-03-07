@@ -88,7 +88,7 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 
 void get_ts_voltage(hv_plate_t *hv_plate)
 {
-	read_v2_registers(hv_plate->ic);
+	read_v2_register(hv_plate->ic);
 	// note: ts+ is output to both v2 and v3
 	float avg_volts =
 		get_voltage_conversion(hv_plate->ic->vr.v_codes[1]); // V2
@@ -176,17 +176,12 @@ void vHvPlateData(ULONG thread_input)
 
 	tx_thread_sleep(MS_TO_TICKS(500));
 
-	set_gpo(hv_plate->ic, GPO2_2950);
-
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
 	for (;;) {
 		// get the current reading from the pack
 		get_pack_current_and_batt_voltage(hv_plate,
 						  hv_plate_task_delay);
-
-		PRINTLN_INFO("HV PLATE HIGH VOLTAGE: %2f",
-			     hv_plate->batt_volts);
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received

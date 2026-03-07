@@ -67,7 +67,7 @@ void read_v7_v9_registers(cell_asic_2950 *ic)
 	}
 }
 
-void read_v2_registers(cell_asic_2950 *ic)
+void read_v2_register(cell_asic_2950 *ic)
 {
 	adBmsWakeupIc2950(1);
 	adBms2950_Adv(1, ic, OW_OFF, SM_V2);
@@ -76,7 +76,7 @@ void read_v2_registers(cell_asic_2950 *ic)
 	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1A, GPV1, A_2950);
 	if (ic->cccrc.vr_pec != 0) {
-		PRINTLN_ERROR("PEC Error in reading V2 and V3 registers");
+		PRINTLN_ERROR("PEC Error in reading V2 register");
 	}
 }
 
