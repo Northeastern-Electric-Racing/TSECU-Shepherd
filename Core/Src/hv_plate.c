@@ -180,7 +180,6 @@ void vHvPlateData(ULONG thread_input)
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
-	//app_main();
 	for (;;) {
 		// get the current reading from the pack
 		get_pack_current_and_batt_voltage(hv_plate,

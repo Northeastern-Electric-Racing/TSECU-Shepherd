@@ -110,16 +110,13 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 {
 	switch (gpo) {
 		case GPO1_2950:
-			ic->tx_cfga.gpo1c = PULLED_UP_TRISTATED;
-			ic->tx_cfga.gpo1od = PUSH_PULL;		
+			ic->tx_cfga.gpo1c = PULLED_DOWN;
 			break;
 		case GPO2_2950:
-			ic->tx_cfga.gpo2c = PULLED_UP_TRISTATED;
-			ic->tx_cfga.gpo2od = PUSH_PULL;
+			ic->tx_cfga.gpo2c = PULLED_DOWN;
 			break;
 		case GPO3_2950:
-			ic->tx_cfga.gpo3c = PULLED_UP_TRISTATED;
-			ic->tx_cfga.gpo3od = PUSH_PULL;	
+			ic->tx_cfga.gpo3c = PULLED_DOWN;
 			break;
 		case GPO4_2950:
 			ic->tx_cfga.gpo4c = PULLED_DOWN;
@@ -146,16 +143,13 @@ void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 {
 	switch (gpo) {
 		case GPO1_2950:
-			ic->tx_cfga.gpo1c = PULLED_DOWN;
-			ic->tx_cfga.gpo1od = PUSH_PULL;
+			ic->tx_cfga.gpo1c = PULLED_UP_TRISTATED;
 			break;
 		case GPO2_2950:
-			ic->tx_cfga.gpo2c = PULLED_DOWN;
-			ic->tx_cfga.gpo2od = PUSH_PULL;
+			ic->tx_cfga.gpo2c = PULLED_UP_TRISTATED;
 			break;
 		case GPO3_2950:
-			ic->tx_cfga.gpo3c = PULLED_DOWN;
-			ic->tx_cfga.gpo3od = PUSH_PULL;
+			ic->tx_cfga.gpo3c = PULLED_UP_TRISTATED;
 			break;
 		case GPO4_2950:
 			ic->tx_cfga.gpo4c = PULLED_UP_TRISTATED;
