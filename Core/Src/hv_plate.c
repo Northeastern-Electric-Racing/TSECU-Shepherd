@@ -29,24 +29,24 @@ static float get_voltage_conversion(int16_t data)
 void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 {
 	switch (conversion_count) {
-	case ACCI_8:
-		hv_plate->conversion_count = 8;
-		break;
-	case ACCI_16:
-		hv_plate->conversion_count = 16;
-		break;
-	case ACCI_32:
-		hv_plate->conversion_count = 32;
-		break;
-	default:
-		PRINTLN_WARNING(
-			"Unsupported accumulation count, defaulting to 8");
-		hv_plate->conversion_count = 8;
-		break;
+		case ACCI_8:
+			hv_plate->conversion_count = 8;
+			break;
+		case ACCI_16:
+			hv_plate->conversion_count = 16;
+			break;
+		case ACCI_32:
+			hv_plate->conversion_count = 32;
+			break;
+		default:
+			PRINTLN_WARNING(
+				"Unsupported accumulation count, defaulting to 8");
+			hv_plate->conversion_count = 8;
+			break;
 	}
 	hv_plate->last_total_converion_count = 0;
 
-	set_accumulation_count(hv_plate->ic, conversion_count);
+	write_config(hv_plate->ic, conversion_count);
 	start_adc_conversions(hv_plate->ic);
 }
 
@@ -90,7 +90,8 @@ void get_ts_voltage(hv_plate_t *hv_plate)
 {
 	read_v2_registers(hv_plate->ic);
 	// note: ts+ is output to both v2 and v3
-	float avg_volts = get_voltage_conversion(hv_plate->ic->vr.v_codes[1]); // v2
+	float avg_volts =
+		get_voltage_conversion(hv_plate->ic->vr.v_codes[1]); // V2
 
 	hv_plate->ts_volts = ((3600000 + 4530) * avg_volts) / 4530 + 1.25;
 }
@@ -98,15 +99,17 @@ void get_ts_voltage(hv_plate_t *hv_plate)
 void get_shunt_temp(hv_plate_t *hv_plate)
 {
 	read_v7_v9_registers(hv_plate->ic);
-	// NOTE: TS+ is output to both V2 and V3
-	float avg_volts = get_voltage_conversion(hv_plate->ic->vr.v_codes[6]); // V7A
 
-	PRINTLN_INFO("BEFORE V7A: %2f ------------", avg_volts);
+	float avg_volts =
+		(get_voltage_conversion(hv_plate->ic->vr.v_codes[9]) // V7A
+		 + get_voltage_conversion(hv_plate->ic->vr.v_codes[11])) /
+		2; // V9B
 
 	float therm_res = (10000 * avg_volts) / (1.25 - avg_volts);
-	float shunt_temp = (298.0 * 3380.0) / (298.0 * log(therm_res/10000) + 3380);
+	float shunt_temp =
+		(298.0 * 3380.0) / (298.0 * log(therm_res / 10000) + 3380);
 
-	hv_plate->shunt_temp = shunt_temp; // TODO: convert to temp
+	hv_plate->shunt_temp = shunt_temp;
 }
 
 void get_flags(hv_plate_t *hv_plate)
@@ -206,14 +209,8 @@ void vHvPlateData(ULONG thread_input)
 		// read ts voltage
 		get_ts_voltage(hv_plate);
 
-		PRINTLN_INFO("HV PLATE TS VOLTAGE: %2f",
-			     hv_plate->ts_volts);
-		
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
-
-		PRINTLN_INFO("HV PLATE SHUNT TEMP: %2f",
-			     hv_plate->shunt_temp);
 
 		if (is_timer_expired(&diagnostic_read_timer)) {
 			// read flags
