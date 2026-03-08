@@ -106,7 +106,7 @@ void get_shunt_temp(hv_plate_t *hv_plate)
 {
 	read_v7_v9_registers(hv_plate->ic);
 
-	float v =
+	float volts =
 		(get_voltage_conversion(hv_plate->ic->vr.v_codes[9]) // V7A
 		 + get_voltage_conversion(hv_plate->ic->vr.v_codes[11])) /
 		2; // V9B
