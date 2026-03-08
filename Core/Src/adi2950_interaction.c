@@ -22,15 +22,17 @@ void start_adc_conversions(cell_asic_2950 *ic)
 	Delay_ms2950(ADI1_delay_ms);
 }
 
-void set_accumulation_count(cell_asic_2950 *ic, ACCI count)
+void write_config(cell_asic_2950 *ic, ACCI count)
 {
 	ic->tx_cfga.acci = count;
+	ic->tx_cfga.vs7 = (VSB)VSMV_SGND;
 	adBmsWakeupIc2950(1);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
 }
 
 uint16_t read_conversion_count_registers(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDFLAG, Flag, NONE2950);
 	return ic->flag.i1cnt;
 	if (ic->cccrc.flag_pec != 0) {
@@ -40,6 +42,7 @@ uint16_t read_conversion_count_registers(cell_asic_2950 *ic)
 
 void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDIVB1ACC, AccIvbat,
 			  NONE2950); /* Accumulated Battery Voltage Group*/
 	if (ic->cccrc.avgivbat_pec != 0) {
@@ -50,22 +53,33 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 
 void read_v7_v9_registers(cell_asic_2950 *ic)
 {
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1D, GPV1, D_2950);
+	adBmsWakeupIc2950(1);
+	adBms2950_Adv(1, ic, OW_OFF, SM_V7_V9);
+	Delay_ms2950(Polling_Delay_ms2950);
+
+	adBmsWakeupIc2950(1);
+	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1C, GPV1, D_2950);
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
 	}
 }
 
-void read_v2_v3_registers(cell_asic_2950 *ic)
+void read_v2_register(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
+	adBms2950_Adv(1, ic, OW_OFF, SM_V2);
+	Delay_ms2950(Polling_Delay_ms2950);
+
+	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1A, GPV1, A_2950);
 	if (ic->cccrc.vr_pec != 0) {
-		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
+		PRINTLN_ERROR("PEC Error in reading V2 register");
 	}
 }
 
 void read_flag_register(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDFLAG, Flag, FLAG_NOERR);
 	if (ic->cccrc.flag_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading flag register");
