@@ -580,7 +580,7 @@ void send_status_b_message(float v_res, uint8_t chip, float vref2,
  * @param pec_count The total number of PEC errors detected for the specified
  * chip.
  */
-void send_pec_error_message(uint8_t chip_num, uint16_t pec_count)
+void send_segment_pec_error_message(uint8_t chip_num, uint16_t pec_count)
 {
 	struct __attribute__((__packed__)) {
 		uint8_t chip_number;
@@ -593,11 +593,22 @@ void send_pec_error_message(uint8_t chip_num, uint16_t pec_count)
 	endian_swap(&pec_data.pec_error_count,
 		    sizeof(pec_data.pec_error_count));
 
-	can_msg_t msg = { .id = PEC_ERROR_CANID,
-			  .len = PEC_ERROR_SIZE,
+	can_msg_t msg = { .id = SEGMENT_PEC_ERROR_CANID,
+			  .len = SEGMENT_PEC_ERROR_SIZE,
 			  .data = { 0 } };
 
 	memcpy(&msg.data, &pec_data, sizeof(pec_data));
+
+	queue_can_msg(msg);
+}
+
+void send_hv_plate_pec_error_message(const uint8_t pec_count)
+{
+	can_msg_t msg = { .id = HV_PLATE_PEC_ERROR_CANID,
+			  .len = HV_PLATE_PEC_ERROR_SIZE,
+			  .data = { 0 } };
+
+	msg.data[0] = pec_count;
 
 	queue_can_msg(msg);
 }
