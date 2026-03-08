@@ -11,6 +11,7 @@
 #include <math.h>
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
+#define THERM_B_VAL 3380
 
 #define microV(x) ((x * 1e-6))
 
@@ -71,6 +72,9 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 	if ((num_conversitions - hv_plate->last_total_converion_count) /
 		    hv_plate->conversion_count >=
 	    expected_conversions) {
+		
+		// Equation is based on resistances of voltage divider:
+		// R1: 3.6 MOhms, R2: 9.1 kOhms
 		hv_plate->batt_volts =
 			((3600000 + 9100) *
 			 get_voltage_conversion(hv_plate->ic->i_vbacc.vb1acc) /
@@ -89,25 +93,31 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 void get_ts_voltage(hv_plate_t *hv_plate)
 {
 	read_v2_register(hv_plate->ic);
-	// note: ts+ is output to both v2 and v3
-	float avg_volts =
+
+	float volts =
 		get_voltage_conversion(hv_plate->ic->vr.v_codes[1]); // V2
 
-	hv_plate->ts_volts = ((3600000 + 4530) * avg_volts) / 4530 + 1.25;
+	// Equation is based on resistances of voltage divider:
+	// R1: 3.6 MOhms, R2: 4.53 kOhms (+ V1P25 reference)
+	hv_plate->ts_volts = ((3600000 + 4530) * volts) / 4530 + 1.25;
 }
 
 void get_shunt_temp(hv_plate_t *hv_plate)
 {
 	read_v7_v9_registers(hv_plate->ic);
 
-	float avg_volts =
+	float v =
 		(get_voltage_conversion(hv_plate->ic->vr.v_codes[9]) // V7A
 		 + get_voltage_conversion(hv_plate->ic->vr.v_codes[11])) /
 		2; // V9B
 
-	float therm_res = (10000 * avg_volts) / (1.25 - avg_volts);
+	// Equation derived from voltage divider on V1P25:
+	// R1: 10 kOhms, R2: Therm Resistance
+	float therm_res = (10000 * volts) / (1.25 - volts);
+
+	// (T0 * B) / (T0 * ln(R/R0) + B)
 	float shunt_temp =
-		(298.0 * 3380.0) / (298.0 * log(therm_res / 10000) + 3380);
+		(298.0 * THERM_B_VAL) / (298.0 * log(therm_res / 10000) + THERM_B_VAL);
 
 	hv_plate->shunt_temp = shunt_temp;
 }
