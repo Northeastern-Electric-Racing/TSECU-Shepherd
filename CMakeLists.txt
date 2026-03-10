@@ -63,7 +63,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/adbms/adbms2950/lib/src/adi_bms_2950data.c"
     "Drivers/adbms/adbms2950/lib/src/adi_bms_utility.c"
     "Drivers/adbms/adbms2950/program/src/adbms_2950.c"
-    "Drivers/adbms/adbms2950/program/src/application.c"
     "Drivers/adbms/adbms2950/program/src/pal.c"
     "Drivers/adbms/adbms2950/program/src/print_result.c"
     "Drivers/Embedded-Base/threadX/src/u_tx_debug.c"

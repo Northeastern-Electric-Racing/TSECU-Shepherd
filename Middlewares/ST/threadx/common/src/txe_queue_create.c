@@ -31,6 +31,8 @@
 #include "tx_thread.h"
 #include "tx_queue.h"
 
+/* Macro to configure max queue message sizes. This is a value in 32-bit words, so the message size in bytes would be (U_MAX_QUEUE_MESSAGE_SIZE * 4) */
+#define U_MAX_QUEUE_MESSAGE_SIZE ((UINT) 128)
 
 /**************************************************************************/
 /*                                                                        */
@@ -180,7 +182,7 @@ TX_THREAD       *thread_ptr;
         }
 
         /* Check for an invalid message size - greater than 16.  */
-        else if (message_size > TX_16_ULONG)
+        else if (message_size > U_MAX_QUEUE_MESSAGE_SIZE)
         {
 
             /* Invalid message size specified.  */

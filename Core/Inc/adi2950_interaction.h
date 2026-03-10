@@ -26,12 +26,12 @@ void unsnap_2950(cell_asic_2950 *ic);
 void start_adc_conversions(cell_asic_2950 *ic);
 
 /**
- * @brief Sets the accumulation count for current and voltage measurements.
+ * @brief Sets the config for current and voltage measurements.
  * 
  * @param ic Pointer to the adbms2950 data structure.
  * @param count Accumulation count to set.
  */
-void set_accumulation_count(cell_asic_2950 *ic, ACCI count);
+void write_config(cell_asic_2950 *ic, ACCI count);
 
 /**
  * @brief Reads the accumulated current and battery voltage registers from the adbms2950.
@@ -46,10 +46,10 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic);
 void read_v7_v9_registers(cell_asic_2950 *ic);
 
 /**
- * @brief Reads V2 and V3 redundant pair voltage registers.
+ * @brief Reads V2 voltage register.
  * @param ic Pointer to the adbms2950 data structure.
  */
-void read_v2_v3_registers(cell_asic_2950 *ic);
+void read_v2_register(cell_asic_2950 *ic);
 
 /**
  * @brief Reads flag register.
@@ -83,5 +83,11 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo);
  * @param gpo GPO to reset
  */
 void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo);
+
+/**
+ * @brief Counts and reports HV plate PEC errors over CAN.
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void count_hv_plate_pec_errors(cell_asic_2950 *ic);
 
 #endif
