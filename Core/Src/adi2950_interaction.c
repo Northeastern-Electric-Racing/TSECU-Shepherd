@@ -51,14 +51,14 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 	}
 }
 
-void read_v7_v9_registers(cell_asic_2950 *ic)
+void read_v7_register(cell_asic_2950 *ic)
 {
 	adBmsWakeupIc2950(1);
 	adBms2950_Adv(1, ic, OW_OFF, SM_V7_V9);
 	Delay_ms2950(Polling_Delay_ms2950);
 
 	adBmsWakeupIc2950(1);
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1C, GPV1, D_2950);
+	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1C, GPV1, C_2950);
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
 	}
@@ -110,7 +110,8 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 			ic->tx_cfga.gpo1c = PULLED_DOWN;
 			break;
 		case GPO2_2950:
-			ic->tx_cfga.gpo2c = PULLED_DOWN;
+			ic->tx_cfga.gpo2od = PUSH_PULL;
+			ic->tx_cfga.gpo2c = PULLED_UP_TRISTATED;
 			break;
 		case GPO3_2950:
 			ic->tx_cfga.gpo3c = PULLED_DOWN;
@@ -143,7 +144,8 @@ void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 			ic->tx_cfga.gpo1c = PULLED_UP_TRISTATED;
 			break;
 		case GPO2_2950:
-			ic->tx_cfga.gpo2c = PULLED_UP_TRISTATED;
+			ic->tx_cfga.gpo2od = PUSH_PULL;
+			ic->tx_cfga.gpo2c = PULLED_DOWN;
 			break;
 		case GPO3_2950:
 			ic->tx_cfga.gpo3c = PULLED_UP_TRISTATED;

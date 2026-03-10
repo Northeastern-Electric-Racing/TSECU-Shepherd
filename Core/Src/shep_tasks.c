@@ -455,7 +455,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	/* Task Definitions End */
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
+		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
