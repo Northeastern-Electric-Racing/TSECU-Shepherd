@@ -25,7 +25,7 @@ void calc_pack_temps(analyzer_t *analyzer, acc_data_t *acc_data);
  *
  */
 void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
-			state_machine_t *state_machine);
+                        state_machine_t *state_machine);
 
 /**
  * @brief Calculate statistics about pack voltage, such as min and max cell
@@ -40,24 +40,19 @@ void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data);
  *
  */
 void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data,
-			    hv_plate_t *hv_plate);
+                            hv_plate_t *hv_plate);
 
 /**
  * @brief Calculate cell resistances using Rin = ( Voc - V )/I
  */
 void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
-			   hv_plate_t *hv_plate);
+                           hv_plate_t *hv_plate);
 
 /**
  * @brief Updates the cell status of balancing and S_C_faults based on raw cell
  * data
  */
 void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data);
-
-/*
- *
- */
-// void set_internal_temp
 
 void vAnalyzer(ULONG thread_input);
 
