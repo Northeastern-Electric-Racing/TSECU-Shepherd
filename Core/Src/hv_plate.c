@@ -100,8 +100,6 @@ void get_ts_voltage(hv_plate_t *hv_plate)
 	float volts =
 		get_voltage_conversion(hv_plate->ic->vr.v_codes[1]); // V2	
 
-	PRINTLN_INFO("Raw TS Voltage: %.3f V", volts);
-
 	// Equation is based on resistances of voltage divider:
 	// R1: 3.6 MOhms, R2: 4.53 kOhms (+ V1P25 reference)
 	hv_plate->ts_volts = ((3600000 + 4530) * volts) / 4530 + 1.25;
@@ -191,7 +189,7 @@ void vHvPlateData(ULONG thread_input)
 	set_gpo(hv_plate->ic, GPO2_2950);
 	
 	for (;;) {
-		
+
 		// get the current reading from the pack
 		get_pack_current_and_batt_voltage(hv_plate,
 						  hv_plate_task_delay);

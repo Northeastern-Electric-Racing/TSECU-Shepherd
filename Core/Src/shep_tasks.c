@@ -464,7 +464,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
 		    U_SUCCESS);
-	//CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
