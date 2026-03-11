@@ -2,8 +2,119 @@
 #include "pal.h"
 #include "u_tx_debug.h"
 #include "can_messages.h"
+#include "c_utils.h"
 
 #define TOTAL_IC_2950 1
+
+static uint16_t hv_plate_pec_errors = { 0U };
+static uint16_t prev_hv_plate_pec_errors = { 0U };
+
+/**
+ * @brief Update the PEC error mask and accumulation counter for the given register read.
+ *
+ * @param ic Pointer to the adbms2950 data structure.
+ * @param type Register type that was read.
+ */
+static void update_hv_plate_pec_errors(cell_asic_2950 *ic, TYPE2950 type)
+{
+	// clang-format off
+	switch (type)
+	{
+		case GPV1:
+			NER_SET_BIT(hv_plate_pec_errors, 0U);
+			printf("[HV_PLATE] VR PEC %u, ", ic->cccrc.vr_pec);
+			break;
+		case GPV2:
+			NER_SET_BIT(hv_plate_pec_errors, 1U);
+			printf("[HV_PLATE] RVR PEC %u, ", ic->cccrc.rvr_pec);
+			break;
+		case Config2950:
+			NER_SET_BIT(hv_plate_pec_errors, 2U);
+			printf("[HV_PLATE] CFGR PEC %u, ", ic->cccrc.cfgr_pec);
+			break;
+		case Cr:
+			NER_SET_BIT(hv_plate_pec_errors, 3U);
+			printf("[HV_PLATE] CR PEC %u, ", ic->cccrc.cr_pec);
+			break;
+		case Vbat:
+			NER_SET_BIT(hv_plate_pec_errors, 4U);
+			printf("[HV_PLATE] VBAT PEC %u, ", ic->cccrc.vbat_pec);
+			break;
+		case Ivbat:
+			NER_SET_BIT(hv_plate_pec_errors, 5U);
+			printf("[HV_PLATE] IVBAT PEC %u, ", ic->cccrc.ivbat_pec);
+			break;
+		case Oc:
+			NER_SET_BIT(hv_plate_pec_errors, 6U);
+			printf("[HV_PLATE] OC PEC %u, ", ic->cccrc.oc_pec);
+			break;
+		case AccCr:
+			NER_SET_BIT(hv_plate_pec_errors, 7U);
+			printf("[HV_PLATE] AVGCR PEC %u, ", ic->cccrc.avgcr_pec);
+			break;
+		case AccVbat:
+			NER_SET_BIT(hv_plate_pec_errors, 8U);
+			printf("[HV_PLATE] AVGVBAT PEC %u, ", ic->cccrc.avgvbat_pec);
+			break;
+		case AccIvbat:
+			NER_SET_BIT(hv_plate_pec_errors, 9U);
+			printf("[HV_PLATE] AVGIVBAT PEC %u, ", ic->cccrc.avgivbat_pec);
+			break;
+		case Aux2950:
+			NER_SET_BIT(hv_plate_pec_errors, 10U);
+			printf("[HV_PLATE] AUX PEC %u, ", ic->cccrc.aux_pec);
+			break;
+		case Flag:
+			NER_SET_BIT(hv_plate_pec_errors, 11U);
+			printf("[HV_PLATE] FLAG PEC %u, ", ic->cccrc.flag_pec);
+			break;
+		case Status2950:
+			NER_SET_BIT(hv_plate_pec_errors, 12U);
+			printf("[HV_PLATE] STAT PEC %u, ", ic->cccrc.stat_pec);
+			break;
+		case Comm2950:
+			NER_SET_BIT(hv_plate_pec_errors, 13U);
+			printf("[HV_PLATE] COMM PEC %u, ", ic->cccrc.comm_pec);
+			break;
+		case SID:
+			NER_SET_BIT(hv_plate_pec_errors, 14U);
+			printf("[HV_PLATE] SID2950 PED %u, ", ic->cccrc.sid2950_pec);
+			break;
+		default:
+			break;
+	}
+	// clang-format on
+}
+
+void send_hv_plate_pec_errors(void)
+{
+	uint16_t current_pec_errors = hv_plate_pec_errors;
+
+	if (current_pec_errors != prev_hv_plate_pec_errors) {
+		send_hv_plate_pec_error_message(current_pec_errors);
+
+		prev_hv_plate_pec_errors = current_pec_errors;
+	}
+
+	// Clear PEC errors for next cycle
+	current_pec_errors &= 0x0000U;
+}
+
+/**
+ * @brief Read data from hv plate 2950.
+ *
+ * @param ic Pointer to the adbms2950 data structure.
+ * @param command Command to issue to the chip.
+ * @param type Register type to write to.
+ * @param group Group of registers to write to.
+ */
+void read_adbms2950_data(cell_asic_2950 *ic, uint8_t command[2], TYPE2950 type,
+			 GRP2950 group)
+{
+	adBmsWriteData2950(TOTAL_IC_2950, ic, command, type, group);
+
+	update_hv_plate_pec_errors(ic, type);
+}
 
 void snap_2950(cell_asic_2950 *ic)
 {
@@ -31,7 +142,7 @@ void set_accumulation_count(cell_asic_2950 *ic, ACCI count)
 
 uint16_t read_conversion_count_registers(cell_asic_2950 *ic)
 {
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDFLAG, Flag, NONE2950);
+	read_adbms2950_data(ic, RDFLAG, Flag, NONE2950);
 	return ic->flag.i1cnt;
 	if (ic->cccrc.flag_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading conversion count register");
@@ -40,7 +151,7 @@ uint16_t read_conversion_count_registers(cell_asic_2950 *ic)
 
 void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 {
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDIVB1ACC, AccIvbat,
+	read_adbms2950_data(ic, RDIVB1ACC, AccIvbat,
 			  NONE2950); /* Accumulated Battery Voltage Group*/
 	if (ic->cccrc.avgivbat_pec != 0) {
 		PRINTLN_ERROR(
@@ -50,7 +161,7 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 
 void read_v7_v9_registers(cell_asic_2950 *ic)
 {
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1D, GPV1, D_2950);
+	read_adbms2950_data(ic, RDV1D, GPV1, D_2950);
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
 	}
@@ -58,7 +169,7 @@ void read_v7_v9_registers(cell_asic_2950 *ic)
 
 void read_v2_v3_registers(cell_asic_2950 *ic)
 {
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1A, GPV1, A_2950);
+	read_adbms2950_data(ic, RDV1A, GPV1, A_2950);
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
 	}
@@ -66,7 +177,7 @@ void read_v2_v3_registers(cell_asic_2950 *ic)
 
 void read_flag_register(cell_asic_2950 *ic)
 {
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDFLAG, Flag, FLAG_NOERR);
+	read_adbms2950_data(ic, RDFLAG, Flag, FLAG_NOERR);
 	if (ic->cccrc.flag_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading flag register");
 	}
@@ -79,9 +190,9 @@ void read_aux_registers(cell_asic_2950 *ic)
 	ic[0].pladc_count = adBmsPollAdc2950(TOTAL_IC_2950, ic, PLX);
 
 	// Read all relevant register groups
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDXA, Aux2950, A_2950);
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDXB, Aux2950, B_2950);
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDXC, Aux2950, C_2950);
+	read_adbms2950_data(ic, RDXA, Aux2950, A_2950);
+	read_adbms2950_data(ic, RDXB, Aux2950, B_2950);
+	read_adbms2950_data(ic, RDXC, Aux2950, C_2950);
 
 	if (ic->cccrc.aux_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading auxiliary registers");
@@ -116,7 +227,7 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 
 	adBmsWakeupIc2950(TOTAL_IC_2950);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDCFGA2950, Config2950, A_2950);
+	read_adbms2950_data(ic, RDCFGA2950, Config2950, A_2950);
 	if (ic->cccrc.cfgr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in writing GPO configuration");
 	}
@@ -149,109 +260,9 @@ void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 
 	adBmsWakeupIc2950(TOTAL_IC_2950);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
-	adBmsReadData2950(TOTAL_IC_2950, ic, RDCFGA2950, Config2950, A_2950);
+	read_adbms2950_data(ic, RDCFGA2950, Config2950, A_2950);
 
 	if (ic->cccrc.cfgr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in writing GPO configuration");
 	}
-}
-
-void count_hv_plate_pec_errors(cell_asic_2950 *ic)
-{
-	uint8_t pec_error_count =
-		(uint8_t)(ic->cccrc.cfgr_pec + ic->cccrc.cr_pec +
-			  ic->cccrc.vbat_pec + ic->cccrc.ivbat_pec +
-			  ic->cccrc.oc_pec + ic->cccrc.avgcr_pec +
-			  ic->cccrc.avgvbat_pec + ic->cccrc.avgivbat_pec +
-			  ic->cccrc.aux_pec + ic->cccrc.flag_pec +
-			  ic->cccrc.vr_pec + ic->cccrc.rvr_pec +
-			  ic->cccrc.comm_pec + ic->cccrc.stat_pec +
-			  ic->cccrc.sid2950_pec);
-
-	if (pec_error_count > 0U) {
-		PRINTLN_ERROR("HV Plate PEC Error: Count: %u\n",
-			      pec_error_count);
-
-		// if only a few PEC errors happened, print which registers they came from
-		if (pec_error_count < 10U) {
-			if (ic->cccrc.cfgr_pec > 0U) {
-				printf("[HV_PLATE] CFGR PEC %u, ",
-				       ic->cccrc.cfgr_pec);
-			}
-			if (ic->cccrc.cr_pec > 0U) {
-				printf("[HV_PLATE] CR PEC %u, ",
-				       ic->cccrc.cr_pec);
-			}
-			if (ic->cccrc.vbat_pec > 0U) {
-				printf("[HV_PLATE] VBAT PEC %u, ",
-				       ic->cccrc.vbat_pec);
-			}
-			if (ic->cccrc.ivbat_pec > 0U) {
-				printf("[HV_PLATE] IVBAT PEC %u, ",
-				       ic->cccrc.ivbat_pec);
-			}
-			if (ic->cccrc.oc_pec > 0U) {
-				printf("[HV_PLATE] OC PEC %u, ",
-				       ic->cccrc.oc_pec);
-			}
-			if (ic->cccrc.avgcr_pec > 0U) {
-				printf("[HV_PLATE] AVGCR PEC %u, ",
-				       ic->cccrc.avgcr_pec);
-			}
-			if (ic->cccrc.avgvbat_pec > 0U) {
-				printf("[HV_PLATE] AVGVBAT PEC %u, ",
-				       ic->cccrc.avgvbat_pec);
-			}
-			if (ic->cccrc.avgivbat_pec > 0U) {
-				printf("[HV_PLATE] AVGIVBAT PEC %u, ",
-				       ic->cccrc.avgivbat_pec);
-			}
-			if (ic->cccrc.aux_pec > 0U) {
-				printf("[HV_PLATE] AUX PEC %u, ",
-				       ic->cccrc.aux_pec);
-			}
-			if (ic->cccrc.flag_pec > 0U) {
-				printf("[HV_PLATE] FLAG PEC %u, ",
-				       ic->cccrc.flag_pec);
-			}
-			if (ic->cccrc.vr_pec > 0U) {
-				printf("[HV_PLATE] VR PEC %u, ",
-				       ic->cccrc.vr_pec);
-			}
-			if (ic->cccrc.rvr_pec > 0U) {
-				printf("[HV_PLATE] RVR PEC %u, ",
-				       ic->cccrc.rvr_pec);
-			}
-			if (ic->cccrc.comm_pec > 0U) {
-				printf("[HV_PLATE] COMM PEC %u, ",
-				       ic->cccrc.comm_pec);
-			}
-			if (ic->cccrc.stat_pec > 0U) {
-				printf("[HV_PLATE] STAT PEC %u, ",
-				       ic->cccrc.stat_pec);
-			}
-			if (ic->cccrc.sid2950_pec > 0U) {
-				printf("[HV_PLATE] SID2950 PED %u, ",
-				       ic->cccrc.sid2950_pec);
-			}
-		}
-
-		send_hv_plate_pec_error_message(pec_error_count);
-	}
-
-	ic->cccrc.cfgr_pec = 0U;
-	ic->cccrc.cr_pec = 0U;
-	ic->cccrc.vbat_pec = 0U;
-	ic->cccrc.ivbat_pec = 0U;
-	ic->cccrc.oc_pec = 0U;
-	ic->cccrc.avgcr_pec = 0U;
-	ic->cccrc.avgvbat_pec = 0U;
-	ic->cccrc.avgivbat_pec = 0U;
-	ic->cccrc.aux_pec = 0U;
-	ic->cccrc.flag_pec = 0U;
-	ic->cccrc.vr_pec = 0U;
-	ic->cccrc.rvr_pec = 0U;
-	ic->cccrc.comm_pec = 0U;
-	ic->cccrc.stat_pec = 0U;
-	ic->cccrc.sid2950_pec = 0U;
 }

@@ -210,7 +210,7 @@ void vHvPlateData(ULONG thread_input)
 			send_hv_plate_diagnostic_data(hv_plate);
 		}
 
-		count_hv_plate_pec_errors(hv_plate->ic);
+		send_hv_plate_pec_errors();
 
 		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
 	}

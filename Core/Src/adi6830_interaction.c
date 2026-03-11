@@ -4,109 +4,127 @@
 #include "mcuWrapper.h"
 #include "isospi_recovery.h"
 #include "can_messages.h"
+#include "c_utils.h"
 
 #define MAX_PEC_ERROR_ACCUM (100U) // Max accumulated PECs
 
 #define ADBMS_ADC_POLL_TIMEOUT (200U) // ms
 
+static uint16_t segment_pec_errors[NUM_CHIPS] = { 0U };
+static uint16_t prev_segment_pec_errors[NUM_CHIPS] = { 0U };
+
 /**
- * @brief Count PEC errors for all chips, send CAN message, and reset counters.
- *
- * This function iterates through all chips, accumulates the PEC (Packet Error
- * Code) error count, resets the PEC error counter and Command counter, then
- * sends a CAN message if any errors exist.
+ * @brief Update the PEC error mask and accumulation counter for the given register read.
  *
  * @param chips Pointer to the array of cell_asic structures.
+ * @param type Register type that was read.
  */
-static void count_segment_pec_errors(cell_asic chips[NUM_CHIPS])
+static void update_segment_pec_errors(cell_asic chips[NUM_CHIPS], TYPE type)
 {
+	const bool pec_mask_timer_expired = is_startup_pec_mask_timer_expired();
+
 	for (uint8_t chip = 0U; chip < NUM_CHIPS; chip++) {
-		uint16_t pec_error_count =
-			(uint16_t)(chips[chip].cccrc.cfgr_pec +
-				   chips[chip].cccrc.cell_pec +
-				   chips[chip].cccrc.acell_pec +
-				   chips[chip].cccrc.scell_pec +
-				   chips[chip].cccrc.fcell_pec +
-				   chips[chip].cccrc.aux_pec +
-				   chips[chip].cccrc.raux_pec +
-				   chips[chip].cccrc.stat_pec +
-				   chips[chip].cccrc.comm_pec +
-				   chips[chip].cccrc.pwm_pec +
-				   chips[chip].cccrc.sid_pec);
+		// clang-format off
+		switch (type) {
+			case Cell:
+				if (chips[chip].cccrc.cell_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 0U);
+					printf("[SEGMENT] CELL PEC %d, ", chips[chip].cccrc.cell_pec);
+				}
+				break;
+			case Aux:
+				if (chips[chip].cccrc.aux_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 1U);
+					printf("[SEGMENT] AUX PEC %d, ", chips[chip].cccrc.aux_pec);
+				}
+			case RAux:
+				if (chips[chip].cccrc.raux_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 2U);
+					printf("[SEGMENT] RAUX PEC %d, ", chips[chip].cccrc.raux_pec);
+				}
+				break;
+			case Status:
+				if (chips[chip].cccrc.stat_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 3U);
+					printf("[SEGMENT] STAT PEC %d, ", chips[chip].cccrc.stat_pec);
+				}
+				break;
+			case Pwm:
+				if (chips[chip].cccrc.pwm_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 4U);
+					printf("[SEGMENT] PWM PEC %d, ", chips[chip].cccrc.pwm_pec);
+				}
+				break;
+			case AvgCell:
+				if (chips[chip].cccrc.acell_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 5U);
+					printf("[SEGMENT] ACELL PEC %d, ", chips[chip].cccrc.acell_pec);
+				}
+				break;
+			case S_volt:
+				if (chips[chip].cccrc.scell_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 6U);
+					printf("[SEGMENT] SCELL PEC %d, ", chips[chip].cccrc.scell_pec);
+				}
+				break;
+			case F_volt:
+				if (chips[chip].cccrc.fcell_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 7U);
+					printf("[SEGMENT] FCELL PEC %d, ", chips[chip].cccrc.fcell_pec);
+				}
+				break;
+			case Config:
+				if (chips[chip].cccrc.cfgr_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 8U);
+					printf("[SEGMENT] CFGR PEC %d, ", chips[chip].cccrc.cfgr_pec);
+				}
+				break;
+			case Comm:
+				if (chips[chip].cccrc.comm_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 9U);
+					printf("[SEGMENT] COMM PEC %d, ", chips[chip].cccrc.comm_pec);
+				}
+				break;
+			case Sid:
+				if (chips[chip].cccrc.sid_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 10U);
+					printf("[SEGMENT] SID PEC %d, ", chips[chip].cccrc.sid_pec);
+				}
+				break;
+			default:
+				break;
+		}
+		// clang-format on
 
-		if (pec_error_count > 0) {
-			PRINTLN_ERROR("Segment PEC Error: Chip %u, Count: %u\n",
-				      chip, pec_error_count);
-
-			// if only a few PEC errors happened, print which registers they came from
-			if (pec_error_count < 10) {
-				if (chips[chip].cccrc.cfgr_pec > 0) {
-					printf("[SEGMENT] CFGR PEC %d, ",
-					       chips[chip].cccrc.cfgr_pec);
-				}
-				if (chips[chip].cccrc.cell_pec > 0) {
-					printf("[SEGMENT] CELL PEC %d, ",
-					       chips[chip].cccrc.cell_pec);
-				}
-				if (chips[chip].cccrc.acell_pec > 0) {
-					printf("[SEGMENT] ACELL PEC %d, ",
-					       chips[chip].cccrc.acell_pec);
-				}
-				if (chips[chip].cccrc.scell_pec > 0) {
-					printf("[SEGMENT] SCELL PEC %d, ",
-					       chips[chip].cccrc.scell_pec);
-				}
-				if (chips[chip].cccrc.fcell_pec > 0) {
-					printf("[SEGMENT] FCELL PEC %d, ",
-					       chips[chip].cccrc.fcell_pec);
-				}
-				if (chips[chip].cccrc.aux_pec > 0) {
-					printf("[SEGMENT] AUX PEC %d, ",
-					       chips[chip].cccrc.aux_pec);
-				}
-				if (chips[chip].cccrc.raux_pec > 0) {
-					printf("[SEGMENT] RAUX PEC %d, ",
-					       chips[chip].cccrc.raux_pec);
-				}
-				if (chips[chip].cccrc.stat_pec > 0) {
-					printf("[SEGMENT] STAT PEC %d, ",
-					       chips[chip].cccrc.stat_pec);
-				}
-				if (chips[chip].cccrc.comm_pec > 0) {
-					printf("[SEGMENT] COMM PEC %d, ",
-					       chips[chip].cccrc.comm_pec);
-				}
-				if (chips[chip].cccrc.pwm_pec > 0) {
-					printf("[SEGMENT] PWM PEC %d, ",
-					       chips[chip].cccrc.pwm_pec);
-				}
-				if (chips[chip].cccrc.sid_pec > 0) {
-					printf("[SEGMENT] SID PEC %d, ",
-					       chips[chip].cccrc.sid_pec);
-				}
-				printf("\n");
-			}
-
-			send_segment_pec_error_message(chip, pec_error_count);
-
-			// Accumulate PEC errors only after startup mask timer ends
-
-			if (!is_startup_pec_mask_active()) {
-				// Saturate at MAX_PEC_ERROR_ACCUM
-				if ((MAX_PEC_ERROR_ACCUM -
-				     chips[chip].pec_error_sum) <
-				    pec_error_count) {
-					chips[chip].pec_error_sum =
-						MAX_PEC_ERROR_ACCUM;
-				} else {
-					chips[chip].pec_error_sum +=
-						pec_error_count; // cleared in detect_isospi_break()
-				}
+		// Accumulate PEC errors only after startup mask timer ends
+		if (pec_mask_timer_expired && (segment_pec_errors[chip] > 0U)) {
+			// Saturate at MAX_PEC_ERROR_ACCUM
+			if ((MAX_PEC_ERROR_ACCUM - chips[chip].pec_error_sum) ==
+			    0U) {
+				chips[chip].pec_error_sum = MAX_PEC_ERROR_ACCUM;
+			} else {
+				chips[chip].pec_error_sum +=
+					1U; // cleared in detect_isospi_break()
 			}
 		}
+	}
+}
 
-		// Reset PEC counters for next round
-		memset(&(chips[chip].cccrc), 0, sizeof(chips[chip].cccrc));
+void send_segment_pec_errors(void)
+{
+	for (uint8_t chip = 0U; chip < NUM_CHIPS; chip++) {
+
+		uint16_t current_pec_errors = segment_pec_errors[chip];
+
+		if (current_pec_errors != prev_segment_pec_errors[chip]) {
+			send_segment_pec_error_message(
+				chip + 1U, segment_pec_errors[chip]);
+
+			prev_segment_pec_errors[chip] = segment_pec_errors[chip];
+		}
+
+		// Clear PEC errors for next cycle
+		segment_pec_errors[chip] &= 0x0000U;
 	}
 }
 
@@ -264,7 +282,7 @@ void read_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 {
 	adBmsReadData(NUM_CHIPS, chips, command, type, group);
 
-	count_segment_pec_errors(chips);
+	update_segment_pec_errors(chips, type);
 }
 
 uint32_t adBmsPollAdc_indicator(cell_asic chips[NUM_CHIPS],

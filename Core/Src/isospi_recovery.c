@@ -6,54 +6,67 @@
 #include "timer.h"
 #include "state_machine.h"
 
-/** @brief Break detect threshold.
- *  PEC errors > this value in the accumulation window indicate a break.
+/**
+ * @brief Break detect threshold.
+ *
+ * PEC errors > this value in the accumulation window indicate a break.
  */
 #define ISOSPI_PEC_ERROR_THRESHOLD (25U)
 
-/** @brief Threshold for accumulation timer.
- *  Set just above the PEC error sum noise level per cycle,
- *  so random noise doesn’t start the accumulation window.
+/**
+ * @brief Threshold for accumulation timer.
+ *
+ * Set just above the PEC error sum noise level per cycle,
+ * so random noise doesn’t start the accumulation window.
  */
 #define ISOSPI_PEC_ACCUM_START_THRESH (5U)
 
-/** @brief Validation threshold during recovery.
- *  Maximum PEC errors allowed while verifying recovery success.
- *  Lower this value for stricter validation.
+/**
+ * @brief Validation threshold during recovery.
+ *
+ * Maximum PEC errors allowed while verifying recovery success.
+ * Lower this value for stricter validation.
  */
-#define ISOSPI_VALIDATION_THRESHOLD (5U)
+#define ISOSPI_VALIDATION_THRESHOLD (3U)
 
-/** @brief Startup mask time (ms).
- *  Time to ignore PECs after init to avoid false detections.
+/**
+ * @brief Startup mask time (ms).
+ *
+ * Time to ignore PECs after init to avoid false detections.
  */
 #define ISOSPI_STARTUP_MASK_TIME (1500U)
 
-/** @brief Accumulation window (ms).
- *  For accumulation, the PEC sum updates at the ADBMS system-wide sample rate
- *  defined in bmsConfig.h.
- *  Observed PECs/run for chips with break: ~9 (discharge_state), ~20 (charge_state)
- *  Current: 2 Hz -> 500 ms * 8 runs = 4000 ms
+/**
+ * @brief Accumulation window (ms).
+ *
+ * For accumulation, the PEC sum updates at the ADBMS system-wide sample rate
+ * defined in bmsConfig.h.
+ * Observed PECs/run for chips with break: ~9 (discharge_state), ~20 (charge_state)
+ * Current: 2 Hz -> 500 ms * 8 runs = 4000 ms
  */
 #define ISOSPI_ACCUM_PERIOD_MS (4000U)
 
-/** @brief Maximum number of verification read attempts after recovery.
- *  Recovery passes if any attempt succeeds; fails if all attempts fail.
+/**
+ * @brief Maximum number of verification read attempts after recovery.
+ *
+ * Recovery passes if any attempt succeeds; fails if all attempts fail.
  */
-#define ISOSPI_VERIFICATION_READS (3U)
+#define ISOSPI_VERIFICATION_READS (5U)
 
-/** 
- * @brief Timer to mask PEC faults during startup delay window 
+/**
+ * @brief Timer to mask PEC faults during startup delay window
  */
 static nertimer_t startup_pec_mask_timer;
 
-/** 
- * @brief Timer to accumulate PEC errors before break detection 
+/**
+ * @brief Timer to accumulate PEC errors before break detection
  */
 static nertimer_t pec_accum_timer;
 
 /**
- * @brief 
- * @todo Complete Comments
+ * @brief isoSPI break detection status structure.
+ *
+ * Holds data used for isoSPI break detection and recovery
  */
 static isospi_status_t isospi_status;
 
@@ -216,9 +229,9 @@ static void isospi_recover_break(cell_asic chips[NUM_CHIPS],
 	reset_all_pec_error_sums(chips);
 }
 
-int is_startup_pec_mask_active(void)
+bool is_startup_pec_mask_timer_expired(void)
 {
-	return !is_timer_expired(&startup_pec_mask_timer);
+	return is_timer_expired(&startup_pec_mask_timer);
 }
 
 void isospi_break_detection_init(cell_asic chips[NUM_CHIPS])

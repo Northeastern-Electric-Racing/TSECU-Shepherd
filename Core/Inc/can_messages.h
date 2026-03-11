@@ -179,19 +179,19 @@ void send_status_b_message(float v_res, uint8_t chip, float vref2,
 			   float v_analog, float v_digital, stc_ *flt_reg);
 
 /**
- * @brief Sends a CAN message containing the PEC error count for a specific chip.
+ * @brief Sends a CAN message with PEC errors for a segment chip.
  *
- * @param chip_num The index of the chip that reported PEC errors.
- * @param pec_count The total number of PEC errors detected for the specified chip.
+ * @param chip_num Segment chip number.
+ * @param pec_error Bitmask of register groups that experienced PEC errors.
  */
-void send_segment_pec_error_message(uint8_t chip_num, uint16_t pec_count);
+void send_segment_pec_error_message(const uint8_t chip_num, const uint16_t pec_error);
 
 /**
- * @brief Sends a CAN message containing the PEC error count for the HV plate.
+ * @brief Sends a CAN message containing the PEC errors for HV plate.
  *
- * @param pec_count Total number of PEC errors detected for the HV plate.
+ * @param pec_error Bitmask of register groups that experienced PEC errors.
  */
-void send_hv_plate_pec_error_message(const uint8_t pec_count);
+void send_hv_plate_pec_error_message(const uint16_t pec_error);
 
 /**
  * @brief Sends ISO SPI status over CAN.

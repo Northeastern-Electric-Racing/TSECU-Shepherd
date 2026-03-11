@@ -7,6 +7,11 @@
 #include "datastructs.h"
 #include "can_messages.h"
 
+/**
+ * @brief Sends PEC errors for all chips over CAN and clears them for the next cycle.
+ */
+void send_segment_pec_errors(void);
+
 // --- BEGIN SET HELPERS ---
 
 /**
