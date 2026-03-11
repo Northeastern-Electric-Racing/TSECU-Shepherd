@@ -53,7 +53,8 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 	}
 }
 
-void trigger_vr_converion(cell_asic_2950 *ic) {
+void trigger_vr_converion(cell_asic_2950 *ic)
+{
 	adBmsWakeupIc2950(1);
 	adBms2950_Adv(1, ic, OW_OFF, RR_VCH0_VCH8);
 	Delay_ms2950(Polling_Delay_ms2950);
@@ -106,27 +107,29 @@ void poll_and_read_aux_registers(cell_asic_2950 *ic)
 void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 {
 	switch (gpo) {
-		case GPO1_2950:
-			ic->tx_cfga.gpo1c = PULLED_DOWN;
-			break;
-		case GPO2_2950:
-			ic->tx_cfga.gpo2od = PUSH_PULL;
-			ic->tx_cfga.gpo2c = PULLED_UP_TRISTATED;
-			break;
-		case GPO3_2950:
-			ic->tx_cfga.gpo3c = PULLED_DOWN;
-			break;
-		case GPO4_2950:
-			ic->tx_cfga.gpo4c = PULLED_DOWN;
-			break;
-		case GPO5_2950:
-			ic->tx_cfga.gpo5c = PULLED_DOWN;
-			break;
-		case GPO6_2950:
-			ic->tx_cfga.gpo6c = PULLED_DOWN;
-			break;
-		default:
-			break;
+	case GPO1_2950:
+		ic->tx_cfga.gpo1c = PULLED_DOWN;
+		break;
+	case GPO2_2950:
+		// NOTE: temporary change for enabling HV readings on devkit
+		// GPO2 is PUSH_PULL
+		ic->tx_cfga.gpo2od = PUSH_PULL;
+		ic->tx_cfga.gpo2c = PULLED_UP_TRISTATED;
+		break;
+	case GPO3_2950:
+		ic->tx_cfga.gpo3c = PULLED_DOWN;
+		break;
+	case GPO4_2950:
+		ic->tx_cfga.gpo4c = PULLED_DOWN;
+		break;
+	case GPO5_2950:
+		ic->tx_cfga.gpo5c = PULLED_DOWN;
+		break;
+	case GPO6_2950:
+		ic->tx_cfga.gpo6c = PULLED_DOWN;
+		break;
+	default:
+		break;
 	}
 
 	adBmsWakeupIc2950(TOTAL_IC_2950);
@@ -140,27 +143,29 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 {
 	switch (gpo) {
-		case GPO1_2950:
-			ic->tx_cfga.gpo1c = PULLED_UP_TRISTATED;
-			break;
-		case GPO2_2950:
-			ic->tx_cfga.gpo2od = PUSH_PULL;
-			ic->tx_cfga.gpo2c = PULLED_DOWN;
-			break;
-		case GPO3_2950:
-			ic->tx_cfga.gpo3c = PULLED_UP_TRISTATED;
-			break;
-		case GPO4_2950:
-			ic->tx_cfga.gpo4c = PULLED_UP_TRISTATED;
-			break;
-		case GPO5_2950:
-			ic->tx_cfga.gpo5c = PULLED_UP_TRISTATED;
-			break;
-		case GPO6_2950:
-			ic->tx_cfga.gpo6c = PULLED_UP_TRISTATED;
-			break;
-		default:
-			break;
+	case GPO1_2950:
+		ic->tx_cfga.gpo1c = PULLED_UP_TRISTATED;
+		break;
+	case GPO2_2950:
+		// NOTE: temporary change for enabling HV readings on devkit
+		// GPO2 is PUSH_PULL
+		ic->tx_cfga.gpo2od = PUSH_PULL;
+		ic->tx_cfga.gpo2c = PULLED_DOWN;
+		break;
+	case GPO3_2950:
+		ic->tx_cfga.gpo3c = PULLED_UP_TRISTATED;
+		break;
+	case GPO4_2950:
+		ic->tx_cfga.gpo4c = PULLED_UP_TRISTATED;
+		break;
+	case GPO5_2950:
+		ic->tx_cfga.gpo5c = PULLED_UP_TRISTATED;
+		break;
+	case GPO6_2950:
+		ic->tx_cfga.gpo6c = PULLED_UP_TRISTATED;
+		break;
+	default:
+		break;
 	}
 
 	adBmsWakeupIc2950(TOTAL_IC_2950);

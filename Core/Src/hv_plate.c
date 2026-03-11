@@ -186,7 +186,7 @@ void vHvPlateData(ULONG thread_input)
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
-	set_gpo(hv_plate->ic, GPO2_2950);
+	set_gpo(hv_plate->ic, GPO2_2950); // enable HV1 readings on ADBMS2950 devkit
 	
 	for (;;) {
 
@@ -230,7 +230,7 @@ void vHvPlateData(ULONG thread_input)
 			send_hv_plate_diagnostic_data(hv_plate);
 		}
 
-		// count_hv_plate_pec_errors(hv_plate->ic);
+		count_hv_plate_pec_errors(hv_plate->ic);
 
 		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
 	}
