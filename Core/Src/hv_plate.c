@@ -7,8 +7,11 @@
 #include "bms_algos.h"
 #include "app_threadx.h"
 #include "shep_mutexes.h"
+#include "application.h"
+#include <math.h>
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
+#define THERM_B_VAL 3380
 
 #define microV(x) ((x * 1e-6))
 
@@ -18,9 +21,9 @@ static float get_current_conversion(uint32_t data)
 	return current / (float)SHUNT_RESISTANCE;
 }
 
-static float get_voltage_conversion(int data)
+static float get_voltage_conversion(int16_t data)
 {
-	float voltage = microV(100) * (int16_t)data;
+	float voltage = microV(100) * data;
 	return voltage;
 }
 
@@ -44,7 +47,7 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 	}
 	hv_plate->last_total_converion_count = 0;
 
-	set_accumulation_count(hv_plate->ic, conversion_count);
+	write_config(hv_plate->ic, conversion_count);
 	start_adc_conversions(hv_plate->ic);
 }
 
@@ -69,8 +72,13 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 	if ((num_conversitions - hv_plate->last_total_converion_count) /
 		    hv_plate->conversion_count >=
 	    expected_conversions) {
+		
+		// Equation is based on resistances of voltage divider:
+		// R1: 3.6 MOhms, R2: 9.1 kOhms
 		hv_plate->batt_volts =
-			get_voltage_conversion(hv_plate->ic->i_vbacc.vb1acc) /
+			((3600000 + 9100) *
+			 get_voltage_conversion(hv_plate->ic->i_vbacc.vb1acc) /
+			 9100) /
 			hv_plate->conversion_count;
 
 		hv_plate->pack_current =
@@ -84,25 +92,34 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 
 void get_ts_voltage(hv_plate_t *hv_plate)
 {
-	read_v2_v3_registers(hv_plate->ic);
-	// note: ts+ is output to both v2 and v3
-	float avg_volts =
-		(get_voltage_conversion(hv_plate->ic->vr.v_codes[1]) + // v2
-		 get_voltage_conversion(hv_plate->ic->vr.v_codes[2])) / // V3
-		2;
-	hv_plate->ts_volts = avg_volts;
+	read_v2_register(hv_plate->ic);
+
+	float volts =
+		get_voltage_conversion(hv_plate->ic->vr.v_codes[1]); // V2
+
+	// Equation is based on resistances of voltage divider:
+	// R1: 3.6 MOhms, R2: 4.53 kOhms (+ V1P25 reference)
+	hv_plate->ts_volts = ((3600000 + 4530) * volts) / 4530 + 1.25;
 }
 
 void get_shunt_temp(hv_plate_t *hv_plate)
 {
 	read_v7_v9_registers(hv_plate->ic);
-	// NOTE: TS+ is output to both V2 and V3
-	float avg_volts =
-		(get_voltage_conversion(hv_plate->ic->vr.v_codes[9]) + // V7A
-		 get_voltage_conversion(hv_plate->ic->vr.v_codes[11])) / // V9B
-		2;
 
-	hv_plate->shunt_temp = avg_volts; // TODO: convert to temp
+	float volts =
+		(get_voltage_conversion(hv_plate->ic->vr.v_codes[9]) // V7A
+		 + get_voltage_conversion(hv_plate->ic->vr.v_codes[11])) /
+		2; // V9B
+
+	// Equation derived from voltage divider on V1P25:
+	// R1: 10 kOhms, R2: Therm Resistance
+	float therm_res = (10000 * volts) / (1.25 - volts);
+
+	// (T0 * B) / (T0 * ln(R/R0) + B)
+	float shunt_temp =
+		(298.0 * THERM_B_VAL) / (298.0 * log(therm_res / 10000) + THERM_B_VAL);
+
+	hv_plate->shunt_temp = shunt_temp;
 }
 
 void get_flags(hv_plate_t *hv_plate)
@@ -170,6 +187,7 @@ void vHvPlateData(ULONG thread_input)
 	tx_thread_sleep(MS_TO_TICKS(500));
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
+
 	for (;;) {
 		// get the current reading from the pack
 		get_pack_current_and_batt_voltage(hv_plate,
