@@ -87,6 +87,7 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 			get_current_conversion(hv_plate->ic->i_vbacc.i1acc) /
 			hv_plate->conversion_count;
 
+
 		hv_plate->last_total_converion_count = num_conversitions;
 	}
 	unsnap_2950(hv_plate->ic);
@@ -120,7 +121,7 @@ void get_shunt_temp(hv_plate_t *hv_plate)
 	float shunt_temp =
 		(298.0 * THERM_B_VAL) / (298.0 * log(therm_res / 10000) + THERM_B_VAL);
 
-	hv_plate->shunt_temp = shunt_temp;
+	hv_plate->shunt_temp = shunt_temp - 273.15; // convert from K to C
 }
 
 void get_flags(hv_plate_t *hv_plate)
@@ -190,8 +191,8 @@ void vHvPlateData(ULONG thread_input)
 	set_gpo(hv_plate->ic, GPO2_2950);
 	
 	for (;;) {
+		
 		// get the current reading from the pack
-
 		get_pack_current_and_batt_voltage(hv_plate,
 						  hv_plate_task_delay);
 

@@ -25,6 +25,7 @@ void start_adc_conversions(cell_asic_2950 *ic)
 void write_config(cell_asic_2950 *ic, ACCI count)
 {
 	ic->tx_cfga.acci = count;
+	ic->tx_cfga.vs1 = (VSB)VSMV_VREF1P25;
 	ic->tx_cfga.vs2 = (VSB)VSMV_VREF1P25;
 	ic->tx_cfga.vs7 = (VSB)VSMV_SGND;
 	adBmsWakeupIc2950(1);
