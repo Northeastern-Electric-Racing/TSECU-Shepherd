@@ -90,4 +90,6 @@ void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo);
  */
 void count_hv_plate_pec_errors(cell_asic_2950 *ic);
 
+void trigger_vr_converion(cell_asic_2950 *ic);
+
 #endif
