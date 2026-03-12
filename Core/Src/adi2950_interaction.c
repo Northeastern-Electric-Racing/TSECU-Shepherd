@@ -10,7 +10,7 @@ static uint16_t hv_plate_pec_errors = { 0U };
 static uint16_t prev_hv_plate_pec_errors = { 0U };
 
 /**
- * @brief Update the PEC error mask and accumulation counter for the given register read.
+ * @brief Update the PEC errors and accumulation counter for the given register read.
  *
  * @param ic Pointer to the adbms2950 data structure.
  * @param type Register type that was read.

@@ -14,7 +14,7 @@ static uint16_t segment_pec_errors[NUM_CHIPS] = { 0U };
 static uint16_t prev_segment_pec_errors[NUM_CHIPS] = { 0U };
 
 /**
- * @brief Update the PEC error mask and accumulation counter for the given register read.
+ * @brief Update the PEC errors and accumulation counter for the given register read.
  *
  * @param chips Pointer to the array of cell_asic structures.
  * @param type Register type that was read.
