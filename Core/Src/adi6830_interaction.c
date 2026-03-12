@@ -37,6 +37,7 @@ static void update_segment_pec_errors(cell_asic chips[NUM_CHIPS], TYPE type)
 					NER_SET_BIT(segment_pec_errors[chip], 1U);
 					printf("[SEGMENT] AUX PEC %d, ", chips[chip].cccrc.aux_pec);
 				}
+				break;
 			case RAux:
 				if (chips[chip].cccrc.raux_pec) {
 					NER_SET_BIT(segment_pec_errors[chip], 2U);
