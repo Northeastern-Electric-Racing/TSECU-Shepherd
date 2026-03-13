@@ -133,7 +133,7 @@ static int32_t _lsm6dsv_write(void *spi_handle, uint8_t reg,
 static p3t1755_t p3t = {P3T1755_DEV_ADDR, _p3t1755_write, _p3t1755_read};
 int p3t_init(void) {
   p3t1755_init(&p3t, p3t.write, p3t.read, P3T1755_DEV_ADDR);
-  int status = p3t1755_configure(&p3t, 0, 1, 0, p3t1755_2_CONSECUTIVE_FAULTS,
+  int status = p3t1755_configure(&p3t, 0, 0, 0, p3t1755_2_CONSECUTIVE_FAULTS,
                                  p3t1755_27_5MS_CONVERSION_TIME);
   if (status != 0) {
     PRINTLN_ERROR(
@@ -146,7 +146,9 @@ int p3t_init(void) {
 }
 
 int p3t1755_getBoardTemp(float *temp_c) {
-  return p3t1755_read_temperature(&p3t, temp_c);
+  int status = p3t1755_read_temperature(&p3t, temp_c);
+  PRINTLN_INFO("Read board temp: %f", *temp_c);
+  return status;
 }
 
 static const stmdev_ctx_t imu = {
@@ -293,7 +295,7 @@ int imu_getAngularRate(vector3_t *data) {
 
 void init_compute(peripherals_t *peripherals) {
   assert(!imu_init());
-  assert(!p3t_init());
+  p3t_init();
 }
 
 void compute_set_fault(bool fault_state) {

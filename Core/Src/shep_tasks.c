@@ -1,19 +1,20 @@
 
 #include <assert.h>
 
-#include "shep_tasks.h"
+#include "bms_algos.h"
 #include "can_handler.h"
 #include "can_messages.h"
+#include "ccl.h"
 #include "cell_temp_sanitizer.h"
 #include "compute.h"
 #include "control.h"
-#include "bms_algos.h"
 #include "dcl.h"
-#include "ccl.h"
+#include "ethernet.h"
 #include "main.h"
 #include "precharge_routine.h"
 #include "segment.h"
 #include "shep_queues.h"
+#include "shep_tasks.h"
 #include "soc.h"
 #include "state_machine.h"
 #include "timer.h"
@@ -22,416 +23,391 @@
 #include "u_tx_debug.h"
 #include "u_tx_flags.h"
 #include "u_tx_general.h"
-#include "u_tx_threads.h"
 #include "u_tx_mutex.h"
-#include "bms_algos.h"
-#include "ethernet.h"
+#include "u_tx_threads.h"
 
 const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
-			   acc_data_t *acc_data, bms_algos_t *bms_algos)
-{
+                           acc_data_t *acc_data, bms_algos_t *bms_algos) {
 #ifdef DEBUG_HV_PLATE
-	PRINTLN_INFO("HV Plate Data:");
-	PRINTLN_INFO("TS Voltage: %.3f V", hv_plate->ts_volts);
-	PRINTLN_INFO("BATT Voltage: %.3f V", hv_plate->batt_volts);
-	PRINTLN_INFO("Shunt Temp: %.2f C", hv_plate->shunt_temp);
-	PRINTLN_INFO("Pack Current: %.3f A", hv_plate->pack_current);
-	PRINTLN_INFO("VREG: %.3f V", hv_plate->vreg);
-	PRINTLN_INFO("VREF1P25: %.3f V", hv_plate->vref1p25);
-	PRINTLN_INFO("EPAD: %.3f V", hv_plate->epad);
-	PRINTLN_INFO("VDIG: %.3f V", hv_plate->vdig);
-	PRINTLN_INFO("VDD: %.3f V", hv_plate->vdd);
-	PRINTLN_INFO("VDIV: %.3f V", hv_plate->vdiv);
-	PRINTLN_INFO("Primary Internal Temperature: %.3f C", hv_plate->tmp1);
-	PRINTLN_INFO("Secondary Internal Temperature: %.3f C", hv_plate->tmp1);
+  PRINTLN_INFO("HV Plate Data:");
+  PRINTLN_INFO("TS Voltage: %.3f V", hv_plate->ts_volts);
+  PRINTLN_INFO("BATT Voltage: %.3f V", hv_plate->batt_volts);
+  PRINTLN_INFO("Shunt Temp: %.2f C", hv_plate->shunt_temp);
+  PRINTLN_INFO("Pack Current: %.3f A", hv_plate->pack_current);
+  PRINTLN_INFO("VREG: %.3f V", hv_plate->vreg);
+  PRINTLN_INFO("VREF1P25: %.3f V", hv_plate->vref1p25);
+  PRINTLN_INFO("EPAD: %.3f V", hv_plate->epad);
+  PRINTLN_INFO("VDIG: %.3f V", hv_plate->vdig);
+  PRINTLN_INFO("VDD: %.3f V", hv_plate->vdd);
+  PRINTLN_INFO("VDIV: %.3f V", hv_plate->vdiv);
+  PRINTLN_INFO("Primary Internal Temperature: %.3f C", hv_plate->tmp1);
+  PRINTLN_INFO("Secondary Internal Temperature: %.3f C", hv_plate->tmp1);
 #endif
 
 #ifdef DEBUG_VOLTAGES
-	PRINTLN_INFO("Min, Max, Avg, Delta Voltages: %f, %f, %f, %f\n",
-		     analyzer->min_voltage.val, analyzer->max_voltage.val,
-		     analyzer->avg_voltage, analyzer->delt_voltage);
+  PRINTLN_INFO("Min, Max, Avg, Delta Voltages: %f, %f, %f, %f\n",
+               analyzer->min_voltage.val, analyzer->max_voltage.val,
+               analyzer->avg_voltage, analyzer->delt_voltage);
 
-	PRINTLN_INFO("Raw Cell Voltages:");
-	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			PRINTLN_INFO(
-				"%.2f\t",
-				analyzer->chip_data[c].cell_voltages[cell]);
-		}
-		printf("\n");
-	}
+  PRINTLN_INFO("Raw Cell Voltages:");
+  for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+    for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+      PRINTLN_INFO("%.2f\t", analyzer->chip_data[c].cell_voltages[cell]);
+    }
+    printf("\n");
+  }
 
-	PRINTLN_INFO("Raw Cell OCV:");
-	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			PRINTLN_INFO(
-				"%.2f\t",
-				analyzer->chip_data[c].open_cell_voltage[cell]);
-		}
-		printf("\n");
-	}
+  PRINTLN_INFO("Raw Cell OCV:");
+  for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+    for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+      PRINTLN_INFO("%.2f\t", analyzer->chip_data[c].open_cell_voltage[cell]);
+    }
+    printf("\n");
+  }
 #endif
 
 #ifdef DEBUG_TEMPS
-	PRINTLN_INFO("Therm Temps:");
-	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			PRINTLN_INFO("%.1f\t",
-				     analyzer->chip_data[c].cell_temp[cell]);
-		}
-		printf("\n");
-	}
-	PRINTLN_INFO("CHIP TEMPS: \n");
-	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		PRINTLN_INFO("%.1f\t", analyzer->chip_data[c].die_temp);
-	}
-	printf("\n");
+  PRINTLN_INFO("Therm Temps:");
+  for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+    for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+      PRINTLN_INFO("%.1f\t", analyzer->chip_data[c].cell_temp[cell]);
+    }
+    printf("\n");
+  }
+  PRINTLN_INFO("CHIP TEMPS: \n");
+  for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+    PRINTLN_INFO("%.1f\t", analyzer->chip_data[c].die_temp);
+  }
+  printf("\n");
 #endif
 
 #ifdef DEBUG_ALGOS
-	PRINTLN_INFO("Cont CCL: %.2f A, Const DCL: %.2f A\n",
-		     bms_algos->cont_CCL, bms_algos->cont_DCL);
+  PRINTLN_INFO("Cont CCL: %.2f A, Const DCL: %.2f A\n", bms_algos->cont_CCL,
+               bms_algos->cont_DCL);
 
-	PRINTLN_INFO("Inst CCL: %.2f A, Inst DCL: %.2f A\n",
-		     bms_algos->inst_CCL, bms_algos->inst_DCL);
+  PRINTLN_INFO("Inst CCL: %.2f A, Inst DCL: %.2f A\n", bms_algos->inst_CCL,
+               bms_algos->inst_DCL);
 #endif
 }
 
-void vDefaultTask(ULONG thread_input)
-{
-	PRINTLN_INFO("Starting Default thread...");
+void vDefaultTask(ULONG thread_input) {
+  PRINTLN_INFO("Starting Default thread...");
 
-	default_task_args_t *default_task_args =
-		(default_task_args_t *)thread_input;
-	analyzer_t *analyzer = default_task_args->analyzer;
-	acc_data_t *acc_data = default_task_args->acc_data;
-	hv_plate_t *hv_plate = default_task_args->hv_plate;
-	bms_algos_t *bms_algos = default_task_args->bms_algos;
+  default_task_args_t *default_task_args = (default_task_args_t *)thread_input;
+  analyzer_t *analyzer = default_task_args->analyzer;
+  acc_data_t *acc_data = default_task_args->acc_data;
+  hv_plate_t *hv_plate = default_task_args->hv_plate;
+  bms_algos_t *bms_algos = default_task_args->bms_algos;
 
-	bool alt = true;
+  bool alt = true;
 
-	/* Infinite loop */
-	for (;;) {
+  /* Infinite loop */
+  for (;;) {
 #ifdef DEBUG_STATS
-		print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
+    print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
 #endif
 
-		if (alt) {
-			printf(".\n");
-		} else {
-			printf("..\n");
-		}
+    if (alt) {
+      printf(".\n");
+    } else {
+      printf("..\n");
+    }
 
-		alt = !alt;
+    alt = !alt;
 
-		//HAL_IWDG_Refresh(&hiwdg);
-		tx_thread_sleep(MS_TO_TICKS(100));
-	}
+    // HAL_IWDG_Refresh(&hiwdg);
+    tx_thread_sleep(MS_TO_TICKS(100));
+  }
 }
 
+void vDebug(ULONG thread_input) {
+  PRINTLN_INFO("Starting Debug thread...");
 
-void vDebug(ULONG thread_input)
-{
-	PRINTLN_INFO("Starting Debug thread...");
+  analyzer_t *analyzer = (analyzer_t *)thread_input;
 
-	analyzer_t *analyzer = (analyzer_t *)thread_input;
+  for (;;) {
+    get_flag(DEBUG_FLAG, TX_WAIT_FOREVER);
 
-	for (;;) {
-		get_flag(DEBUG_FLAG, TX_WAIT_FOREVER);
+    for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+      chipdata_t *chip_data = get_chip_data(analyzer, chip);
+      for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell += 2) {
+        // Sends two cells per messages
+        // Accounts for odd number of cells
+        send_cell_data_message(
+            chip_data->alpha, chip_data->cell_temp[cell],
+            chip_data->cell_voltages[cell],
 
-		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-			chipdata_t *chip_data = get_chip_data(analyzer, chip);
-			for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP;
-			     cell += 2) {
-				// Sends two cells per messages
-				// Accounts for odd number of cells
-				send_cell_data_message(
-					chip_data->alpha,
-					chip_data->cell_temp[cell],
-					chip_data->cell_voltages[cell],
+            cell + 1 == NUM_CELLS_PER_CHIP ? 0
+                                           : chip_data->cell_voltages[cell + 1],
+            chip, cell, cell + 1, chip_data->is_balancing[cell],
 
-					cell + 1 == NUM_CELLS_PER_CHIP ?
-						0 :
-						chip_data->cell_voltages[cell +
-									 1],
-					chip, cell, cell + 1,
-					chip_data->is_balancing[cell],
+            cell + 1 == NUM_CELLS_PER_CHIP ? 0
+                                           : chip_data->is_balancing[cell + 1],
+            chip_data->cs_fault[cell],
+            cell + 1 == NUM_CELLS_PER_CHIP ? 0 : chip_data->cs_fault[cell + 1]);
 
-					cell + 1 == NUM_CELLS_PER_CHIP ?
-						0 :
-						chip_data->is_balancing[cell +
-									1],
-					chip_data->cs_fault[cell],
-					cell + 1 == NUM_CELLS_PER_CHIP ?
-						0 :
-						chip_data->cs_fault[cell + 1]);
+        tx_thread_sleep(10); // TODO: enhance timing
+      }
 
-				tx_thread_sleep(10); // TODO: enhance timing
-			}
+      send_status_a_message(chip, chip_data->die_temp, chip_data->vpv,
+                            chip_data->vmv, &chip_data->flt_reg);
 
-			send_status_a_message(chip, chip_data->die_temp,
-					      chip_data->vpv, chip_data->vmv,
-					      &chip_data->flt_reg);
+      tx_thread_sleep(30); // TODO: enhance timing
 
-			tx_thread_sleep(30); // TODO: enhance timing
+      send_status_b_message(chip_data->v_res, chip, chip_data->vref2,
+                            chip_data->v_analog, chip_data->v_digital,
+                            &chip_data->flt_reg);
 
-			send_status_b_message(chip_data->v_res, chip,
-					      chip_data->vref2,
-					      chip_data->v_analog,
-					      chip_data->v_digital,
-					      &chip_data->flt_reg);
+      tx_thread_sleep(30); // TODO: enhance timings
 
-			tx_thread_sleep(30); // TODO: enhance timings
+      send_onboard_therm_message(chip, chip_data);
 
-			send_onboard_therm_message(chip, chip_data);
-
-			tx_thread_sleep(30); // TODO: enhance timings
-		}
-	}
+      tx_thread_sleep(30); // TODO: enhance timings
+    }
+  }
 }
 
-uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
-{
-	/* Init Interfaces Start */
-	acc_data_t *acc_data = (acc_data_t *)malloc(sizeof(acc_data_t));
-	analyzer_t *analyzer = (analyzer_t *)malloc(sizeof(analyzer_t));
-	state_machine_t *state_machine =
-		(state_machine_t *)malloc(sizeof(state_machine_t));
-	hv_plate_t *hv_plate = (hv_plate_t *)malloc(sizeof(hv_plate_t));
-	cell_asic_2950 hv_plate_ic;
-	hv_plate->ic = &hv_plate_ic;
-	sanitizer_t *sanitizer = (sanitizer_t *)malloc(sizeof(sanitizer_t));
-	bms_algos_t *bms_algos = (bms_algos_t *)malloc(sizeof(bms_algos_t));
-	peripherals_t *peripherals = (peripherals_t *)malloc(sizeof(peripherals_t));
+uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool) {
+  /* Init Interfaces Start */
+  acc_data_t *acc_data = (acc_data_t *)malloc(sizeof(acc_data_t));
+  analyzer_t *analyzer = (analyzer_t *)malloc(sizeof(analyzer_t));
+  state_machine_t *state_machine =
+      (state_machine_t *)malloc(sizeof(state_machine_t));
+  hv_plate_t *hv_plate = (hv_plate_t *)malloc(sizeof(hv_plate_t));
+  cell_asic_2950 hv_plate_ic;
+  hv_plate->ic = &hv_plate_ic;
+  sanitizer_t *sanitizer = (sanitizer_t *)malloc(sizeof(sanitizer_t));
+  bms_algos_t *bms_algos = (bms_algos_t *)malloc(sizeof(bms_algos_t));
+  peripherals_t *peripherals = (peripherals_t *)malloc(sizeof(peripherals_t));
 
-	default_task_args_t *default_task_args =
-		(default_task_args_t *)malloc(sizeof(default_task_args_t));
-	default_task_args->analyzer = analyzer;
-	default_task_args->acc_data = acc_data;
-	default_task_args->hv_plate = hv_plate;
-	default_task_args->bms_algos = bms_algos;
+  default_task_args_t *default_task_args =
+      (default_task_args_t *)malloc(sizeof(default_task_args_t));
+  default_task_args->analyzer = analyzer;
+  default_task_args->acc_data = acc_data;
+  default_task_args->hv_plate = hv_plate;
+  default_task_args->bms_algos = bms_algos;
 
-	analyzer_args_t *analyzer_args =
-		(analyzer_args_t *)malloc(sizeof(analyzer_args_t));
-	analyzer_args->acc_data = acc_data;
-	analyzer_args->hv_plate = hv_plate;
-	analyzer_args->analyzer = analyzer;
-	analyzer_args->state_machine = state_machine;
+  analyzer_args_t *analyzer_args =
+      (analyzer_args_t *)malloc(sizeof(analyzer_args_t));
+  analyzer_args->acc_data = acc_data;
+  analyzer_args->hv_plate = hv_plate;
+  analyzer_args->analyzer = analyzer;
+  analyzer_args->state_machine = state_machine;
 
-	acc_data_args_t *acc_data_args =
-		(acc_data_args_t *)malloc(sizeof(acc_data_args_t));
-	acc_data_args->acc_data = acc_data;
-	acc_data_args->state_machine = state_machine;
+  acc_data_args_t *acc_data_args =
+      (acc_data_args_t *)malloc(sizeof(acc_data_args_t));
+  acc_data_args->acc_data = acc_data;
+  acc_data_args->state_machine = state_machine;
 
-	state_machine_args_t *state_machine_args =
-		(state_machine_args_t *)malloc(sizeof(state_machine_args_t));
-	state_machine_args->acc_data = acc_data;
-	state_machine_args->analyzer = analyzer;
-	state_machine_args->hv_plate = hv_plate;
-	state_machine_args->state_machine = state_machine;
-	state_machine_args->bms_algos = bms_algos;
-	state_machine_args->sanitizer = sanitizer;
+  state_machine_args_t *state_machine_args =
+      (state_machine_args_t *)malloc(sizeof(state_machine_args_t));
+  state_machine_args->acc_data = acc_data;
+  state_machine_args->analyzer = analyzer;
+  state_machine_args->hv_plate = hv_plate;
+  state_machine_args->state_machine = state_machine;
+  state_machine_args->bms_algos = bms_algos;
+  state_machine_args->sanitizer = sanitizer;
 
-	hv_plate_args_t *hv_plate_args =
-		(hv_plate_args_t *)malloc(sizeof(hv_plate_args_t));
-	hv_plate_args->hv_plate = hv_plate;
-	hv_plate_args->analyzer = analyzer;
-	hv_plate_args->state_machine = state_machine;
-	hv_plate_args->bms_algos = bms_algos;
+  hv_plate_args_t *hv_plate_args =
+      (hv_plate_args_t *)malloc(sizeof(hv_plate_args_t));
+  hv_plate_args->hv_plate = hv_plate;
+  hv_plate_args->analyzer = analyzer;
+  hv_plate_args->state_machine = state_machine;
+  hv_plate_args->bms_algos = bms_algos;
 
-	sanitizer_args_t *sanitizer_args =
-		(sanitizer_args_t *)malloc(sizeof(sanitizer_args_t));
-	sanitizer_args->analyzer = analyzer;
-	sanitizer_args->sanitizer = sanitizer;
+  sanitizer_args_t *sanitizer_args =
+      (sanitizer_args_t *)malloc(sizeof(sanitizer_args_t));
+  sanitizer_args->analyzer = analyzer;
+  sanitizer_args->sanitizer = sanitizer;
 
-	bms_algos_args_t *bms_algos_args =
-		(bms_algos_args_t *)malloc(sizeof(bms_algos_args_t));
-	bms_algos_args->analyzer = analyzer;
-	bms_algos_args->sanitizer = sanitizer;
-	bms_algos_args->bms_algos = bms_algos;
+  bms_algos_args_t *bms_algos_args =
+      (bms_algos_args_t *)malloc(sizeof(bms_algos_args_t));
+  bms_algos_args->analyzer = analyzer;
+  bms_algos_args->sanitizer = sanitizer;
+  bms_algos_args->bms_algos = bms_algos;
 
-	peripherals_args_t *peripherals_args =
-		(peripherals_args_t *)malloc(sizeof(peripherals_args_t));
-	peripherals_args->peripherals = peripherals;
+  peripherals_args_t *peripherals_args =
+      (peripherals_args_t *)malloc(sizeof(peripherals_args_t));
+  peripherals_args->peripherals = peripherals;
 
-	PRINTLN_INFO("FINISHED INITIALIZING INTERFACES");
+  PRINTLN_INFO("FINISHED INITIALIZING INTERFACES");
 
-	/* Init Interfaces End */
+  /* Init Interfaces End */
 
-	/* Task Definitions Start */
+  /* Task Definitions Start */
 
-	thread_t _default_thread = {
-		.name = "Default Task Thread", /* Name */
-		.size = 1024, /* Stack Size (in bytes) */
-		.priority = 2, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)default_task_args, /* Thread Args */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vDefaultTask /* Thread Function */
-	};
+  thread_t _default_thread = {
+      .name = "Default Task Thread",            /* Name */
+      .size = 1024,                             /* Stack Size (in bytes) */
+      .priority = 2,                            /* Priority */
+      .threshold = 0,                           /* Preemption Threshold */
+      .thread_input = (ULONG)default_task_args, /* Thread Args */
+      .time_slice = TX_NO_TIME_SLICE,           /* Time Slice */
+      .auto_start = TX_AUTO_START,              /* Auto Start */
+      .function = vDefaultTask                  /* Thread Function */
+  };
 
-	thread_t _state_machine_thread = {
-		.name = "State Machine Thread", /* Name */
-		.size = 5120, /* Stack Size (in bytes) */
-		.priority = 4, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)state_machine_args, /* Thread Args */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vStateMachine /* Thread Function */
-	};
+  thread_t _state_machine_thread = {
+      .name = "State Machine Thread",            /* Name */
+      .size = 5120,                              /* Stack Size (in bytes) */
+      .priority = 4,                             /* Priority */
+      .threshold = 0,                            /* Preemption Threshold */
+      .thread_input = (ULONG)state_machine_args, /* Thread Args */
+      .time_slice = TX_NO_TIME_SLICE,            /* Time Slice */
+      .auto_start = TX_AUTO_START,               /* Auto Start */
+      .function = vStateMachine                  /* Thread Function */
+  };
 
-	thread_t _can_receive_thread = {
-		.name = "Can Receive Thread", /* Name */
-		.size = 1024, /* Stack Size (in bytes) */
-		.priority = 2, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vCanReceive /* Thread Function */
-	};
+  thread_t _can_receive_thread = {
+      .name = "Can Receive Thread",   /* Name */
+      .size = 1024,                   /* Stack Size (in bytes) */
+      .priority = 2,                  /* Priority */
+      .threshold = 0,                 /* Preemption Threshold */
+      .time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+      .auto_start = TX_AUTO_START,    /* Auto Start */
+      .function = vCanReceive         /* Thread Function */
+  };
 
-	thread_t _can_dispatch_thread = {
-		.name = "CAN Dispatch Thread", /* Name */
-		.size = 1024, /* Stack Size (in bytes) */
-		.priority = 1, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vCanDispatch /* Thread Function */
-	};
+  thread_t _can_dispatch_thread = {
+      .name = "CAN Dispatch Thread",  /* Name */
+      .size = 1024,                   /* Stack Size (in bytes) */
+      .priority = 1,                  /* Priority */
+      .threshold = 0,                 /* Preemption Threshold */
+      .time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+      .auto_start = TX_AUTO_START,    /* Auto Start */
+      .function = vCanDispatch        /* Thread Function */
+  };
 
-	thread_t _ethernet_incoming_thread = {
-		.name = "Ethernet Incoming Thread", /* Name */
-		.size = 1024, /* Stack Size (in bytes) */
-		.priority = 1, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vEthernetIncoming /* Thread Function */
-	};
+  thread_t _ethernet_incoming_thread = {
+      .name = "Ethernet Incoming Thread", /* Name */
+      .size = 1024,                       /* Stack Size (in bytes) */
+      .priority = 1,                      /* Priority */
+      .threshold = 0,                     /* Preemption Threshold */
+      .time_slice = TX_NO_TIME_SLICE,     /* Time Slice */
+      .auto_start = TX_AUTO_START,        /* Auto Start */
+      .function = vEthernetIncoming       /* Thread Function */
+  };
 
-	thread_t _ethernet_outgoing_thread = {
-		.name = "Ethernet Outgoing Thread", /* Name */
-		.size = 1024, /* Stack Size (in bytes) */
-		.priority = 1, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vEthernetOutgoing /* Thread Function */
-	};
+  thread_t _ethernet_outgoing_thread = {
+      .name = "Ethernet Outgoing Thread", /* Name */
+      .size = 1024,                       /* Stack Size (in bytes) */
+      .priority = 1,                      /* Priority */
+      .threshold = 0,                     /* Preemption Threshold */
+      .time_slice = TX_NO_TIME_SLICE,     /* Time Slice */
+      .auto_start = TX_AUTO_START,        /* Auto Start */
+      .function = vEthernetOutgoing       /* Thread Function */
+  };
 
-	thread_t _analyzer_thread = {
-		.name = "Analyzer Thread", /* Name */
-		.size = 1024, /* Stack Size (in bytes) */
-		.priority = 6, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)analyzer_args, /* Thread Args */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vAnalyzer /* Thread Function */
-	};
+  thread_t _analyzer_thread = {
+      .name = "Analyzer Thread",            /* Name */
+      .size = 1024,                         /* Stack Size (in bytes) */
+      .priority = 6,                        /* Priority */
+      .threshold = 0,                       /* Preemption Threshold */
+      .thread_input = (ULONG)analyzer_args, /* Thread Args */
+      .time_slice = TX_NO_TIME_SLICE,       /* Time Slice */
+      .auto_start = TX_AUTO_START,          /* Auto Start */
+      .function = vAnalyzer                 /* Thread Function */
+  };
 
-	thread_t _segment_data_thread = {
-		.name = "Segment Data Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 1, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)acc_data_args, /* Thread Args */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vGetSegmentData, /* Thread Function */
-	};
+  thread_t _segment_data_thread = {
+      .name = "Segment Data Thread",        /* Name */
+      .size = 2048,                         /* Stack Size (in bytes) */
+      .priority = 1,                        /* Priority */
+      .threshold = 0,                       /* Preemption Threshold */
+      .thread_input = (ULONG)acc_data_args, /* Thread Args */
+      .time_slice = TX_NO_TIME_SLICE,       /* Time Slice */
+      .auto_start = TX_AUTO_START,          /* Auto Start */
+      .function = vGetSegmentData,          /* Thread Function */
+  };
 
-	thread_t _hv_plate_data_thread = {
-		.name = "HV Plate Data Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 2, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)hv_plate_args, /* Thread Args */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vHvPlateData, /* Thread Function */
-	};
+  thread_t _hv_plate_data_thread = {
+      .name = "HV Plate Data Thread",       /* Name */
+      .size = 2048,                         /* Stack Size (in bytes) */
+      .priority = 2,                        /* Priority */
+      .threshold = 0,                       /* Preemption Threshold */
+      .thread_input = (ULONG)hv_plate_args, /* Thread Args */
+      .time_slice = TX_NO_TIME_SLICE,       /* Time Slice */
+      .auto_start = TX_AUTO_START,          /* Auto Start */
+      .function = vHvPlateData,             /* Thread Function */
+  };
 
-	thread_t _sanitizer_thread = {
-		.name = "Sanitizer Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 3, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)sanitizer_args, /* Thread Args */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vSanitizer, /* Thread Function */
-	};
+  thread_t _sanitizer_thread = {
+      .name = "Sanitizer Thread",            /* Name */
+      .size = 2048,                          /* Stack Size (in bytes) */
+      .priority = 3,                         /* Priority */
+      .threshold = 0,                        /* Preemption Threshold */
+      .thread_input = (ULONG)sanitizer_args, /* Thread Args */
+      .time_slice = TX_NO_TIME_SLICE,        /* Time Slice */
+      .auto_start = TX_AUTO_START,           /* Auto Start */
+      .function = vSanitizer,                /* Thread Function */
+  };
 
-	thread_t _bms_algorithms_thread = {
-		.name = "BMS Algorithms Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 4, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)bms_algos_args, /* Thread Args */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vBMSAlgorithms, /* Thread Function */
-	};
+  thread_t _bms_algorithms_thread = {
+      .name = "BMS Algorithms Thread",       /* Name */
+      .size = 2048,                          /* Stack Size (in bytes) */
+      .priority = 4,                         /* Priority */
+      .threshold = 0,                        /* Preemption Threshold */
+      .thread_input = (ULONG)bms_algos_args, /* Thread Args */
+      .time_slice = TX_NO_TIME_SLICE,        /* Time Slice */
+      .auto_start = TX_AUTO_START,           /* Auto Start */
+      .function = vBMSAlgorithms,            /* Thread Function */
+  };
 
-	thread_t _control_thread = {
-		.name = "Control Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 4, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)analyzer, /* Thread Args */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vControl, /* Thread Function */
-	};
+  thread_t _control_thread = {
+      .name = "Control Thread",        /* Name */
+      .size = 2048,                    /* Stack Size (in bytes) */
+      .priority = 4,                   /* Priority */
+      .threshold = 0,                  /* Preemption Threshold */
+      .thread_input = (ULONG)analyzer, /* Thread Args */
+      .time_slice = TX_NO_TIME_SLICE,  /* Time Slice */
+      .auto_start = TX_AUTO_START,     /* Auto Start */
+      .function = vControl,            /* Thread Function */
+  };
 
-	thread_t _peripherals_thread = {
-		.name = "Peripherals Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 6, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)peripherals_args, /* Thread Args */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vPeripherals, /* Thread Function */
-	};
+  thread_t _peripherals_thread = {
+      .name = "Peripherals Thread",            /* Name */
+      .size = 2048,                            /* Stack Size (in bytes) */
+      .priority = 6,                           /* Priority */
+      .threshold = 0,                          /* Preemption Threshold */
+      .thread_input = (ULONG)peripherals_args, /* Thread Args */
+      .time_slice = TX_NO_TIME_SLICE,          /* Time Slice */
+      .auto_start = TX_AUTO_START,             /* Auto Start */
+      .function = vPeripherals,                /* Thread Function */
+  };
 
-	thread_t _debug_thread = {
-		.name = "BMS Debug Mode Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 4, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)analyzer, /* Thread Args */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vDebug, /* Thread Function */
-	};
+  thread_t _debug_thread = {
+      .name = "BMS Debug Mode Thread", /* Name */
+      .size = 2048,                    /* Stack Size (in bytes) */
+      .priority = 4,                   /* Priority */
+      .threshold = 0,                  /* Preemption Threshold */
+      .thread_input = (ULONG)analyzer, /* Thread Args */
+      .time_slice = TX_NO_TIME_SLICE,  /* Time Slice */
+      .auto_start = TX_AUTO_START,     /* Auto Start */
+      .function = vDebug,              /* Thread Function */
+  };
 
-	PRINTLN_INFO("RUNNING THREADS");
+  PRINTLN_INFO("RUNNING THREADS");
 
-	/* Task Definitions End */
-	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
+  /* Task Definitions End */
+  CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
+  // CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread), U_SUCCESS);
+  // CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
+  // CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
+  // CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
+  // CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
+  // 	    U_SUCCESS);
+  // CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
+  // 	    U_SUCCESS);
+  // CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
+  // CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
+  // 	    U_SUCCESS);
+  // CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
+  // // CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
+  // 	    // U_SUCCESS);
+  // CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
+  CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
+  // CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
-	PRINTLN_INFO("Ran threads_init()");
-	return U_SUCCESS;
+  PRINTLN_INFO("Ran threads_init()");
+  return U_SUCCESS;
 }
