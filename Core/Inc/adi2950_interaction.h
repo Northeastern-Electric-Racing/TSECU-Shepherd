@@ -27,11 +27,18 @@ void start_adc_conversions(cell_asic_2950 *ic);
 
 /**
  * @brief Sets the config for current and voltage measurements.
- * 
+ *
  * @param ic Pointer to the adbms2950 data structure.
  * @param count Accumulation count to set.
  */
 void write_config(cell_asic_2950 *ic, ACCI count);
+
+/**
+ * @brief Clears the internal flag registers.
+ *
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void write_clear_flags_2950(cell_asic_2950 *ic);
 
 /**
  * @brief Reads the accumulated current and battery voltage registers from the adbms2950.

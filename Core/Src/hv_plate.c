@@ -48,8 +48,9 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 	hv_plate->last_total_converion_count = 0;
 
 	write_config(hv_plate->ic, conversion_count);
+	write_clear_flags_2950(hv_plate->ic);
 	start_adc_conversions(hv_plate->ic);
-	
+
 	hv_plate->adbms_flags.raw = 0; // reset flags
 }
 
@@ -74,7 +75,7 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 	if ((num_conversitions - hv_plate->last_total_converion_count) /
 		    hv_plate->conversion_count >=
 	    expected_conversions) {
-		
+
 		// Equation is based on resistances of voltage divider:
 		// R1: 3.6 MOhms, R2: 9.1 kOhms
 		hv_plate->batt_volts =
@@ -98,7 +99,7 @@ void get_ts_voltage(hv_plate_t *hv_plate)
 	read_v2_register(hv_plate->ic);
 
 	float volts =
-		get_voltage_conversion(hv_plate->ic->vr.v_codes[1]); // V2	
+		get_voltage_conversion(hv_plate->ic->vr.v_codes[1]); // V2
 
 	// Equation is based on resistances of voltage divider:
 	// R1: 3.6 MOhms, R2: 4.53 kOhms (+ V1P25 reference)
@@ -166,7 +167,7 @@ void vHvPlateData(ULONG thread_input)
 	PRINTLN_INFO("Starting HV Plate thread...");
 
 	const int hv_plate_task_delay = 100; // in ms
-	const uint16_t diagnostic_read_frequency = 2000; // 2s
+	const uint16_t diagnostic_read_frequency = 1000; // 2s
 	nertimer_t diagnostic_read_timer;
 
 	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
@@ -187,7 +188,7 @@ void vHvPlateData(ULONG thread_input)
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
 	set_gpo(hv_plate->ic, GPO2_2950); // enable HV1 readings on ADBMS2950 devkit
-	
+
 	for (;;) {
 
 		// get the current reading from the pack
@@ -221,9 +222,9 @@ void vHvPlateData(ULONG thread_input)
 		get_shunt_temp(hv_plate);
 
 		if (is_timer_expired(&diagnostic_read_timer)) {
+		    get_aux_adc_data(hv_plate);
 			// read flags
 			get_flags(hv_plate);
-			get_aux_adc_data(hv_plate);
 			start_timer(&diagnostic_read_timer,
 				    diagnostic_read_frequency);
 			// Send can message

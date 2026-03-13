@@ -1,4 +1,7 @@
 #include "adi2950_interaction.h"
+#include "adi_bms_2950cmdlist.h"
+#include "adi_bms_2950data.h"
+#include "adi_bms_utility.h"
 #include "pal.h"
 #include "u_tx_debug.h"
 #include "can_messages.h"
@@ -30,6 +33,42 @@ void write_config(cell_asic_2950 *ic, ACCI count)
 	ic->tx_cfga.vs7 = (VSB)VSMV_SGND;
 	adBmsWakeupIc2950(1);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
+}
+
+void write_clear_flags_2950(cell_asic_2950 *ic) {
+    for (int cic = 0; cic < TOTAL_IC_2950; cic++) {
+        ic[cic].clflag.vdruv = CL_FLAG_SET2950;
+        ic[cic].clflag.ocmm = CL_FLAG_SET2950;
+	    ic[cic].clflag.oc3l = CL_FLAG_SET2950;
+	    ic[cic].clflag.ocagd_clrm = CL_FLAG_SET2950;
+	    ic[cic].clflag.ocal = CL_FLAG_SET2950;
+	    ic[cic].clflag.oc1l = CL_FLAG_SET2950;
+
+	    ic[cic].clflag.vdduv = CL_FLAG_SET2950;
+	    ic[cic].clflag.noclk = CL_FLAG_SET2950;
+	    ic[cic].clflag.refflt = CL_FLAG_SET2950;
+	    ic[cic].clflag.ocbgd = CL_FLAG_SET2950;
+	    ic[cic].clflag.ocbl = CL_FLAG_SET2950;
+	    ic[cic].clflag.oc2l = CL_FLAG_SET2950;
+
+	    ic[cic].clflag.vregov = CL_FLAG_SET2950;
+	    ic[cic].clflag.vreguv = CL_FLAG_SET2950;
+	    ic[cic].clflag.vdigov = CL_FLAG_SET2950;
+	    ic[cic].clflag.vdiguv = CL_FLAG_SET2950;
+	    ic[cic].clflag.sed1 = CL_FLAG_SET2950;
+	    ic[cic].clflag.med1 = CL_FLAG_SET2950;
+	    ic[cic].clflag.sed2 = CL_FLAG_SET2950;
+	    ic[cic].clflag.med2 = CL_FLAG_SET2950;
+
+	    ic[cic].clflag.vdel = CL_FLAG_SET2950;
+	    ic[cic].clflag.vde = CL_FLAG_SET2950;
+	    ic[cic].clflag.spiflt = CL_FLAG_SET2950;
+	    ic[cic].clflag.reset = CL_FLAG_SET2950;
+	    ic[cic].clflag.thsd = CL_FLAG_SET2950;
+	    ic[cic].clflag.tmode = CL_FLAG_SET2950;
+	    ic[cic].clflag.oscflt = CL_FLAG_SET2950;
+	}
+    adBmsWriteData2950(TOTAL_IC_2950, ic, CLRFLAG2950, Clrflag2950, NONE2950);
 }
 
 uint16_t read_conversion_count_registers(cell_asic_2950 *ic)
