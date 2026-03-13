@@ -6,32 +6,39 @@
 
 /**
  * Snaps registers of ADBMS2950
- * 
+ *
  * @param ic Pointer to the adbms2950 data structure.
  */
 void snap_2950(cell_asic_2950 *ic);
 
 /**
  * Unsnaps registers of ADBMS2950
- * 
+ *
  * @param ic Pointer to the adbms2950 data structure.
  */
 void unsnap_2950(cell_asic_2950 *ic);
 
 /**
  * Begins continuous ADC conversions with redundancy
- * 
+ *
  * @param ic Pointer to the adbms2950 data structure.
  */
 void start_adc_conversions(cell_asic_2950 *ic);
 
 /**
  * @brief Sets the config for current and voltage measurements.
- * 
+ *
  * @param ic Pointer to the adbms2950 data structure.
  * @param count Accumulation count to set.
  */
 void write_config(cell_asic_2950 *ic, ACCI count);
+
+/**
+ * @brief Clears the internal flag registers.
+ *
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void write_clear_flags_2950(cell_asic_2950 *ic);
 
 /**
  * @brief Reads the accumulated current and battery voltage registers from the adbms2950.
@@ -40,10 +47,10 @@ void write_config(cell_asic_2950 *ic, ACCI count);
 void read_accumulated_current_vbat_registers(cell_asic_2950 *ic);
 
 /**
- * @brief Reads V7 and V9 redundant pair voltage registers.
+ * @brief Reads V7 redundant pair voltage registers.
  * @param ic Pointer to the adbms2950 data structure.
  */
-void read_v7_v9_registers(cell_asic_2950 *ic);
+void read_v7_register(cell_asic_2950 *ic);
 
 /**
  * @brief Reads V2 voltage register.
@@ -61,7 +68,7 @@ void read_flag_register(cell_asic_2950 *ic);
  * @brief Reads all aux register groups. (NOTE: Must restart continuous conversion after)
  * @param ic Pointer to the adbms2950 data structure.
  */
-void read_aux_registers(cell_asic_2950 *ic);
+void poll_and_read_aux_registers(cell_asic_2950 *ic);
 
 /**
  * @brief Reads the conversion count registerm for total number of ADC conversions.
@@ -89,5 +96,11 @@ void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo);
  * @param ic Pointer to the adbms2950 data structure.
  */
 void count_hv_plate_pec_errors(cell_asic_2950 *ic);
+
+/**
+ * @brief Triggers a conversion of the VR registers.
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void trigger_vr_converion(cell_asic_2950 *ic);
 
 #endif

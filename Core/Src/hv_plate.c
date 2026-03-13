@@ -48,7 +48,10 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 	hv_plate->last_total_converion_count = 0;
 
 	write_config(hv_plate->ic, conversion_count);
+	write_clear_flags_2950(hv_plate->ic);
 	start_adc_conversions(hv_plate->ic);
+
+	hv_plate->adbms_flags.raw = 0; // reset flags
 }
 
 void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
@@ -72,7 +75,7 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 	if ((num_conversitions - hv_plate->last_total_converion_count) /
 		    hv_plate->conversion_count >=
 	    expected_conversions) {
-		
+
 		// Equation is based on resistances of voltage divider:
 		// R1: 3.6 MOhms, R2: 9.1 kOhms
 		hv_plate->batt_volts =
@@ -84,6 +87,7 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 		hv_plate->pack_current =
 			get_current_conversion(hv_plate->ic->i_vbacc.i1acc) /
 			hv_plate->conversion_count;
+
 
 		hv_plate->last_total_converion_count = num_conversitions;
 	}
@@ -104,12 +108,9 @@ void get_ts_voltage(hv_plate_t *hv_plate)
 
 void get_shunt_temp(hv_plate_t *hv_plate)
 {
-	read_v7_v9_registers(hv_plate->ic);
+	read_v7_register(hv_plate->ic);
 
-	float volts =
-		(get_voltage_conversion(hv_plate->ic->vr.v_codes[9]) // V7A
-		 + get_voltage_conversion(hv_plate->ic->vr.v_codes[11])) /
-		2; // V9B
+	float volts = get_voltage_conversion(hv_plate->ic->vr.v_codes[6]); // V7A
 
 	// Equation derived from voltage divider on V1P25:
 	// R1: 10 kOhms, R2: Therm Resistance
@@ -119,7 +120,7 @@ void get_shunt_temp(hv_plate_t *hv_plate)
 	float shunt_temp =
 		(298.0 * THERM_B_VAL) / (298.0 * log(therm_res / 10000) + THERM_B_VAL);
 
-	hv_plate->shunt_temp = shunt_temp;
+	hv_plate->shunt_temp = shunt_temp - 273.15; // convert from K to C
 }
 
 void get_flags(hv_plate_t *hv_plate)
@@ -142,24 +143,22 @@ void get_flags(hv_plate_t *hv_plate)
 
 void get_aux_adc_data(hv_plate_t *hv_plate)
 {
-	read_aux_registers(hv_plate->ic);
+	poll_and_read_aux_registers(hv_plate->ic);
 
 	cell_asic_2950 *ic = hv_plate->ic;
 	// Read voltage results into struct
-	hv_plate->vreg = get_voltage_conversion(ic->auxa.vreg);
+	hv_plate->vreg = ic->auxa.vreg * microV(240);
 	hv_plate->vref1p25 = get_voltage_conversion(ic->auxa.vref1p25);
 	hv_plate->epad = get_voltage_conversion(ic->auxb.epad);
 	// Different conversions for vreg and vdd
-	hv_plate->vreg = ic->auxb.epad * microV(240);
 	hv_plate->vdd = ic->auxb.vdd * microV(1000);
 	hv_plate->vdiv = get_voltage_conversion(ic->auxc.vdiv);
+	hv_plate->vdig = ic->auxb.vdig * microV(240);
 
 	hv_plate->tmp1 = (ic->auxa.tmp1 / 61.8f) - 250;
 	hv_plate->tmp2 = (ic->auxc.tmp2 / 20.5f) - 267;
 
 	hv_plate->osccnt = ic->auxc.osccnt;
-	// Start continuous conversion again
-	start_adc_conversions(ic);
 }
 
 // HV PLATE DATA THREAD
@@ -168,7 +167,7 @@ void vHvPlateData(ULONG thread_input)
 	PRINTLN_INFO("Starting HV Plate thread...");
 
 	const int hv_plate_task_delay = 100; // in ms
-	const uint16_t diagnostic_read_frequency = 5000; // 5s
+	const uint16_t diagnostic_read_frequency = 1000; // 2s
 	nertimer_t diagnostic_read_timer;
 
 	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
@@ -188,7 +187,10 @@ void vHvPlateData(ULONG thread_input)
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
+	set_gpo(hv_plate->ic, GPO2_2950); // enable HV1 readings on ADBMS2950 devkit
+
 	for (;;) {
+
 		// get the current reading from the pack
 		get_pack_current_and_batt_voltage(hv_plate,
 						  hv_plate_task_delay);
@@ -210,6 +212,9 @@ void vHvPlateData(ULONG thread_input)
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
 
+		// this is required for next two functions to work!
+		trigger_vr_converion(hv_plate->ic);
+
 		// read ts voltage
 		get_ts_voltage(hv_plate);
 
@@ -217,13 +222,11 @@ void vHvPlateData(ULONG thread_input)
 		get_shunt_temp(hv_plate);
 
 		if (is_timer_expired(&diagnostic_read_timer)) {
+		    get_aux_adc_data(hv_plate);
 			// read flags
 			get_flags(hv_plate);
-			read_aux_registers(hv_plate->ic);
 			start_timer(&diagnostic_read_timer,
 				    diagnostic_read_frequency);
-			// Restart continuous conversion
-			start_adc_conversions(hv_plate->ic);
 			// Send can message
 			send_hv_plate_diagnostic_data(hv_plate);
 		}
