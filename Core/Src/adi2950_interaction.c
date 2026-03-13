@@ -111,7 +111,7 @@ void send_hv_plate_pec_errors(void)
 void read_adbms2950_data(cell_asic_2950 *ic, uint8_t command[2], TYPE2950 type,
 			 GRP2950 group)
 {
-	adBmsWriteData2950(TOTAL_IC_2950, ic, command, type, group);
+	adBmsReadData2950(TOTAL_IC_2950, ic, command, type, group);
 
 	update_hv_plate_pec_errors(ic, type);
 }
