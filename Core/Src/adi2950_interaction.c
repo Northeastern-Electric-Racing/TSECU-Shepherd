@@ -1,4 +1,7 @@
 #include "adi2950_interaction.h"
+#include "adi_bms_2950cmdlist.h"
+#include "adi_bms_2950data.h"
+#include "adi_bms_utility.h"
 #include "pal.h"
 #include "u_tx_debug.h"
 #include "can_messages.h"
@@ -136,9 +139,47 @@ void start_adc_conversions(cell_asic_2950 *ic)
 void write_config(cell_asic_2950 *ic, ACCI count)
 {
 	ic->tx_cfga.acci = count;
+	ic->tx_cfga.vs1 = (VSB)VSMV_VREF1P25;
+	ic->tx_cfga.vs2 = (VSB)VSMV_VREF1P25;
 	ic->tx_cfga.vs7 = (VSB)VSMV_SGND;
 	adBmsWakeupIc2950(1);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
+}
+
+void write_clear_flags_2950(cell_asic_2950 *ic) {
+    for (int cic = 0; cic < TOTAL_IC_2950; cic++) {
+        ic[cic].clflag.vdruv = CL_FLAG_SET2950;
+        ic[cic].clflag.ocmm = CL_FLAG_SET2950;
+	    ic[cic].clflag.oc3l = CL_FLAG_SET2950;
+	    ic[cic].clflag.ocagd_clrm = CL_FLAG_SET2950;
+	    ic[cic].clflag.ocal = CL_FLAG_SET2950;
+	    ic[cic].clflag.oc1l = CL_FLAG_SET2950;
+
+	    ic[cic].clflag.vdduv = CL_FLAG_SET2950;
+	    ic[cic].clflag.noclk = CL_FLAG_SET2950;
+	    ic[cic].clflag.refflt = CL_FLAG_SET2950;
+	    ic[cic].clflag.ocbgd = CL_FLAG_SET2950;
+	    ic[cic].clflag.ocbl = CL_FLAG_SET2950;
+	    ic[cic].clflag.oc2l = CL_FLAG_SET2950;
+
+	    ic[cic].clflag.vregov = CL_FLAG_SET2950;
+	    ic[cic].clflag.vreguv = CL_FLAG_SET2950;
+	    ic[cic].clflag.vdigov = CL_FLAG_SET2950;
+	    ic[cic].clflag.vdiguv = CL_FLAG_SET2950;
+	    ic[cic].clflag.sed1 = CL_FLAG_SET2950;
+	    ic[cic].clflag.med1 = CL_FLAG_SET2950;
+	    ic[cic].clflag.sed2 = CL_FLAG_SET2950;
+	    ic[cic].clflag.med2 = CL_FLAG_SET2950;
+
+	    ic[cic].clflag.vdel = CL_FLAG_SET2950;
+	    ic[cic].clflag.vde = CL_FLAG_SET2950;
+	    ic[cic].clflag.spiflt = CL_FLAG_SET2950;
+	    ic[cic].clflag.reset = CL_FLAG_SET2950;
+	    ic[cic].clflag.thsd = CL_FLAG_SET2950;
+	    ic[cic].clflag.tmode = CL_FLAG_SET2950;
+	    ic[cic].clflag.oscflt = CL_FLAG_SET2950;
+	}
+    adBmsWriteData2950(TOTAL_IC_2950, ic, CLRFLAG2950, Clrflag2950, NONE2950);
 }
 
 uint16_t read_conversion_count_registers(cell_asic_2950 *ic)
@@ -162,14 +203,17 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 	}
 }
 
-void read_v7_v9_registers(cell_asic_2950 *ic)
+void trigger_vr_converion(cell_asic_2950 *ic)
 {
 	adBmsWakeupIc2950(1);
-	adBms2950_Adv(1, ic, OW_OFF, SM_V7_V9);
+	adBms2950_Adv(1, ic, OW_OFF, RR_VCH0_VCH8);
 	Delay_ms2950(Polling_Delay_ms2950);
+}
 
+void read_v7_register(cell_asic_2950 *ic)
+{
 	adBmsWakeupIc2950(1);
-	read_adbms2950_data(ic, RDV1D, GPV1, D_2950);
+	read_adbms2950_data(ic, RDV1C, GPV1, C_2950);
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
 	}
@@ -197,7 +241,7 @@ void read_flag_register(cell_asic_2950 *ic)
 	}
 }
 
-void read_aux_registers(cell_asic_2950 *ic)
+void poll_and_read_aux_registers(cell_asic_2950 *ic)
 {
 	spiSendCmd2950(TOTAL_IC_2950, ic, sADX);
 	// Poll on conversion to block thread
@@ -217,26 +261,29 @@ void read_aux_registers(cell_asic_2950 *ic)
 void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 {
 	switch (gpo) {
-		case GPO1_2950:
-			ic->tx_cfga.gpo1c = PULLED_DOWN;
-			break;
-		case GPO2_2950:
-			ic->tx_cfga.gpo2c = PULLED_DOWN;
-			break;
-		case GPO3_2950:
-			ic->tx_cfga.gpo3c = PULLED_DOWN;
-			break;
-		case GPO4_2950:
-			ic->tx_cfga.gpo4c = PULLED_DOWN;
-			break;
-		case GPO5_2950:
-			ic->tx_cfga.gpo5c = PULLED_DOWN;
-			break;
-		case GPO6_2950:
-			ic->tx_cfga.gpo6c = PULLED_DOWN;
-			break;
-		default:
-			break;
+	case GPO1_2950:
+		ic->tx_cfga.gpo1c = PULLED_DOWN;
+		break;
+	case GPO2_2950:
+		// NOTE: temporary change for enabling HV readings on devkit
+		// GPO2 is PUSH_PULL
+		ic->tx_cfga.gpo2od = PUSH_PULL;
+		ic->tx_cfga.gpo2c = PULLED_UP_TRISTATED;
+		break;
+	case GPO3_2950:
+		ic->tx_cfga.gpo3c = PULLED_DOWN;
+		break;
+	case GPO4_2950:
+		ic->tx_cfga.gpo4c = PULLED_DOWN;
+		break;
+	case GPO5_2950:
+		ic->tx_cfga.gpo5c = PULLED_DOWN;
+		break;
+	case GPO6_2950:
+		ic->tx_cfga.gpo6c = PULLED_DOWN;
+		break;
+	default:
+		break;
 	}
 
 	adBmsWakeupIc2950(TOTAL_IC_2950);
@@ -250,26 +297,29 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 {
 	switch (gpo) {
-		case GPO1_2950:
-			ic->tx_cfga.gpo1c = PULLED_UP_TRISTATED;
-			break;
-		case GPO2_2950:
-			ic->tx_cfga.gpo2c = PULLED_UP_TRISTATED;
-			break;
-		case GPO3_2950:
-			ic->tx_cfga.gpo3c = PULLED_UP_TRISTATED;
-			break;
-		case GPO4_2950:
-			ic->tx_cfga.gpo4c = PULLED_UP_TRISTATED;
-			break;
-		case GPO5_2950:
-			ic->tx_cfga.gpo5c = PULLED_UP_TRISTATED;
-			break;
-		case GPO6_2950:
-			ic->tx_cfga.gpo6c = PULLED_UP_TRISTATED;
-			break;
-		default:
-			break;
+	case GPO1_2950:
+		ic->tx_cfga.gpo1c = PULLED_UP_TRISTATED;
+		break;
+	case GPO2_2950:
+		// NOTE: temporary change for enabling HV readings on devkit
+		// GPO2 is PUSH_PULL
+		ic->tx_cfga.gpo2od = PUSH_PULL;
+		ic->tx_cfga.gpo2c = PULLED_DOWN;
+		break;
+	case GPO3_2950:
+		ic->tx_cfga.gpo3c = PULLED_UP_TRISTATED;
+		break;
+	case GPO4_2950:
+		ic->tx_cfga.gpo4c = PULLED_UP_TRISTATED;
+		break;
+	case GPO5_2950:
+		ic->tx_cfga.gpo5c = PULLED_UP_TRISTATED;
+		break;
+	case GPO6_2950:
+		ic->tx_cfga.gpo6c = PULLED_UP_TRISTATED;
+		break;
+	default:
+		break;
 	}
 
 	adBmsWakeupIc2950(TOTAL_IC_2950);
