@@ -97,7 +97,7 @@ void send_hv_plate_pec_errors(void)
 	}
 
 	// Clear PEC errors for next cycle
-	current_pec_errors &= 0x0000U;
+	current_pec_errors = 0U;
 }
 
 /**
