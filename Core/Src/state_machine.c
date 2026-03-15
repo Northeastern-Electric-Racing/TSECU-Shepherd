@@ -480,9 +480,8 @@ void vStateMachine(ULONG thread_input)
 	for (;;) {
 		sm_handle_state(state_machine_args);
 
+		// send unimportant messages less frequently
 		if (is_timer_expired(&telem_timer)) {
-			// these are unimportant telemetry messages so they can be sent
-			// infrequently
 			send_bms_status(
 				get_current_state(state_machine),
 				analyzer->avg_temp,
