@@ -220,8 +220,15 @@ void vHvPlateData(ULONG thread_input)
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
 
-		if (is_timer_expired(&diagnostic_read_timer)) {
+		if (is_timer_expired(&diagnostic_read_timer) && !is_timer_active(&diagnostic_read_timer)) {
+
 			get_aux_adc_data(hv_plate);
+
+			// send hv plate data for telemetry
+			PRINTLN_INFO("Sending HV Plate Data...");
+			send_hv_plate_data(hv_plate->batt_volts, hv_plate->ts_volts, hv_plate->shunt_temp,
+					   hv_plate->pack_current);
+
 			// read flags
 			get_flags(hv_plate);
 			start_timer(&diagnostic_read_timer,

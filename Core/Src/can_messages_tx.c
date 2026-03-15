@@ -559,90 +559,6 @@ uint8_t send_segment_delta_voltages
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
 
-uint8_t send_hv_plate_diagnostics
-(uint16_t flags,float vreg,float tmp1,float vref1p25,uint16_t osccnt)
-{
-    can_msg_t msg;
-    msg.id = 0x100;
-    msg.id_is_extended = false;
-    msg.len = 8;
-
-    
-            uint64_t data = 0;
-                        uint32_t flags_i = (uint32_t)(flags);
-                        if(flags_i > 4095ULL) {flags_i = 4095;
-                        }
-                        data |= ((flags_i) & 0xFFFULL) << 52;
-            
-                        uint32_t vreg_i = (uint32_t)(vreg*100);
-                        if(vreg_i > 4095ULL) {vreg_i = 4095;
-                        }
-                        data |= ((vreg_i) & 0xFFFULL) << 40;
-            
-                        uint32_t tmp1_i = (uint32_t)(tmp1*100);
-                        if(tmp1_i > 4095ULL) {tmp1_i = 4095;
-                        }
-                        data |= ((tmp1_i) & 0xFFFULL) << 28;
-            
-                        uint32_t vref1p25_i = (uint32_t)(vref1p25*100);
-                        if(vref1p25_i > 4095ULL) {vref1p25_i = 4095;
-                        }
-                        data |= ((vref1p25_i) & 0xFFFULL) << 16;
-            
-                        uint32_t osccnt_i = (uint32_t)(osccnt);
-                        if(osccnt_i > 65535ULL) {osccnt_i = 65535;
-                        }
-                        data |= ((osccnt_i) & 0xFFFFULL) << 0;
-            
-            uint64_t data_bigendian = __builtin_bswap64(data);
-            memcpy(msg.data, &data_bigendian, 8);
-        
-
-    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
-}
-
-uint8_t send_hv_plate_diagnostics_second
-(float epad,float vdig,float vdd,float tmp2,float vdiv)
-{
-    can_msg_t msg;
-    msg.id = 0x101;
-    msg.id_is_extended = false;
-    msg.len = 8;
-
-    
-            uint64_t data = 0;
-                        uint32_t epad_i = (uint32_t)(epad*100);
-                        if(epad_i > 4095ULL) {epad_i = 4095;
-                        }
-                        data |= ((epad_i) & 0xFFFULL) << 52;
-            
-                        uint32_t vdig_i = (uint32_t)(vdig*100);
-                        if(vdig_i > 4095ULL) {vdig_i = 4095;
-                        }
-                        data |= ((vdig_i) & 0xFFFULL) << 40;
-            
-                        uint32_t vdd_i = (uint32_t)(vdd*100);
-                        if(vdd_i > 4095ULL) {vdd_i = 4095;
-                        }
-                        data |= ((vdd_i) & 0xFFFULL) << 28;
-            
-                        uint32_t tmp2_i = (uint32_t)(tmp2*100);
-                        if(tmp2_i > 4095ULL) {tmp2_i = 4095;
-                        }
-                        data |= ((tmp2_i) & 0xFFFULL) << 16;
-            
-                        uint32_t vdiv_i = (uint32_t)(vdiv*100);
-                        if(vdiv_i > 4095ULL) {vdiv_i = 4095;
-                        }
-                        data |= ((vdiv_i) & 0xFFFULL) << 4;
-            
-            uint64_t data_bigendian = __builtin_bswap64(data);
-            memcpy(msg.data, &data_bigendian, 8);
-        
-
-    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
-}
-
 uint8_t send_bms_debug
 (uint8_t spare0,uint8_t spare1,uint16_t spare2,uint32_t spare3)
 {
@@ -1328,6 +1244,130 @@ uint8_t send_precharge_status
                         data |= ((precharge_status_i) & 0x1ULL) << 7;
             
             msg.data[0] = data;
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_hv_plate_data
+(float batt_voltage,float ts_voltage,float shunt_temp,float pack_current)
+{
+    can_msg_t msg;
+    msg.id = 0x701;
+    msg.id_is_extended = false;
+    msg.len = 8;
+
+    
+            uint64_t data = 0;
+                        int32_t batt_voltage_i = (int32_t)(batt_voltage*100);
+                        if(batt_voltage_i > 32767) {batt_voltage_i = 32767;
+                        } else if(batt_voltage_i < -32768) {batt_voltage_i = -32768;
+                        }
+                        data |= ((uint32_t)(batt_voltage_i) & 0xFFFFULL) << 48;
+            
+                        int32_t ts_voltage_i = (int32_t)(ts_voltage*100);
+                        if(ts_voltage_i > 32767) {ts_voltage_i = 32767;
+                        } else if(ts_voltage_i < -32768) {ts_voltage_i = -32768;
+                        }
+                        data |= ((uint32_t)(ts_voltage_i) & 0xFFFFULL) << 32;
+            
+                        int32_t shunt_temp_i = (int32_t)(shunt_temp*100);
+                        if(shunt_temp_i > 32767) {shunt_temp_i = 32767;
+                        } else if(shunt_temp_i < -32768) {shunt_temp_i = -32768;
+                        }
+                        data |= ((uint32_t)(shunt_temp_i) & 0xFFFFULL) << 16;
+            
+                        int32_t pack_current_i = (int32_t)(pack_current*100);
+                        if(pack_current_i > 32767) {pack_current_i = 32767;
+                        } else if(pack_current_i < -32768) {pack_current_i = -32768;
+                        }
+                        data |= ((uint32_t)(pack_current_i) & 0xFFFFULL) << 0;
+            
+            uint64_t data_bigendian = __builtin_bswap64(data);
+            memcpy(msg.data, &data_bigendian, 8);
+        
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_hv_plate_diagnostics
+(uint16_t flags,float vreg,float tmp1,float vref1p25,uint16_t osccnt)
+{
+    can_msg_t msg;
+    msg.id = 0x100;
+    msg.id_is_extended = false;
+    msg.len = 8;
+
+    
+            uint64_t data = 0;
+                        uint32_t flags_i = (uint32_t)(flags);
+                        if(flags_i > 4095ULL) {flags_i = 4095;
+                        }
+                        data |= ((flags_i) & 0xFFFULL) << 52;
+            
+                        uint32_t vreg_i = (uint32_t)(vreg*100);
+                        if(vreg_i > 4095ULL) {vreg_i = 4095;
+                        }
+                        data |= ((vreg_i) & 0xFFFULL) << 40;
+            
+                        uint32_t tmp1_i = (uint32_t)(tmp1*100);
+                        if(tmp1_i > 4095ULL) {tmp1_i = 4095;
+                        }
+                        data |= ((tmp1_i) & 0xFFFULL) << 28;
+            
+                        uint32_t vref1p25_i = (uint32_t)(vref1p25*100);
+                        if(vref1p25_i > 4095ULL) {vref1p25_i = 4095;
+                        }
+                        data |= ((vref1p25_i) & 0xFFFULL) << 16;
+            
+                        uint32_t osccnt_i = (uint32_t)(osccnt);
+                        if(osccnt_i > 65535ULL) {osccnt_i = 65535;
+                        }
+                        data |= ((osccnt_i) & 0xFFFFULL) << 0;
+            
+            uint64_t data_bigendian = __builtin_bswap64(data);
+            memcpy(msg.data, &data_bigendian, 8);
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_hv_plate_diagnostics_second
+(float epad,float vdig,float vdd,float tmp2,float vdiv)
+{
+    can_msg_t msg;
+    msg.id = 0x101;
+    msg.id_is_extended = false;
+    msg.len = 8;
+
+    
+            uint64_t data = 0;
+                        uint32_t epad_i = (uint32_t)(epad*100);
+                        if(epad_i > 4095ULL) {epad_i = 4095;
+                        }
+                        data |= ((epad_i) & 0xFFFULL) << 52;
+            
+                        uint32_t vdig_i = (uint32_t)(vdig*100);
+                        if(vdig_i > 4095ULL) {vdig_i = 4095;
+                        }
+                        data |= ((vdig_i) & 0xFFFULL) << 40;
+            
+                        uint32_t vdd_i = (uint32_t)(vdd*100);
+                        if(vdd_i > 4095ULL) {vdd_i = 4095;
+                        }
+                        data |= ((vdd_i) & 0xFFFULL) << 28;
+            
+                        uint32_t tmp2_i = (uint32_t)(tmp2*100);
+                        if(tmp2_i > 4095ULL) {tmp2_i = 4095;
+                        }
+                        data |= ((tmp2_i) & 0xFFFULL) << 16;
+            
+                        uint32_t vdiv_i = (uint32_t)(vdiv*100);
+                        if(vdiv_i > 4095ULL) {vdiv_i = 4095;
+                        }
+                        data |= ((vdiv_i) & 0xFFFULL) << 4;
+            
+            uint64_t data_bigendian = __builtin_bswap64(data);
+            memcpy(msg.data, &data_bigendian, 8);
         
 
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);

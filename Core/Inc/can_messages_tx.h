@@ -158,29 +158,6 @@ uint8_t send_segment_delta_voltages
 
 /**
 * Contents of this message:
-* BMS/Plate/Diagnostics/Flags - ADBMS2950 Flags
-* BMS/Plate/Diagnostics/VREG - VREG power supply pin
-* BMS/Plate/Diagnostics/TMP1 - Primary internal temperature
-* BMS/Plate/Diagnostics/VREF1P25 - VREF1P25 reference pin
-* BMS/Plate/Diagnostics/OSCCNT - Oscillator count
-*/
-uint8_t send_hv_plate_diagnostics
-(uint16_t flags,float vreg,float tmp1,float vref1p25,uint16_t osccnt);
-
-/**
-* Contents of this message:
-* BMS/Plate/Diagnostics/EPAD - Exposed pad
-* BMS/Plate/Diagnostics/VDIG - Internal digital 3V supply
-* BMS/Plate/Diagnostics/VDD - VDD power supply pin
-* BMS/Plate/Diagnostics/TMP2 - Secondary internal temperature sensor
-* BMS/Plate/Diagnostics/VDIV - 
-* BMS/Plate/Diagnostics/Extra - Reserved
-*/
-uint8_t send_hv_plate_diagnostics_second
-(float epad,float vdig,float vdd,float tmp2,float vdiv);
-
-/**
-* Contents of this message:
 * BMS/Debug/Spare0 - Internal
 * BMS/Debug/Spare1 - Internal
 * BMS/Debug/Spare2 - Internal
@@ -337,6 +314,39 @@ uint8_t send_onboard_therm_temperatures
 */
 uint8_t send_precharge_status
 (bool precharge_status);
+
+/**
+* Contents of this message:
+* BMS/Precharge/Batt_Voltage - Battery Voltage
+* BMS/Precharge/TS_Voltage - TS Voltage
+* BMS/Precharge/Shunt_Temp - Shunt Temperature
+* BMS/Precharge/Pack_Current - Pack Current
+*/
+uint8_t send_hv_plate_data
+(float batt_voltage,float ts_voltage,float shunt_temp,float pack_current);
+
+/**
+* Contents of this message:
+* BMS/Plate/Diagnostics/Flags - ADBMS2950 Flags
+* BMS/Plate/Diagnostics/VREG - VREG power supply pin
+* BMS/Plate/Diagnostics/TMP1 - Primary internal temperature
+* BMS/Plate/Diagnostics/VREF1P25 - VREF1P25 reference pin
+* BMS/Plate/Diagnostics/OSCCNT - Oscillator count
+*/
+uint8_t send_hv_plate_diagnostics
+(uint16_t flags,float vreg,float tmp1,float vref1p25,uint16_t osccnt);
+
+/**
+* Contents of this message:
+* BMS/Plate/Diagnostics/EPAD - Exposed pad
+* BMS/Plate/Diagnostics/VDIG - Internal digital 3V supply
+* BMS/Plate/Diagnostics/VDD - VDD power supply pin
+* BMS/Plate/Diagnostics/TMP2 - Secondary internal temperature sensor
+* BMS/Plate/Diagnostics/VDIV - 
+* BMS/Plate/Diagnostics/Extra - Reserved
+*/
+uint8_t send_hv_plate_diagnostics_second
+(float epad,float vdig,float vdd,float tmp2,float vdiv);
 
 /**
 * Contents of this message:
