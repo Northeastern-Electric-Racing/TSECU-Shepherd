@@ -1,6 +1,5 @@
-
 #include "soc.h"
-#include "stm32xx_hal.h"
+#include "u_tx_general.h"
 #include "tx_api.h"
 
 #define FULL_CAPACITY_AH \
@@ -11,54 +10,57 @@ typedef struct {
 	float capacity; // in Ah
 } soc_lookup_t;
 
-// clang-format off
-const soc_lookup_t SOC_LOOKUP_TABLE[] = {
-    {MAX_VOLT, FULL_CAPACITY_AH}, // Max possible capacity at max voltage
-    {4.10f, 4.5f},
-    {4.00f, 4.0f},
-    {3.90f, 3.5f},
-    {3.80f, 3.0f},
-    {3.70f, 2.5f},
-    {3.60f, 2.0f},
-    {3.50f, 1.5f},
-    {3.40f, 1.0f},
-    {3.30f, 0.5f},
-    {MIN_VOLT, 0.0f} // Minimum capacity at min voltage
-};
-// clang-format on
+/**
+ * @brief Estimate SoC from cell OCV using a polynomial fit.
+ *
+ * Original polynomial (standard form):
+ *
+ * SoC(x) =
+ *     -0.0179218x^5
+ *     +0.0830236x^4
+ *     +0.905277x^3
+ *     -7.43367x^2
+ *     +18.7306x
+ *     -16.0039
+ *
+ * Implemented below in Horner form to reduce multiplications
+ * and improve runtime performance.
+ *
+ * @param ocv Cell open-circuit voltage (V)
+ * @return Estimated SoC (0.0 to 1.0)
+ */
+static float get_soc_from_ocv(float ocv)
+{
+	float soc;
 
-static float _get_initial_soc(analyzer_t *analyzer, hv_plate_t *hv_plate)
+	// clang-format off
+	soc = ((((-0.0179218f * ocv + 0.0830236f) * ocv
+	         + 0.905277f) * ocv
+	         - 7.43367f) * ocv
+	         + 18.7306f) * ocv
+	         - 16.0039f;
+	// clang-format on
+
+	/* Saturate to valid SOC range */
+	if (soc < 0.0f) {
+		soc = 0.0f;
+	} else if (soc > 1.0f) {
+		soc = 1.0f;
+	}
+
+	return soc;
+}
+
+static float get_initial_soc(analyzer_t *analyzer)
 {
 	float min_ocv = analyzer->min_ocv.val;
 
-	// check for if min OCV has not been initialized yet
-	if (min_ocv < MIN_VOLT) {
-		return -1;
-	} else if (min_ocv > MAX_VOLT) {
-		return -1;
+	/* Check for invalid OCV reading */
+	if ((min_ocv < MIN_VOLT) || (min_ocv > MAX_VOLT)) {
+		return -1.0f;
 	}
 
-	// lookup the capacity from the table
-	for (size_t i = 0;
-	     i < sizeof(SOC_LOOKUP_TABLE) / sizeof(SOC_LOOKUP_TABLE[0]) - 1;
-	     i++) {
-		if (min_ocv <= SOC_LOOKUP_TABLE[i].min_ocv &&
-		    min_ocv > SOC_LOOKUP_TABLE[i + 1].min_ocv) {
-			float cap_high = SOC_LOOKUP_TABLE[i].capacity;
-			float cap_low = SOC_LOOKUP_TABLE[i + 1].capacity;
-			float volt_high = SOC_LOOKUP_TABLE[i].min_ocv;
-			float volt_low = SOC_LOOKUP_TABLE[i + 1].min_ocv;
-			// linear interpolation bewteen the two points
-			float capacity =
-				cap_low + (cap_high - cap_low) *
-						  (min_ocv - volt_low) /
-						  (volt_high - volt_low);
-			return capacity /
-			       FULL_CAPACITY_AH; // calc OCV with capacity
-		}
-	}
-
-	return -1; // invalid OCV reading
+	return get_soc_from_ocv(min_ocv);
 }
 
 void update_soc(analyzer_t *analyzer, hv_plate_t *hv_plate)
@@ -66,12 +68,9 @@ void update_soc(analyzer_t *analyzer, hv_plate_t *hv_plate)
 	static bool is_first_run = true;
 	static float prev_time = 0;
 
-	// Lookup Table for initial SoC
+	// OCV-SoC curve for initial SoC
 	if (is_first_run) {
-		float initial_soc = _get_initial_soc(analyzer, hv_plate);
-		if (initial_soc < 0) {
-			return; // invalid OCV reading, cannot initialize SoC
-		}
+		float initial_soc = get_initial_soc(analyzer);
 		analyzer->soc = initial_soc;
 		prev_time = TICKS_TO_MS(tx_time_get()); // in milliseconds
 		is_first_run = false;
