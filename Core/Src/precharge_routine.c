@@ -62,13 +62,21 @@ void vPrecharge(ULONG args)
 	PRINTLN_INFO("Starting Precharge thread...");
 
 	hv_plate_t *hv_plate = (hv_plate_t *)args;
+	nertimer_t *update_loop_timer = (nertimer_t *){0, 0, false, false};
+	static const TELEMETRY_LOOP_TIMEOUT = 2000;
 
 	prechargeconfig_t precharge_config;
 	precharge_init(&precharge_config, hv_plate, 0.9f,
 		       200 /* ms debounce time */);
+	start_timer(&update_loop_timer, TELEMETRY_LOOP_TIMEOUT);
 
 	for (;;) {
 		handle_precharge(&precharge_config);
+		if (!is_timer_active(&update_loop_timer)){
+			/* Send the Can Message here */
+			
+			start_timer(&update_loop_timer, TELEMETRY_LOOP_TIMEOUT);
+		}
 		tx_thread_sleep(MS_TO_TICKS(50)); // TODO; fix thread timing
 	}
 }
