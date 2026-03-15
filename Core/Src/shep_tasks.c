@@ -45,7 +45,46 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	PRINTLN_INFO("VDD: %.3f V", hv_plate->vdd);
 	PRINTLN_INFO("VDIV: %.3f V", hv_plate->vdiv);
 	PRINTLN_INFO("Primary Internal Temperature: %.3f C", hv_plate->tmp1);
-	PRINTLN_INFO("Secondary Internal Temperature: %.3f C", hv_plate->tmp1);
+	PRINTLN_INFO("Secondary Internal Temperature: %.3f C", hv_plate->tmp2);
+
+	if (hv_plate->adbms_flags.raw > 0) {
+	    if (hv_plate->adbms_flags.flags.noclk) {
+			PRINTLN_WARNING("HVP FLT: NOCLK - OSC1 STUCK");
+		}
+		if (hv_plate->adbms_flags.flags.oscflt) {
+		    PRINTLN_WARNING("HVP FLT: OSCFLT - OSC1 vs OSC2 diff");
+		}
+		if (hv_plate->adbms_flags.flags.reset) {
+		    PRINTLN_WARNING("HVP FLT: RESET - EVENT DETECTED");
+		}
+		if (hv_plate->adbms_flags.flags.spiflt) {
+		    PRINTLN_WARNING("HVP FLT: SPIFLT - SPI SDO mismatch");
+		}
+		if (hv_plate->adbms_flags.flags.thsd) {
+		    PRINTLN_WARNING("HVP FLT: THSD - Thermal Shutdown");
+		}
+		if (hv_plate->adbms_flags.flags.vdduv) {
+		    PRINTLN_WARNING("HVP FLT: VDDUV - VDD Undervoltage");
+		}
+		if (hv_plate->adbms_flags.flags.vde) {
+		    PRINTLN_WARNING("HVP FLT: VDE - Mismatch on VREG or GND");
+		}
+		if (hv_plate->adbms_flags.flags.vdel) {
+		    PRINTLN_WARNING("HVP FLT: VDEL - Mismatch on VREG or GND");
+		}
+		if (hv_plate->adbms_flags.flags.vdigov) {
+		    PRINTLN_WARNING("HVP FLT: VDIGOV - Overvoltage on VDIG");
+		}
+		if (hv_plate->adbms_flags.flags.vdiguv) {
+		    PRINTLN_WARNING("HVP FLT: VDIGUV - Undervoltage on VDIG");
+		}
+		if (hv_plate->adbms_flags.flags.vregov) {
+		    PRINTLN_WARNING("HVP FLT: VREGOV - Overvoltage on VREG");
+		}
+		if (hv_plate->adbms_flags.flags.vreguv) {
+		    PRINTLN_WARNING("HVP FLT: VREGUV - Undervoltage on VREG");
+		}
+	}
 #endif
 
 #ifdef DEBUG_VOLTAGES

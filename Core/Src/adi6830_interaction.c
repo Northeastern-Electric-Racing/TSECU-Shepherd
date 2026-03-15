@@ -18,7 +18,7 @@
  *
  * @param chips Pointer to the array of cell_asic structures.
  */
-static void count_pec_errors(cell_asic chips[NUM_CHIPS])
+static void count_segment_pec_errors(cell_asic chips[NUM_CHIPS])
 {
 	for (uint8_t chip = 0U; chip < NUM_CHIPS; chip++) {
 		uint16_t pec_error_count =
@@ -35,53 +35,53 @@ static void count_pec_errors(cell_asic chips[NUM_CHIPS])
 				   chips[chip].cccrc.sid_pec);
 
 		if (pec_error_count > 0) {
-			printf("PEC Error: Chip %u, Count: %u\n", chip,
-			       pec_error_count);
+			PRINTLN_ERROR("Segment PEC Error: Chip %u, Count: %u\n",
+				      chip, pec_error_count);
 
 			// if only a few PEC errors happened, print which registers they came from
 			if (pec_error_count < 10) {
 				if (chips[chip].cccrc.cfgr_pec > 0) {
-					printf("CFGR PEC %d, ",
+					printf("[SEGMENT] CFGR PEC %d, ",
 					       chips[chip].cccrc.cfgr_pec);
 				}
 				if (chips[chip].cccrc.cell_pec > 0) {
-					printf("CELL PEC %d, ",
+					printf("[SEGMENT] CELL PEC %d, ",
 					       chips[chip].cccrc.cell_pec);
 				}
 				if (chips[chip].cccrc.acell_pec > 0) {
-					printf("ACELL PEC %d, ",
+					printf("[SEGMENT] ACELL PEC %d, ",
 					       chips[chip].cccrc.acell_pec);
 				}
 				if (chips[chip].cccrc.scell_pec > 0) {
-					printf("SCELL PEC %d, ",
+					printf("[SEGMENT] SCELL PEC %d, ",
 					       chips[chip].cccrc.scell_pec);
 				}
 				if (chips[chip].cccrc.fcell_pec > 0) {
-					printf("FCELL PEC %d, ",
+					printf("[SEGMENT] FCELL PEC %d, ",
 					       chips[chip].cccrc.fcell_pec);
 				}
 				if (chips[chip].cccrc.aux_pec > 0) {
-					printf("AUX PEC %d, ",
+					printf("[SEGMENT] AUX PEC %d, ",
 					       chips[chip].cccrc.aux_pec);
 				}
 				if (chips[chip].cccrc.raux_pec > 0) {
-					printf("RAUX PEC %d, ",
+					printf("[SEGMENT] RAUX PEC %d, ",
 					       chips[chip].cccrc.raux_pec);
 				}
 				if (chips[chip].cccrc.stat_pec > 0) {
-					printf("STAT PEC %d, ",
+					printf("[SEGMENT] STAT PEC %d, ",
 					       chips[chip].cccrc.stat_pec);
 				}
 				if (chips[chip].cccrc.comm_pec > 0) {
-					printf("COMM PEC %d, ",
+					printf("[SEGMENT] COMM PEC %d, ",
 					       chips[chip].cccrc.comm_pec);
 				}
 				if (chips[chip].cccrc.pwm_pec > 0) {
-					printf("PWM PEC %d, ",
+					printf("[SEGMENT] PWM PEC %d, ",
 					       chips[chip].cccrc.pwm_pec);
 				}
 				if (chips[chip].cccrc.sid_pec > 0) {
-					printf("SID PEC %d, ",
+					printf("[SEGMENT] SID PEC %d, ",
 					       chips[chip].cccrc.sid_pec);
 				}
 				printf("\n");
@@ -264,7 +264,7 @@ void read_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 {
 	adBmsReadData(NUM_CHIPS, chips, command, type, group);
 
-	count_pec_errors(chips);
+	count_segment_pec_errors(chips);
 }
 
 uint32_t adBmsPollAdc_indicator(cell_asic chips[NUM_CHIPS],

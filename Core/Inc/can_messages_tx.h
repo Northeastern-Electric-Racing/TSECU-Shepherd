@@ -98,6 +98,7 @@ uint8_t send_segment_temperatures
 * BMS/Segment_Comms/State - Current IsoSPI state
 * BMS/Segment_Comms/Break_Location - Detected break location
 * BMS/Segment_Comms/Verification_Attempts - Number of required recovery verification attempts
+* BMS/Segment_Comms/Extra - Reserved
 * BMS/Segment_Comms/Recovery_Successful - IsoSPI recovery completed successfully
 */
 uint8_t send_segment_isospi_communication_status
@@ -105,20 +106,19 @@ uint8_t send_segment_isospi_communication_status
 
 /**
 * Contents of this message:
-* BMS/Faults/Critical/DCL_Enforce - Reserved
+* BMS/Faults/Critical/DCL_Enforce - DCL not being obeyed
 * BMS/Faults/Critical/CCL_Enforce - CCL is not being obeyed
-* BMS/Faults/Critical/Cell_Voltage_Low - Reserved
-* BMS/Faults/Critical/Cell_Voltage_High - Reserved
-* BMS/Faults/Critical/Charging_Voltage_High - DCL is not being obeyed
-* BMS/Faults/Critical/Pack_too_hot - Reserved
-* BMS/Faults/Critical/High_die_temp - Cell voltage is below datasheet minimum
-* BMS/Faults/Critical/Cell_Undervoltage - A cell has gone below datasheet minimum
+* BMS/Faults/Critical/Cell_Voltage_Low - Cell voltage is low
+* BMS/Faults/Critical/Cell_Voltage_High - Cell voltage is high
+* BMS/Faults/Critical/Charging_Voltage_High - Voltage when charging is high
+* BMS/Faults/Critical/Pack_too_hot - Pack is too hot
+* BMS/Faults/Critical/High_die_temp - Die temp ts too high
 * BMS/Faults/Non-Critical/Segment_Comms_fault - Lost communications with segments
 * BMS/Faults/Non-Critical/HV_Plate_Comms_Fault - Lost communications with HV Plate
 * BMS/Faults/Non-Critical/Extra - Reserved
 */
 uint8_t send_fault_status
-(bool dcl_enforce,bool ccdl_enforce,bool low_cell_volt,bool high_cell_volt,bool high_charge_volt,bool pack_hot,bool die_temp_max,bool segment_comms,bool hv_plate_comms);
+(bool dcl_enforce,bool ccl_enforce,bool low_cell_volt,bool high_cell_volt,bool high_charge_volt,bool pack_hot,bool die_temp_max,bool segment_comms,bool hv_plate_comms);
 
 /**
 * Contents of this message:
@@ -195,11 +195,44 @@ uint8_t send_shepherd_version_hash
 
 /**
 * Contents of this message:
-* BMS/PerChip/PECErrorChip - The chip that has experienced PEC errors
-* BMS/PerChip/PECErrorCount - The number of times errors have occured
+* BMS/Segment_PEC/Chip - Segment chip with PEC error
+* BMS/Segment_PEC/Extra - Reserved
+* BMS/Segment_PEC/SID - SID PEC error
+* BMS/Segment_PEC/COMM - COMM PEC error
+* BMS/Segment_PEC/CFGR - CFGR PEC error
+* BMS/Segment_PEC/FCELL - FCELL PEC error
+* BMS/Segment_PEC/SCELL - SCELL PEC error
+* BMS/Segment_PEC/ACELL - ACELL PEC error
+* BMS/Segment_PEC/PWM - PWM PEC error
+* BMS/Segment_PEC/STAT - STAT PEC error
+* BMS/Segment_PEC/RAUX - RAUX PEC error
+* BMS/Segment_PEC/AUX - AUX PEC error
+* BMS/Segment_PEC/CELL - CELL PEC error
 */
-uint8_t send_pec_error_count_notification_per_chip
-(uint8_t pec_error_chip,uint16_t pec_error_cnt);
+uint8_t send_segment_chip_pec_errors
+(uint8_t chip,bool sid_pec,bool comm_pec,bool cfgr_pec,bool fcell_pec,bool scell_pec,bool acell_pec,bool pwm_pec,bool stat_pec,bool raux_pec,bool aux_pec,bool cell_pec);
+
+/**
+* Contents of this message:
+* BMS/HV_Plate_PEC/Extra - Reserved
+* BMS/HV_Plate_PEC/SID - SID PEC error
+* BMS/HV_Plate_PEC/COMM - COMM PEC error
+* BMS/HV_Plate_PEC/STAT - STAT PEC error
+* BMS/HV_Plate_PEC/FLAG - FLAG PEC error
+* BMS/HV_Plate_PEC/AUX - AUX PEC error
+* BMS/HV_Plate_PEC/AVGIVBAT - AVGIVBAT PEC error
+* BMS/HV_Plate_PEC/AVGVBAT - AVGVBAT PEC error
+* BMS/HV_Plate_PEC/AVGCR - AVGCR PEC error
+* BMS/HV_Plate_PEC/OC - OC PEC error
+* BMS/HV_Plate_PEC/IVBAT - IVBAT
+* BMS/HV_Plate_PEC/VBAT - VBAT PEC error
+* BMS/HV_Plate_PEC/CR - CR PEC error
+* BMS/HV_Plate_PEC/CFGR - CFGR PEC error
+* BMS/HV_Plate_PEC/RVR - RVR PEC error
+* BMS/HV_Plate_PEC/VR - VR PEC error
+*/
+uint8_t send_hv_plate_pec_errors
+(bool sid_pec,bool comm_pec,bool stat_pec,bool flag_pec,bool aux_pec,bool avgivbat_pec,bool avgvbat_pec,bool avgcr_pec,bool oc_pec,bool ivbat_pec,bool vbat_pec,bool cr_pec,bool cfgr_pec,bool rvr_pec,bool vr_pec);
 
 /**
 * Contents of this message:
@@ -274,6 +307,13 @@ uint8_t send_fan_duty_cycle_percentage
 */
 uint8_t send_onboard_therm_temperatures
 (uint8_t chip_id,float therm_temp_1,float therm_temp_2,float therm_temp_3);
+
+/**
+* Contents of this message:
+* BMS/Precharge/Status - Indicates whether Precharge is active or not
+*/
+uint8_t send_precharge_status
+(bool precharge_status);
 
 /**
 * Contents of this message:

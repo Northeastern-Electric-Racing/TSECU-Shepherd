@@ -360,9 +360,9 @@ uint8_t send_segment_isospi_communication_status
                         data |= ((verification_attempts_i) & 0xFFULL) << 8;
             
                         uint32_t recovery_successful_i = (uint32_t)(recovery_successful);
-                        if(recovery_successful_i > 255ULL) {recovery_successful_i = 255;
+                        if(recovery_successful_i > 1ULL) {recovery_successful_i = 1;
                         }
-                        data |= ((recovery_successful_i) & 0xFFULL) << 0;
+                        data |= ((recovery_successful_i) & 0x1ULL) << 7;
             
             uint32_t data_bigendian = __builtin_bswap32(data);
             memcpy(msg.data, &data_bigendian, 4);
@@ -372,7 +372,7 @@ uint8_t send_segment_isospi_communication_status
 }
 
 uint8_t send_fault_status
-(bool dcl_enforce,bool ccdl_enforce,bool low_cell_volt,bool high_cell_volt,bool high_charge_volt,bool pack_hot,bool die_temp_max,bool segment_comms,bool hv_plate_comms)
+(bool dcl_enforce,bool ccl_enforce,bool low_cell_volt,bool high_cell_volt,bool high_charge_volt,bool pack_hot,bool die_temp_max,bool segment_comms,bool hv_plate_comms)
 {
     can_msg_t msg;
     msg.id = 0x89;
@@ -386,10 +386,10 @@ uint8_t send_fault_status
                         }
                         data |= ((dcl_enforce_i) & 0x1ULL) << 15;
             
-                        uint32_t ccdl_enforce_i = (uint32_t)(ccdl_enforce);
-                        if(ccdl_enforce_i > 1ULL) {ccdl_enforce_i = 1;
+                        uint32_t ccl_enforce_i = (uint32_t)(ccl_enforce);
+                        if(ccl_enforce_i > 1ULL) {ccl_enforce_i = 1;
                         }
-                        data |= ((ccdl_enforce_i) & 0x1ULL) << 14;
+                        data |= ((ccl_enforce_i) & 0x1ULL) << 14;
             
                         uint32_t low_cell_volt_i = (uint32_t)(low_cell_volt);
                         if(low_cell_volt_i > 1ULL) {low_cell_volt_i = 1;
@@ -724,8 +724,8 @@ uint8_t send_overflow_notification_for_percell
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
 
-uint8_t send_pec_error_count_notification_per_chip
-(uint8_t pec_error_chip,uint16_t pec_error_cnt)
+uint8_t send_segment_chip_pec_errors
+(uint8_t chip,bool sid_pec,bool comm_pec,bool cfgr_pec,bool fcell_pec,bool scell_pec,bool acell_pec,bool pwm_pec,bool stat_pec,bool raux_pec,bool aux_pec,bool cell_pec)
 {
     can_msg_t msg;
     msg.id = 0x6F2;
@@ -734,18 +734,160 @@ uint8_t send_pec_error_count_notification_per_chip
 
     
             uint32_t data = 0;
-                        uint32_t pec_error_chip_i = (uint32_t)(pec_error_chip);
-                        if(pec_error_chip_i > 255ULL) {pec_error_chip_i = 255;
+                        uint32_t chip_i = (uint32_t)(chip);
+                        if(chip_i > 255ULL) {chip_i = 255;
                         }
-                        data |= ((pec_error_chip_i) & 0xFFULL) << 24;
+                        data |= ((chip_i) & 0xFFULL) << 24;
             
-                        uint32_t pec_error_cnt_i = (uint32_t)(pec_error_cnt);
-                        if(pec_error_cnt_i > 65535ULL) {pec_error_cnt_i = 65535;
+                        uint32_t sid_pec_i = (uint32_t)(sid_pec);
+                        if(sid_pec_i > 1ULL) {sid_pec_i = 1;
                         }
-                        data |= ((pec_error_cnt_i) & 0xFFFFULL) << 8;
+                        data |= ((sid_pec_i) & 0x1ULL) << 23;
+            
+                        uint32_t comm_pec_i = (uint32_t)(comm_pec);
+                        if(comm_pec_i > 1ULL) {comm_pec_i = 1;
+                        }
+                        data |= ((comm_pec_i) & 0x1ULL) << 22;
+            
+                        uint32_t cfgr_pec_i = (uint32_t)(cfgr_pec);
+                        if(cfgr_pec_i > 1ULL) {cfgr_pec_i = 1;
+                        }
+                        data |= ((cfgr_pec_i) & 0x1ULL) << 21;
+            
+                        uint32_t fcell_pec_i = (uint32_t)(fcell_pec);
+                        if(fcell_pec_i > 1ULL) {fcell_pec_i = 1;
+                        }
+                        data |= ((fcell_pec_i) & 0x1ULL) << 20;
+            
+                        uint32_t scell_pec_i = (uint32_t)(scell_pec);
+                        if(scell_pec_i > 1ULL) {scell_pec_i = 1;
+                        }
+                        data |= ((scell_pec_i) & 0x1ULL) << 19;
+            
+                        uint32_t acell_pec_i = (uint32_t)(acell_pec);
+                        if(acell_pec_i > 1ULL) {acell_pec_i = 1;
+                        }
+                        data |= ((acell_pec_i) & 0x1ULL) << 18;
+            
+                        uint32_t pwm_pec_i = (uint32_t)(pwm_pec);
+                        if(pwm_pec_i > 1ULL) {pwm_pec_i = 1;
+                        }
+                        data |= ((pwm_pec_i) & 0x1ULL) << 17;
+            
+                        uint32_t stat_pec_i = (uint32_t)(stat_pec);
+                        if(stat_pec_i > 1ULL) {stat_pec_i = 1;
+                        }
+                        data |= ((stat_pec_i) & 0x1ULL) << 16;
+            
+                        uint32_t raux_pec_i = (uint32_t)(raux_pec);
+                        if(raux_pec_i > 1ULL) {raux_pec_i = 1;
+                        }
+                        data |= ((raux_pec_i) & 0x1ULL) << 15;
+            
+                        uint32_t aux_pec_i = (uint32_t)(aux_pec);
+                        if(aux_pec_i > 1ULL) {aux_pec_i = 1;
+                        }
+                        data |= ((aux_pec_i) & 0x1ULL) << 14;
+            
+                        uint32_t cell_pec_i = (uint32_t)(cell_pec);
+                        if(cell_pec_i > 1ULL) {cell_pec_i = 1;
+                        }
+                        data |= ((cell_pec_i) & 0x1ULL) << 13;
             
             uint32_t data_bigendian = __builtin_bswap32(data);
             memcpy(msg.data, &data_bigendian, 4);
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_hv_plate_pec_errors
+(bool sid_pec,bool comm_pec,bool stat_pec,bool flag_pec,bool aux_pec,bool avgivbat_pec,bool avgvbat_pec,bool avgcr_pec,bool oc_pec,bool ivbat_pec,bool vbat_pec,bool cr_pec,bool cfgr_pec,bool rvr_pec,bool vr_pec)
+{
+    can_msg_t msg;
+    msg.id = 0x6F3;
+    msg.id_is_extended = false;
+    msg.len = 2;
+
+    
+            uint16_t data = 0;
+                        uint32_t sid_pec_i = (uint32_t)(sid_pec);
+                        if(sid_pec_i > 1ULL) {sid_pec_i = 1;
+                        }
+                        data |= ((sid_pec_i) & 0x1ULL) << 15;
+            
+                        uint32_t comm_pec_i = (uint32_t)(comm_pec);
+                        if(comm_pec_i > 1ULL) {comm_pec_i = 1;
+                        }
+                        data |= ((comm_pec_i) & 0x1ULL) << 14;
+            
+                        uint32_t stat_pec_i = (uint32_t)(stat_pec);
+                        if(stat_pec_i > 1ULL) {stat_pec_i = 1;
+                        }
+                        data |= ((stat_pec_i) & 0x1ULL) << 13;
+            
+                        uint32_t flag_pec_i = (uint32_t)(flag_pec);
+                        if(flag_pec_i > 1ULL) {flag_pec_i = 1;
+                        }
+                        data |= ((flag_pec_i) & 0x1ULL) << 12;
+            
+                        uint32_t aux_pec_i = (uint32_t)(aux_pec);
+                        if(aux_pec_i > 1ULL) {aux_pec_i = 1;
+                        }
+                        data |= ((aux_pec_i) & 0x1ULL) << 11;
+            
+                        uint32_t avgivbat_pec_i = (uint32_t)(avgivbat_pec);
+                        if(avgivbat_pec_i > 1ULL) {avgivbat_pec_i = 1;
+                        }
+                        data |= ((avgivbat_pec_i) & 0x1ULL) << 10;
+            
+                        uint32_t avgvbat_pec_i = (uint32_t)(avgvbat_pec);
+                        if(avgvbat_pec_i > 1ULL) {avgvbat_pec_i = 1;
+                        }
+                        data |= ((avgvbat_pec_i) & 0x1ULL) << 9;
+            
+                        uint32_t avgcr_pec_i = (uint32_t)(avgcr_pec);
+                        if(avgcr_pec_i > 1ULL) {avgcr_pec_i = 1;
+                        }
+                        data |= ((avgcr_pec_i) & 0x1ULL) << 8;
+            
+                        uint32_t oc_pec_i = (uint32_t)(oc_pec);
+                        if(oc_pec_i > 1ULL) {oc_pec_i = 1;
+                        }
+                        data |= ((oc_pec_i) & 0x1ULL) << 7;
+            
+                        uint32_t ivbat_pec_i = (uint32_t)(ivbat_pec);
+                        if(ivbat_pec_i > 1ULL) {ivbat_pec_i = 1;
+                        }
+                        data |= ((ivbat_pec_i) & 0x1ULL) << 6;
+            
+                        uint32_t vbat_pec_i = (uint32_t)(vbat_pec);
+                        if(vbat_pec_i > 1ULL) {vbat_pec_i = 1;
+                        }
+                        data |= ((vbat_pec_i) & 0x1ULL) << 5;
+            
+                        uint32_t cr_pec_i = (uint32_t)(cr_pec);
+                        if(cr_pec_i > 1ULL) {cr_pec_i = 1;
+                        }
+                        data |= ((cr_pec_i) & 0x1ULL) << 4;
+            
+                        uint32_t cfgr_pec_i = (uint32_t)(cfgr_pec);
+                        if(cfgr_pec_i > 1ULL) {cfgr_pec_i = 1;
+                        }
+                        data |= ((cfgr_pec_i) & 0x1ULL) << 3;
+            
+                        uint32_t rvr_pec_i = (uint32_t)(rvr_pec);
+                        if(rvr_pec_i > 1ULL) {rvr_pec_i = 1;
+                        }
+                        data |= ((rvr_pec_i) & 0x1ULL) << 2;
+            
+                        uint32_t vr_pec_i = (uint32_t)(vr_pec);
+                        if(vr_pec_i > 1ULL) {vr_pec_i = 1;
+                        }
+                        data |= ((vr_pec_i) & 0x1ULL) << 1;
+            
+            uint16_t data_bigendian = __builtin_bswap16(data);
+            memcpy(msg.data, &data_bigendian, 2);
         
 
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
@@ -1079,6 +1221,27 @@ uint8_t send_onboard_therm_temperatures
                         if(therm_temp_3_i > 3ULL) {therm_temp_3_i = 3;
                         }
                         data |= ((therm_temp_3_i) & 0x3ULL) << 1;
+            
+            msg.data[0] = data;
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_precharge_status
+(bool precharge_status)
+{
+    can_msg_t msg;
+    msg.id = 0x601;
+    msg.id_is_extended = false;
+    msg.len = 0;
+
+    
+            uint8_t data = 0;
+                        uint32_t precharge_status_i = (uint32_t)(precharge_status);
+                        if(precharge_status_i > 1ULL) {precharge_status_i = 1;
+                        }
+                        data |= ((precharge_status_i) & 0x1ULL) << 7;
             
             msg.data[0] = data;
         
