@@ -87,6 +87,7 @@ static void count_segment_pec_errors(cell_asic chips[NUM_CHIPS])
 				printf("\n");
 			}
 
+			/*
 			send_segment_chip_pec_errors(
 				chip, chips[chip].cccrc.sid_pec > 0U,
 				chips[chip].cccrc.comm_pec > 0U,
@@ -99,6 +100,7 @@ static void count_segment_pec_errors(cell_asic chips[NUM_CHIPS])
 				chips[chip].cccrc.raux_pec > 0U,
 				chips[chip].cccrc.aux_pec > 0U,
 				chips[chip].cccrc.cell_pec > 0U);
+			*/
 
 			// Accumulate PEC errors only after startup mask timer ends
 

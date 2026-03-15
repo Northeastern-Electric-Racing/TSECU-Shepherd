@@ -419,7 +419,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	thread_t _segment_data_thread = {
 		.name = "Segment Data Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
+		.size = 4096, /* Stack Size (in bytes) */
 		.priority = 1, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)acc_data_args, /* Thread Args */
