@@ -3,7 +3,7 @@
 #include "compute.h"
 #include "mcuWrapper.h"
 #include "isospi_recovery.h"
-#include "can_messages.h"
+#include "can_messages_tx.h"
 
 #define MAX_PEC_ERROR_ACCUM (100U) // Max accumulated PECs
 
@@ -87,7 +87,18 @@ static void count_segment_pec_errors(cell_asic chips[NUM_CHIPS])
 				printf("\n");
 			}
 
-			send_segment_pec_error_message(chip, pec_error_count);
+			send_segment_chip_pec_errors(
+				chip, chips[chip].cccrc.sid_pec > 0U,
+				chips[chip].cccrc.comm_pec > 0U,
+				chips[chip].cccrc.cfgr_pec > 0U,
+				chips[chip].cccrc.fcell_pec > 0U,
+				chips[chip].cccrc.scell_pec > 0U,
+				chips[chip].cccrc.acell_pec > 0U,
+				chips[chip].cccrc.pwm_pec > 0U,
+				chips[chip].cccrc.stat_pec > 0U,
+				chips[chip].cccrc.raux_pec > 0U,
+				chips[chip].cccrc.aux_pec > 0U,
+				chips[chip].cccrc.cell_pec > 0U);
 
 			// Accumulate PEC errors only after startup mask timer ends
 
@@ -223,17 +234,17 @@ void set_discharge_timeout(cell_asic *chip, DCTO timeout)
 void adbms_wake_core(isospi_line_ line, uint8_t num_ic)
 {
 	switch (line) {
-		case ISOSPI_LINE_A:
-		case ISOSPI_LINE_B:
-			for (uint8_t ic = 0; ic < num_ic; ic++) {
-				adBmsLineCsLow(line);
-				adBmsLineCsHigh(line);
-				delay_us(4000);
-			}
-			break;
-		default:
-			printf(" Invalid isoSPI line selected \n");
-			break;
+	case ISOSPI_LINE_A:
+	case ISOSPI_LINE_B:
+		for (uint8_t ic = 0; ic < num_ic; ic++) {
+			adBmsLineCsLow(line);
+			adBmsLineCsHigh(line);
+			delay_us(4000);
+		}
+		break;
+	default:
+		printf(" Invalid isoSPI line selected \n");
+		break;
 	}
 }
 

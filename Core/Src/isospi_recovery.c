@@ -2,7 +2,7 @@
 #include "adi6830_interation.h"
 #include "segment.h"
 #include "bms_config.h"
-#include "can_messages.h"
+#include "can_messages_tx.h"
 #include "timer.h"
 #include "state_machine.h"
 
@@ -41,18 +41,18 @@
  */
 #define ISOSPI_VERIFICATION_READS (3U)
 
-/** 
- * @brief Timer to mask PEC faults during startup delay window 
+/**
+ * @brief Timer to mask PEC faults during startup delay window
  */
 static nertimer_t startup_pec_mask_timer;
 
-/** 
- * @brief Timer to accumulate PEC errors before break detection 
+/**
+ * @brief Timer to accumulate PEC errors before break detection
  */
 static nertimer_t pec_accum_timer;
 
 /**
- * @brief 
+ * @brief
  * @todo Complete Comments
  */
 static isospi_status_t isospi_status;
@@ -235,7 +235,7 @@ void isospi_break_detection_init(cell_asic chips[NUM_CHIPS])
 
 	reset_all_pec_error_sums(chips);
 
-	send_isospi_status_message(&isospi_status);
+	send_segment_isospi_communication_status(isospi_status.state, isospi_status.break_chip, isospi_status.verification_attempts, isospi_status.recovery_successful);
 }
 
 void isospi_handle_state(cell_asic chips[NUM_CHIPS],
@@ -252,14 +252,14 @@ void isospi_handle_state(cell_asic chips[NUM_CHIPS],
 			break;
 
 		case ISOSPI_BREAK_DETECTED:
-			send_isospi_status_message(&isospi_status);
+		    send_segment_isospi_communication_status(isospi_status.state, isospi_status.break_chip, isospi_status.verification_attempts, isospi_status.recovery_successful);
 			printf("[isoSPI] Recovery Started\n\r");
 			isospi_recover_break(chips, hspi);
 			isospi_status.state = ISOSPI_STATE_VERIFYING;
 			break;
 
 		case ISOSPI_STATE_VERIFYING:
-			send_isospi_status_message(&isospi_status);
+		    send_segment_isospi_communication_status(isospi_status.state, isospi_status.break_chip, isospi_status.verification_attempts, isospi_status.recovery_successful);
 			// clang-format off
 		if (isospi_status.verification_attempts >= ISOSPI_VERIFICATION_READS) {
 			printf("[isoSPI] Verification failed after max attempts\n\r");
@@ -280,8 +280,7 @@ void isospi_handle_state(cell_asic chips[NUM_CHIPS],
 			break;
 
 		case ISOSPI_RECOVERY_SUCCESS:
-			send_isospi_status_message(&isospi_status);
-
+		    send_segment_isospi_communication_status(isospi_status.state, isospi_status.break_chip, isospi_status.verification_attempts, isospi_status.recovery_successful);
 			// Clear all faults return to normal operation state
 			printf("[isoSPI] Recovery Complete, Fault Cleared\n\r");
 			clear_segment_comms_fault(state_mach);
@@ -291,7 +290,7 @@ void isospi_handle_state(cell_asic chips[NUM_CHIPS],
 		case ISOSPI_RECOVERY_FAILED:
 			// Run recovery failed fault logic only once to avoid repeating logs and CAN messages
 			if (!isospi_status.fault_latched) {
-				send_isospi_status_message(&isospi_status);
+			    send_segment_isospi_communication_status(isospi_status.state, isospi_status.break_chip, isospi_status.verification_attempts, isospi_status.recovery_successful);
 				printf("[isoSPI] Recovery Failed. Non-critical Fault Latched\n\r");
 
 				isospi_status.recovery_successful = 0U;
