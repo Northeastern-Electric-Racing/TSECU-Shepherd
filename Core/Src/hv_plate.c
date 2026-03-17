@@ -211,9 +211,6 @@ void vHvPlateData(ULONG thread_input)
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
 
-		// this is required for next two functions to work!
-		trigger_vr_converion(hv_plate->ic);
-
 		// read ts voltage
 		get_ts_voltage(hv_plate);
 
@@ -245,7 +242,7 @@ void vHvPlateData(ULONG thread_input)
 				hv_plate->tmp2, hv_plate->vdiv);
 		}
 
-		count_hv_plate_pec_errors(hv_plate->ic);
+		send_hv_plate_pec_errors_message();
 
 		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
 	}

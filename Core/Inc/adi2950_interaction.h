@@ -5,6 +5,11 @@
 #include "adi_bms_2950data.h"
 
 /**
+ * @brief Sends PEC errors for hv plate over CAN and clears them for the next cycle.
+ */
+void send_hv_plate_pec_errors_message(void);
+
+/**
  * Snaps registers of ADBMS2950
  *
  * @param ic Pointer to the adbms2950 data structure.
@@ -90,17 +95,5 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo);
  * @param gpo GPO to reset
  */
 void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo);
-
-/**
- * @brief Counts and reports HV plate PEC errors over CAN.
- * @param ic Pointer to the adbms2950 data structure.
- */
-void count_hv_plate_pec_errors(cell_asic_2950 *ic);
-
-/**
- * @brief Triggers a conversion of the VR registers.
- * @param ic Pointer to the adbms2950 data structure.
- */
-void trigger_vr_converion(cell_asic_2950 *ic);
 
 #endif
