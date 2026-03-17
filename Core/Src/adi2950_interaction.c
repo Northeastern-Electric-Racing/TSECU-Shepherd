@@ -247,8 +247,13 @@ void poll_and_read_aux_registers(cell_asic_2950 *ic)
 	ic[0].pladc_count = adBmsPollAdc2950(TOTAL_IC_2950, ic, PLX);
 
 	// Read all relevant register groups
+	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDXA, Aux2950, A_2950);
+
+	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDXB, Aux2950, B_2950);
+
+	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDXC, Aux2950, C_2950);
 
 	if (ic->cccrc.aux_pec != 0) {
