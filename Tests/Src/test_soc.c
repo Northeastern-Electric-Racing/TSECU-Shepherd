@@ -27,7 +27,18 @@ static hv_plate_t hv_plate;
  * Setup / Teardown
  * ------------------------------------------------- */
 
-void setUp(void) {}
+void setUp(void)
+{
+	test_tx_ticks = 0U;
+
+	/* Reset inputs */
+	analyzer.min_ocv.val = 0.0f;
+	analyzer.soc = 0.0f;
+	hv_plate.pack_current = 0.0f;
+
+	/* Ensure SoC starts from OCV each test */
+	init_soc();
+}
 
 void tearDown(void) {}
 
@@ -35,7 +46,7 @@ void tearDown(void) {}
  * Test: SOC initializes from OCV
  * ------------------------------------------------- */
 
-void test_update_soc_initializes_from_ocv(void)
+void test_soc_initializes_from_ocv(void)
 {
 	analyzer.min_ocv.val = 3.8f;
 
@@ -48,10 +59,14 @@ void test_update_soc_initializes_from_ocv(void)
  * Test: SOC decreases during discharge
  * ------------------------------------------------- */
 
-void test_update_soc_coulomb_discharge(void)
+void test_soc_coulomb_discharge(void)
 {
-	hv_plate.pack_current = 100.0f;
+	analyzer.min_ocv.val = 3.8f;
 
+	/* Initial OCV init */
+	update_soc(&analyzer, &hv_plate);
+
+	hv_plate.pack_current = 100.0f;
 	test_tx_ticks += 10U;
 
 	update_soc(&analyzer, &hv_plate);
@@ -63,17 +78,41 @@ void test_update_soc_coulomb_discharge(void)
  * Test: SOC increases during charge
  * ------------------------------------------------- */
 
-void test_update_soc_coulomb_charge(void)
+void test_soc_coulomb_charge(void)
 {
-	update_soc(&analyzer, &hv_plate); /* initialize */
+	analyzer.min_ocv.val = 3.8f;
+
+	/* Initial OCV init */
+	update_soc(&analyzer, &hv_plate);
 
 	hv_plate.pack_current = -10.0f;
-
 	test_tx_ticks += 10U;
 
 	update_soc(&analyzer, &hv_plate);
 
-	TEST_ASSERT_EQUAL_FLOAT(0.615228f, analyzer.soc);
+	TEST_ASSERT_EQUAL_FLOAT(0.615784f, analyzer.soc);
+}
+
+/* -------------------------------------------------
+ * Test: Invalid OCV does not initialize, then recovers
+ * ------------------------------------------------- */
+
+void test_soc_invalid_ocv_then_valid(void)
+{
+	/* Invalid OCV */
+	analyzer.min_ocv.val = 0.5f;
+
+	update_soc(&analyzer, &hv_plate);
+
+	/* Should not initialize */
+	TEST_ASSERT_EQUAL_FLOAT(0.0f, analyzer.soc);
+
+	/* Now valid OCV */
+	analyzer.min_ocv.val = 3.8f;
+
+	update_soc(&analyzer, &hv_plate);
+
+	TEST_ASSERT_EQUAL_FLOAT(0.615728f, analyzer.soc);
 }
 
 /* -------------------------------------------------
@@ -84,9 +123,10 @@ int main(void)
 {
 	UNITY_BEGIN();
 
-	RUN_TEST(test_update_soc_initializes_from_ocv);
-	RUN_TEST(test_update_soc_coulomb_discharge);
-	RUN_TEST(test_update_soc_coulomb_charge);
+	RUN_TEST(test_soc_initializes_from_ocv);
+	RUN_TEST(test_soc_coulomb_discharge);
+	RUN_TEST(test_soc_coulomb_charge);
+	RUN_TEST(test_soc_invalid_ocv_then_valid);
 
 	return UNITY_END();
 }

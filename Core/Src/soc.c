@@ -1,14 +1,19 @@
 #include "soc.h"
 #include "u_tx_general.h"
 #include "tx_api.h"
+#include "c_utils.h"
 
 #define FULL_CAPACITY_AH \
 	5.0f // datasheet specified 5000 mAh capacity for the Molicel P50Bs
 
-typedef struct {
-	float min_ocv; // in Volts
-	float capacity; // in Ah
-} soc_lookup_t;
+#define MS_TO_HOURS(ms) ((ms) / 3600000.0f) // Convert milliseconds to hours
+
+/**
+ * @brief Flag to initialize SoC from OCV.
+ *
+ * Set at startup or when a new OCV-based SoC is needed.
+ */
+static bool soc_reinit_request = true;
 
 /**
  * @brief Estimate SoC from cell OCV using a polynomial fit.
@@ -31,70 +36,75 @@ typedef struct {
  */
 static float get_soc_from_ocv(float ocv)
 {
-	float soc;
-
 	// clang-format off
-	soc = ((((-0.0179218f * ocv + 0.0830236f) * ocv
-	         + 0.905277f) * ocv
-	         - 7.43367f) * ocv
-	         + 18.7306f) * ocv
-	         - 16.0039f;
+	float soc = ((((-0.0179218f * ocv + 0.0830236f) * ocv
+					+ 0.905277f) * ocv
+					- 7.43367f) * ocv
+					+ 18.7306f) * ocv
+					- 16.0039f;
 	// clang-format on
-
-	/* Saturate to valid SOC range */
-	if (soc < 0.0f) {
-		soc = 0.0f;
-	} else if (soc > 1.0f) {
-		soc = 1.0f;
-	}
 
 	return soc;
 }
 
-static float get_initial_soc(analyzer_t *analyzer)
+void init_soc(void)
 {
-	float min_ocv = analyzer->min_ocv.val;
-
-	/* Check for invalid OCV reading */
-	if ((min_ocv < MIN_VOLT) || (min_ocv > MAX_VOLT)) {
-		return -1.0f;
-	}
-
-	return get_soc_from_ocv(min_ocv);
+	soc_reinit_request = true;
 }
 
 void update_soc(analyzer_t *analyzer, hv_plate_t *hv_plate)
 {
-	static bool is_first_run = true;
-	static float prev_time = 0;
+	static float prev_time = 0.0f;
 
-	// OCV-SoC curve for initial SoC
-	if (is_first_run) {
-		float initial_soc = get_initial_soc(analyzer);
-		analyzer->soc = initial_soc;
-		prev_time = TICKS_TO_MS(tx_time_get()); // in milliseconds
-		is_first_run = false;
-		return;
+	float min_ocv = analyzer->min_ocv.val;
+	bool ocv_valid;
+
+	/* Check if OCV is within valid range */
+	if ((min_ocv >= MIN_VOLT) && (min_ocv <= MAX_VOLT)) {
+		ocv_valid = true;
+	} else {
+		ocv_valid = false;
 	}
 
-	// Coulomb Counting
-	// SoC(t) = SoC(t-1) + I(t)/Qn * (t1 - t0)
+	/* Initialize or reinitialize SoC from OCV
+	   Used when current data is unreliable (e.g., isoSPI break)
+	   or when a fresh SoC reference is needed */
+	if (soc_reinit_request == true) {
+		if (ocv_valid == true) {
+			float soc = get_soc_from_ocv(min_ocv);
 
-	float last_soc = analyzer->soc;
-	float curr_time = TICKS_TO_MS(tx_time_get()); // in milliseconds
-	float delta_time =
-		(curr_time - prev_time) / 3600000.0; // convert to hours
+			/* Limit upper bound */
+			if (soc > 1.0f) {
+				soc = 1.0f;
+			}
 
-	float current = hv_plate->pack_current; // in Amperes
+			analyzer->soc = soc;
 
-	// subtracted since discharging current is positive
-	float soc = last_soc - (current * delta_time) / FULL_CAPACITY_AH;
-	if (soc > 1.0f) {
-		soc = 1.0f;
-	} else if (soc < 0.0f) {
-		soc = 0.0f;
+			/* Reset time reference for integration */
+			prev_time = TICKS_TO_MS(tx_time_get());
+
+			/* Clear request after successful initialization */
+			soc_reinit_request = false;
+		}
+
+	} else {
+		float curr_time = TICKS_TO_MS(tx_time_get());
+		float delta_time = MS_TO_HOURS(curr_time - prev_time);
+		float current = hv_plate->pack_current;
+
+		// Coulomb Counting
+		// SoC(t) = SoC(t-1) + I(t)/Qn * (t1 - t0)
+		float soc = analyzer->soc -
+			    (current * delta_time) / FULL_CAPACITY_AH;
+
+		/* Enforce bounds */
+		if (soc > 1.0f) {
+			soc = 1.0f;
+		} else if (soc < 0.0f) {
+			soc = 0.0f;
+		}
+
+		analyzer->soc = soc;
+		prev_time = curr_time;
 	}
-
-	analyzer->soc = soc;
-	prev_time = curr_time;
 }
