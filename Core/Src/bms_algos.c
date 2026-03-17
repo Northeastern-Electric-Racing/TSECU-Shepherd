@@ -11,8 +11,8 @@ bool disable_pulse(state_machine_t *const state_machine)
  	 *  If classified as critical, it is already handled.
  	 */
 	if ((get_current_state(state_machine) == CHARGING) ||
-	    (state_machine->fault_code_crit != FAULTS_CLEAR) ||
-	    ((state_machine->fault_code_noncrit & SEGMENT_COMMS_FAULT) != 0U)) {
+	    (are_critical_faults_active()) ||
+	    (get_fault(SEGMENT_COMMS_FAULT))) {
 		dis_pulse = true;
 	}
 

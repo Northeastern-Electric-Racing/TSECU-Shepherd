@@ -3,8 +3,7 @@
 #include "compute.h"
 #include "mcuWrapper.h"
 #include "isospi_recovery.h"
-#include "can_messages.h"
-#include "c_utils.h"
+#include "can_messages_tx.h"
 
 #define MAX_PEC_ERROR_ACCUM (100U) // Max accumulated PECs
 
@@ -259,17 +258,17 @@ void set_discharge_timeout(cell_asic *chip, DCTO timeout)
 void adbms_wake_core(isospi_line_ line, uint8_t num_ic)
 {
 	switch (line) {
-		case ISOSPI_LINE_A:
-		case ISOSPI_LINE_B:
-			for (uint8_t ic = 0; ic < num_ic; ic++) {
-				adBmsLineCsLow(line);
-				adBmsLineCsHigh(line);
-				delay_us(4000);
-			}
-			break;
-		default:
-			printf(" Invalid isoSPI line selected \n");
-			break;
+	case ISOSPI_LINE_A:
+	case ISOSPI_LINE_B:
+		for (uint8_t ic = 0; ic < num_ic; ic++) {
+			adBmsLineCsLow(line);
+			adBmsLineCsHigh(line);
+			delay_us(4000);
+		}
+		break;
+	default:
+		printf(" Invalid isoSPI line selected \n");
+		break;
 	}
 }
 

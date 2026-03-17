@@ -1,6 +1,6 @@
 #include "can_handler.h"
 #include "datastructs.h"
-#include "shep_queues.h"
+#include "u_queues.h"
 #include "state_machine.h"
 #include "u_tx_general.h"
 #include "u_tx_debug.h"
@@ -33,7 +33,7 @@ uint8_t init_can(FDCAN_HandleTypeDef *hcan)
 static uint8_t receive_can_msg(can_msg_t can_msg)
 {
 	return queue_send(&can_incoming, &can_msg, TX_NO_WAIT);
-} 
+}
 
 void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs)
 {
@@ -112,13 +112,13 @@ void vCanReceive(ULONG thred_input)
 // CAN DISPATCH THREAD
 void vCanDispatch(ULONG thread_input)
 {
-	// INITIALIZING CAN 
+	// INITIALIZING CAN
 	assert(!init_can(&hfdcan2));
 	PRINTLN_INFO("INITIALIZED CAN");
 
 	can_msg_t message;
 	uint8_t status;
-	
+
 	for (;;) {
 		/* Process incoming messages */
 		while (queue_receive(&can_outgoing, &message,
