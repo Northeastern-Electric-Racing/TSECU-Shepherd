@@ -4,6 +4,7 @@
 #include "mcuWrapper.h"
 #include "isospi_recovery.h"
 #include "can_messages_tx.h"
+#include "c_utils.h"
 
 #define MAX_PEC_ERROR_ACCUM (100U) // Max accumulated PECs
 
@@ -127,13 +128,13 @@ static void update_segment_pec_errors(cell_asic chips[NUM_CHIPS], TYPE type)
 	}
 }
 
-void send_segment_pec_errors(void)
+void send_segment_pec_errors_message(void)
 {
 	for (uint8_t chip = 0U; chip < NUM_CHIPS; chip++) {
 		uint16_t current_pec_errors = segment_pec_errors[chip];
 
 		if (current_pec_errors != prev_segment_pec_errors[chip]) {
-			send_segment_pec_error_message(
+			send_segment_pec_errors(
 				chip + 1U, segment_pec_errors[chip]);
 
 			prev_segment_pec_errors[chip] =

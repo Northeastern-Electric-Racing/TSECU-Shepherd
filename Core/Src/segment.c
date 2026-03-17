@@ -380,7 +380,7 @@ void vGetSegmentData(ULONG thread_input)
 		if (current_state == CHARGING || current_state == BALANCING) {
 			// in charging, debug data is required to get things like die temp
 			segment_retrieve_charging_data(acc_data->chips, &hspi2);
-			send_segment_pec_errors();
+			send_segment_pec_errors_message();
 			isospi_handle_state(acc_data->chips, state_machine,
 					    &hspi2);
 		} else {
@@ -389,7 +389,7 @@ void vGetSegmentData(ULONG thread_input)
 			segment_retrieve_active_data(acc_data->chips, &hspi2);
 			// unsnap after getting data
 			segment_unsnap(acc_data->chips, &hspi2);
-			send_segment_pec_errors();
+			send_segment_pec_errors_message();
 			isospi_handle_state(acc_data->chips, state_machine,
 					    &hspi2);
 

@@ -245,7 +245,7 @@ void vHvPlateData(ULONG thread_input)
 				hv_plate->tmp2, hv_plate->vdiv);
 		}
 
-		send_hv_plate_pec_errors();
+		send_hv_plate_pec_errors_message();
 
 		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
 	}

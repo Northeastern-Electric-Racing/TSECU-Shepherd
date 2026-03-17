@@ -7,7 +7,7 @@
 /**
  * @brief Sends PEC errors for hv plate over CAN and clears them for the next cycle.
  */
-void send_hv_plate_pec_errors(void);
+void send_hv_plate_pec_errors_message(void);
 
 /**
  * Snaps registers of ADBMS2950

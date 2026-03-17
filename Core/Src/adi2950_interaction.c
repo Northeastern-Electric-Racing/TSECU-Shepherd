@@ -5,6 +5,7 @@
 #include "pal.h"
 #include "u_tx_debug.h"
 #include "can_messages_tx.h"
+#include "c_utils.h"
 
 #define TOTAL_IC_2950 1
 
@@ -88,12 +89,12 @@ static void update_hv_plate_pec_errors(cell_asic_2950 *ic, TYPE2950 type)
 	// clang-format on
 }
 
-void send_hv_plate_pec_errors(void)
+void send_hv_plate_pec_errors_message(void)
 {
 	uint16_t current_pec_errors = hv_plate_pec_errors;
 
 	if (current_pec_errors != prev_hv_plate_pec_errors) {
-		send_hv_plate_pec_error_message(current_pec_errors);
+		send_hv_plate_pec_errors(current_pec_errors);
 
 		prev_hv_plate_pec_errors = current_pec_errors;
 	}
