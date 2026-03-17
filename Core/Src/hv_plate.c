@@ -219,7 +219,7 @@ void vHvPlateData(ULONG thread_input)
 		get_ts_voltage(hv_plate);
 
 		// read shunt temperature
-		get_shunt_temp(hv_plate);
+		// get_shunt_temp(hv_plate);
 
 		if (is_timer_expired(&diagnostic_read_timer)) {
 		    get_aux_adc_data(hv_plate);

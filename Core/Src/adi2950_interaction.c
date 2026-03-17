@@ -94,13 +94,15 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 
 void trigger_vr_converion(cell_asic_2950 *ic)
 {
-	adBmsWakeupIc2950(1);
-	adBms2950_Adv(1, ic, OW_OFF, RR_VCH0_VCH8);
-	Delay_ms2950(Polling_Delay_ms2950);
+	
 }
 
 void read_v7_register(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
+	adBms2950_Adv(1, ic, OW_OFF, SM_V7_V9);
+	Delay_ms2950(Polling_Delay_ms2950);
+
 	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1C, GPV1, C_2950);
 	if (ic->cccrc.vr_pec != 0) {
@@ -110,6 +112,10 @@ void read_v7_register(cell_asic_2950 *ic)
 
 void read_v2_register(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
+	adBms2950_Adv(1, ic, OW_OFF, SM_V2);
+	Delay_ms2950(Polling_Delay_ms2950);
+
 	adBmsWakeupIc2950(1);
 	adBmsReadData2950(TOTAL_IC_2950, ic, RDV1A, GPV1, A_2950);
 	if (ic->cccrc.vr_pec != 0) {
