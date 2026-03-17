@@ -96,10 +96,4 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo);
  */
 void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo);
 
-/**
- * @brief Triggers a conversion of the VR registers.
- * @param ic Pointer to the adbms2950 data structure.
- */
-void trigger_vr_converion(cell_asic_2950 *ic);
-
 #endif

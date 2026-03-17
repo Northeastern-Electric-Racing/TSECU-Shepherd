@@ -25,63 +25,63 @@ static void update_hv_plate_pec_errors(cell_asic_2950 *ic, TYPE2950 type)
 	{
 		case GPV1:
 			NER_SET_BIT(hv_plate_pec_errors, 0U);
-			printf("[HV_PLATE] VR PEC %u, ", ic->cccrc.vr_pec);
+			PRINTLN_WARNING("[HV_PLATE] VR PEC %u", ic->cccrc.vr_pec);
 			break;
 		case GPV2:
 			NER_SET_BIT(hv_plate_pec_errors, 1U);
-			printf("[HV_PLATE] RVR PEC %u, ", ic->cccrc.rvr_pec);
+			PRINTLN_WARNING("[HV_PLATE] RVR PEC %u", ic->cccrc.rvr_pec);
 			break;
 		case Config2950:
 			NER_SET_BIT(hv_plate_pec_errors, 2U);
-			printf("[HV_PLATE] CFGR PEC %u, ", ic->cccrc.cfgr_pec);
+			PRINTLN_WARNING("[HV_PLATE] CFGR PEC %u", ic->cccrc.cfgr_pec);
 			break;
 		case Cr:
 			NER_SET_BIT(hv_plate_pec_errors, 3U);
-			printf("[HV_PLATE] CR PEC %u, ", ic->cccrc.cr_pec);
+			PRINTLN_WARNING("[HV_PLATE] CR PEC %u", ic->cccrc.cr_pec);
 			break;
 		case Vbat:
 			NER_SET_BIT(hv_plate_pec_errors, 4U);
-			printf("[HV_PLATE] VBAT PEC %u, ", ic->cccrc.vbat_pec);
+			PRINTLN_WARNING("[HV_PLATE] VBAT PEC %u", ic->cccrc.vbat_pec);
 			break;
 		case Ivbat:
 			NER_SET_BIT(hv_plate_pec_errors, 5U);
-			printf("[HV_PLATE] IVBAT PEC %u, ", ic->cccrc.ivbat_pec);
+			PRINTLN_WARNING("[HV_PLATE] IVBAT PEC %u", ic->cccrc.ivbat_pec);
 			break;
 		case Oc:
 			NER_SET_BIT(hv_plate_pec_errors, 6U);
-			printf("[HV_PLATE] OC PEC %u, ", ic->cccrc.oc_pec);
+			PRINTLN_WARNING("[HV_PLATE] OC PEC %u", ic->cccrc.oc_pec);
 			break;
 		case AccCr:
 			NER_SET_BIT(hv_plate_pec_errors, 7U);
-			printf("[HV_PLATE] AVGCR PEC %u, ", ic->cccrc.avgcr_pec);
+			PRINTLN_WARNING("[HV_PLATE] AVGCR PEC %u", ic->cccrc.avgcr_pec);
 			break;
 		case AccVbat:
 			NER_SET_BIT(hv_plate_pec_errors, 8U);
-			printf("[HV_PLATE] AVGVBAT PEC %u, ", ic->cccrc.avgvbat_pec);
+			PRINTLN_WARNING("[HV_PLATE] AVGVBAT PEC %u", ic->cccrc.avgvbat_pec);
 			break;
 		case AccIvbat:
 			NER_SET_BIT(hv_plate_pec_errors, 9U);
-			printf("[HV_PLATE] AVGIVBAT PEC %u, ", ic->cccrc.avgivbat_pec);
+			PRINTLN_WARNING("[HV_PLATE] AVGIVBAT PEC %u", ic->cccrc.avgivbat_pec);
 			break;
 		case Aux2950:
 			NER_SET_BIT(hv_plate_pec_errors, 10U);
-			printf("[HV_PLATE] AUX PEC %u, ", ic->cccrc.aux_pec);
+			PRINTLN_WARNING("[HV_PLATE] AUX PEC %u", ic->cccrc.aux_pec);
 			break;
 		case Flag:
 			NER_SET_BIT(hv_plate_pec_errors, 11U);
-			printf("[HV_PLATE] FLAG PEC %u, ", ic->cccrc.flag_pec);
+			PRINTLN_WARNING("[HV_PLATE] FLAG PEC %u", ic->cccrc.flag_pec);
 			break;
 		case Status2950:
 			NER_SET_BIT(hv_plate_pec_errors, 12U);
-			printf("[HV_PLATE] STAT PEC %u, ", ic->cccrc.stat_pec);
+			PRINTLN_WARNING("[HV_PLATE] STAT PEC %u", ic->cccrc.stat_pec);
 			break;
 		case Comm2950:
 			NER_SET_BIT(hv_plate_pec_errors, 13U);
-			printf("[HV_PLATE] COMM PEC %u, ", ic->cccrc.comm_pec);
+			printf("[HV_PLATE] COMM PEC %u", ic->cccrc.comm_pec);
 			break;
 		case SID:
 			NER_SET_BIT(hv_plate_pec_errors, 14U);
-			printf("[HV_PLATE] SID2950 PED %u, ", ic->cccrc.sid2950_pec);
+			PRINTLN_WARNING("[HV_PLATE] SID2950 PED %u", ic->cccrc.sid2950_pec);
 			break;
 		default:
 			break;
@@ -205,15 +205,12 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 	}
 }
 
-void trigger_vr_converion(cell_asic_2950 *ic)
-{
-	adBmsWakeupIc2950(1);
-	adBms2950_Adv(1, ic, OW_OFF, RR_VCH0_VCH8);
-	Delay_ms2950(Polling_Delay_ms2950);
-}
-
 void read_v7_register(cell_asic_2950 *ic)
 {
+	adBmsWakeupIc2950(1);
+	adBms2950_Adv(1, ic, OW_OFF, SM_V7_V9);
+	Delay_ms2950(Polling_Delay_ms2950);
+
 	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDV1C, GPV1, C_2950);
 	if (ic->cccrc.vr_pec != 0) {
