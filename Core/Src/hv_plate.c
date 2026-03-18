@@ -3,11 +3,12 @@
 #include "dcl.h"
 #include "ccl.h"
 #include "soc.h"
-#include "can_messages.h"
+#include "can_messages_tx.h"
 #include "bms_algos.h"
 #include "app_threadx.h"
 #include "shep_mutexes.h"
 #include "application.h"
+#include "can_messages_tx.h"
 #include <math.h>
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
@@ -30,20 +31,20 @@ static float get_voltage_conversion(int16_t data)
 void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 {
 	switch (conversion_count) {
-		case ACCI_8:
-			hv_plate->conversion_count = 8;
-			break;
-		case ACCI_16:
-			hv_plate->conversion_count = 16;
-			break;
-		case ACCI_32:
-			hv_plate->conversion_count = 32;
-			break;
-		default:
-			PRINTLN_WARNING(
-				"Unsupported accumulation count, defaulting to 8");
-			hv_plate->conversion_count = 8;
-			break;
+	case ACCI_8:
+		hv_plate->conversion_count = 8;
+		break;
+	case ACCI_16:
+		hv_plate->conversion_count = 16;
+		break;
+	case ACCI_32:
+		hv_plate->conversion_count = 32;
+		break;
+	default:
+		PRINTLN_WARNING(
+			"Unsupported accumulation count, defaulting to 8");
+		hv_plate->conversion_count = 8;
+		break;
 	}
 	hv_plate->last_total_converion_count = 0;
 
@@ -212,26 +213,38 @@ void vHvPlateData(ULONG thread_input)
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
 
-		// this is required for next two functions to work!
-		trigger_vr_converion(hv_plate->ic);
-
 		// read ts voltage
 		get_ts_voltage(hv_plate);
 
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
 
-		if (is_timer_expired(&diagnostic_read_timer)) {
+		if (is_timer_expired(&diagnostic_read_timer) && !is_timer_active(&diagnostic_read_timer)) {
+
 			get_aux_adc_data(hv_plate);
+
+			// send hv plate data for telemetry
+			PRINTLN_INFO("Sending HV Plate Data...");
+			send_hv_plate_data(hv_plate->batt_volts, hv_plate->ts_volts, hv_plate->shunt_temp,
+					   hv_plate->pack_current);
+
 			// read flags
 			get_flags(hv_plate);
 			start_timer(&diagnostic_read_timer,
 				    diagnostic_read_frequency);
-			// Send can message
-			send_hv_plate_diagnostic_data(hv_plate);
+
+			// Send can messages
+			send_hv_plate_diagnostics(0, hv_plate->vreg,
+						  hv_plate->tmp1,
+						  hv_plate->vref1p25,
+						  hv_plate->osccnt);
+
+			send_hv_plate_diagnostics_second(
+				hv_plate->epad, hv_plate->vdig, hv_plate->vdd,
+				hv_plate->tmp2, hv_plate->vdiv);
 		}
 
-		count_hv_plate_pec_errors(hv_plate->ic);
+		send_hv_plate_pec_errors_message();
 
 		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
 	}

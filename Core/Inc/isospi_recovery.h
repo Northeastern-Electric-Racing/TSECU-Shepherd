@@ -2,13 +2,14 @@
 #define ISOSPI_RECOVERY_H
 
 #include "datastructs.h"
+#include <stdbool.h>
 
 /**
- * @brief Checks whether the isoSPI startup mask period is still active.
+ * @brief Checks whether the isoSPI startup PEC mask timer has expired.
  *
- * @return 1 if the startup mask is active (PECs should be ignored), 0 otherwise.
+ * @return true if the startup mask timer has expired (PECs should be checked), false otherwise.
  */
-int is_startup_pec_mask_active(void);
+bool is_startup_pec_mask_timer_expired(void);
 
 /**
  * @brief Initializes ISO SPI break detection timers and state.
