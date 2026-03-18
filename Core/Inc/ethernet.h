@@ -4,12 +4,12 @@
 #include "nx_stm32_eth_driver.h"
 #include "u_nx_ethernet.h"
 #include "main.h"
-#include "shep_queues.h"
+#include "u_queues.h"
 
-/** 
+/**
  * @brief Initializes ethernet.
  *
- * @return Status. 
+ * @return Status.
  */
 uint8_t ethernet1_init(void);
 
