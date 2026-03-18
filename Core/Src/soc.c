@@ -66,9 +66,11 @@ void update_soc(analyzer_t *analyzer, hv_plate_t *hv_plate)
 		ocv_valid = false;
 	}
 
-	/* Initialize or reinitialize SoC from OCV
-	   Used when current data is unreliable (e.g., isoSPI break)
-	   or when a fresh SoC reference is needed */
+	/**
+	 * Initialize or reinitialize SoC from OCV
+	 * Used when current data is unreliable/unavailable
+	 * (e.g., IsoSPI break) to get a fresh SoC reference.
+	 */
 	if (soc_reinit_request == true) {
 		if (ocv_valid == true) {
 			float soc = get_soc_from_ocv(min_ocv);
