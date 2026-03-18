@@ -16,6 +16,7 @@ static void close_relay(void *args)
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
 	set_precharge_relay(precharge_config->hv_plate->ic, true);
 	precharge_config->air_switch_closed = true;
+	PRINTLN_INFO("Precharge relay closed ----------------");
 }
 
 static void open_relay(void *args)
@@ -23,6 +24,7 @@ static void open_relay(void *args)
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
 	set_precharge_relay(precharge_config->hv_plate->ic, false);
 	precharge_config->air_switch_closed = false;
+	PRINTLN_INFO("Precharge relay open ----------------");
 }
 
 void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
@@ -32,6 +34,7 @@ void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
 	assert(hv_plate != NULL);
 	assert(transition_ratio > 0 && transition_ratio < 1);
 
+	precharge_config->hv_plate = hv_plate;
 	precharge_config->transition_ratio = transition_ratio;
 	precharge_config->open_debounce_timer =
 		(nertimer_t){ 0, 0, false, false };
@@ -48,6 +51,11 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 		hv_plate->ts_volts >=
 		hv_plate->batt_volts * precharge_config->transition_ratio;
 
+	if (hv_plate->batt_volts <= 10) {
+		should_precharge = false;
+	}
+
+	PRINTLN_INFO("SHOULD PRECHARGE: %d", should_precharge);
 	debounce(should_precharge, &precharge_config->open_debounce_timer,
 		 precharge_config->debounce_time, close_relay,
 		 precharge_config);
@@ -65,7 +73,7 @@ void vPrecharge(ULONG args)
 
 	prechargeconfig_t precharge_config;
 	precharge_init(&precharge_config, hv_plate, 0.9f,
-		       200 /* ms debounce time */);
+		       500 /* ms debounce time */);
 
 	for (;;) {
 		handle_precharge(&precharge_config);
