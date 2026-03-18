@@ -28,6 +28,7 @@
 #include "u_tx_threads.h"
 #include "u_tx_mutex.h"
 #include "bms_algos.h"
+#include "precharge_routine.h"
 
 const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 			   acc_data_t *acc_data, bms_algos_t *bms_algos)
@@ -483,6 +484,17 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vPeripherals, /* Thread Function */
 	};
 
+	thread_t _precharge_thread = {
+		.name = "Precharge Thread", /* Name */
+		.size = 2048, /* Stack Size (in bytes) */
+		.priority = 4, /* Priority */
+		.threshold = 0, /* Preemption Threshold */
+		.thread_input = (ULONG)hv_plate, /* Thread Args */
+		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+		.auto_start = TX_AUTO_START, /* Auto Start */
+		.function = vPrecharge, /* Thread Function */
+	};
+
 	thread_t _debug_thread = {
 		.name = "BMS Debug Mode Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
@@ -515,6 +527,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_precharge_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");
