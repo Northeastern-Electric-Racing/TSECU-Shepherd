@@ -16,7 +16,7 @@ static void close_relay(void *args)
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
 	set_precharge_relay(precharge_config->hv_plate->ic, true);
 	precharge_config->air_switch_closed = true;
-	// TODO: Send the CAN Message here 
+	send_precharge_status(&precharge_config->air_switch_closed)
 }
 
 static void open_relay(void *args)
@@ -24,7 +24,7 @@ static void open_relay(void *args)
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
 	set_precharge_relay(precharge_config->hv_plate->ic, false);
 	precharge_config->air_switch_closed = false;
-	// TODO: Send the CAN Message here
+	send_precharge_status(&precharge_config->air_switch_closed)
 }
 
 void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
@@ -75,7 +75,7 @@ void vPrecharge(ULONG args)
 	for (;;) {
 		handle_precharge(&precharge_config);
 		if (!is_timer_active(&update_loop_timer) && is_timer_expired(&update_loop_timer)){
-			// TODO: Send the CAN Message here 
+			send_precharge_status(&precharge_config->air_switch_closed)
 
 			start_timer(&update_loop_timer, TELEMETRY_LOOP_TIMEOUT);
 		}
