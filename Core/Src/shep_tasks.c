@@ -274,6 +274,15 @@ void vDebug(ULONG thread_input)
 	}
 }
 
+void vTest(ULONG thread_input) {
+	while(1) {
+		send_bms_test_message_one(-1923.2453, -954, 122);
+		send_bms_test_message_two(3, true, 4, 56, false, true, false, true, 200000, 356);
+
+		tx_thread_sleep(500);
+	}
+}
+
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 {
 	/* Init Interfaces Start */
@@ -506,6 +515,16 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vDebug, /* Thread Function */
 	};
 
+	thread_t _test_thread = {
+		.name = "Test Thread", /* Name */
+		.size = 2048, /* Stack Size (in bytes) */
+		.priority = 4, /* Priority */
+		.threshold = 0, /* Preemption Threshold */
+		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+		.auto_start = TX_AUTO_START, /* Auto Start */
+		.function = vTest, /* Thread Function */
+	};
+
 	PRINTLN_INFO("RUNNING THREADS");
 
 	/* Task Definitions End */
@@ -529,6 +548,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_precharge_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_test_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");
 	return U_SUCCESS;
