@@ -21,6 +21,9 @@ endif()
 # Set the project name
 set(CMAKE_PROJECT_NAME TSECU-Shepherd)
 
+# Include toolchain file
+include("cmake/gcc-arm-none-eabi.cmake")
+
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 

@@ -38,6 +38,16 @@ uint8_t send_max_dc_brake_current_command
 
 /**
 * Contents of this message:
+* BMS/Charging/Voltage - Voltage to charge to
+* BMS/Charging/Current - Current to charge at
+* BMS/Charging/Control - Whether to charge
+* BMS/Charging/UnimplementedData - Reserved
+*/
+uint8_t send_bms_charge_message_send
+(float charge_volts,float charge_current,uint8_t enable_charging);
+
+/**
+* Contents of this message:
 * BMS/Pack/Voltage - The total pack voltage.
 * BMS/Pack/Current - The total pack current
 * BMS/Pack/Amp-hours - Reserved
@@ -324,11 +334,26 @@ uint8_t send_hv_plate_diagnostics_second
 
 /**
 * Contents of this message:
-* BMS/Charging/Voltage - Voltage to charge to
-* BMS/Charging/Current - Current to charge at
-* BMS/Charging/Control - Whether to charge
-* BMS/Charging/UnimplementedData - Reserved
+* BMS/Test/MessageOne/One - 
+* BMS/Test/MessageOne/Two - 
+* BMS/Test/MessageOne/Three - 
 */
-uint8_t send_bms_charge_message_send
-(float charge_volts,float charge_current,uint8_t enable_charging);
+uint8_t send_bms_test_message_one
+(float one,int16_t two,uint8_t three);
+
+/**
+* Contents of this message:
+* BMS/Test/MessageTwo/One - 
+* BMS/Test/MessageTwo/Two - 
+* BMS/Test/MessageTwo/Three - 
+* BMS/Test/MessageTwo/Four - 
+* BMS/Test/MessageTwo/Five - 
+* BMS/Test/MessageTwo/Six - 
+* BMS/Test/MessageTwo/Seven - 
+* BMS/Test/MessageTwo/Eight - 
+* BMS/Test/MessageTwo/Nine - 
+* BMS/Test/MessageTwo/Ten - 
+*/
+uint8_t send_bms_test_message_two
+(uint8_t one,bool two,uint8_t three,uint8_t four,bool five,bool six,bool seven,bool eight,uint32_t nine,uint16_t ten);
 #endif

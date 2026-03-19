@@ -634,6 +634,6 @@ void vStateMachine(ULONG thread_input)
 			start_timer(&telem_timer, 500);
 		}
 
-		thread_sleep_ms(20);
+		tx_thread_sleep(20);
 	}
 }
