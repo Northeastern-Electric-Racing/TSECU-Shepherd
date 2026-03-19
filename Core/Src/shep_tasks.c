@@ -3,7 +3,7 @@
 
 #include "shep_tasks.h"
 #include "can_handler.h"
-#include "can_messages.h"
+#include "can_messages_tx.h"
 #include "ccl.h"
 #include "cell_temp_sanitizer.h"
 #include "compute.h"
@@ -16,7 +16,7 @@
 #include "main.h"
 #include "precharge_routine.h"
 #include "segment.h"
-#include "shep_queues.h"
+#include "u_queues.h"
 #include "soc.h"
 #include "state_machine.h"
 #include "timer.h"
@@ -28,6 +28,7 @@
 #include "u_tx_threads.h"
 #include "u_tx_mutex.h"
 #include "bms_algos.h"
+#include "precharge_routine.h"
 
 const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 			   acc_data_t *acc_data, bms_algos_t *bms_algos)
@@ -45,7 +46,52 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	PRINTLN_INFO("VDD: %.3f V", hv_plate->vdd);
 	PRINTLN_INFO("VDIV: %.3f V", hv_plate->vdiv);
 	PRINTLN_INFO("Primary Internal Temperature: %.3f C", hv_plate->tmp1);
-	PRINTLN_INFO("Secondary Internal Temperature: %.3f C", hv_plate->tmp1);
+	PRINTLN_INFO("Secondary Internal Temperature: %.3f C", hv_plate->tmp2);
+
+	if (hv_plate->adbms_flags.raw > 0) {
+		if (hv_plate->adbms_flags.flags.noclk) {
+			PRINTLN_WARNING("HVP FLT: NOCLK - OSC1 STUCK");
+		}
+		if (hv_plate->adbms_flags.flags.oscflt) {
+			PRINTLN_WARNING("HVP FLT: OSCFLT - OSC1 vs OSC2 diff");
+		}
+		if (hv_plate->adbms_flags.flags.reset) {
+			PRINTLN_WARNING("HVP FLT: RESET - EVENT DETECTED");
+		}
+		if (hv_plate->adbms_flags.flags.spiflt) {
+			PRINTLN_WARNING("HVP FLT: SPIFLT - SPI SDO mismatch");
+		}
+		if (hv_plate->adbms_flags.flags.thsd) {
+			PRINTLN_WARNING("HVP FLT: THSD - Thermal Shutdown");
+		}
+		if (hv_plate->adbms_flags.flags.vdduv) {
+			PRINTLN_WARNING("HVP FLT: VDDUV - VDD Undervoltage");
+		}
+		if (hv_plate->adbms_flags.flags.vde) {
+			PRINTLN_WARNING(
+				"HVP FLT: VDE - Mismatch on VREG or GND");
+		}
+		if (hv_plate->adbms_flags.flags.vdel) {
+			PRINTLN_WARNING(
+				"HVP FLT: VDEL - Mismatch on VREG or GND");
+		}
+		if (hv_plate->adbms_flags.flags.vdigov) {
+			PRINTLN_WARNING(
+				"HVP FLT: VDIGOV - Overvoltage on VDIG");
+		}
+		if (hv_plate->adbms_flags.flags.vdiguv) {
+			PRINTLN_WARNING(
+				"HVP FLT: VDIGUV - Undervoltage on VDIG");
+		}
+		if (hv_plate->adbms_flags.flags.vregov) {
+			PRINTLN_WARNING(
+				"HVP FLT: VREGOV - Overvoltage on VREG");
+		}
+		if (hv_plate->adbms_flags.flags.vreguv) {
+			PRINTLN_WARNING(
+				"HVP FLT: VREGUV - Undervoltage on VREG");
+		}
+	}
 #endif
 
 #ifdef DEBUG_VOLTAGES
@@ -146,45 +192,82 @@ void vDebug(ULONG thread_input)
 			     cell += 2) {
 				// Sends two cells per messages
 				// Accounts for odd number of cells
-				send_cell_data_message(
-					chip_data->alpha,
-					chip_data->cell_temp[cell],
-					chip_data->cell_voltages[cell],
 
-					cell + 1 == NUM_CELLS_PER_CHIP ?
-						0 :
-						chip_data->cell_voltages[cell +
-									 1],
-					chip, cell, cell + 1,
-					chip_data->is_balancing[cell],
+				if (chip_data->alpha) {
+					send_alpha_cell_data_debug(
+						chip_data->cell_temp[cell],
+						chip_data->cell_voltages[cell],
 
-					cell + 1 == NUM_CELLS_PER_CHIP ?
-						0 :
-						chip_data->is_balancing[cell +
-									1],
-					chip_data->cs_fault[cell],
-					cell + 1 == NUM_CELLS_PER_CHIP ?
-						0 :
-						chip_data->cs_fault[cell + 1]);
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->cell_voltages
+								[cell + 1],
+						chip, cell, cell + 1,
+						chip_data->is_balancing[cell],
+
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->is_balancing
+								[cell + 1],
+						chip_data->cs_fault[cell],
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->cs_fault[cell +
+									    1]);
+				} else {
+					send_beta_cell_data_debug(
+						chip_data->cell_temp[cell],
+						chip_data->cell_voltages[cell],
+
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->cell_voltages
+								[cell + 1],
+						chip, cell, cell + 1,
+						chip_data->is_balancing[cell],
+
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->is_balancing
+								[cell + 1],
+						chip_data->cs_fault[cell],
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->cs_fault[cell +
+									    1]);
+				}
 
 				tx_thread_sleep(10); // TODO: enhance timing
 			}
 
-			send_status_a_message(chip, chip_data->die_temp,
-					      chip_data->vpv, chip_data->vmv,
-					      &chip_data->flt_reg);
+			send_chip_a_debug(chip, chip_data->die_temp,
+					  chip_data->vpv, chip_data->vmv,
+					  chip_data->flt_reg.va_ov > 0,
+					  chip_data->flt_reg.va_uv > 0,
+					  chip_data->flt_reg.vd_ov > 0,
+					  chip_data->flt_reg.vd_uv > 0,
+					  chip_data->flt_reg.vde > 0,
+					  chip_data->flt_reg.vdel > 0, 
+					  chip_data->flt_reg.spiflt > 0,
+					  chip_data->flt_reg.sleep > 0,
+					  chip_data->flt_reg.thsd > 0,
+					  chip_data->flt_reg.tmodchk > 0,
+					  chip_data->flt_reg.oscchk > 0);
 
 			tx_thread_sleep(30); // TODO: enhance timing
 
-			send_status_b_message(chip_data->v_res, chip,
-					      chip_data->vref2,
-					      chip_data->v_analog,
-					      chip_data->v_digital,
-					      &chip_data->flt_reg);
+			send_chip_b_debug(chip_data->v_res, chip,
+					  chip_data->vref2, chip_data->v_analog,
+					  chip_data->v_digital,
+					  chip_data->flt_reg.otp1_med > 0,
+					  chip_data->flt_reg.otp2_med > 0);
 
 			tx_thread_sleep(30); // TODO: enhance timings
 
-			send_onboard_therm_message(chip, chip_data);
+			send_onboard_therm_temperatures(
+				chip, chip_data->on_board_temp[0],
+				chip_data->on_board_temp[1],
+				chip_data->on_board_temp[2]);
 
 			tx_thread_sleep(30); // TODO: enhance timings
 		}
@@ -337,7 +420,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	thread_t _segment_data_thread = {
 		.name = "Segment Data Thread", /* Name */
-		.size = 2048, /* Stack Size (in bytes) */
+		.size = 4096, /* Stack Size (in bytes) */
 		.priority = 1, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)acc_data_args, /* Thread Args */
@@ -401,6 +484,17 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vPeripherals, /* Thread Function */
 	};
 
+	thread_t _precharge_thread = {
+		.name = "Precharge Thread", /* Name */
+		.size = 2048, /* Stack Size (in bytes) */
+		.priority = 4, /* Priority */
+		.threshold = 0, /* Preemption Threshold */
+		.thread_input = (ULONG)hv_plate, /* Thread Args */
+		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
+		.auto_start = TX_AUTO_START, /* Auto Start */
+		.function = vPrecharge, /* Thread Function */
+	};
+
 	thread_t _debug_thread = {
 		.name = "BMS Debug Mode Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
@@ -416,7 +510,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	/* Task Definitions End */
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
+		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
@@ -432,6 +527,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
+	CATCH_ERROR(create_thread(byte_pool, &_precharge_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");

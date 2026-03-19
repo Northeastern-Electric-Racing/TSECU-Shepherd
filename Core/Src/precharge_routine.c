@@ -32,6 +32,7 @@ void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
 	assert(hv_plate != NULL);
 	assert(transition_ratio > 0 && transition_ratio < 1);
 
+	precharge_config->hv_plate = hv_plate;
 	precharge_config->transition_ratio = transition_ratio;
 	precharge_config->open_debounce_timer =
 		(nertimer_t){ 0, 0, false, false };
