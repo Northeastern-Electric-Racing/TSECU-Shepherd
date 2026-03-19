@@ -11,7 +11,9 @@
 
 uint8_t calypso_signals[NUM_DEVICES];
 uint8_t control_device_signals[NUM_DEVICES];
-pwm_device_t device_fan0;
+pwm_device_t device_fan0; 
+pwm_device_t device_fan1;
+
 
 static HAL_StatusTypeDef _init_pwm_device(pwm_device_t *device)
 {
@@ -39,9 +41,23 @@ bool control_init_peripherals(void)
 		.channel_identifier = TIM_CHANNEL_2,
 	};
 
+	device_fan1 = (pwm_device_t){
+		.tim_handle = &htim3,
+		.channel_identifier = TIM_CHANNEL_1,
+	};
+
 	bool status = _init_pwm_device(&device_fan0);
-	return !status;
+	if (!status) {
+		return false;
+	}
+	status = _init_pwm_device(&device_fan1);
+	if (!status) {
+		return false;
+	}
+	return true;
 }
+
+// 1 from vcu and 1 from calypso
 
 void control_fan(float pack_high_temp)
 {
@@ -56,13 +72,20 @@ void control_fan(float pack_high_temp)
 		duty = _PERCENT_16(100);
 	}
 
+	//fan0
 	uint16_t duty_from_calypso = _PERCENT_16(calypso_signals[DEVICE_FAN0]);
 	if (duty_from_calypso > duty) {
 		duty = duty_from_calypso;
 	}
-
 	control_device_signals[DEVICE_FAN0] = (uint8_t)(duty >> 8);
 	_write_pwm_device(&device_fan0, duty);
+
+	
+
+	//fan1
+	uint16_t duty1 = _PERCENT_16(calypso_signals[DEVICE_FAN1]);
+	control_device_signals[DEVICE_FAN1] = (uint8_t)(duty1 >> 8);
+	_write_pwm_device(&device_fan1, duty1);
 }
 
 void control_message_fans(can_msg_t msg)
@@ -74,6 +97,16 @@ void control_message_fans(can_msg_t msg)
 	}
 	calypso_signals[DEVICE_FAN0] = duty;
 }
+
+void control_message_fans1(can_msg_t msg)
+{
+	uint8_t duty1 = *(msg.data);
+	if (duty1 > 100) {
+		duty1 = 100;
+	}
+	calypso_signals[DEVICE_FAN1] = duty1;
+}
+
 #undef _PERCENT_16
 
 // CONTROL THREAD

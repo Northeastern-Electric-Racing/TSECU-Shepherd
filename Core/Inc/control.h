@@ -13,7 +13,8 @@ typedef struct {
 	int channel_identifier;
 } pwm_device_t;
 
-typedef enum { DEVICE_FAN0, NUM_DEVICES } control_devices;
+typedef enum { DEVICE_FAN0, DEVICE_FAN1, NUM_DEVICES } control_devices;
+
 
 extern uint8_t control_device_signals[];
 
@@ -33,6 +34,7 @@ void control_fan(float pack_high_temp);
  * @brief Send calypso message for controlling fans
  */
 void control_message_fans(can_msg_t msg);
+void control_message_fans1(can_msg_t msg);
 
 void vControl(ULONG thread_input);
 
