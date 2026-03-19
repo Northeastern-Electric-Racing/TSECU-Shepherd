@@ -102,6 +102,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/control.c"
     "Core/Src/traceout_app.c"
     "Core/Src/shep_mutexes.c"
+    "Core/Src/precharge_routine.c"
+    "Drivers/Embedded-Base/middleware/src/debounce.c"
 )
 
 # Add include paths
