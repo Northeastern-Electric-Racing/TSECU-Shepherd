@@ -23,7 +23,6 @@ set(CMAKE_PROJECT_NAME TSECU-Shepherd)
 
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-
 # Core project settings
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
@@ -80,6 +79,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/middleware/src/c_utils.c"
     "Drivers/Embedded-Base/platforms/stm32h563/src/fdcan.c"
     "Drivers/Embedded-Base/middleware/src/timer.c"
+    "Drivers/Embedded-Base/general/src/p3t1755.c"
     "Core/Src/adi2950_interaction.c"
     "Core/Src/adi6830_interaction.c"
     "Core/Src/analyzer.c"

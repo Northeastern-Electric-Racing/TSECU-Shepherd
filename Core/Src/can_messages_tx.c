@@ -152,32 +152,27 @@ uint8_t send_pack_status
 }
 
 uint8_t send_bms_status
-(uint8_t state,float temp_average,float temp_internal)
+(uint8_t state,float temp_average)
 {
     can_msg_t msg;
     msg.id = 0x81;
     msg.id_is_extended = false;
-    msg.len = 3;
+    msg.len = 2;
 
     
-            uint32_t data = 0;
+            uint16_t data = 0;
                         uint32_t state_i = (uint32_t)(state);
                         if(state_i > 255ULL) {state_i = 255;
                         }
-                        data |= ((state_i) & 0xFFULL) << 24;
+                        data |= ((state_i) & 0xFFULL) << 8;
             
                         uint32_t temp_average_i = (uint32_t)(temp_average);
                         if(temp_average_i > 255ULL) {temp_average_i = 255;
                         }
-                        data |= ((temp_average_i) & 0xFFULL) << 16;
+                        data |= ((temp_average_i) & 0xFFULL) << 0;
             
-                        uint32_t temp_internal_i = (uint32_t)(temp_internal);
-                        if(temp_internal_i > 255ULL) {temp_internal_i = 255;
-                        }
-                        data |= ((temp_internal_i) & 0xFFULL) << 8;
-            
-            uint32_t data_bigendian = __builtin_bswap32(data);
-            memcpy(msg.data, &data_bigendian, 4);
+            uint16_t data_bigendian = __builtin_bswap16(data);
+            memcpy(msg.data, &data_bigendian, 2);
         
 
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
@@ -1246,6 +1241,95 @@ uint8_t send_hv_plate_diagnostics_second
                         if(vdiv_i > 4095ULL) {vdiv_i = 4095;
                         }
                         data |= ((vdiv_i) & 0xFFFULL) << 4;
+            
+            uint64_t data_bigendian = __builtin_bswap64(data);
+            memcpy(msg.data, &data_bigendian, 8);
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_bms_onboard_temperature
+(float internal_temp)
+{
+    can_msg_t msg;
+    msg.id = 0x01B;
+    msg.id_is_extended = false;
+    msg.len = 2;
+
+    
+            uint16_t data = 0;
+                        uint32_t internal_temp_i = (uint32_t)(internal_temp*100);
+                        if(internal_temp_i > 65535ULL) {internal_temp_i = 65535;
+                        }
+                        data |= ((internal_temp_i) & 0xFFFFULL) << 0;
+            
+            uint16_t data_bigendian = __builtin_bswap16(data);
+            memcpy(msg.data, &data_bigendian, 2);
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_bms_imu_accelerometer
+(float imu_accelerometer_x,float imu_accelerometer_y,float imu_accelerometer_z)
+{
+    can_msg_t msg;
+    msg.id = 0x01C;
+    msg.id_is_extended = false;
+    msg.len = 6;
+
+    
+            uint64_t data = 0;
+                        uint32_t imu_accelerometer_x_i = (uint32_t)(imu_accelerometer_x*4);
+                        if(imu_accelerometer_x_i > 65535ULL) {imu_accelerometer_x_i = 65535;
+                        }
+                        data |= ((imu_accelerometer_x_i) & 0xFFFFULL) << 48;
+            
+                        uint32_t imu_accelerometer_y_i = (uint32_t)(imu_accelerometer_y*4);
+                        if(imu_accelerometer_y_i > 65535ULL) {imu_accelerometer_y_i = 65535;
+                        }
+                        data |= ((imu_accelerometer_y_i) & 0xFFFFULL) << 32;
+            
+                        uint32_t imu_accelerometer_z_i = (uint32_t)(imu_accelerometer_z*4);
+                        if(imu_accelerometer_z_i > 65535ULL) {imu_accelerometer_z_i = 65535;
+                        }
+                        data |= ((imu_accelerometer_z_i) & 0xFFFFULL) << 16;
+            
+            uint64_t data_bigendian = __builtin_bswap64(data);
+            memcpy(msg.data, &data_bigendian, 8);
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_bms_imu_gyro
+(float imu_gyro_x,float imu_gyro_y,float imu_gyro_z)
+{
+    can_msg_t msg;
+    msg.id = 0x01D;
+    msg.id_is_extended = false;
+    msg.len = 6;
+
+    
+            uint64_t data = 0;
+                        int32_t imu_gyro_x_i = (int32_t)(imu_gyro_x*100);
+                        if(imu_gyro_x_i > 32767) {imu_gyro_x_i = 32767;
+                        } else if(imu_gyro_x_i < -32768) {imu_gyro_x_i = -32768;
+                        }
+                        data |= ((uint32_t)(imu_gyro_x_i) & 0xFFFFULL) << 48;
+            
+                        int32_t imu_gyro_y_i = (int32_t)(imu_gyro_y*100);
+                        if(imu_gyro_y_i > 32767) {imu_gyro_y_i = 32767;
+                        } else if(imu_gyro_y_i < -32768) {imu_gyro_y_i = -32768;
+                        }
+                        data |= ((uint32_t)(imu_gyro_y_i) & 0xFFFFULL) << 32;
+            
+                        int32_t imu_gyro_z_i = (int32_t)(imu_gyro_z*100);
+                        if(imu_gyro_z_i > 32767) {imu_gyro_z_i = 32767;
+                        } else if(imu_gyro_z_i < -32768) {imu_gyro_z_i = -32768;
+                        }
+                        data |= ((uint32_t)(imu_gyro_z_i) & 0xFFFFULL) << 16;
             
             uint64_t data_bigendian = __builtin_bswap64(data);
             memcpy(msg.data, &data_bigendian, 8);
