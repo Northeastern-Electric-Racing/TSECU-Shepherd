@@ -199,9 +199,6 @@ typedef struct {
 	crit_cellval_t min_temp;
 	float avg_temp;
 
-	// the board temperature
-	float internal_temp;
-
 	/* Max, min, and avg voltage of the cells */
 	crit_cellval_t max_voltage;
 	crit_cellval_t min_voltage;
@@ -358,6 +355,7 @@ typedef struct {
 
 typedef struct {
 	imu_data_t imu_data;
+	float onboard_temp;
 } peripherals_t;
 
 /* Task Args */

@@ -62,7 +62,7 @@ bool read_shutdown();
  * @brief Initializes peripherals for compute thread.
  * @param peripherals Pointer to peripherals struct
  */
-void init_compute(peripherals_t *peripherals);
+int init_compute(peripherals_t *peripherals);
 
 void vPeripherals(ULONG thread_input);
 
