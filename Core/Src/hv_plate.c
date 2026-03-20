@@ -189,6 +189,8 @@ void vHvPlateData(ULONG thread_input)
 	set_gpo(hv_plate->ic,
 		GPO2_2950); // enable HV1 readings on ADBMS2950 devkit
 
+	init_soc();
+
 	for (;;) {
 		// get the current reading from the pack
 		get_pack_current_and_batt_voltage(hv_plate,
