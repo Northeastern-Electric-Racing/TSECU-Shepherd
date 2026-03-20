@@ -51,10 +51,9 @@ uint8_t send_pack_status
 * Contents of this message:
 * BMS/Status/State - The system state
 * BMS/Status/Temp_Average - Average of all thermistor readings
-* BMS/Status/Temp_Internal - Board temperature
 */
 uint8_t send_bms_status
-(uint8_t state,float temp_average,float temp_internal);
+(uint8_t state,float temp_average);
 
 /**
 * Contents of this message:
@@ -321,6 +320,27 @@ uint8_t send_hv_plate_diagnostics
 */
 uint8_t send_hv_plate_diagnostics_second
 (float epad,float vdig,float vdd,float tmp2,float vdiv);
+
+/**
+* Contents of this message:
+* BMS/Peripherals/Temperature - 
+*/
+uint8_t send_bms_onboard_temperature
+(float internal_temp);
+
+/**
+* Contents of this message:
+* BMS/IMU/Accelerometer - IMU acceleration values (x,y,z).
+*/
+uint8_t send_bms_imu_accelerometer
+(float imu_accelerometer_x,float imu_accelerometer_y,float imu_accelerometer_z);
+
+/**
+* Contents of this message:
+* BMS/IMU/Gyro - IMU Gyroscope Reading
+*/
+uint8_t send_bms_imu_gyro
+(float imu_gyro_x,float imu_gyro_y,float imu_gyro_z);
 
 /**
 * Contents of this message:
