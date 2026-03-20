@@ -51,6 +51,10 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 		hv_plate->ts_volts >=
 		hv_plate->batt_volts * precharge_config->transition_ratio;
 
+	if (hv_plate->batt_volts < 60.0f) {
+		should_precharge = false; 
+	}
+
 	debounce(should_precharge, &precharge_config->open_debounce_timer,
 		 precharge_config->debounce_time, close_relay,
 		 precharge_config);
