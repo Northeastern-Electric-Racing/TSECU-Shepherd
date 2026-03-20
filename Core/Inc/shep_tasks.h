@@ -5,7 +5,7 @@
 #include "tx_api.h"
 #include "datastructs.h"
 
-#define DEBUG_HV_PLATE
+// #define DEBUG_HV_PLATE
 // #define DEBUG_VOLTAGES
 // #define DEBUG_TEMPS
 // #define DEBUG_AlGOS
