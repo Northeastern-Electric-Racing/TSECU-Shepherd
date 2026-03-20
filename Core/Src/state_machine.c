@@ -471,7 +471,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT].data_1 =
 			hv_plate->pack_current;
 		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT].lim_1 =
-			bms_algos->cont_DCL;	
+			bms_algos->cont_DCL;
 		fault_eval_table[CHARGE_LIMIT_ENFORCEMENT_FAULT].data_1 =
 			hv_plate->pack_current;
 		fault_eval_table[CHARGE_LIMIT_ENFORCEMENT_FAULT].lim_1 =
@@ -614,11 +614,8 @@ void vStateMachine(ULONG thread_input)
 
 		// send unimportant messages less frequently
 		if (is_timer_expired(&telem_timer)) {
-			send_bms_status(
-				get_current_state(state_machine),
-				analyzer->avg_temp,
-				analyzer->internal_temp // TODO: we never set internal temp
-			);
+			send_bms_status(get_current_state(state_machine),
+					analyzer->avg_temp);
 
 			send_fault_status(
 				get_fault(DISCHARGE_LIMIT_ENFORCEMENT_FAULT),
