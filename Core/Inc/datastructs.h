@@ -2,30 +2,21 @@
 #ifndef _DATA_STRUCTS_H
 #define _DATA_STRUCTS_H
 
+#include <stdint.h>
+#include <stdbool.h>
+#include "bms_config.h"
+#include "u_tx_mutex.h"
 #include "adBms6830Data.h"
 #include "adi_bms_2950data.h"
-#include "bms_config.h"
-#include "sht30.h"
 #include "timer.h"
-#include "u_tx_mutex.h"
-#include <stdbool.h>
-#include <stdint.h>
+#include "sht30.h"
 
 #define ANALYZER_FLAG  0x1
 #define SANITIZER_FLAG 0x2
 #define DEBUG_FLAG     0x4
 
 /**
- * @brief Compute Board Temperature
- * @note Stores the output of p3t1755 temperature sensor
- */
-typedef struct {
-	float temp_c;
-} board_temp_t;
-
-/**
- * @brief Stores critical values for the pack (across all chips), and where that
- * critical value can be found
+ * @brief Stores critical values for the pack (across all chips), and where that critical value can be found
  */
 typedef struct {
 	float val;
@@ -72,8 +63,7 @@ typedef struct {
 } chipdata_t;
 
 /**
- * @brief Stores critical values for the pack, and where that critical value can
- * be found
+ * @brief Stores critical values for the pack, and where that critical value can be found
  */
 typedef struct {
 	float val;
@@ -84,8 +74,7 @@ typedef struct {
 /**
  * @brief A therm_state_t is a struct of a (float, bool).
  * - Last recorded temperature of a cell.
- * - Whether the cell temperature can be used (i.e. whether the measurement is
- * bad).
+ * - Whether the cell temperature can be used (i.e. whether the measurement is bad).
  */
 typedef struct {
 	float last_temp;
@@ -136,6 +125,7 @@ typedef union {
 		uint8_t spiflt : 1;
 		uint8_t thsd : 1;
 		uint8_t reset : 1;
+		unsigned : 4;
 	} flags;
 	uint16_t raw;
 } adbms_2950_flags_t;
@@ -149,8 +139,7 @@ typedef struct {
 	float batt_volts; // BATT Voltage (V)
 	float shunt_temp; // Temperature of shunt resistor (C)
 	float pack_current; // Current read through the shunt (A)
-	uint16_t conversion_count; // Number of conversions taken for each voltage and
-	// current measurement
+	uint16_t conversion_count; // Number of conversions taken for each voltage and current measurement
 	uint16_t last_total_converion_count; // previously read total conversion count
 	adbms_2950_flags_t adbms_flags; // Relevant flags from flag register
 	// AUX ADC values
@@ -169,8 +158,7 @@ typedef struct {
  * @brief data read from the ADBMS6830 chips on our segments
  */
 typedef struct {
-	/* Array of structs containing raw data from and configurations for the
-   * ADBMS6830 chips */
+	/* Array of structs containing raw data from and configurations for the ADBMS6830 chips */
 	cell_asic chips[NUM_CHIPS];
 
 	// the current discharge configuration the state machine wants
@@ -339,12 +327,8 @@ typedef struct {
 	state_t bms_state;
 
 	/**
-   * @brief Note that this is a 32 bit integer, so there are 32 max possible
-   * fault codes
-   */
-	// uint32_t fault_code;
-	uint32_t fault_code_crit;
-	uint32_t fault_code_noncrit;
+	 * @brief Note that this is a 32 bit integer, so there are 32 max possible fault codes
+	 */
 
 	// charge settling timers
 	nertimer_t charging_stage_timer;
@@ -352,6 +336,10 @@ typedef struct {
 
 	// charging message timer for telemetry
 	nertimer_t charger_message_timer;
+
+	bool segment_comms_fault_flag;
+	bool hv_plate_comms_fault_flag;
+
 } state_machine_t;
 
 /**
@@ -370,7 +358,6 @@ typedef struct {
 
 typedef struct {
 	imu_data_t imu_data;
-	board_temp_t board_temp;
 } peripherals_t;
 
 /* Task Args */
@@ -452,24 +439,25 @@ typedef struct {
 /**
  * @brief Fault codes
  */
-enum {
-	FAULTS_CLEAR = 0x0,
+typedef enum {
 
-	/* Shepherd BMS faults */
-	CELLS_NOT_BALANCING = 0x1,
-	CELL_VOLTAGE_TOO_HIGH = 0x2,
-	CELL_VOLTAGE_TOO_LOW = 0x4,
-	PACK_TOO_HOT = 0x8,
-	WEAK_PACK_FAULT = 0x10,
-	EXTERNAL_CAN_FAULT = 0x20,
-	DISCHARGE_LIMIT_ENFORCEMENT_FAULT = 0x40,
-	CHARGE_LIMIT_ENFORCEMENT_FAULT = 0x80,
-	DIE_TEMP_MAXIMUM_FAULT = 0x100,
-	HV_PLATE_COMMS_FAULT = 0x200,
-	SEGMENT_COMMS_FAULT = 0x400,
+	/* SHEP CONDITIONAL FAUTS */
+	DISCHARGE_LIMIT_ENFORCEMENT_FAULT,
+	CHARGE_LIMIT_ENFORCEMENT_FAULT,
+	CELL_VOLTAGE_TOO_LOW,
+	CELL_VOLTAGE_TOO_HIGH,
+	CELL_CHARGE_VOLTAGE_TOO_HIGH,
+	PACK_TOO_HOT,
+	DIE_TEMP_MAXIMUM_FAULT,
 
-	MAX_FAULTS = 0x80000000 /* Maximum allowable fault code */
-};
+	HV_PLATE_COMMS_FAULT,
+	SEGMENT_COMMS_FAULT,
+
+	NUM_FAULTS, /* NUM_REACTIONARY_FAULTS = NUM_FAULTS - NUM_CONDITIONAL_FAULTS - 1 */
+
+	/* TOTAL FAULTS = NUM_FAULTS - 1 */
+
+} fault_code_t;
 
 /**
  * @brief Represents fault evaluation operators
@@ -482,7 +470,6 @@ typedef enum {
 	EQ, /* fault if {data} equal to {threshold}                 */
 	NEQ, /* fault if {data} not equal to {threshold}             */
 	NOP /* no operation, use for single threshold faults        */
-
 } fault_evalop_t;
 
 /**
@@ -497,7 +484,6 @@ typedef struct {
 	float lim_1;
 
 	int timeout;
-	int code;
 
 	fault_evalop_t optype_2;
 	float data_2;
@@ -506,5 +492,6 @@ typedef struct {
 	bool is_critical;
 	// bool is_faulted; /* note: unused field */
 } fault_eval_t;
+
 
 #endif

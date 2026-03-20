@@ -5,8 +5,6 @@
 #include "analyzer.h"
 #include "datastructs.h"
 
-#define NUM_FAULTS 7
-
 /**
  * @brief gets the current state of the BMS
  * 
@@ -51,9 +49,10 @@ void sm_fault_return(state_machine_args_t *state_machine_args);
  * fault status
  *
  * @param fault_item fault data
+ * @param fault_code fault code
  * @return true if fault is present, false otherwise
  */
-bool sm_fault_eval(fault_eval_t *fault_item);
+bool sm_fault_eval(fault_eval_t *fault_item, fault_code_t fault_code);
 
 /**
  * @brief handles the state machine, calls the appropriate handler function and
@@ -77,6 +76,40 @@ void set_segment_comms_fault(state_machine_t *state_mach);
  */
 void clear_segment_comms_fault(state_machine_t *state_mach);
 
+/**
+ * @brief Determines if there is a critical fault that is active.
+ * 
+ * @return true if critical faults are active, false otherwise
+ */
+bool are_critical_faults_active();
+
+/**
+ * @brief Gets the status of a given fault code.
+ * 
+ * @param fault The fault code to check
+ * @return true if the fault is active, false otherwise
+ */
+bool get_fault(fault_code_t fault);
+
+// init functions
+void init_boot(state_machine_args_t *state_machine_args);
+void init_ready(state_machine_args_t *state_machine_args);
+void init_charging(state_machine_args_t *state_machine_args);
+void init_balancing(state_machine_args_t *state_machine_args);
+void init_faulted(state_machine_args_t *state_machine_args);
+
+// handle functions
+void handle_boot(state_machine_args_t *state_machine_args);
+void handle_ready(state_machine_args_t *state_machine_args);
+void handle_charging(state_machine_args_t *state_machine_args);
+void handle_balancing(state_machine_args_t *state_machine_args);
+void handle_faulted(state_machine_args_t *state_machine_args);
+
+/**
+ * @brief State machine thread function for BMS state management.
+ * 
+ * @param thread_input Pointer to state_machine_args_t structure
+ */
 void vStateMachine(ULONG thread_input);
 
 #endif

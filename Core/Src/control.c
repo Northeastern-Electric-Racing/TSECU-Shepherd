@@ -2,7 +2,7 @@
 #include "control.h"
 #include "main.h"
 #include "datastructs.h"
-#include "can_messages.h"
+#include "can_messages_tx.h"
 #include "shep_mutexes.h"
 
 #define INIT_TIMEOUT_MS 10
@@ -98,7 +98,7 @@ void vControl(ULONG thread_input)
 		control_fan(pack_high_temp);
 		mutex_put(&analyzer_mutex);
 
-		send_control_signals(control_device_signals);
+		send_fan_duty_cycle_percentage(control_device_signals[DEVICE_FAN0]);
 
 		tx_thread_sleep(MS_TO_TICKS(100));
 	}

@@ -3,111 +3,146 @@
 #include "compute.h"
 #include "mcuWrapper.h"
 #include "isospi_recovery.h"
-#include "can_messages.h"
+#include "can_messages_tx.h"
+#include "c_utils.h"
 
 #define MAX_PEC_ERROR_ACCUM (100U) // Max accumulated PECs
 
 #define ADBMS_ADC_POLL_TIMEOUT (200U) // ms
 
+static uint16_t segment_pec_errors[NUM_CHIPS] = { 0U };
+static uint16_t prev_segment_pec_errors[NUM_CHIPS] = { 0U };
+
 /**
- * @brief Count PEC errors for all chips, send CAN message, and reset counters.
+ * @brief Increment PEC accumulator with saturation.
  *
- * This function iterates through all chips, accumulates the PEC (Packet Error
- * Code) error count, resets the PEC error counter and Command counter, then
- * sends a CAN message if any errors exist.
+ * @param chip Chip whose PEC sum is updated.
+ * @param pec_mask_timer_expired True if accumulation is enabled.
+ */
+static void accumulate_segment_pec_errors(cell_asic *const chip,
+					  const bool pec_mask_timer_expired)
+{
+	// Accumulate PEC errors only after startup mask timer ends
+	if (pec_mask_timer_expired) {
+		// Saturate at MAX_PEC_ERROR_ACCUM
+		if (chip->pec_error_sum < MAX_PEC_ERROR_ACCUM) {
+			chip->pec_error_sum += 1U;
+		}
+	}
+}
+
+/**
+ * @brief Update the PEC errors and accumulation counter for the given register read.
  *
  * @param chips Pointer to the array of cell_asic structures.
+ * @param type Register type that was read.
  */
-static void count_segment_pec_errors(cell_asic chips[NUM_CHIPS])
+static void update_segment_pec_errors(cell_asic chips[NUM_CHIPS], TYPE type)
+{
+	const bool pec_mask_timer_expired = is_startup_pec_mask_timer_expired();
+
+	for (uint8_t chip = 0U; chip < NUM_CHIPS; chip++) {
+		// clang-format off
+		switch (type) {
+			case Cell:
+				if (chips[chip].cccrc.cell_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 0U);
+					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
+					PRINTLN_WARNING("[SEGMENT] CELL PEC %d", chips[chip].cccrc.cell_pec);
+				}
+				break;
+			case Aux:
+				if (chips[chip].cccrc.aux_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 1U);
+					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
+					PRINTLN_WARNING("[SEGMENT] AUX PEC %d", chips[chip].cccrc.aux_pec);
+				}
+				break;
+			case RAux:
+				if (chips[chip].cccrc.raux_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 2U);
+					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
+					PRINTLN_WARNING("[SEGMENT] RAUX PEC %d", chips[chip].cccrc.raux_pec);
+				}
+				break;
+			case Status:
+				if (chips[chip].cccrc.stat_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 3U);
+					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
+					PRINTLN_WARNING("[SEGMENT] STAT PEC %d", chips[chip].cccrc.stat_pec);
+				}
+				break;
+			case Pwm:
+				if (chips[chip].cccrc.pwm_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 4U);
+					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
+					PRINTLN_WARNING("[SEGMENT] PWM PEC %d", chips[chip].cccrc.pwm_pec);
+				}
+				break;
+			case AvgCell:
+				if (chips[chip].cccrc.acell_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 5U);
+					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
+					PRINTLN_WARNING("[SEGMENT] ACELL PEC %d", chips[chip].cccrc.acell_pec);
+				}
+				break;
+			case S_volt:
+				if (chips[chip].cccrc.scell_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 6U);
+					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
+					PRINTLN_WARNING("[SEGMENT] SCELL PEC %d", chips[chip].cccrc.scell_pec);
+				}
+				break;
+			case F_volt:
+				if (chips[chip].cccrc.fcell_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 7U);
+					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
+					PRINTLN_WARNING("[SEGMENT] FCELL PEC %d", chips[chip].cccrc.fcell_pec);
+				}
+				break;
+			case Config:
+				if (chips[chip].cccrc.cfgr_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 8U);
+					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
+					PRINTLN_WARNING("[SEGMENT] CFGR PEC %d", chips[chip].cccrc.cfgr_pec);
+				}
+				break;
+			case Comm:
+				if (chips[chip].cccrc.comm_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 9U);
+					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
+					PRINTLN_WARNING("[SEGMENT] COMM PEC %d", chips[chip].cccrc.comm_pec);
+				}
+				break;
+			case Sid:
+				if (chips[chip].cccrc.sid_pec) {
+					NER_SET_BIT(segment_pec_errors[chip], 10U);
+					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
+					PRINTLN_WARNING("[SEGMENT] SID PEC %d", chips[chip].cccrc.sid_pec);
+				}
+				break;
+			default:
+				break;
+		}
+		// clang-format on
+	}
+}
+
+void send_segment_pec_errors_message(void)
 {
 	for (uint8_t chip = 0U; chip < NUM_CHIPS; chip++) {
-		uint16_t pec_error_count =
-			(uint16_t)(chips[chip].cccrc.cfgr_pec +
-				   chips[chip].cccrc.cell_pec +
-				   chips[chip].cccrc.acell_pec +
-				   chips[chip].cccrc.scell_pec +
-				   chips[chip].cccrc.fcell_pec +
-				   chips[chip].cccrc.aux_pec +
-				   chips[chip].cccrc.raux_pec +
-				   chips[chip].cccrc.stat_pec +
-				   chips[chip].cccrc.comm_pec +
-				   chips[chip].cccrc.pwm_pec +
-				   chips[chip].cccrc.sid_pec);
+		uint16_t current_pec_errors = segment_pec_errors[chip];
 
-		if (pec_error_count > 0) {
-			PRINTLN_ERROR("Segment PEC Error: Chip %u, Count: %u\n",
-				      chip, pec_error_count);
+		if (current_pec_errors != prev_segment_pec_errors[chip]) {
+			send_segment_pec_errors(
+				chip + 1U, segment_pec_errors[chip]);
 
-			// if only a few PEC errors happened, print which registers they came from
-			if (pec_error_count < 10) {
-				if (chips[chip].cccrc.cfgr_pec > 0) {
-					printf("[SEGMENT] CFGR PEC %d, ",
-					       chips[chip].cccrc.cfgr_pec);
-				}
-				if (chips[chip].cccrc.cell_pec > 0) {
-					printf("[SEGMENT] CELL PEC %d, ",
-					       chips[chip].cccrc.cell_pec);
-				}
-				if (chips[chip].cccrc.acell_pec > 0) {
-					printf("[SEGMENT] ACELL PEC %d, ",
-					       chips[chip].cccrc.acell_pec);
-				}
-				if (chips[chip].cccrc.scell_pec > 0) {
-					printf("[SEGMENT] SCELL PEC %d, ",
-					       chips[chip].cccrc.scell_pec);
-				}
-				if (chips[chip].cccrc.fcell_pec > 0) {
-					printf("[SEGMENT] FCELL PEC %d, ",
-					       chips[chip].cccrc.fcell_pec);
-				}
-				if (chips[chip].cccrc.aux_pec > 0) {
-					printf("[SEGMENT] AUX PEC %d, ",
-					       chips[chip].cccrc.aux_pec);
-				}
-				if (chips[chip].cccrc.raux_pec > 0) {
-					printf("[SEGMENT] RAUX PEC %d, ",
-					       chips[chip].cccrc.raux_pec);
-				}
-				if (chips[chip].cccrc.stat_pec > 0) {
-					printf("[SEGMENT] STAT PEC %d, ",
-					       chips[chip].cccrc.stat_pec);
-				}
-				if (chips[chip].cccrc.comm_pec > 0) {
-					printf("[SEGMENT] COMM PEC %d, ",
-					       chips[chip].cccrc.comm_pec);
-				}
-				if (chips[chip].cccrc.pwm_pec > 0) {
-					printf("[SEGMENT] PWM PEC %d, ",
-					       chips[chip].cccrc.pwm_pec);
-				}
-				if (chips[chip].cccrc.sid_pec > 0) {
-					printf("[SEGMENT] SID PEC %d, ",
-					       chips[chip].cccrc.sid_pec);
-				}
-				printf("\n");
-			}
-
-			send_segment_pec_error_message(chip, pec_error_count);
-
-			// Accumulate PEC errors only after startup mask timer ends
-
-
-			if (!is_startup_pec_mask_active()) {
-				// Saturate at MAX_PEC_ERROR_ACCUM
-				if ((MAX_PEC_ERROR_ACCUM -
-				     chips[chip].pec_error_sum) <
-				    pec_error_count) {
-					chips[chip].pec_error_sum =
-						MAX_PEC_ERROR_ACCUM;
-				} else {
-					chips[chip].pec_error_sum +=
-						pec_error_count; // cleared in detect_isospi_break()
-				}
-			}
+			prev_segment_pec_errors[chip] =
+				segment_pec_errors[chip];
 		}
 
-		// Reset PEC counters for next round
-		memset(&(chips[chip].cccrc), 0, sizeof(chips[chip].cccrc));
+		// Clear PEC errors for next cycle
+		segment_pec_errors[chip] = 0U;
 	}
 }
 
@@ -224,17 +259,17 @@ void set_discharge_timeout(cell_asic *chip, DCTO timeout)
 void adbms_wake_core(isospi_line_ line, uint8_t num_ic)
 {
 	switch (line) {
-		case ISOSPI_LINE_A:
-		case ISOSPI_LINE_B:
-			for (uint8_t ic = 0; ic < num_ic; ic++) {
-				adBmsLineCsLow(line);
-				adBmsLineCsHigh(line);
-				delay_us(4000);
-			}
-			break;
-		default:
-			printf(" Invalid isoSPI line selected \n");
-			break;
+	case ISOSPI_LINE_A:
+	case ISOSPI_LINE_B:
+		for (uint8_t ic = 0; ic < num_ic; ic++) {
+			adBmsLineCsLow(line);
+			adBmsLineCsHigh(line);
+			delay_us(4000);
+		}
+		break;
+	default:
+		printf(" Invalid isoSPI line selected \n");
+		break;
 	}
 }
 
@@ -265,7 +300,7 @@ void read_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 {
 	adBmsReadData(NUM_CHIPS, chips, command, type, group);
 
-	count_segment_pec_errors(chips);
+	update_segment_pec_errors(chips, type);
 }
 
 uint32_t adBmsPollAdc_indicator(cell_asic chips[NUM_CHIPS],
