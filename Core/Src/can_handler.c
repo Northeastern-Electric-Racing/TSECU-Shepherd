@@ -14,20 +14,52 @@
 extern FDCAN_HandleTypeDef hfdcan2;
 can_t can1;
 
-static uint16_t can1_id_list_standard[4] = {
-	// CANID_X,
-	DTI_CURRENT_CANID,
-};
-
-static uint32_t can1_id_list_extended[2] = {
-	// CANID_X,
-	CHARGERBOX_CANID
-};
-
-uint8_t init_can(FDCAN_HandleTypeDef *hcan)
+uint8_t init_can1(FDCAN_HandleTypeDef *hcan)
 {
-	return can_filter_init(hcan, &can1, can1_id_list_standard,
-			       can1_id_list_extended);
+	/* Init CAN interface */
+	HAL_StatusTypeDef status = can_init(&can1, hcan);
+	if (status != HAL_OK) {
+		PRINTLN_ERROR(
+			"Failed to execute can_init() when initializing can1 (Status: %d/%s).",
+			status, hal_status_toString(status));
+		return U_ERROR;
+	}
+
+	/* Add filters for standard IDs */
+	uint16_t standard1[] = {DTI_CURRENT_CANID, BATTBOX_TEMP_CANID};
+	status = can_add_filter_standard(&can1, standard1);
+	if (status != HAL_OK) {
+		PRINTLN_ERROR(
+			"Failed to add standard filter to can1 (Status: %d/%s, ID1: %d, ID2: %d).",
+			status, hal_status_toString(status),
+			standard1[0], standard1[1]);
+		return U_ERROR;
+	}
+
+	uint16_t standard2[] = {CALYPSO_CONTROL_CANID, CALYPSO_CONTROL_CANID};
+	status = can_add_filter_standard(&can1, standard2);
+	if (status != HAL_OK) {
+		PRINTLN_ERROR(
+			"Failed to add standard filter to can1 (Status: %d/%s, ID1: %d, ID2: %d).",
+			status, hal_status_toString(status),
+			standard2[0], standard2[1]);
+		return U_ERROR;
+	}
+
+	/* Add fitlers for extended IDs */
+	uint32_t extended1[] = {CHARGERBOX_CANID, CHARGERBOX_CANID};
+	status = can_add_filter_extended(&can1, extended1);
+	if (status != HAL_OK) {
+		PRINTLN_ERROR(
+			"Failed to add extended filter to can1 (Status: %d/%s, ID1: %ld, ID2: %ld).",
+			status, hal_status_toString(status),
+			extended1[0], extended1[1]);
+		return U_ERROR;
+	}
+
+	PRINTLN_INFO("Ran can1_init().");
+
+	return U_SUCCESS;
 }
 
 static uint8_t receive_can_msg(can_msg_t can_msg)
@@ -113,7 +145,7 @@ void vCanReceive(ULONG thred_input)
 void vCanDispatch(ULONG thread_input)
 {
 	// INITIALIZING CAN
-	assert(!init_can(&hfdcan2));
+	assert(!init_can1(&hfdcan2));
 	PRINTLN_INFO("INITIALIZED CAN");
 
 	can_msg_t message;
