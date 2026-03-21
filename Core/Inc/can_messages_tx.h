@@ -259,9 +259,9 @@ uint8_t send_fan_duty_cycle_percentage
 
 /**
 * Contents of this message:
-* BMS/{1}/OnboardTemp1 - Temp of onboard therm 1
-* BMS/{1}/OnboardTemp2 - Temp of onboard therm 2
-* BMS/{1}/OnboardTemp3 - Temp of onboard therm 3
+* BMS/SegmentTemps/{1}/OnboardTemp1 - Temp of onboard therm 1
+* BMS/SegmentTemps/{1}/OnboardTemp2 - Temp of onboard therm 2
+* BMS/SegmentTemps/{1}/OnboardTemp3 - Temp of onboard therm 3
 */
 uint8_t send_onboard_therm_temperatures
 (uint8_t chip_id,float therm_temp_1,float therm_temp_2,float therm_temp_3);
