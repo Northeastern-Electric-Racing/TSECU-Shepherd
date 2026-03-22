@@ -57,7 +57,7 @@ bool control_init_peripherals(void)
 	return true;
 }
 
-// 1 from vcu and 1 from calypso
+
 
 void control_fan(float pack_high_temp)
 {
@@ -132,6 +132,7 @@ void vControl(ULONG thread_input)
 		mutex_put(&analyzer_mutex);
 
 		send_fan_duty_cycle_percentage(control_device_signals[DEVICE_FAN0]);
+		send_fan_duty_cycle_percentage(control_device_signals[DEVICE_FAN1]);
 
 		tx_thread_sleep(MS_TO_TICKS(100));
 	}
