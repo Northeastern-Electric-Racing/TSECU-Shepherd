@@ -586,7 +586,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 			.lim_1 = true,
 			.timeout = 0,
 			.optype_2 = NOP, // UNUSED
-			.is_critical = true
+			.is_critical = false
 		};
 		initialized = true;
 	}
