@@ -173,7 +173,7 @@ void vDefaultTask(ULONG thread_input)
 		alt = !alt;
 
 		//HAL_IWDG_Refresh(&hiwdg);
-		tx_thread_sleep(MS_TO_TICKS(100));
+		thread_sleep_ms(100);
 	}
 }
 
@@ -237,7 +237,7 @@ void vDebug(ULONG thread_input)
 									    1]);
 				}
 
-				tx_thread_sleep(10); // TODO: enhance timing
+				thread_sleep_ms(10); // TODO: enhance timing
 			}
 
 			send_chip_a_debug(chip, chip_data->die_temp,
@@ -254,7 +254,7 @@ void vDebug(ULONG thread_input)
 					  chip_data->flt_reg.tmodchk > 0,
 					  chip_data->flt_reg.oscchk > 0);
 
-			tx_thread_sleep(30); // TODO: enhance timing
+			thread_sleep_ms(30); // TODO: enhance timing
 
 			send_chip_b_debug(chip_data->v_res, chip,
 					  chip_data->vref2, chip_data->v_analog,
@@ -262,14 +262,14 @@ void vDebug(ULONG thread_input)
 					  chip_data->flt_reg.otp1_med > 0,
 					  chip_data->flt_reg.otp2_med > 0);
 
-			tx_thread_sleep(30); // TODO: enhance timings
+			thread_sleep_ms(30); // TODO: enhance timings
 
 			send_onboard_therm_temperatures(
 				chip, chip_data->on_board_temp[0],
 				chip_data->on_board_temp[1],
 				chip_data->on_board_temp[2]);
 
-			tx_thread_sleep(30); // TODO: enhance timings
+			thread_sleep_ms(30); // TODO: enhance timings
 		}
 	}
 }

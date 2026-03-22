@@ -182,7 +182,7 @@ void vHvPlateData(ULONG thread_input)
 	// initialize HV Plate struct and start conversions
 	init_hv_plate(hv_plate, ACCI_8);
 
-	tx_thread_sleep(MS_TO_TICKS(500));
+	thread_sleep_ms(500);
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
@@ -246,6 +246,6 @@ void vHvPlateData(ULONG thread_input)
 
 		send_hv_plate_pec_errors_message();
 
-		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
+		thread_sleep_ms(hv_plate_task_delay);
 	}
 }

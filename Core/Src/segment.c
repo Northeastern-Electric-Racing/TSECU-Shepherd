@@ -361,7 +361,7 @@ void vGetSegmentData(ULONG thread_input)
 	isospi_break_detection_init(acc_data->chips);
 
 	// must delay after init for ADC to start up
-	tx_thread_sleep(MS_TO_TICKS(200));
+	thread_sleep_ms(200);
 
 	state_t prev_state = BOOT;
 	state_t current_state = BOOT;
@@ -373,8 +373,7 @@ void vGetSegmentData(ULONG thread_input)
 		current_state = get_current_state(state_machine);
 
 		if (prev_state == BALANCING && current_state == CHARGING) {
-			tx_thread_sleep(MS_TO_TICKS(
-				balancing_delay)); // delay after balancing to let cells settle
+			thread_sleep_ms(balancing_delay); // delay after balancing to let cells settle
 		}
 
 		if (current_state == CHARGING || current_state == BALANCING) {
@@ -410,6 +409,6 @@ void vGetSegmentData(ULONG thread_input)
 		}
 
 		set_flag(ANALYZER_FLAG);
-		tx_thread_sleep(MS_TO_TICKS(750));
+		thread_sleep_ms(750);
 	}
 }

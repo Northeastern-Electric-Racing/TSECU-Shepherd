@@ -100,6 +100,6 @@ void vControl(ULONG thread_input)
 
 		send_fan_duty_cycle_percentage(control_device_signals[DEVICE_FAN0]);
 
-		tx_thread_sleep(MS_TO_TICKS(100));
+		thread_sleep_ms(100);
 	}
 }

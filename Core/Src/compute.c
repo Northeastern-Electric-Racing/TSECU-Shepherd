@@ -211,7 +211,7 @@ int imu_init(void)
 	// HAL_Delay(30); // This is probably overkill, but the datasheet lists the
 	// gyroscope's "Turn-on time" as 30ms, and I can't find anything else that
 	// specifies how long resets take.
-	tx_thread_sleep(30);
+	thread_sleep_ms(30);
 	printf("after HAL_DELAY()\n");
 
 	/* Enable Block Data Update. */
@@ -389,6 +389,6 @@ void vPeripherals(ULONG thread_input)
 
 		mutex_put(&peripherals_mutex);
 
-		tx_thread_sleep(MS_TO_TICKS(50));
+		thread_sleep_ms(50);
 	}
 }
