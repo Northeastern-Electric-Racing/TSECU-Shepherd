@@ -23,7 +23,6 @@ set(CMAKE_PROJECT_NAME TSECU-Shepherd)
 
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-
 # Core project settings
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
@@ -64,7 +63,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/adbms/adbms2950/lib/src/adi_bms_2950data.c"
     "Drivers/adbms/adbms2950/lib/src/adi_bms_utility.c"
     "Drivers/adbms/adbms2950/program/src/adbms_2950.c"
-    "Drivers/adbms/adbms2950/program/src/application.c"
     "Drivers/adbms/adbms2950/program/src/pal.c"
     "Drivers/adbms/adbms2950/program/src/print_result.c"
     "Drivers/Embedded-Base/threadX/src/u_tx_debug.c"
@@ -81,17 +79,18 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/middleware/src/c_utils.c"
     "Drivers/Embedded-Base/platforms/stm32h563/src/fdcan.c"
     "Drivers/Embedded-Base/middleware/src/timer.c"
+    "Drivers/Embedded-Base/general/src/p3t1755.c"
     "Core/Src/adi2950_interaction.c"
     "Core/Src/adi6830_interaction.c"
     "Core/Src/analyzer.c"
     "Core/Src/can_handler.c"
-    "Core/Src/can_messages.c"
+    "Core/Src/can_messages_tx.c"
     "Core/Src/ethernet.c"
     "Core/Src/charging.c"
     "Core/Src/compute.c"
     "Core/Src/hv_plate.c"
     "Core/Src/segment.c"
-    "Core/Src/shep_queues.c"
+    "Core/Src/u_queues.c"
     "Core/Src/shep_tasks.c"
     "Core/Src/state_machine.c"
     "Core/Src/cell_temp_sanitizer.c"
@@ -103,6 +102,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/control.c"
     "Core/Src/traceout_app.c"
     "Core/Src/shep_mutexes.c"
+    "Core/Src/precharge_routine.c"
+    "Drivers/Embedded-Base/middleware/src/debounce.c"
 )
 
 # Add include paths

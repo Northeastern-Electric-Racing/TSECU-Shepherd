@@ -1,15 +1,59 @@
 #include "compute.h"
-#include <assert.h>
-#include <stdlib.h>
-#include "datastructs.h"
-#include "main.h"
-#include "sht30.h"
-#include "lsm6dsv_reg.h"
+
 #include "app_threadx.h"
+#include "datastructs.h"
+#include "lsm6dsv_reg.h"
+#include "main.h"
+#include "p3t1755.h"
 #include "shep_mutexes.h"
+#include "sht30.h"
+#include "stm32h5xx_hal_def.h"
+#include "stm32h5xx_hal_i2c.h"
+#include "can_messages_tx.h"
+#include "timer.h"
+#include "u_tx_debug.h"
+#include <assert.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 #define IMU_CS_GPIO_Port SPI6_CS_GPIO_Port
 #define IMU_CS_Pin	 SPI6_CS_Pin
+
+extern I2C_HandleTypeDef hi2c1;
+
+// NOTE: that this is a blocking call
+static int32_t _p3t1755_read(uint16_t dev_addr, uint16_t reg, uint8_t *data,
+			     uint8_t length)
+{
+	HAL_StatusTypeDef status = HAL_I2C_Mem_Read(&hi2c1, dev_addr, reg,
+						    sizeof(reg), data, length,
+						    HAL_MAX_DELAY);
+
+	if (status != HAL_OK) {
+		PRINTLN_ERROR(
+			"Failed to call HAL_I2C_Master_Receive() to read from P3T1755 (Status: "
+			"%d/%s).",
+			status, hal_status_toString(status));
+		return status;
+	}
+	return HAL_OK;
+}
+
+// NOTE:  this is a blocking call
+static int32_t _p3t1755_write(uint16_t dev_addr, uint16_t reg, uint8_t *data,
+			      uint8_t length)
+{
+	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(
+		&hi2c1, dev_addr, data, length, HAL_MAX_DELAY);
+	if (status != HAL_OK) {
+		PRINTLN_ERROR(
+			"Failed to call HAL_I2C_Master_Transmit() to write to "
+			"P3T1755 (Status: %d/%s).",
+			status, hal_status_toString(status));
+		return status;
+	}
+	return HAL_OK;
+}
 
 /* Wrapper for lsm6dsv SPI reading. */
 static int32_t _lsm6dsv_read(void *spi_handle, uint8_t reg, uint8_t *buffer,
@@ -24,12 +68,15 @@ static int32_t _lsm6dsv_read(void *spi_handle, uint8_t reg, uint8_t *buffer,
 	/* Tell the IMU you want to read from 'reg'. */
 	uint8_t spi_reg =
 		(uint8_t)(reg |
-			  0b10000000); // Bits 0 through 6 store 'reg' (the register address), while Bit 7 lets you chose if it's a read or write operation (1=read, 0=write).
+			  0b10000000); // Bits 0 through 6 store 'reg' (the register
+	// address), while Bit 7 lets you chose if it's a
+	// read or write operation (1=read, 0=write).
 	status = HAL_SPI_Transmit(handle, &spi_reg, sizeof(spi_reg),
 				  HAL_MAX_DELAY);
 	if (status != HAL_OK) {
 		PRINTLN_ERROR(
-			"Failed to call HAL_SPI_Transmit() to write the first SPI command (Status: %d/%s).",
+			"Failed to call HAL_SPI_Transmit() to write the first SPI "
+			"command (Status: %d/%s).",
 			status, hal_status_toString(status));
 		HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin,
 				  GPIO_PIN_SET); // Deselect IMU since error.
@@ -66,12 +113,15 @@ static int32_t _lsm6dsv_write(void *spi_handle, uint8_t reg,
 	/* Tell the IMU you want to write to 'reg'. */
 	uint8_t spi_reg =
 		(uint8_t)(reg &
-			  0b01111111); // Bits 0 through 6 store 'reg' (the register address), while Bit 7 lets you chose if it's a read or write operation (1=read, 0=write).
+			  0b01111111); // Bits 0 through 6 store 'reg' (the register
+	// address), while Bit 7 lets you chose if it's a
+	// read or write operation (1=read, 0=write).
 	status = HAL_SPI_Transmit(handle, &spi_reg, sizeof(spi_reg),
 				  HAL_MAX_DELAY);
 	if (status != HAL_OK) {
 		PRINTLN_ERROR(
-			"Failed to call HAL_SPI_Transmit() to write the first SPI command (Status: %d/%s).",
+			"Failed to call HAL_SPI_Transmit() to write the first SPI "
+			"command (Status: %d/%s).",
 			status, hal_status_toString(status));
 		HAL_GPIO_WritePin(IMU_CS_GPIO_Port, IMU_CS_Pin,
 				  GPIO_PIN_SET); // Deselect IMU since error.
@@ -95,6 +145,30 @@ static int32_t _lsm6dsv_write(void *spi_handle, uint8_t reg,
 	return 0;
 }
 
+static p3t1755_t p3t = { P3T1755_DEV_ADDR, _p3t1755_write, _p3t1755_read };
+int p3t_init(void)
+{
+	p3t1755_init(&p3t, p3t.write, p3t.read, P3T1755_DEV_ADDR);
+	int status = p3t1755_configure(&p3t, 0, 0, 0,
+				       p3t1755_2_CONSECUTIVE_FAULTS,
+				       p3t1755_27_5MS_CONVERSION_TIME);
+	if (status != 0) {
+		PRINTLN_ERROR(
+			"Failed to configure P3T1755 via p3t1755_configure() (Status: %d).",
+			status);
+		return U_ERROR;
+	}
+
+	return U_SUCCESS;
+}
+
+int p3t1755_getBoardTemp(float *temp_c)
+{
+	int status = p3t1755_read_temperature(&p3t, temp_c);
+	PRINTLN_INFO("Read board temp: %f", *temp_c);
+	return status;
+}
+
 static const stmdev_ctx_t imu = { .handle = &hspi6,
 				  .read_reg = _lsm6dsv_read,
 				  .write_reg = _lsm6dsv_write };
@@ -115,7 +189,8 @@ int imu_init(void)
 	}
 	if (id != LSM6DSV_ID) {
 		PRINTLN_ERROR(
-			"lsm6dsv_device_id_get() returned an unexpected ID (id=%d, expected=%d). This means that the IMU is not configured correctly.",
+			"lsm6dsv_device_id_get() returned an unexpected ID (id=%d, "
+			"expected=%d). This means that the IMU is not configured correctly.",
 			id, LSM6DSV_ID);
 		return U_ERROR;
 	}
@@ -133,54 +208,59 @@ int imu_init(void)
 	printf("after lsm6dsv_reset_set()\n");
 
 	printf("before HAL_DELAY()\n");
-	//HAL_Delay(30); // This is probably overkill, but the datasheet lists the gyroscope's "Turn-on time" as 30ms, and I can't find anything else that specifies how long resets take.
+	// HAL_Delay(30); // This is probably overkill, but the datasheet lists the
+	// gyroscope's "Turn-on time" as 30ms, and I can't find anything else that
+	// specifies how long resets take.
 	tx_thread_sleep(30);
 	printf("after HAL_DELAY()\n");
 
 	/* Enable Block Data Update. */
 	status = lsm6dsv_block_data_update_set(
 		&imu,
-		PROPERTY_ENABLE); // Makes it so "output registers are not updated until LSB and MSB have been read". Datasheet says this is enabled by default but figured it was better to be explicit.
+		PROPERTY_ENABLE); // Makes it so "output registers are not updated until
+	// LSB and MSB have been read". Datasheet says this is
+	// enabled by default but figured it was better to be
+	// explicit.
 	if (status != 0) {
-		PRINTLN_ERROR(
-			"Failed to enable Block Data Update via lsm6dsv_block_data_update_set() (Status: %d).",
-			status);
+		PRINTLN_ERROR("Failed to enable Block Data Update via "
+			      "lsm6dsv_block_data_update_set() (Status: %d).",
+			      status);
 		return U_ERROR;
 	}
 
 	/* Set Accelerometer Full Scale. */
 	status = lsm6dsv_xl_full_scale_set(&imu, LSM6DSV_2g);
 	if (status != 0) {
-		PRINTLN_ERROR(
-			"Failed to set IMU Accelerometer Full Scale via lsm6dsv_xl_full_scale_set() (Status: %d).",
-			status);
+		PRINTLN_ERROR("Failed to set IMU Accelerometer Full Scale via "
+			      "lsm6dsv_xl_full_scale_set() (Status: %d).",
+			      status);
 		return U_ERROR;
 	}
 
 	/* Set gyroscope full scale. */
 	status = lsm6dsv_gy_full_scale_set(&imu, LSM6DSV_2000dps);
 	if (status != 0) {
-		PRINTLN_ERROR(
-			"Failed to set IMU Gyroscope Full Scale via lsm6dsv_gy_full_scale_set() (Status: %d).",
-			status);
+		PRINTLN_ERROR("Failed to set IMU Gyroscope Full Scale via "
+			      "lsm6dsv_gy_full_scale_set() (Status: %d).",
+			      status);
 		return U_ERROR;
 	}
 
 	/* Set accelerometer output data rate. */
 	status = lsm6dsv_xl_data_rate_set(&imu, LSM6DSV_ODR_AT_120Hz);
 	if (status != 0) {
-		PRINTLN_ERROR(
-			"Failed to set IMU Accelerometer Datarate via lsm6dsv_xl_data_rate_set() (Status: %d).",
-			status);
+		PRINTLN_ERROR("Failed to set IMU Accelerometer Datarate via "
+			      "lsm6dsv_xl_data_rate_set() (Status: %d).",
+			      status);
 		return U_ERROR;
 	}
 
 	/* Set gyroscope output data rate. */
 	status = lsm6dsv_gy_data_rate_set(&imu, LSM6DSV_ODR_AT_120Hz);
 	if (status != 0) {
-		PRINTLN_ERROR(
-			"Failed to set IMU Gyroscope Datarate via lsm6dsv_gy_data_rate_set() (Status: %d).",
-			status);
+		PRINTLN_ERROR("Failed to set IMU Gyroscope Datarate via "
+			      "lsm6dsv_gy_data_rate_set() (Status: %d).",
+			      status);
 		return U_ERROR;
 	}
 
@@ -202,7 +282,10 @@ int imu_getAcceleration(vector3_t *data)
 
 	/* Convert to mg (milligravity). */
 	data->x = lsm6dsv_from_fs2_to_mg(
-		raw_data[0]); // Somewhat important: These functions MUST match the full-scale settings configured in peripherals_init(). The conversions will be incorrect if you use the wrong functions.
+		raw_data[0]); // Somewhat important: These functions MUST match the
+	// full-scale settings configured in peripherals_init(). The
+	// conversions will be incorrect if you use the wrong
+	// functions.
 	data->y = lsm6dsv_from_fs2_to_mg(raw_data[1]);
 	data->z = lsm6dsv_from_fs2_to_mg(raw_data[2]);
 
@@ -223,20 +306,22 @@ int imu_getAngularRate(vector3_t *data)
 
 	/* Convert to mdps (millidegrees per second). */
 	data->x = lsm6dsv_from_fs2000_to_mdps(
-		raw_data[0]); // Somewhat important: These functions MUST match the full-scale settings configured in peripherals_init(). The conversions will be incorrect if you use the wrong functions.
+		raw_data[0]); // Somewhat important: These functions MUST match the
+	// full-scale settings configured in peripherals_init(). The
+	// conversions will be incorrect if you use the wrong
+	// functions.
 	data->y = lsm6dsv_from_fs2000_to_mdps(raw_data[1]);
 	data->z = lsm6dsv_from_fs2000_to_mdps(raw_data[2]);
 
 	return U_SUCCESS;
 }
 
-extern I2C_HandleTypeDef hi2c1;
-
-
-void init_compute(peripherals_t *peripherals)
+int init_compute(peripherals_t *peripherals)
 {
-	assert(peripherals);
-	assert(!imu_init());
+	int status;
+	CATCH_ERROR(status = imu_init(), U_SUCCESS);
+	CATCH_ERROR(status = p3t_init(), U_SUCCESS);
+	return status;
 }
 
 void compute_set_fault(bool fault_state)
@@ -268,20 +353,39 @@ bool read_shutdown()
 // PERIPHERALS THREAD
 void vPeripherals(ULONG thread_input)
 {
+	const uint32_t TELEM_TIMEOUT = 500; // ms
+
 	PRINTLN_INFO("Starting Peripherals thread...");
 
 	peripherals_args_t *peripherals_args =
 		(peripherals_args_t *)thread_input;
-  peripherals_t *peripherals = peripherals_args->peripherals;
+	peripherals_t *peripherals = peripherals_args->peripherals;
+
+	nertimer_t telem_timer = { 0 };
 
 	init_compute(peripherals);
-	imu_data_t imu_data = peripherals->imu_data;
+
+	start_timer(&telem_timer, TELEM_TIMEOUT);
 
 	for (;;) {
 		mutex_get(&peripherals_mutex);
 
-		imu_getAcceleration(&imu_data.accel_data);
-		imu_getAngularRate(&imu_data.ang_rate_data);
+		imu_getAcceleration(&peripherals->imu_data.accel_data);
+		imu_getAngularRate(&peripherals->imu_data.ang_rate_data);
+		p3t1755_getBoardTemp(&peripherals->onboard_temp);
+
+		if (is_timer_expired(&telem_timer) &&
+		    !is_timer_active(&telem_timer)) {
+			send_bms_onboard_temperature(peripherals->onboard_temp);
+			send_bms_imu_accelerometer(
+				peripherals->imu_data.accel_data.x,
+				peripherals->imu_data.accel_data.y,
+				peripherals->imu_data.accel_data.z);
+			send_bms_imu_gyro(
+				peripherals->imu_data.ang_rate_data.x,
+				peripherals->imu_data.ang_rate_data.y,
+				peripherals->imu_data.ang_rate_data.z);
+		}
 
 		mutex_put(&peripherals_mutex);
 

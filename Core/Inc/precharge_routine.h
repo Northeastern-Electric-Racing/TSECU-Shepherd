@@ -4,6 +4,7 @@
 #include "adi2950_interaction.h"
 #include "timer.h"
 #include "hv_plate.h"
+#include "can_messages_tx.h"
 
 typedef struct {
 	hv_plate_t *hv_plate;
