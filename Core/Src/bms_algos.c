@@ -2,8 +2,6 @@
 #include "state_machine.h"
 #include "ccl.h"
 #include "dcl.h"
-#include "soc.h"
-#include "can_messages_tx.h"
 
 bool disable_pulse(state_machine_t *const state_machine)
 {
@@ -41,8 +39,6 @@ void vBMSAlgorithms(ULONG thread_input)
 
 		dcl_calc_inst_limit(algo_inputs, bms_algos);
 		ccl_calc_inst_limit(algo_inputs, bms_algos);
-
-		send_pack_soc_status(analyzer->soc, get_soc_drift());
 
 		tx_thread_sleep(MS_TO_TICKS(500));
 	}

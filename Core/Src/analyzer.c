@@ -8,6 +8,7 @@
 #include "u_tx_flags.h"
 #include "can_messages_tx.h"
 #include "shep_mutexes.h"
+#include "soc.h"
 
 #define OCV_TIMER_DURATION 750 // in ticks
 
@@ -409,5 +410,6 @@ void vAnalyzer(ULONG thread_input)
 		    );
 		send_segment_temperatures(
 		analyzer->segment_average_temps[0], analyzer->segment_average_temps[1], analyzer->segment_average_temps[2], analyzer->segment_average_temps[3], analyzer->segment_average_temps[4]);
+		send_pack_soc_status(analyzer->soc, get_soc_drift());
 	}
 }
