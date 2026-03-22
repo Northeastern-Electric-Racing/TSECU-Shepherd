@@ -358,7 +358,7 @@ void vGetSegmentData(ULONG thread_input)
 
 	segment_init(acc_data->chips, &hspi2);
 
-	isospi_break_detection_init(acc_data->chips);
+	//isospi_break_detection_init(acc_data->chips);
 
 	// must delay after init for ADC to start up
 	tx_thread_sleep(MS_TO_TICKS(200));
@@ -381,17 +381,18 @@ void vGetSegmentData(ULONG thread_input)
 			// in charging, debug data is required to get things like die temp
 			segment_retrieve_charging_data(acc_data->chips, &hspi2);
 			send_segment_pec_errors_message();
-			isospi_handle_state(acc_data->chips, state_machine,
-					    &hspi2);
+			// isospi_handle_state(acc_data->chips, state_machine,
+					    // &hspi2);
 		} else {
 			// snap before getting data
 			segment_snap(acc_data->chips, &hspi2);
+			PRINTLN_INFO("ACTIVE DATA-------------------------");
 			segment_retrieve_active_data(acc_data->chips, &hspi2);
 			// unsnap after getting data
 			segment_unsnap(acc_data->chips, &hspi2);
 			send_segment_pec_errors_message();
-			isospi_handle_state(acc_data->chips, state_machine,
-					    &hspi2);
+			//isospi_handle_state(acc_data->chips, state_machine,
+			//		    &hspi2);
 
 			if (DEBUG_MODE_ENABLED) {
 				segment_retrieve_debug_data(acc_data->chips,

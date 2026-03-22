@@ -161,7 +161,7 @@ void dcl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 
 					// Cancel debounce if condition clears
 					cancel_timer(&dcl_ctrl.t_above);
-				}
+				}	
 				break;
 
 			case CURRENT_LIMIT_STATE_PULSE:

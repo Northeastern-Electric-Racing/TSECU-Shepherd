@@ -103,8 +103,8 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			PRINTLN_INFO(
-				"%.2f\t",
-				analyzer->chip_data[c].cell_voltages[cell]);
+				"Chip %d, Cell %d: %.2f\t",
+				c, cell, analyzer->chip_data[c].cell_voltages[cell]);
 		}
 		printf("\n");
 	}
@@ -113,8 +113,8 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			PRINTLN_INFO(
-				"%.2f\t",
-				analyzer->chip_data[c].open_cell_voltage[cell]);
+				"Chip %d, Cell %d: %.2f\t",
+				c, cell, analyzer->chip_data[c].open_cell_voltage[cell]);
 		}
 		printf("\n");
 	}
@@ -510,25 +510,25 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 
 	/* Task Definitions End */
 	CATCH_ERROR(create_thread(byte_pool, &_default_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
-		    U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_state_machine_thread),
+		    // U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
-		    U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
+		    // U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
+		    // U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_precharge_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
+		    // U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
+		    // U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_control_thread), U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_peripherals_thread), U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_precharge_thread), U_SUCCESS);
+	// CATCH_ERROR(create_thread(byte_pool, &_debug_thread), U_SUCCESS);
 
 	PRINTLN_INFO("Ran threads_init()");
 	return U_SUCCESS;

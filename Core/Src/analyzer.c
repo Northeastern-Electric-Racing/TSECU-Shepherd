@@ -59,7 +59,7 @@ void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 			analyzer->chip_data[chip].cell_temp[cell] =
 				calc_cell_temp(getVoltage(x));
 		}
-
+		
 		// Calculate onboard therm temps and chip temps
 		analyzer->chip_data[chip].on_board_temp[0] = calc_cell_temp(
 			getVoltage(acc_data->chips[chip].raux.ra_codes[2]));
@@ -67,6 +67,14 @@ void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 			getVoltage(acc_data->chips[chip].raux.ra_codes[3]));
 		analyzer->chip_data[chip].on_board_temp[2] = calc_cell_temp(
 			getVoltage(acc_data->chips[chip].raux.ra_codes[4]));
+
+		PRINTLN_INFO("Chip %d, Onboard Temp 1: %f --------------------",
+			     chip, analyzer->chip_data[chip].on_board_temp[0]);
+		PRINTLN_INFO("Chip %d, Onboard Temp 2: %f --------------------",
+			     chip, analyzer->chip_data[chip].on_board_temp[1]);
+		PRINTLN_INFO(
+			"Chip %d, Onboard Temps 3: %f --------------------",
+			chip, analyzer->chip_data[chip].on_board_temp[2]);
 
 		/* set the die temp */
 		// conversion rate from datasheet, Table 105.  also in driver src
@@ -395,19 +403,32 @@ void vAnalyzer(ULONG thread_input)
 		set_flag(DEBUG_FLAG);
 
 		// send out telemetry data sourced from the above functions
-		send_cell_voltage(analyzer->max_ocv.val, analyzer->max_ocv.chipIndex, analyzer->max_ocv.cellNum,
-		                  analyzer->min_ocv.val, analyzer->min_ocv.chipIndex, analyzer->min_ocv.cellNum,
-					  analyzer->avg_ocv
-		    );
+		send_cell_voltage(analyzer->max_ocv.val,
+				  analyzer->max_ocv.chipIndex,
+				  analyzer->max_ocv.cellNum,
+				  analyzer->min_ocv.val,
+				  analyzer->min_ocv.chipIndex,
+				  analyzer->min_ocv.cellNum, analyzer->avg_ocv);
 		send_segment_average_voltages(
-			analyzer->segment_average_volts[0], analyzer->segment_average_volts[1], analyzer->segment_average_volts[2], analyzer->segment_average_volts[3], analyzer->segment_average_volts[4]);
-		send_segment_total_voltages(
-		analyzer->segment_total_volts[0], analyzer->segment_total_volts[1], analyzer->segment_total_volts[2], analyzer->segment_total_volts[3], analyzer->segment_total_volts[4]);
-		send_cell_temperatures(analyzer->max_temp.val, analyzer->max_temp.chipIndex, analyzer->max_temp.cellNum,
-		                  analyzer->min_temp.val, analyzer->min_temp.chipIndex, analyzer->min_temp.cellNum,
-					  analyzer->avg_temp
-		    );
-		send_segment_temperatures(
-		analyzer->segment_average_temps[0], analyzer->segment_average_temps[1], analyzer->segment_average_temps[2], analyzer->segment_average_temps[3], analyzer->segment_average_temps[4]);
+			analyzer->segment_average_volts[0],
+			analyzer->segment_average_volts[1],
+			analyzer->segment_average_volts[2],
+			analyzer->segment_average_volts[3],
+			analyzer->segment_average_volts[4]);
+		send_segment_total_voltages(analyzer->segment_total_volts[0],
+					    analyzer->segment_total_volts[1],
+					    analyzer->segment_total_volts[2],
+					    analyzer->segment_total_volts[3],
+					    analyzer->segment_total_volts[4]);
+		send_cell_temperatures(
+			analyzer->max_temp.val, analyzer->max_temp.chipIndex,
+			analyzer->max_temp.cellNum, analyzer->min_temp.val,
+			analyzer->min_temp.chipIndex,
+			analyzer->min_temp.cellNum, analyzer->avg_temp);
+		send_segment_temperatures(analyzer->segment_average_temps[0],
+					  analyzer->segment_average_temps[1],
+					  analyzer->segment_average_temps[2],
+					  analyzer->segment_average_temps[3],
+					  analyzer->segment_average_temps[4]);
 	}
 }
