@@ -76,6 +76,7 @@ void control_fan(float pack_high_temp) {
   uint16_t duty1 = _PERCENT_16(calypso_signals[DEVICE_FAN1]);
   // uint16_t duty1 = _PERCENT_16(100);
   control_device_signals[DEVICE_FAN1] = (uint8_t)(duty1 >> 8);
+  PRINTLN_INFO("duty1: %d", duty1);
   _write_pwm_device(&device_fan1, duty1);
 }
 

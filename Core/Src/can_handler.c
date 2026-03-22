@@ -127,6 +127,7 @@ void vCanReceive(ULONG thred_input) {
         control_message_fans(message);
         break;
       case BATTBOX_TEMP_CANID:
+        PRINTLN_INFO("BATTBOX_TEMP_CANID recived: %d", *message.data);
         control_message_fans_lv(message);
         break;
       default:
