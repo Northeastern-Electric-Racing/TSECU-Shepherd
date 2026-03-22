@@ -16,141 +16,6 @@
 static void handle_bitstream_overflow(bitstream_t *bitstream_res,
 					    uint32_t can_id);
 
-uint8_t send_max_ac_current_command
-(float max_current_ac_target)
-{
-    can_msg_t msg;
-    msg.id = 0x116;
-    msg.id_is_extended = false;
-    msg.len = 8;
-
-    
-            uint64_t data = 0;
-                        int32_t max_current_ac_target_i = (int32_t)(max_current_ac_target*10);
-                        if(max_current_ac_target_i > 32767) {max_current_ac_target_i = 32767;
-                        } else if(max_current_ac_target_i < -32768) {max_current_ac_target_i = -32768;
-                        }
-                        data |= ((uint32_t)(max_current_ac_target_i) & 0xFFFFULL) << 48;
-            
-            uint64_t data_bigendian = __builtin_bswap64(data);
-            memcpy(msg.data, &data_bigendian, 8);
-        
-
-    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
-}
-
-uint8_t send_max_ac_brake_current_command
-(float max_ac_brake_current_target)
-{
-    can_msg_t msg;
-    msg.id = 0x136;
-    msg.id_is_extended = false;
-    msg.len = 8;
-
-    
-            uint64_t data = 0;
-                        int32_t max_ac_brake_current_target_i = (int32_t)(max_ac_brake_current_target*10);
-                        if(max_ac_brake_current_target_i > 32767) {max_ac_brake_current_target_i = 32767;
-                        } else if(max_ac_brake_current_target_i < -32768) {max_ac_brake_current_target_i = -32768;
-                        }
-                        data |= ((uint32_t)(max_ac_brake_current_target_i) & 0xFFFFULL) << 48;
-            
-            uint64_t data_bigendian = __builtin_bswap64(data);
-            memcpy(msg.data, &data_bigendian, 8);
-        
-
-    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
-}
-
-uint8_t send_max_dc_current_command
-(float max_dc_current_target)
-{
-    can_msg_t msg;
-    msg.id = 0x156;
-    msg.id_is_extended = false;
-    msg.len = 2;
-
-    
-            uint16_t data = 0;
-                        int32_t max_dc_current_target_i = (int32_t)(max_dc_current_target*10);
-                        if(max_dc_current_target_i > 32767) {max_dc_current_target_i = 32767;
-                        } else if(max_dc_current_target_i < -32768) {max_dc_current_target_i = -32768;
-                        }
-                        data |= ((uint32_t)(max_dc_current_target_i) & 0xFFFFULL) << 0;
-            
-            uint16_t data_bigendian = __builtin_bswap16(data);
-            memcpy(msg.data, &data_bigendian, 2);
-        
-
-    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
-}
-
-uint8_t send_max_dc_brake_current_command
-(float max_dc_brake_current_target)
-{
-    can_msg_t msg;
-    msg.id = 0x176;
-    msg.id_is_extended = false;
-    msg.len = 2;
-
-    
-            uint16_t data = 0;
-                        int32_t max_dc_brake_current_target_i = (int32_t)(max_dc_brake_current_target*10);
-                        if(max_dc_brake_current_target_i > 32767) {max_dc_brake_current_target_i = 32767;
-                        } else if(max_dc_brake_current_target_i < -32768) {max_dc_brake_current_target_i = -32768;
-                        }
-                        data |= ((uint32_t)(max_dc_brake_current_target_i) & 0xFFFFULL) << 0;
-            
-            uint16_t data_bigendian = __builtin_bswap16(data);
-            memcpy(msg.data, &data_bigendian, 2);
-        
-
-    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
-}
-
-uint8_t send_pack_status
-(float voltage,float current,float amp_hours,float soc,float health)
-{
-    can_msg_t msg;
-    msg.id = 0x80;
-    msg.id_is_extended = false;
-    msg.len = 8;
-
-    
-            uint64_t data = 0;
-                        uint32_t voltage_i = (uint32_t)(voltage*10);
-                        if(voltage_i > 65535ULL) {voltage_i = 65535;
-                        }
-                        data |= ((voltage_i) & 0xFFFFULL) << 48;
-            
-                        int32_t current_i = (int32_t)(current*10);
-                        if(current_i > 32767) {current_i = 32767;
-                        } else if(current_i < -32768) {current_i = -32768;
-                        }
-                        data |= ((uint32_t)(current_i) & 0xFFFFULL) << 32;
-            
-                        uint32_t amp_hours_i = (uint32_t)(amp_hours);
-                        if(amp_hours_i > 65535ULL) {amp_hours_i = 65535;
-                        }
-                        data |= ((amp_hours_i) & 0xFFFFULL) << 16;
-            
-                        uint32_t soc_i = (uint32_t)(soc);
-                        if(soc_i > 255ULL) {soc_i = 255;
-                        }
-                        data |= ((soc_i) & 0xFFULL) << 8;
-            
-                        uint32_t health_i = (uint32_t)(health);
-                        if(health_i > 255ULL) {health_i = 255;
-                        }
-                        data |= ((health_i) & 0xFFULL) << 0;
-            
-            uint64_t data_bigendian = __builtin_bswap64(data);
-            memcpy(msg.data, &data_bigendian, 8);
-        
-
-    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
-}
-
 uint8_t send_bms_status
 (uint8_t state,float temp_average)
 {
@@ -1333,6 +1198,126 @@ uint8_t send_bms_imu_gyro
             
             uint64_t data_bigendian = __builtin_bswap64(data);
             memcpy(msg.data, &data_bigendian, 8);
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_pack_soc_status
+(float Pack_SoC,float Pack_SoC_Drift)
+{
+    can_msg_t msg;
+    msg.id = 0x94;
+    msg.id_is_extended = false;
+    msg.len = 4;
+
+    
+            uint32_t data = 0;
+                        uint32_t Pack_SoC_i = (uint32_t)(Pack_SoC*1000);
+                        if(Pack_SoC_i > 65535ULL) {Pack_SoC_i = 65535;
+                        }
+                        data |= ((Pack_SoC_i) & 0xFFFFULL) << 16;
+            
+                        int32_t Pack_SoC_Drift_i = (int32_t)(Pack_SoC_Drift*1000);
+                        if(Pack_SoC_Drift_i > 32767) {Pack_SoC_Drift_i = 32767;
+                        } else if(Pack_SoC_Drift_i < -32768) {Pack_SoC_Drift_i = -32768;
+                        }
+                        data |= ((uint32_t)(Pack_SoC_Drift_i) & 0xFFFFULL) << 0;
+            
+            uint32_t data_bigendian = __builtin_bswap32(data);
+            memcpy(msg.data, &data_bigendian, 4);
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_max_ac_current_command
+(float max_current_ac_target)
+{
+    can_msg_t msg;
+    msg.id = 0x116;
+    msg.id_is_extended = false;
+    msg.len = 8;
+
+    
+            uint64_t data = 0;
+                        int32_t max_current_ac_target_i = (int32_t)(max_current_ac_target*10);
+                        if(max_current_ac_target_i > 32767) {max_current_ac_target_i = 32767;
+                        } else if(max_current_ac_target_i < -32768) {max_current_ac_target_i = -32768;
+                        }
+                        data |= ((uint32_t)(max_current_ac_target_i) & 0xFFFFULL) << 48;
+            
+            uint64_t data_bigendian = __builtin_bswap64(data);
+            memcpy(msg.data, &data_bigendian, 8);
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_max_ac_brake_current_command
+(float max_ac_brake_current_target)
+{
+    can_msg_t msg;
+    msg.id = 0x136;
+    msg.id_is_extended = false;
+    msg.len = 8;
+
+    
+            uint64_t data = 0;
+                        int32_t max_ac_brake_current_target_i = (int32_t)(max_ac_brake_current_target*10);
+                        if(max_ac_brake_current_target_i > 32767) {max_ac_brake_current_target_i = 32767;
+                        } else if(max_ac_brake_current_target_i < -32768) {max_ac_brake_current_target_i = -32768;
+                        }
+                        data |= ((uint32_t)(max_ac_brake_current_target_i) & 0xFFFFULL) << 48;
+            
+            uint64_t data_bigendian = __builtin_bswap64(data);
+            memcpy(msg.data, &data_bigendian, 8);
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_max_dc_current_command
+(float max_dc_current_target)
+{
+    can_msg_t msg;
+    msg.id = 0x156;
+    msg.id_is_extended = false;
+    msg.len = 2;
+
+    
+            uint16_t data = 0;
+                        int32_t max_dc_current_target_i = (int32_t)(max_dc_current_target*10);
+                        if(max_dc_current_target_i > 32767) {max_dc_current_target_i = 32767;
+                        } else if(max_dc_current_target_i < -32768) {max_dc_current_target_i = -32768;
+                        }
+                        data |= ((uint32_t)(max_dc_current_target_i) & 0xFFFFULL) << 0;
+            
+            uint16_t data_bigendian = __builtin_bswap16(data);
+            memcpy(msg.data, &data_bigendian, 2);
+        
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_max_dc_brake_current_command
+(float max_dc_brake_current_target)
+{
+    can_msg_t msg;
+    msg.id = 0x176;
+    msg.id_is_extended = false;
+    msg.len = 2;
+
+    
+            uint16_t data = 0;
+                        int32_t max_dc_brake_current_target_i = (int32_t)(max_dc_brake_current_target*10);
+                        if(max_dc_brake_current_target_i > 32767) {max_dc_brake_current_target_i = 32767;
+                        } else if(max_dc_brake_current_target_i < -32768) {max_dc_brake_current_target_i = -32768;
+                        }
+                        data |= ((uint32_t)(max_dc_brake_current_target_i) & 0xFFFFULL) << 0;
+            
+            uint16_t data_bigendian = __builtin_bswap16(data);
+            memcpy(msg.data, &data_bigendian, 2);
         
 
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);

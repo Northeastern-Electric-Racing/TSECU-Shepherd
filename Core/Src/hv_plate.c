@@ -189,7 +189,7 @@ void vHvPlateData(ULONG thread_input)
 	set_gpo(hv_plate->ic,
 		GPO2_2950); // enable HV1 readings on ADBMS2950 devkit
 
-	init_soc();
+	soc_init();
 
 	for (;;) {
 		// get the current reading from the pack
@@ -198,7 +198,7 @@ void vHvPlateData(ULONG thread_input)
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
-		update_soc(analyzer, hv_plate);
+		soc_handle_state(analyzer, hv_plate);
 
 		/* Check whether pulse operation needs to be disabled due to charging state or faults */
 
@@ -245,6 +245,8 @@ void vHvPlateData(ULONG thread_input)
 		}
 
 		send_hv_plate_pec_errors_message();
+		send_max_dc_current_command(bms_algos->cont_DCL);
+		send_max_dc_brake_current_command(bms_algos->cont_CCL);
 
 		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
 	}
