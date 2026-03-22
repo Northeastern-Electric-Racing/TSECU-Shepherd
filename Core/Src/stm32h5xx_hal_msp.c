@@ -250,6 +250,8 @@ void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef* hfdcan)
     /* FDCAN2 interrupt Init */
     HAL_NVIC_SetPriority(FDCAN2_IT0_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
+    HAL_NVIC_SetPriority(FDCAN2_IT1_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(FDCAN2_IT1_IRQn);
     /* USER CODE BEGIN FDCAN2_MspInit 1 */
 
     /* USER CODE END FDCAN2_MspInit 1 */
@@ -284,6 +286,7 @@ void HAL_FDCAN_MspDeInit(FDCAN_HandleTypeDef* hfdcan)
 
     /* FDCAN2 interrupt DeInit */
     HAL_NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
+    HAL_NVIC_DisableIRQ(FDCAN2_IT1_IRQn);
     /* USER CODE BEGIN FDCAN2_MspDeInit 1 */
 
     /* USER CODE END FDCAN2_MspDeInit 1 */

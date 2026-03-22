@@ -36,7 +36,7 @@ uint8_t init_can1(FDCAN_HandleTypeDef *hcan)
 		return U_ERROR;
 	}
 
-	uint16_t standard2[] = {CALYPSO_CONTROL_CANID, CALYPSO_CONTROL_CANID};
+	uint16_t standard2[] = {CALYPSO_CONTROL_CANID, 0x00};
 	status = can_add_filter_standard(&can1, standard2);
 	if (status != HAL_OK) {
 		PRINTLN_ERROR(
@@ -47,7 +47,7 @@ uint8_t init_can1(FDCAN_HandleTypeDef *hcan)
 	}
 
 	/* Add fitlers for extended IDs */
-	uint32_t extended1[] = {CHARGERBOX_CANID, CHARGERBOX_CANID};
+	uint32_t extended1[] = {CHARGERBOX_CANID, 0x00};
 	status = can_add_filter_extended(&can1, extended1);
 	if (status != HAL_OK) {
 		PRINTLN_ERROR(
@@ -134,6 +134,9 @@ void vCanReceive(ULONG thred_input)
 				case CALYPSO_CONTROL_CANID:
 					control_message_fans(message);
 					break;
+				case BATTBOX_TEMP_CANID:
+					control_message_fans1(message);
+					break;
 				default:
 					break;
 			}
@@ -145,7 +148,6 @@ void vCanReceive(ULONG thred_input)
 void vCanDispatch(ULONG thread_input)
 {
 	// INITIALIZING CAN
-	assert(!init_can1(&hfdcan2));
 	PRINTLN_INFO("INITIALIZED CAN");
 
 	can_msg_t message;

@@ -93,6 +93,6 @@ uint8_t queue_can_msg(can_msg_t can_msg);
  *
  * @return error code
  */
-uint8_t init_can(FDCAN_HandleTypeDef *hcan);
+uint8_t init_can1(FDCAN_HandleTypeDef *hcan);
 
 #endif // CAN_HANDLER_H
