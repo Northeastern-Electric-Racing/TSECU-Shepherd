@@ -185,6 +185,11 @@ void set_cell_discharge(cell_asic *chip, DCC cell, DCC_BIT discharge)
 	}
 }
 
+void set_cell_pwm(cell_asic *chip, DCC cell, PWM_DUTY discharge) {
+	if (cell < 12)chip->PwmA.pwma[cell] = discharge;
+	else chip->PwmB.pwmb[cell - 12] = discharge;
+}
+
 void clear_cell_discharge(cell_asic *chip)
 {
 	chip->tx_cfgb.dcc = 0;
@@ -401,6 +406,12 @@ void write_config_regs(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 	write_adbms_data(chips, WRCFGB, Config, B, hspi);
 }
 
+void write_pwm_regs(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
+{
+	write_adbms_data(chips, WRPWM1, Pwm, A, hspi);
+	write_adbms_data(chips, WRPWM2, Pwm, B, hspi);
+}
+
 void write_clear_flags(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
@@ -584,8 +595,7 @@ void get_c_and_s_adc_voltages(cell_asic chips[NUM_CHIPS],
 
 void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, CONTINUOUS, DCP_OFF, RSTF_ON,
-		       OW_OFF_ALL_CH);
+	adBms6830_Adcv(NUM_CHIPS, chips, RD_OFF, CONTINUOUS, DCP_ON, RSTF_ON, OW_OFF_ALL_CH);
 }
 
 // --- END ADC POLL ---

@@ -314,11 +314,11 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 {
 	// clang-format off
 	bool discharge_confg[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
+		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -337,11 +337,13 @@ void segment_configure_balancing(
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			set_cell_discharge(&chips[chip], cell,
-					   discharge_config[chip][cell]);
+			set_cell_pwm(&chips[chip], cell,
+				discharge_config[chip][cell] ?
+				PWM_52_8_PCT :
+				PWM_0_0_PCT);
 		}
 	}
-	write_config_regs(chips, hspi);
+	write_pwm_regs(chips, hspi);
 }
 
 // GET SEGEMENT DATA THREAD
@@ -366,50 +368,58 @@ void vGetSegmentData(ULONG thread_input)
 	state_t prev_state = BOOT;
 	state_t current_state = BOOT;
 
+	segment_unmute(acc_data->chips, &hspi2);
+	set_discharge_timeout(&acc_data->chips[0], 1);
+	set_discharge_timeout(&acc_data->chips[1], 0);
+
 	for (;;) {
-		segment_mute(acc_data->chips, &hspi2);
+		segment_unmute(acc_data->chips, &hspi2);
+		segment_manual_balancing(&acc_data->chips, &hspi2);
+		tx_thread_sleep(MS_TO_TICKS(100));
 
-		prev_state = current_state;
-		current_state = get_current_state(state_machine);
+		// segment_mute(acc_data->chips, &hspi2);
 
-		if (prev_state == BALANCING && current_state == CHARGING) {
-			tx_thread_sleep(MS_TO_TICKS(
-				balancing_delay)); // delay after balancing to let cells settle
-		}
+		// prev_state = current_state;
+		// current_state = get_current_state(state_machine);
 
-		if (current_state == CHARGING || current_state == BALANCING) {
-			// in charging, debug data is required to get things like die temp
-			segment_retrieve_charging_data(acc_data->chips, &hspi2);
-			send_segment_pec_errors_message();
-			isospi_handle_state(acc_data->chips, state_machine,
-					    &hspi2);
-		} else {
-			// snap before getting data
-			segment_snap(acc_data->chips, &hspi2);
-			segment_retrieve_active_data(acc_data->chips, &hspi2);
-			// unsnap after getting data
-			segment_unsnap(acc_data->chips, &hspi2);
-			send_segment_pec_errors_message();
-			isospi_handle_state(acc_data->chips, state_machine,
-					    &hspi2);
+		// if (prev_state == BALANCING && current_state == CHARGING) {
+		// 	tx_thread_sleep(MS_TO_TICKS(
+		// 		balancing_delay)); // delay after balancing to let cells settle
+		// }
 
-			if (DEBUG_MODE_ENABLED) {
-				segment_retrieve_debug_data(acc_data->chips,
-							    &hspi2);
-			}
-		}
+		// if (current_state == CHARGING || current_state == BALANCING) {
+		// 	// in charging, debug data is required to get things like die temp
+		// 	segment_retrieve_charging_data(acc_data->chips, &hspi2);
+		// 	send_segment_pec_errors_message();
+		// 	isospi_handle_state(acc_data->chips, state_machine,
+		// 			    &hspi2);
+		// } else {
+		// 	// snap before getting data
+		// 	segment_snap(acc_data->chips, &hspi2);
+		// 	segment_retrieve_active_data(acc_data->chips, &hspi2);
+		// 	// unsnap after getting data
+		// 	segment_unsnap(acc_data->chips, &hspi2);
+		// 	send_segment_pec_errors_message();
+		// 	isospi_handle_state(acc_data->chips, state_machine,
+		// 			    &hspi2);
 
-		if (current_state == CHARGING || current_state == BALANCING) {
-			segment_unmute(acc_data->chips, &hspi2);
-		}
+		// 	if (DEBUG_MODE_ENABLED) {
+		// 		segment_retrieve_debug_data(acc_data->chips,
+		// 					    &hspi2);
+		// 	}
+		// }
 
-		if (get_current_state(state_machine) == BALANCING) {
-			segment_configure_balancing(
-				acc_data->chips, acc_data->discharge_config,
-				&hspi2); // TODO: Move to state machine
-		}
+		// if (current_state == CHARGING || current_state == BALANCING) {
+		// 	segment_unmute(acc_data->chips, &hspi2);
+		// }
 
-		set_flag(ANALYZER_FLAG);
-		tx_thread_sleep(MS_TO_TICKS(750));
+		// if (get_current_state(state_machine) == BALANCING) {
+		// 	segment_configure_balancing(
+		// 		acc_data->chips, acc_data->discharge_config,
+		// 		&hspi2); // TODO: Move to state machine
+		// }
+
+		// set_flag(ANALYZER_FLAG);
+		// tx_thread_sleep(MS_TO_TICKS(750));
 	}
 }

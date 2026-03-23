@@ -153,7 +153,7 @@ void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
 				analyzer->chip_data[chip].cell_voltages[cell] =
 					getVoltage(
 						acc_data->chips[chip]
-							.fcell.fc_codes[cell]);
+							.cell.c_codes[cell]);
 			}
 		}
 	}
