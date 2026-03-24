@@ -76,7 +76,6 @@ void control_fan(float pack_high_temp) {
   uint16_t duty1 = _PERCENT_16(calypso_signals[DEVICE_FAN1]);
   // uint16_t duty1 = _PERCENT_16(100);
   control_device_signals[DEVICE_FAN1] = (uint8_t)(duty1 >> 8);
-  PRINTLN_INFO("duty1: %d", duty1);
   _write_pwm_device(&device_fan1, duty1);
 }
 
@@ -92,7 +91,6 @@ void control_message_fans(can_msg_t msg) {
 void control_message_fans_lv(can_msg_t msg) {
   uint8_t temp_c = *(msg.data);
   uint8_t duty_cycle = temp_c >= 35 ? 100 : 75;
-  PRINTLN_INFO("duty_cycle = %d\n", duty_cycle);
   calypso_signals[DEVICE_FAN1] = duty_cycle;
 }
 
