@@ -62,7 +62,7 @@ void init_chip(cell_asic *chip)
 	set_discharge_timer_monitor(chip, DTMEN_OFF);
 
 	// set this to allow sleep mode
-	set_discharge_timeout(chip, 0);
+	set_discharge_timeout(chip, 1);
 
 	// Set discharge timer range to 0 to 63 minutes with 1 minute increments
 	set_discharge_timer_range(chip, RANG_0_TO_63_MIN);
@@ -369,8 +369,6 @@ void vGetSegmentData(ULONG thread_input)
 	state_t current_state = BOOT;
 
 	segment_unmute(acc_data->chips, &hspi2);
-	set_discharge_timeout(&acc_data->chips[0], 1);
-	set_discharge_timeout(&acc_data->chips[1], 0);
 
 	for (;;) {
 		segment_unmute(acc_data->chips, &hspi2);
