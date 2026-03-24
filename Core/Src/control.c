@@ -128,6 +128,11 @@ void vControl(ULONG thread_input)
 			"Failed to initialize one or more peripherals.\n");
 	}
 
+	nertimer_t update_loop_timer = { 0 };
+	static const uint16_t TELEMETRY_LOOP_TIMEOUT = 2000;
+
+	start_timer(&update_loop_timer, TELEMETRY_LOOP_TIMEOUT);
+
 	for (;;) {
 		mutex_get(&analyzer_mutex);
 		float pack_high_temp = analyzer->max_temp.val;
@@ -136,10 +141,15 @@ void vControl(ULONG thread_input)
 
 		write_fan_duty_cycle_percentage();
 
-		send_fan_duty_cycle_percentage(
-			(uint8_t)(device_fan0.current_duty >> 8));
-		send_fan_duty_cycle_percentage(
-			(uint8_t)(device_fan0.current_duty >> 8));
+		if (is_timer_expired(&update_loop_timer) &&
+		    !is_timer_active(&update_loop_timer)) {
+			send_fan_duty_cycle_percentage(
+				(uint8_t)(device_fan0.current_duty >> 8));
+			send_fan_duty_cycle_percentage(
+				(uint8_t)(device_fan0.current_duty >> 8));
+
+			start_timer(&update_loop_timer, TELEMETRY_LOOP_TIMEOUT);
+		}
 
 		tx_thread_sleep(MS_TO_TICKS(100));
 	}
