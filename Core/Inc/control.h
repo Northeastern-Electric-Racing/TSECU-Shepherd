@@ -11,6 +11,8 @@
 typedef struct {
   TIM_HandleTypeDef *tim_handle;
   int channel_identifier;
+  uint16_t current_duty;
+  uint16_t requested_duty;
 } pwm_device_t;
 
 typedef enum { DEVICE_FAN0, DEVICE_FAN1, NUM_DEVICES } control_devices;
