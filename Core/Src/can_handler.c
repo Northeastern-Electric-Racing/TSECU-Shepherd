@@ -25,23 +25,13 @@ uint8_t init_can1(FDCAN_HandleTypeDef *hcan) {
   }
 
   /* Add filters for standard IDs */
-  uint16_t standard1[] = {DTI_CURRENT_CANID, BATTBOX_TEMP_CANID};
+  uint16_t standard1[] = {BATTBOX_TEMP_CANID, CALYPSO_CONTROL_CANID};
   status = can_add_filter_standard(&can1, standard1);
   if (status != HAL_OK) {
     PRINTLN_ERROR("Failed to add standard filter to can1 (Status: %d/%s, ID1: "
                   "%d, ID2: %d).",
                   status, hal_status_toString(status), standard1[0],
                   standard1[1]);
-    return U_ERROR;
-  }
-
-  uint16_t standard2[] = {CALYPSO_CONTROL_CANID, 0x00};
-  status = can_add_filter_standard(&can1, standard2);
-  if (status != HAL_OK) {
-    PRINTLN_ERROR("Failed to add standard filter to can1 (Status: %d/%s, ID1: "
-                  "%d, ID2: %d).",
-                  status, hal_status_toString(status), standard2[0],
-                  standard2[1]);
     return U_ERROR;
   }
 
@@ -110,7 +100,8 @@ float parse_charger_current(can_msg_t msg) {
 }
 
 // CAN RECIEVE THREAD
-void vCanReceive(ULONG thred_input) {
+void vCanReceive(ULONG thread_input) {
+  state_machine_args_t *state_machine_args = (state_machine_args_t *)thread_input;
   can_msg_t message;
   for (;;) {
     /* Process incoming messages */
@@ -118,10 +109,7 @@ void vCanReceive(ULONG thred_input) {
            U_SUCCESS) {
       switch (message.id) {
       case CHARGERBOX_CANID:
-        // TODO process charger can message
-        break;
-      case DTI_CURRENT_CANID:
-        // TODO process charger can message
+        charger_message_recieved(state_machine_args);
         break;
       case CALYPSO_CONTROL_CANID:
         control_message_fans(message);
