@@ -291,14 +291,14 @@ uint8_t send_bms_onboard_temperature
 
 /**
 * Contents of this message:
-* BMS/IMU/Accelerometer - IMU acceleration values (x,y,z).
+* BMS/Peripherals/IMU/Accelerometer - IMU acceleration values (x,y,z).
 */
 uint8_t send_bms_imu_accelerometer
 (float imu_accelerometer_x,float imu_accelerometer_y,float imu_accelerometer_z);
 
 /**
 * Contents of this message:
-* BMS/IMU/Gyro - IMU Gyroscope Reading
+* BMS/Peripherals/IMU/Gyro - IMU Gyroscope Reading
 */
 uint8_t send_bms_imu_gyro
 (float imu_gyro_x,float imu_gyro_y,float imu_gyro_z);

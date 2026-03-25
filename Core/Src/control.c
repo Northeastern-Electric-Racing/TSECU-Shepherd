@@ -1,17 +1,18 @@
 
 #include "control.h"
-#include "main.h"
-#include "datastructs.h"
 #include "can_messages_tx.h"
+#include "datastructs.h"
+#include "main.h"
 #include "shep_mutexes.h"
+#include "u_tx_debug.h"
 
 #define INIT_TIMEOUT_MS 10
 
 #define _PERCENT_16(x) ((uint16_t)(x * (((1 << 16) - 1) / 100)))
 
-uint8_t calypso_signals[NUM_DEVICES];
-uint8_t control_device_signals[NUM_DEVICES];
+uint8_t calypso_signals[NUM_DEVICES] = { 0 };
 pwm_device_t device_fan0;
+pwm_device_t device_fan1;
 
 static HAL_StatusTypeDef _init_pwm_device(pwm_device_t *device)
 {
@@ -39,11 +40,23 @@ bool control_init_peripherals(void)
 		.channel_identifier = TIM_CHANNEL_2,
 	};
 
+	device_fan1 = (pwm_device_t){
+		.tim_handle = &htim3,
+		.channel_identifier = TIM_CHANNEL_1,
+	};
+
 	bool status = _init_pwm_device(&device_fan0);
-	return !status;
+	if (!status) {
+		return false;
+	}
+	status = _init_pwm_device(&device_fan1);
+	if (!status) {
+		return false;
+	}
+	return true;
 }
 
-void control_fan(float pack_high_temp)
+void update_batt_box_fan(float pack_high_temp)
 {
 	uint16_t duty;
 	if (pack_high_temp <= 30.0f) {
@@ -56,13 +69,28 @@ void control_fan(float pack_high_temp)
 		duty = _PERCENT_16(100);
 	}
 
+	device_fan0.requested_duty = duty;
+}
+
+void write_fan_duty_cycle_percentage()
+{
 	uint16_t duty_from_calypso = _PERCENT_16(calypso_signals[DEVICE_FAN0]);
-	if (duty_from_calypso > duty) {
-		duty = duty_from_calypso;
+	if (duty_from_calypso > device_fan0.requested_duty) {
+		device_fan0.current_duty = duty_from_calypso;
+	} else {
+		device_fan0.current_duty = device_fan0.requested_duty;
 	}
 
-	control_device_signals[DEVICE_FAN0] = (uint8_t)(duty >> 8);
-	_write_pwm_device(&device_fan0, duty);
+	_write_pwm_device(&device_fan0, device_fan0.current_duty);
+
+	uint16_t duty1_from_calypso = _PERCENT_16(calypso_signals[DEVICE_FAN1]);
+	if (duty1_from_calypso > device_fan1.requested_duty) {
+		device_fan1.current_duty = duty1_from_calypso;
+	} else {
+		device_fan1.current_duty = device_fan1.requested_duty;
+	}
+
+	_write_pwm_device(&device_fan1, device_fan1.current_duty);
 }
 
 void control_message_fans(can_msg_t msg)
@@ -74,6 +102,14 @@ void control_message_fans(can_msg_t msg)
 	}
 	calypso_signals[DEVICE_FAN0] = duty;
 }
+
+void control_message_fans_lv(can_msg_t msg)
+{
+	uint8_t temp_c = *(msg.data);
+	uint8_t duty_cycle = temp_c >= 35 ? 100 : 75;
+	device_fan1.requested_duty = _PERCENT_16(duty_cycle);
+}
+
 #undef _PERCENT_16
 
 // CONTROL THREAD
@@ -92,13 +128,28 @@ void vControl(ULONG thread_input)
 			"Failed to initialize one or more peripherals.\n");
 	}
 
+	nertimer_t update_loop_timer = { 0 };
+	static const uint16_t TELEMETRY_LOOP_TIMEOUT = 2000;
+
+	start_timer(&update_loop_timer, TELEMETRY_LOOP_TIMEOUT);
+
 	for (;;) {
 		mutex_get(&analyzer_mutex);
 		float pack_high_temp = analyzer->max_temp.val;
-		control_fan(pack_high_temp);
+		update_batt_box_fan(pack_high_temp);
 		mutex_put(&analyzer_mutex);
 
-		send_fan_duty_cycle_percentage(control_device_signals[DEVICE_FAN0]);
+		write_fan_duty_cycle_percentage();
+
+		if (is_timer_expired(&update_loop_timer) &&
+		    !is_timer_active(&update_loop_timer)) {
+			send_fan_duty_cycle_percentage(
+				(uint8_t)(device_fan0.current_duty >> 8));
+			send_fan_duty_cycle_percentage(
+				(uint8_t)(device_fan0.current_duty >> 8));
+
+			start_timer(&update_loop_timer, TELEMETRY_LOOP_TIMEOUT);
+		}
 
 		tx_thread_sleep(MS_TO_TICKS(100));
 	}

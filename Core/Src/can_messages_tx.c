@@ -1146,20 +1146,23 @@ uint8_t send_bms_imu_accelerometer
 
     
             uint64_t data = 0;
-                        uint32_t imu_accelerometer_x_i = (uint32_t)(imu_accelerometer_x*4);
-                        if(imu_accelerometer_x_i > 65535ULL) {imu_accelerometer_x_i = 65535;
+                        int32_t imu_accelerometer_x_i = (int32_t)(imu_accelerometer_x*4);
+                        if(imu_accelerometer_x_i > 32767) {imu_accelerometer_x_i = 32767;
+                        } else if(imu_accelerometer_x_i < -32768) {imu_accelerometer_x_i = -32768;
                         }
-                        data |= ((imu_accelerometer_x_i) & 0xFFFFULL) << 48;
+                        data |= ((uint32_t)(imu_accelerometer_x_i) & 0xFFFFULL) << 48;
             
-                        uint32_t imu_accelerometer_y_i = (uint32_t)(imu_accelerometer_y*4);
-                        if(imu_accelerometer_y_i > 65535ULL) {imu_accelerometer_y_i = 65535;
+                        int32_t imu_accelerometer_y_i = (int32_t)(imu_accelerometer_y*4);
+                        if(imu_accelerometer_y_i > 32767) {imu_accelerometer_y_i = 32767;
+                        } else if(imu_accelerometer_y_i < -32768) {imu_accelerometer_y_i = -32768;
                         }
-                        data |= ((imu_accelerometer_y_i) & 0xFFFFULL) << 32;
+                        data |= ((uint32_t)(imu_accelerometer_y_i) & 0xFFFFULL) << 32;
             
-                        uint32_t imu_accelerometer_z_i = (uint32_t)(imu_accelerometer_z*4);
-                        if(imu_accelerometer_z_i > 65535ULL) {imu_accelerometer_z_i = 65535;
+                        int32_t imu_accelerometer_z_i = (int32_t)(imu_accelerometer_z*4);
+                        if(imu_accelerometer_z_i > 32767) {imu_accelerometer_z_i = 32767;
+                        } else if(imu_accelerometer_z_i < -32768) {imu_accelerometer_z_i = -32768;
                         }
-                        data |= ((imu_accelerometer_z_i) & 0xFFFFULL) << 16;
+                        data |= ((uint32_t)(imu_accelerometer_z_i) & 0xFFFFULL) << 16;
             
             uint64_t data_bigendian = __builtin_bswap64(data);
             memcpy(msg.data, &data_bigendian, 8);
