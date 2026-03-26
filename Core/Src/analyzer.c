@@ -8,6 +8,7 @@
 #include "u_tx_flags.h"
 #include "can_messages_tx.h"
 #include "shep_mutexes.h"
+#include "soc.h"
 
 #define OCV_TIMER_DURATION 750 // in ticks
 
@@ -400,25 +401,15 @@ void vAnalyzer(ULONG thread_input)
 				  analyzer->min_ocv.chipIndex,
 				  analyzer->min_ocv.cellNum, analyzer->avg_ocv);
 		send_segment_average_voltages(
-			analyzer->segment_average_volts[0],
-			analyzer->segment_average_volts[1],
-			analyzer->segment_average_volts[2],
-			analyzer->segment_average_volts[3],
-			analyzer->segment_average_volts[4]);
-		send_segment_total_voltages(analyzer->segment_total_volts[0],
-					    analyzer->segment_total_volts[1],
-					    analyzer->segment_total_volts[2],
-					    analyzer->segment_total_volts[3],
-					    analyzer->segment_total_volts[4]);
-		send_cell_temperatures(
-			analyzer->max_temp.val, analyzer->max_temp.chipIndex,
-			analyzer->max_temp.cellNum, analyzer->min_temp.val,
-			analyzer->min_temp.chipIndex,
-			analyzer->min_temp.cellNum, analyzer->avg_temp);
-		send_segment_temperatures(analyzer->segment_average_temps[0],
-					  analyzer->segment_average_temps[1],
-					  analyzer->segment_average_temps[2],
-					  analyzer->segment_average_temps[3],
-					  analyzer->segment_average_temps[4]);
+			analyzer->segment_average_volts[0], analyzer->segment_average_volts[1], analyzer->segment_average_volts[2], analyzer->segment_average_volts[3], analyzer->segment_average_volts[4]);
+		send_segment_total_voltages(
+		analyzer->segment_total_volts[0], analyzer->segment_total_volts[1], analyzer->segment_total_volts[2], analyzer->segment_total_volts[3], analyzer->segment_total_volts[4]);
+		send_cell_temperatures(analyzer->max_temp.val, analyzer->max_temp.chipIndex, analyzer->max_temp.cellNum,
+		                  analyzer->min_temp.val, analyzer->min_temp.chipIndex, analyzer->min_temp.cellNum,
+					  analyzer->avg_temp
+		    );
+		send_segment_temperatures(
+		analyzer->segment_average_temps[0], analyzer->segment_average_temps[1], analyzer->segment_average_temps[2], analyzer->segment_average_temps[3], analyzer->segment_average_temps[4]);
+		send_pack_soc_status(analyzer->soc, get_soc_drift());
 	}
 }
