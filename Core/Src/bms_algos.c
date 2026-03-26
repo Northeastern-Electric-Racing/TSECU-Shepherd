@@ -10,7 +10,7 @@ bool disable_pulse(state_machine_t *const state_machine)
 	/** @todo If HV_PLATE_COMMS_FAULT is classified as non-critical, add it to this check.
  	 *  If classified as critical, it is already handled.
  	 */
-	if ((get_current_state(state_machine) == CHARGING) ||
+	if ((state_machine->bms_state == CHARGING) ||
 	    (are_critical_faults_active()) ||
 	    (get_fault(SEGMENT_COMMS_FAULT))) {
 		dis_pulse = true;

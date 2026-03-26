@@ -101,6 +101,8 @@ void temp_sanitizer_run(sanitizer_t *sanitizer, analyzer_t *analyzer)
 		}
 	}
 	first_reading = false;
+
+	
 }
 
 

@@ -40,6 +40,7 @@ extern "C" {
 extern SPI_HandleTypeDef hspi2;
 extern SPI_HandleTypeDef hspi6;
 extern TIM_HandleTypeDef htim3;
+extern FDCAN_HandleTypeDef hfdcan2;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -87,6 +88,8 @@ void Error_Handler(void);
 #define TRACEX_TRIG_Pin GPIO_PIN_8
 #define TRACEX_TRIG_GPIO_Port GPIOD
 #define TRACEX_TRIG_EXTI_IRQn EXTI8_IRQn
+#define FAN_PWM1_Pin GPIO_PIN_6
+#define FAN_PWM1_GPIO_Port GPIOC
 #define FAN_PWM0_Pin GPIO_PIN_7
 #define FAN_PWM0_GPIO_Port GPIOC
 #define SP1_CS_Pin GPIO_PIN_10

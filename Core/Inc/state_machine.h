@@ -6,13 +6,6 @@
 #include "datastructs.h"
 
 /**
- * @brief gets the current state of the BMS
- * 
- * @param state_machine pointer to state_machine_args data
- */
-state_t get_current_state(state_machine_t *state_machine);
-
-/**
  * @brief Called when we receive a message from the charger
  * 
  * @param state_machine_args pointer to state_machine_args data
