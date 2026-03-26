@@ -7,7 +7,7 @@
 
 // #define DEBUG_HV_PLATE
 #define DEBUG_VOLTAGES
-// #define DEBUG_TEMPS
+#define DEBUG_TEMPS
 // #define DEBUG_AlGOS
 
 /* Initializes all ThreadX threads.
