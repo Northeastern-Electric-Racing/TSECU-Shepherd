@@ -36,7 +36,7 @@ void test_initial_state(void)
 	mutex_put_IgnoreAndReturn(0);
 
 	// Check that the initial state is BOOT
-	TEST_ASSERT_EQUAL(BOOT, get_current_state(&state_machine));
+	TEST_ASSERT_EQUAL(BOOT, state_machine.bms_state);
 }
 
 void test_eval_table(void)

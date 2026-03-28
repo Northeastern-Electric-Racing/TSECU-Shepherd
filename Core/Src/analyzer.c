@@ -8,6 +8,7 @@
 #include "u_tx_flags.h"
 #include "can_messages_tx.h"
 #include "shep_mutexes.h"
+#include "soc.h"
 
 #define OCV_TIMER_DURATION 750 // in ticks
 
@@ -151,9 +152,7 @@ void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
 {
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			if (get_current_state(state_machine) ==
-			    CHARGING) { // TOOO: Clean this
-				// in charging state, we read single shot c codes ONLY
+			if (state_machine->bms_state == CHARGING) {
 				analyzer->chip_data[chip].cell_voltages[cell] =
 					getVoltage(acc_data->chips[chip]
 							   .cell.c_codes[cell]);
@@ -430,5 +429,6 @@ void vAnalyzer(ULONG thread_input)
 					  analyzer->segment_average_temps[2],
 					  analyzer->segment_average_temps[3],
 					  analyzer->segment_average_temps[4]);
+		send_pack_soc_status(analyzer->soc, get_soc_drift());
 	}
 }

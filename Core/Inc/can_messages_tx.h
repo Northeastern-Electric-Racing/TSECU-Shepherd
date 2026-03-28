@@ -10,45 +10,6 @@
 
 /**
 * Contents of this message:
-* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
-*/
-uint8_t send_max_ac_current_command
-(float max_current_ac_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
-*/
-uint8_t send_max_ac_brake_current_command
-(float max_ac_brake_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
-*/
-uint8_t send_max_dc_current_command
-(float max_dc_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
-*/
-uint8_t send_max_dc_brake_current_command
-(float max_dc_brake_current_target);
-
-/**
-* Contents of this message:
-* BMS/Pack/Voltage - The total pack voltage.
-* BMS/Pack/Current - The total pack current
-* BMS/Pack/Amp-hours - Reserved
-* BMS/Pack/SOC - The state of charge of the lowest cell
-* BMS/Pack/Health - Reserved
-*/
-uint8_t send_pack_status
-(float voltage,float current,float amp_hours,float soc,float health);
-
-/**
-* Contents of this message:
 * BMS/Status/State - The system state
 * BMS/Status/Temp_Average - Average of all thermistor readings
 */
@@ -341,6 +302,42 @@ uint8_t send_bms_imu_accelerometer
 */
 uint8_t send_bms_imu_gyro
 (float imu_gyro_x,float imu_gyro_y,float imu_gyro_z);
+
+/**
+* Contents of this message:
+* BMS/Pack/SoC - Pack state of charge
+* BMS/Pack/SoC_Drift - Pack SoC drift from OCV curve
+*/
+uint8_t send_pack_soc_status
+(float Pack_SoC,float Pack_SoC_Drift);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
+*/
+uint8_t send_max_ac_current_command
+(float max_current_ac_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
+*/
+uint8_t send_max_ac_brake_current_command
+(float max_ac_brake_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
+*/
+uint8_t send_max_dc_current_command
+(float max_dc_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
+*/
+uint8_t send_max_dc_brake_current_command
+(float max_dc_brake_current_target);
 
 /**
 * Contents of this message:
