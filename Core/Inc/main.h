@@ -92,8 +92,8 @@ void Error_Handler(void);
 #define FAN_PWM1_GPIO_Port GPIOC
 #define FAN_PWM0_Pin GPIO_PIN_7
 #define FAN_PWM0_GPIO_Port GPIOC
-#define SP1_CS_Pin GPIO_PIN_10
-#define SP1_CS_GPIO_Port GPIOG
+#define SPI1_CS_Pin GPIO_PIN_10
+#define SPI1_CS_GPIO_Port GPIOG
 #define FAULT_MCU_Pin GPIO_PIN_15
 #define FAULT_MCU_GPIO_Port GPIOG
 
