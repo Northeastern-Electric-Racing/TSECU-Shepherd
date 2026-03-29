@@ -27,6 +27,7 @@
 #include <assert.h>
 #include "can_handler.h"
 #include "ethernet.h"
+#include "fdcan.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -174,6 +175,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   /* USER CODE END 2 */
 
+  init_can1(&hfdcan2);
   MX_ThreadX_Init();
 
   /* We should never get here as control is now taken by the scheduler */

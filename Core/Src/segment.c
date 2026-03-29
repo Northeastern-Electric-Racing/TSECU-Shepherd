@@ -370,7 +370,7 @@ void vGetSegmentData(ULONG thread_input)
 		segment_mute(acc_data->chips, &hspi2);
 
 		prev_state = current_state;
-		current_state = get_current_state(state_machine);
+		current_state = state_machine->bms_state;
 
 		if (prev_state == BALANCING && current_state == CHARGING) {
 			tx_thread_sleep(MS_TO_TICKS(
@@ -403,10 +403,10 @@ void vGetSegmentData(ULONG thread_input)
 			segment_unmute(acc_data->chips, &hspi2);
 		}
 
-		if (get_current_state(state_machine) == BALANCING) {
+		if (current_state == BALANCING) {
 			segment_configure_balancing(
 				acc_data->chips, acc_data->discharge_config,
-				&hspi2); // TODO: Move to state machine
+				&hspi2);
 		}
 
 		set_flag(ANALYZER_FLAG);

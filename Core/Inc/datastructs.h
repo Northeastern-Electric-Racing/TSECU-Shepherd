@@ -192,6 +192,24 @@ typedef struct {
 } isospi_status_t;
 
 /**
+ * @brief SoC estimator state machine states.
+ */
+typedef enum {
+	SOC_STATE_INIT_FROM_OCV,
+	SOC_STATE_COULOMB_COUNTING
+} soc_state_t;
+
+/**
+ * @brief SoC estimator runtime data.
+ */
+typedef struct {
+	uint32_t prev_time;
+	bool soc_reinit_request;
+	float soc_drift;
+	soc_state_t soc_state;
+} soc_data_t;
+
+/**
  * @brief data needed for processing raw data
  */
 typedef struct {
@@ -494,6 +512,5 @@ typedef struct {
 	bool is_critical;
 	// bool is_faulted; /* note: unused field */
 } fault_eval_t;
-
 
 #endif
