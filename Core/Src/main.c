@@ -1073,7 +1073,7 @@ static void MX_TIM5_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM5_Init 2 */
-
+  HAL_TIM_Base_Start(&htim5);
   /* USER CODE END TIM5_Init 2 */
 
 }
