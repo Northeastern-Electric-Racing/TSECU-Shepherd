@@ -11,9 +11,13 @@
 #include "timer.h"
 #include "sht30.h"
 
-#define ANALYZER_FLAG  0x1
-#define SANITIZER_FLAG 0x2
-#define DEBUG_FLAG     0x4
+// clang-format off
+#define ANALYZER_FLAG		         (1U)
+#define SANITIZER_FLAG		         (1U << 1)
+#define DEBUG_FLAG		             (1U << 2)
+#define SPI_LINE_A_DMA_RX_CPLT_FLAG  (1U << 3)
+#define SPI_LINE_B_DMA_RX_CPLT_FLAG  (1U << 4)
+// clang-format on
 
 /**
  * @brief Stores critical values for the pack (across all chips), and where that critical value can be found

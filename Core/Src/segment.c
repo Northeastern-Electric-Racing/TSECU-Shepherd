@@ -410,6 +410,6 @@ void vGetSegmentData(ULONG thread_input)
 		}
 
 		set_flag(ANALYZER_FLAG);
-		tx_thread_sleep(MS_TO_TICKS(750));
+		tx_thread_sleep(MS_TO_TICKS(300));
 	}
 }
