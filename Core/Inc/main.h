@@ -65,6 +65,9 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define SPI4_CS_Pin GPIO_PIN_4
 #define SPI4_CS_GPIO_Port GPIOE
+#define SPI2_CONV_CPLT_Pin GPIO_PIN_9
+#define SPI2_CONV_CPLT_GPIO_Port GPIOF
+#define SPI2_CONV_CPLT_EXTI_IRQn EXTI9_IRQn
 #define TS_MINUS_SENSE_Pin GPIO_PIN_0
 #define TS_MINUS_SENSE_GPIO_Port GPIOC
 #define TS_PLUS_SENSE_Pin GPIO_PIN_3
@@ -79,6 +82,9 @@ void Error_Handler(void);
 #define ACC_SENSE_GPIO_Port GPIOB
 #define TSIP_SENSE_Pin GPIO_PIN_1
 #define TSIP_SENSE_GPIO_Port GPIOB
+#define SPI1_CONV_CPLT_Pin GPIO_PIN_2
+#define SPI1_CONV_CPLT_GPIO_Port GPIOB
+#define SPI1_CONV_CPLT_EXTI_IRQn EXTI2_IRQn
 #define PHY_IRQ_Pin GPIO_PIN_7
 #define PHY_IRQ_GPIO_Port GPIOE
 #define PHY_RESET_Pin GPIO_PIN_10
