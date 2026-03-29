@@ -172,7 +172,7 @@ void vDefaultTask(ULONG thread_input)
 
 		alt = !alt;
 
-		//HAL_IWDG_Refresh(&hiwdg);
+		HAL_IWDG_Refresh(&hiwdg);
 		tx_thread_sleep(MS_TO_TICKS(100));
 	}
 }
@@ -182,6 +182,10 @@ void vDebug(ULONG thread_input)
 	PRINTLN_INFO("Starting Debug thread...");
 
 	analyzer_t *analyzer = (analyzer_t *)thread_input;
+
+	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+		analyzer->chip_data[chip].alpha = (chip % 2 == 0);
+	}
 
 	for (;;) {
 		get_flag(DEBUG_FLAG, TX_WAIT_FOREVER);
@@ -223,7 +227,7 @@ void vDebug(ULONG thread_input)
 							0 :
 							chip_data->cell_voltages
 								[cell + 1],
-						chip, cell, cell + 1,
+						chip - 1, cell, cell + 1,
 						chip_data->is_balancing[cell],
 
 						cell + 1 == NUM_CELLS_PER_CHIP ?
