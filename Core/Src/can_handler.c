@@ -25,7 +25,7 @@ uint8_t init_can1(FDCAN_HandleTypeDef *hcan) {
   }
 
   /* Add filters for standard IDs */
-  uint16_t standard1[] = {BATTBOX_TEMP_CANID, CALYPSO_CONTROL_CANID};
+  uint16_t standard1[] = {BATTBOX_DUTY_CYCLE_CANID, CALYPSO_CONTROL_CANID};
   status = can_add_filter_standard(&can1, standard1);
   if (status != HAL_OK) {
     PRINTLN_ERROR("Failed to add standard filter to can1 (Status: %d/%s, ID1: "
@@ -114,7 +114,7 @@ void vCanReceive(ULONG thread_input) {
       case CALYPSO_CONTROL_CANID:
         control_message_fans(message);
         break;
-      case BATTBOX_TEMP_CANID:
+      case BATTBOX_DUTY_CYCLE_CANID:
         control_message_fans_lv(message);
         break;
       default:
