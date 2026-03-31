@@ -402,6 +402,7 @@ typedef struct {
 	acc_data_t *acc_data;
 	bms_algos_t *bms_algos;
 	sanitizer_t *sanitizer;
+	peripherals_t *peripherals;
 } state_machine_args_t;
 
 /**
@@ -454,6 +455,7 @@ typedef struct {
  */
 typedef struct {
 	peripherals_t *peripherals;
+	bool shutdown_active;
 } peripherals_args_t;
 
 /* Task args end */

@@ -12,6 +12,7 @@
 #include "can_messages_tx.h"
 #include "timer.h"
 #include "u_tx_debug.h"
+#include "debounce.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -335,8 +336,28 @@ void compute_set_fault(bool fault_state)
 	}
 }
 
-bool read_shutdown()
+static void set_shutdown_active(void *arg)
 {
+	periphals_t *peripherals = (periphals_t *)arg;
+	mutex_get(&shutdown_mutex);
+	peripherals->shutdown_active = true;
+	mutex_put(&shutdown_mutex);
+}
+
+static void set_shutdown_inactive(void *arg)
+{
+	periphals_t *peripherals = (periphals_t *)arg;
+	mutex_get(&shutdown_mutex);
+	peripherals->shutdown_active = false;
+	mutex_put(&shutdown_mutex);
+}
+
+void read_shutdown(periphals_t *peripherals)
+{
+	static nertimer_t shutdown_active_timer = { 0 };
+	static nertimer_t shutdown_inactive_timer = { 0 };
+	static const uint16_t debounce_time = 200; // ms
+
 	// Read shutdown sense using TS_MINUS_SENSE pin
 	bool shutdown =
 		HAL_GPIO_ReadPin(TS_MINUS_SENSE_GPIO_Port,
@@ -345,9 +366,11 @@ bool read_shutdown()
 		HAL_GPIO_ReadPin(ACC_SENSE_GPIO_Port, ACC_SENSE_Pin) &&
 		HAL_GPIO_ReadPin(TSIP_SENSE_GPIO_Port, TSIP_SENSE_Pin);
 
-	// If the pin is high, the shutdown circuit is closed. So, return false.
-	// If the pin is low, the shutdown circuit is open. So, return true.
-	return !shutdown;
+	debounce(shutdown, &shutdown_active_timer, MS_TO_TICKS(debounce_time),
+		 set_shutdown_active, peripherals);
+	debounce(!shutdown, &shutdown_inactive_timer,
+		 MS_TO_TICKS(debounce_time), set_shutdown_inactive,
+		 peripherals);
 }
 
 // PERIPHERALS THREAD
@@ -360,6 +383,7 @@ void vPeripherals(ULONG thread_input)
 	peripherals_args_t *peripherals_args =
 		(peripherals_args_t *)thread_input;
 	peripherals_t *peripherals = peripherals_args->peripherals;
+	peripherals->shutdown_active = false;
 
 	nertimer_t telem_timer = { 0 };
 
@@ -373,6 +397,8 @@ void vPeripherals(ULONG thread_input)
 		imu_getAcceleration(&peripherals->imu_data.accel_data);
 		imu_getAngularRate(&peripherals->imu_data.ang_rate_data);
 		p3t1755_getBoardTemp(&peripherals->onboard_temp);
+
+		read_shutdown(peripherals);
 
 		if (is_timer_expired(&telem_timer) &&
 		    !is_timer_active(&telem_timer)) {
