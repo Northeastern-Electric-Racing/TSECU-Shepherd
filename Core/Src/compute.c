@@ -338,21 +338,34 @@ void compute_set_fault(bool fault_state)
 
 static void set_shutdown_active(void *arg)
 {
-	periphals_t *peripherals = (periphals_t *)arg;
+	peripherals_t *peripherals = (peripherals_t *)arg;
+	// only react to change in state
+	if (peripherals->shutdown_active) {
+		return;
+	}
+
 	mutex_get(&shutdown_mutex);
 	peripherals->shutdown_active = true;
 	mutex_put(&shutdown_mutex);
+	send_shutdown_as_read_by_bms(true);
 }
 
 static void set_shutdown_inactive(void *arg)
 {
-	periphals_t *peripherals = (periphals_t *)arg;
+	peripherals_t *peripherals = (peripherals_t *)arg;
+
+	// only react to change in state
+	if (!peripherals->shutdown_active) {
+		return;
+	}
+
 	mutex_get(&shutdown_mutex);
 	peripherals->shutdown_active = false;
 	mutex_put(&shutdown_mutex);
+	send_shutdown_as_read_by_bms(false);
 }
 
-void read_shutdown(periphals_t *peripherals)
+void read_shutdown(peripherals_t *peripherals)
 {
 	static nertimer_t shutdown_active_timer = { 0 };
 	static nertimer_t shutdown_inactive_timer = { 0 };
@@ -398,10 +411,17 @@ void vPeripherals(ULONG thread_input)
 		imu_getAngularRate(&peripherals->imu_data.ang_rate_data);
 		p3t1755_getBoardTemp(&peripherals->onboard_temp);
 
+		mutex_put(&peripherals_mutex);
+
 		read_shutdown(peripherals);
 
 		if (is_timer_expired(&telem_timer) &&
 		    !is_timer_active(&telem_timer)) {
+
+			// send shutdown state periodically
+			send_shutdown_as_read_by_bms(peripherals->shutdown_active);
+
+			mutex_get(&peripherals_mutex);
 			send_bms_onboard_temperature(peripherals->onboard_temp);
 			send_bms_imu_accelerometer(
 				peripherals->imu_data.accel_data.x,
@@ -411,9 +431,8 @@ void vPeripherals(ULONG thread_input)
 				peripherals->imu_data.ang_rate_data.x,
 				peripherals->imu_data.ang_rate_data.y,
 				peripherals->imu_data.ang_rate_data.z);
+			mutex_put(&peripherals_mutex);
 		}
-
-		mutex_put(&peripherals_mutex);
 
 		tx_thread_sleep(MS_TO_TICKS(50));
 	}

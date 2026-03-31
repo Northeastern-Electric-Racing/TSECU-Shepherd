@@ -10,6 +10,34 @@
 
 /**
 * Contents of this message:
+* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
+*/
+uint8_t send_max_ac_current_command
+(float max_current_ac_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
+*/
+uint8_t send_max_ac_brake_current_command
+(float max_ac_brake_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
+*/
+uint8_t send_max_dc_current_command
+(float max_dc_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
+*/
+uint8_t send_max_dc_brake_current_command
+(float max_dc_brake_current_target);
+
+/**
+* Contents of this message:
 * BMS/Status/State - The system state
 * BMS/Status/Temp_Average - Average of all thermistor readings
 */
@@ -313,31 +341,10 @@ uint8_t send_pack_soc_status
 
 /**
 * Contents of this message:
-* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
+* BMS/shutdown/state - 
 */
-uint8_t send_max_ac_current_command
-(float max_current_ac_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
-*/
-uint8_t send_max_ac_brake_current_command
-(float max_ac_brake_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
-*/
-uint8_t send_max_dc_current_command
-(float max_dc_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
-*/
-uint8_t send_max_dc_brake_current_command
-(float max_dc_brake_current_target);
+uint8_t send_shutdown_as_read_by_bms
+(bool shutdown);
 
 /**
 * Contents of this message:
