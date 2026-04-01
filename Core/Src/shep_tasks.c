@@ -103,7 +103,7 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			PRINTLN_INFO(
-				"%.2f\t",
+				"%.3f\t",
 				analyzer->chip_data[c].cell_voltages[cell]);
 		}
 		printf("\n");
@@ -113,7 +113,7 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			PRINTLN_INFO(
-				"%.2f\t",
+				"%.3f\t",
 				analyzer->chip_data[c].open_cell_voltage[cell]);
 		}
 		printf("\n");
@@ -415,7 +415,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	thread_t _analyzer_thread = {
 		.name = "Analyzer Thread", /* Name */
 		.size = 1024, /* Stack Size (in bytes) */
-		.priority = 6, /* Priority */
+		.priority = 1, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)analyzer_args, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
