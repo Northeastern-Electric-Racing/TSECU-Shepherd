@@ -7,6 +7,7 @@
 #include "c_utils.h"
 
 #define MAX_PEC_ERROR_ACCUM (100U) // Max accumulated PECs
+#define ADBMS_ADC_POLL_TIMEOUT (200U) // ms
 
 static uint16_t segment_pec_errors[NUM_CHIPS] = { 0U };
 static uint16_t prev_segment_pec_errors[NUM_CHIPS] = { 0U };
@@ -304,7 +305,7 @@ void read_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 uint32_t adBmsPollAdc_indicator(cell_asic chips[NUM_CHIPS],
 				uint8_t poll_type[2])
 {
-	uint32_t result = adBmsPollAdc(NUM_CHIPS, chips, poll_type);
+	uint32_t result = adBmsPollAdc(NUM_CHIPS, chips, poll_type, ADBMS_ADC_POLL_TIMEOUT);
 	return result;
 }
 

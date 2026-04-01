@@ -349,6 +349,10 @@ void vGetSegmentData(ULONG thread_input)
 {
 	PRINTLN_INFO("Starting GetSegmentData thread...");
 
+	/* Disable GPIO EXTI for polling for the time being*/
+	HAL_NVIC_DisableIRQ(EXTI2_IRQn);
+	HAL_NVIC_DisableIRQ(EXTI9_IRQn);
+
 	const uint16_t balancing_delay = 75;
 
 	acc_data_args_t *acc_data_args = (acc_data_args_t *)thread_input;
