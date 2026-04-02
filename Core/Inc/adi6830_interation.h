@@ -132,6 +132,23 @@ void set_gpio_pull(cell_asic *chip, GPO gpio, CFGA_GPO input);
 void set_iir_corner_freq(cell_asic *chip, IIR_FPA freq);
 
 /**
+ * @brief Set the PWM duty cycle for a cell. Note: this only sets the value in the struct, must call `write_config_regs` to actually write it to the chip
+ * Config B
+ * @param chip Pointer to chip config
+ * @param cell Cell to set the PWM for
+ * @param discharge PWM duty cycle to set for the cell
+ */
+void set_cell_pwm(cell_asic *chip, DCC cell, PWM_DUTY discharge);
+
+/**
+ * Writes the PWM registers for all chips. Wakes chips before writing.
+ * Config B
+ * @param chips Array of chips to write PWM registers of.
+ * @param hspi SPI handle to use for writing.
+ */
+void write_pwm_regs(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
+
+/**
  * @brief Configure a chip as a break in the isoSPI daisy chain.
  *
  * Config A

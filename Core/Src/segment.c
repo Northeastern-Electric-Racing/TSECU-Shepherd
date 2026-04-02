@@ -62,7 +62,7 @@ void init_chip(cell_asic *chip)
 	set_discharge_timer_monitor(chip, DTMEN_OFF);
 
 	// set this to allow sleep mode
-	set_discharge_timeout(chip, 0);
+	set_discharge_timeout(chip, 1);
 
 	// Set discharge timer range to 0 to 63 minutes with 1 minute increments
 	set_discharge_timer_range(chip, RANG_0_TO_63_MIN);
@@ -314,11 +314,11 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 {
 	// clang-format off
 	bool discharge_confg[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
+		{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -337,9 +337,22 @@ void segment_configure_balancing(
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			set_cell_discharge(&chips[chip], cell,
-					   discharge_config[chip][cell]);
+			set_cell_pwm(&chips[chip], cell,
+				     discharge_config[chip][cell] ?
+					     PWM_52_8_PCT :
+					     PWM_0_0_PCT);
 		}
+	}
+
+	PRINTLN_INFO("Writing PWM registers...");
+	write_pwm_regs(chips, hspi);
+}
+
+void segment_set_dcto(cell_asic chips[NUM_CHIPS], uint8_t dcto,
+		      SPI_HandleTypeDef *hspi)
+{
+	for (int chip = 0; chip < NUM_CHIPS; chip++) {
+		set_discharge_timeout(&chips[chip], dcto);
 	}
 	write_config_regs(chips, hspi);
 }
@@ -358,6 +371,9 @@ void vGetSegmentData(ULONG thread_input)
 
 	segment_init(acc_data->chips, &hspi2);
 
+	nertimer_t dcto_timer = { 0 };
+	const uint32_t dcto_timeout_ms = MS_TO_TICKS(55000);
+
 	isospi_break_detection_init(acc_data->chips);
 
 	// must delay after init for ADC to start up
@@ -366,11 +382,13 @@ void vGetSegmentData(ULONG thread_input)
 	state_t prev_state = BOOT;
 	state_t current_state = BOOT;
 
+	start_timer(&dcto_timer, 0);
+
 	for (;;) {
 		segment_mute(acc_data->chips, &hspi2);
 
 		prev_state = current_state;
-		current_state = state_machine->bms_state;
+		current_state = BALANCING;
 
 		if (prev_state == BALANCING && current_state == CHARGING) {
 			tx_thread_sleep(MS_TO_TICKS(
@@ -404,9 +422,12 @@ void vGetSegmentData(ULONG thread_input)
 		}
 
 		if (current_state == BALANCING) {
-			segment_configure_balancing(
-				acc_data->chips, acc_data->discharge_config,
-				&hspi2);
+			segment_manual_balancing(acc_data->chips, &hspi2);
+			if (is_timer_expired(&dcto_timer)) {
+				segment_set_dcto(acc_data->chips,
+						 TIME_1MIN_OR_0_26HR, &hspi2);
+				start_timer(&dcto_timer, dcto_timeout_ms);
+			}
 		}
 
 		set_flag(ANALYZER_FLAG);

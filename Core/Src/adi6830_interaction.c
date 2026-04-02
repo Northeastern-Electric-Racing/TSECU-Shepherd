@@ -585,4 +585,15 @@ void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 		       OW_OFF_ALL_CH);
 }
 
+void set_cell_pwm(cell_asic *chip, DCC cell, PWM_DUTY discharge) {
+	if (cell < 12)chip->PwmA.pwma[cell] = discharge;
+	else chip->PwmB.pwmb[cell - 12] = discharge;
+}
+
+void write_pwm_regs(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
+{
+	write_adbms_data(chips, WRPWM1, Pwm, A, hspi);
+	write_adbms_data(chips, WRPWM2, Pwm, B, hspi);
+}
+
 // --- END ADC POLL ---
