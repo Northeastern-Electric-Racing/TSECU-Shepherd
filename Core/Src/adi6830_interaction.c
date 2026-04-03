@@ -8,8 +8,6 @@
 
 #define MAX_PEC_ERROR_ACCUM (100U) // Max accumulated PECs
 
-#define ADBMS_ADC_POLL_TIMEOUT (200U) // ms
-
 static uint16_t segment_pec_errors[NUM_CHIPS] = { 0U };
 static uint16_t prev_segment_pec_errors[NUM_CHIPS] = { 0U };
 
@@ -134,8 +132,8 @@ void send_segment_pec_errors_message(void)
 		uint16_t current_pec_errors = segment_pec_errors[chip];
 
 		if (current_pec_errors != prev_segment_pec_errors[chip]) {
-			send_segment_pec_errors(
-				chip + 1U, segment_pec_errors[chip]);
+			send_segment_pec_errors(chip + 1U,
+						segment_pec_errors[chip]);
 
 			prev_segment_pec_errors[chip] =
 				segment_pec_errors[chip];
@@ -264,17 +262,17 @@ void set_discharge_timeout(cell_asic *chip, DCTO timeout)
 void adbms_wake_core(isospi_line_ line, uint8_t num_ic)
 {
 	switch (line) {
-	case ISOSPI_LINE_A:
-	case ISOSPI_LINE_B:
-		for (uint8_t ic = 0; ic < num_ic; ic++) {
-			adBmsLineCsLow(line);
-			adBmsLineCsHigh(line);
-			delay_us(4000);
-		}
-		break;
-	default:
-		printf(" Invalid isoSPI line selected \n");
-		break;
+		case ISOSPI_LINE_A:
+		case ISOSPI_LINE_B:
+			for (uint8_t ic = 0; ic < num_ic; ic++) {
+				adBmsLineCsLow(line);
+				adBmsLineCsHigh(line);
+				delay_us(4000);
+			}
+			break;
+		default:
+			printf(" Invalid isoSPI line selected \n");
+			break;
 	}
 }
 
@@ -311,8 +309,7 @@ void read_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 uint32_t adBmsPollAdc_indicator(cell_asic chips[NUM_CHIPS],
 				uint8_t poll_type[2])
 {
-	uint32_t result = adBmsPollAdc(NUM_CHIPS, chips, poll_type,
-				       ADBMS_ADC_POLL_TIMEOUT);
+	uint32_t result = adBmsPollAdc(NUM_CHIPS, chips, poll_type);
 	return result;
 }
 

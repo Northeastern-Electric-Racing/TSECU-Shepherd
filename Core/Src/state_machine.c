@@ -163,34 +163,29 @@ void sm_handle_state(state_machine_args_t *state_machine_args)
 		request_transition(state_machine_args, FAULTED);
 	}
 
-	handler_LUT[get_current_state(state_machine_args->state_machine)](
+	handler_LUT[state_machine_args->state_machine->bms_state](
 		state_machine_args);
-}
-
-state_t get_current_state(state_machine_t *state_machine)
-{
-	state_t state;
-	mutex_get(&state_mutex);
-	state = state_machine->bms_state;
-	mutex_put(&state_mutex);
-	return state;
 }
 
 void request_transition(state_machine_args_t *state_machine_args,
 			state_t next_state)
 {
-	if (get_current_state(state_machine_args->state_machine) == next_state)
-		return;
-	if (!valid_transition_from_to[get_current_state(
-		    state_machine_args->state_machine)][next_state])
-		return;
+
+	state_machine_t *state_machine = state_machine_args->state_machine;
 
 	mutex_get(&state_mutex);
 
+	if (state_machine->bms_state == next_state)
+		return;
+
+	if (!valid_transition_from_to[state_machine->bms_state][next_state])
+		return;
+
 	state_machine_args->state_machine->bms_state = next_state;
-	init_LUT[next_state](state_machine_args);
 
 	mutex_put(&state_mutex);
+
+	init_LUT[next_state](state_machine_args);
 }
 
 void sm_fault_return(state_machine_args_t *state_machine_args)
@@ -420,7 +415,13 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 	}
 
 	// Do not balance if the shutdown circuit is open.
-	return !read_shutdown();
+
+	bool shutdown_active;
+	mutex_get(&shutdown_mutex);
+	shutdown_active = state_machine_args->peripherals->shutdown_active;
+	mutex_put(&shutdown_mutex);
+
+	return !shutdown_active;
 }
 
 void set_segment_comms_fault(state_machine_t *state_mach)
@@ -471,7 +472,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT].data_1 =
 			hv_plate->pack_current;
 		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT].lim_1 =
-			bms_algos->cont_DCL;	
+			bms_algos->cont_DCL;
 		fault_eval_table[CHARGE_LIMIT_ENFORCEMENT_FAULT].data_1 =
 			hv_plate->pack_current;
 		fault_eval_table[CHARGE_LIMIT_ENFORCEMENT_FAULT].lim_1 =
@@ -614,11 +615,8 @@ void vStateMachine(ULONG thread_input)
 
 		// send unimportant messages less frequently
 		if (is_timer_expired(&telem_timer)) {
-			send_bms_status(
-				get_current_state(state_machine),
-				analyzer->avg_temp,
-				analyzer->internal_temp // TODO: we never set internal temp
-			);
+			send_bms_status(state_machine->bms_state,
+					analyzer->avg_temp);
 
 			send_fault_status(
 				get_fault(DISCHARGE_LIMIT_ENFORCEMENT_FAULT),

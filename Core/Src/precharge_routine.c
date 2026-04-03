@@ -16,6 +16,7 @@ static void close_relay(void *args)
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
 	set_precharge_relay(precharge_config->hv_plate->ic, true);
 	precharge_config->air_switch_closed = true;
+	send_precharge_status(precharge_config->air_switch_closed);
 }
 
 static void open_relay(void *args)
@@ -23,6 +24,7 @@ static void open_relay(void *args)
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
 	set_precharge_relay(precharge_config->hv_plate->ic, false);
 	precharge_config->air_switch_closed = false;
+	send_precharge_status(precharge_config->air_switch_closed);
 }
 
 void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
@@ -49,6 +51,10 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 		hv_plate->ts_volts >=
 		hv_plate->batt_volts * precharge_config->transition_ratio;
 
+	if (hv_plate->batt_volts < 60.0f) {
+		should_precharge = false; 
+	}
+
 	debounce(should_precharge, &precharge_config->open_debounce_timer,
 		 precharge_config->debounce_time, close_relay,
 		 precharge_config);
@@ -63,13 +69,24 @@ void vPrecharge(ULONG args)
 	PRINTLN_INFO("Starting Precharge thread...");
 
 	hv_plate_t *hv_plate = (hv_plate_t *)args;
+	nertimer_t update_loop_timer = { 0 };
+	static const uint16_t TELEMETRY_LOOP_TIMEOUT = 2000;
 
 	prechargeconfig_t precharge_config;
 	precharge_init(&precharge_config, hv_plate, 0.9f,
 		       200 /* ms debounce time */);
 
+	start_timer(&update_loop_timer, TELEMETRY_LOOP_TIMEOUT);
+
 	for (;;) {
 		handle_precharge(&precharge_config);
+
+		if (is_timer_expired(&update_loop_timer) && !is_timer_active(&update_loop_timer)) {
+			send_precharge_status(
+				precharge_config.air_switch_closed);
+			start_timer(&update_loop_timer, TELEMETRY_LOOP_TIMEOUT);
+		}
+
 		tx_thread_sleep(MS_TO_TICKS(50)); // TODO; fix thread timing
 	}
 }

@@ -8,6 +8,7 @@
 #include "u_tx_flags.h"
 #include "can_messages_tx.h"
 #include "shep_mutexes.h"
+#include "soc.h"
 
 #define OCV_TIMER_DURATION 750 // in ticks
 
@@ -143,9 +144,7 @@ void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
 {
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			if (get_current_state(state_machine) ==
-			    CHARGING) { // TOOO: Clean this
-				// in charging state, we read single shot c codes ONLY
+			if (state_machine->bms_state == CHARGING) {
 				analyzer->chip_data[chip].cell_voltages[cell] =
 					getVoltage(acc_data->chips[chip]
 							   .cell.c_codes[cell]);
@@ -342,9 +341,6 @@ void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 		}
 
 		// Chip Diagnotics
-		chip_data->die_temp =
-			getVoltage(acc_data->chips[chip].stata.itmp / 0.0075) -
-			273;
 		chip_data->vpv =
 			20.0 *
 			getVoltage( // VPV is ra_code 11 w/ different scale
@@ -375,6 +371,8 @@ void vAnalyzer(ULONG thread_input)
 	state_machine_t *state_machine = analyzer_args->state_machine;
 	hv_plate_t *hv_plate = analyzer_args->hv_plate;
 
+	memset(analyzer->chip_data, 0, sizeof(analyzer->chip_data));
+
 	for (;;) {
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 
@@ -395,10 +393,12 @@ void vAnalyzer(ULONG thread_input)
 		set_flag(DEBUG_FLAG);
 
 		// send out telemetry data sourced from the above functions
-		send_cell_voltage(analyzer->max_ocv.val, analyzer->max_ocv.chipIndex, analyzer->max_ocv.cellNum,
-		                  analyzer->min_ocv.val, analyzer->min_ocv.chipIndex, analyzer->min_ocv.cellNum,
-					  analyzer->avg_ocv
-		    );
+		send_cell_voltage(analyzer->max_ocv.val,
+				  analyzer->max_ocv.chipIndex,
+				  analyzer->max_ocv.cellNum,
+				  analyzer->min_ocv.val,
+				  analyzer->min_ocv.chipIndex,
+				  analyzer->min_ocv.cellNum, analyzer->avg_ocv);
 		send_segment_average_voltages(
 			analyzer->segment_average_volts[0], analyzer->segment_average_volts[1], analyzer->segment_average_volts[2], analyzer->segment_average_volts[3], analyzer->segment_average_volts[4]);
 		send_segment_total_voltages(
@@ -409,5 +409,6 @@ void vAnalyzer(ULONG thread_input)
 		    );
 		send_segment_temperatures(
 		analyzer->segment_average_temps[0], analyzer->segment_average_temps[1], analyzer->segment_average_temps[2], analyzer->segment_average_temps[3], analyzer->segment_average_temps[4]);
+		send_pack_soc_status(analyzer->soc, get_soc_drift());
 	}
 }

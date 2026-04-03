@@ -36,10 +36,11 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-//extern IWDG_HandleTypeDef hiwdg;
+extern IWDG_HandleTypeDef hiwdg;
 extern SPI_HandleTypeDef hspi2;
 extern SPI_HandleTypeDef hspi6;
 extern TIM_HandleTypeDef htim3;
+extern FDCAN_HandleTypeDef hfdcan2;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -64,6 +65,9 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define SPI4_CS_Pin GPIO_PIN_4
 #define SPI4_CS_GPIO_Port GPIOE
+#define SPI2_CONV_CPLT_Pin GPIO_PIN_9
+#define SPI2_CONV_CPLT_GPIO_Port GPIOF
+#define SPI2_CONV_CPLT_EXTI_IRQn EXTI9_IRQn
 #define TS_MINUS_SENSE_Pin GPIO_PIN_0
 #define TS_MINUS_SENSE_GPIO_Port GPIOC
 #define TS_PLUS_SENSE_Pin GPIO_PIN_3
@@ -78,6 +82,9 @@ void Error_Handler(void);
 #define ACC_SENSE_GPIO_Port GPIOB
 #define TSIP_SENSE_Pin GPIO_PIN_1
 #define TSIP_SENSE_GPIO_Port GPIOB
+#define SPI1_CONV_CPLT_Pin GPIO_PIN_2
+#define SPI1_CONV_CPLT_GPIO_Port GPIOB
+#define SPI1_CONV_CPLT_EXTI_IRQn EXTI2_IRQn
 #define PHY_IRQ_Pin GPIO_PIN_7
 #define PHY_IRQ_GPIO_Port GPIOE
 #define PHY_RESET_Pin GPIO_PIN_10
@@ -87,10 +94,12 @@ void Error_Handler(void);
 #define TRACEX_TRIG_Pin GPIO_PIN_8
 #define TRACEX_TRIG_GPIO_Port GPIOD
 #define TRACEX_TRIG_EXTI_IRQn EXTI8_IRQn
+#define FAN_PWM1_Pin GPIO_PIN_6
+#define FAN_PWM1_GPIO_Port GPIOC
 #define FAN_PWM0_Pin GPIO_PIN_7
 #define FAN_PWM0_GPIO_Port GPIOC
-#define SP1_CS_Pin GPIO_PIN_10
-#define SP1_CS_GPIO_Port GPIOG
+#define SPI1_CS_Pin GPIO_PIN_10
+#define SPI1_CS_GPIO_Port GPIOG
 #define FAULT_MCU_Pin GPIO_PIN_15
 #define FAULT_MCU_GPIO_Port GPIOG
 

@@ -274,21 +274,21 @@ void isospi_handle_state(cell_asic chips[NUM_CHIPS],
 		case ISOSPI_STATE_VERIFYING:
 		    send_segment_isospi_communication_status(isospi_status.state, isospi_status.break_chip, isospi_status.verification_attempts, isospi_status.recovery_successful);
 			// clang-format off
-		if (isospi_status.verification_attempts >= ISOSPI_VERIFICATION_READS) {
-			printf("[isoSPI] Verification failed after max attempts\n\r");
-			isospi_status.state = ISOSPI_RECOVERY_FAILED;
-		} else {
+			if (isospi_status.verification_attempts >= ISOSPI_VERIFICATION_READS) {
+				printf("[isoSPI] Verification failed after max attempts\n\r");
+				isospi_status.state = ISOSPI_RECOVERY_FAILED;
+			} else {
 
-			// Confirm PEC errors have dropped below acceptable level after recovery
-			uint8_t break_chip_idx = (uint8_t)(isospi_status.break_chip - 1U);
+				// Confirm PEC errors have dropped below acceptable level after recovery
+				uint8_t break_chip_idx = (uint8_t)(isospi_status.break_chip - 1U);
 
-			if (isospi_verify_recovery(chips, break_chip_idx) == 0U) {
-				printf("[isoSPI] Recovery succeeded\n\r");
-				isospi_status.state = ISOSPI_RECOVERY_SUCCESS;
-				isospi_status.recovery_successful = 1U;
+				if (isospi_verify_recovery(chips, break_chip_idx) == 0U) {
+					printf("[isoSPI] Recovery succeeded\n\r");
+					isospi_status.state = ISOSPI_RECOVERY_SUCCESS;
+					isospi_status.recovery_successful = 1U;
+				}
+				isospi_status.verification_attempts++;
 			}
-			isospi_status.verification_attempts++;
-		}
 			// clang-format on
 			break;
 

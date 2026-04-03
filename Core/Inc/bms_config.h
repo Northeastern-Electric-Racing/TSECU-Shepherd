@@ -8,9 +8,9 @@
 #define NUM_SEGMENTS	   1
 #define NUM_CHIPS	   NUM_SEGMENTS * 2
 #define NUM_CELLS_PER_CHIP 13
-#define NUM_CELLS	   NUM_CELLS_PER_CHIP *NUM_CHIPS
+#define NUM_CELLS	   (NUM_CELLS_PER_CHIP * NUM_CHIPS)
 // only actual flexPCB therms counted
-#define NUM_THERMS		    7 * NUM_CHIPS
+#define NUM_THERMS		    (7 * NUM_CHIPS)
 #define NUM_ONBOARD_THERMS_PER_CHIP 3
 
 // Firmware limits

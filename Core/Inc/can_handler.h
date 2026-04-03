@@ -2,6 +2,7 @@
 #define CAN_HANDLER_H
 
 #include "u_tx_can.h"
+#include "app_threadx.h"
 
 /**
  * @brief Callback to be called when a message is received on CAN line 1.
@@ -52,6 +53,7 @@
 #define CHARGER_CANID		   0x1806E5F4
 #define CHARGERBOX_CANID	   0x18FF50E5
 #define DTI_CURRENT_CANID	   0x436
+#define BATTBOX_TEMP_CANID     0xD2
 
 #define OVERFLOW_CANID	 0x6F1
 #define OVERFLOW_SIZE	 6
@@ -92,6 +94,11 @@ uint8_t queue_can_msg(can_msg_t can_msg);
  *
  * @return error code
  */
-uint8_t init_can(FDCAN_HandleTypeDef *hcan);
+uint8_t init_can1(FDCAN_HandleTypeDef *hcan);
+
+void vCanDispatch(ULONG thread_input);
+
+void vCanReceive(ULONG thread_input);
+
 
 #endif // CAN_HANDLER_H

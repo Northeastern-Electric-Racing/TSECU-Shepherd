@@ -11,9 +11,15 @@
 #include "timer.h"
 #include "sht30.h"
 
-#define ANALYZER_FLAG  0x1
-#define SANITIZER_FLAG 0x2
-#define DEBUG_FLAG     0x4
+// clang-format off
+#define ANALYZER_FLAG		            (1U)
+#define SANITIZER_FLAG		            (1U << 1)
+#define DEBUG_FLAG		                (1U << 2)
+#define SPI_LINE_A_DMA_RX_CPLT_FLAG     (1U << 3)
+#define SPI_LINE_B_DMA_RX_CPLT_FLAG     (1U << 4)
+#define SPI_LINE_A_POLL_CONV_CPLT_FLAG  (1U << 5)
+#define SPI_LINE_B_POLL_CONV_CPLT_FLAG  (1U << 6)
+// clang-format on
 
 /**
  * @brief Stores critical values for the pack (across all chips), and where that critical value can be found
@@ -188,6 +194,24 @@ typedef struct {
 } isospi_status_t;
 
 /**
+ * @brief SoC estimator state machine states.
+ */
+typedef enum {
+	SOC_STATE_INIT_FROM_OCV,
+	SOC_STATE_COULOMB_COUNTING
+} soc_state_t;
+
+/**
+ * @brief SoC estimator runtime data.
+ */
+typedef struct {
+	uint32_t prev_time;
+	bool soc_reinit_request;
+	float soc_drift;
+	soc_state_t soc_state;
+} soc_data_t;
+
+/**
  * @brief data needed for processing raw data
  */
 typedef struct {
@@ -198,9 +222,6 @@ typedef struct {
 	crit_cellval_t max_temp;
 	crit_cellval_t min_temp;
 	float avg_temp;
-
-	// the board temperature
-	float internal_temp;
 
 	/* Max, min, and avg voltage of the cells */
 	crit_cellval_t max_voltage;
@@ -358,6 +379,8 @@ typedef struct {
 
 typedef struct {
 	imu_data_t imu_data;
+	float onboard_temp;
+	bool shutdown_active;
 } peripherals_t;
 
 /* Task Args */
@@ -380,6 +403,7 @@ typedef struct {
 	acc_data_t *acc_data;
 	bms_algos_t *bms_algos;
 	sanitizer_t *sanitizer;
+	peripherals_t *peripherals;
 } state_machine_args_t;
 
 /**
@@ -492,6 +516,5 @@ typedef struct {
 	bool is_critical;
 	// bool is_faulted; /* note: unused field */
 } fault_eval_t;
-
 
 #endif
