@@ -548,7 +548,7 @@ void read_serial_id(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 
 void get_c_adc_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adBms6830_Adcv(NUM_CHIPS, chips, RD_OFF, SINGLE, DCP_OFF, RSTF_ON,
+	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, SINGLE, DCP_OFF, RSTF_ON,
 		       OW_OFF_ALL_CH);
 	adBmsPollAdc_indicator(chips, PLCADC);
 

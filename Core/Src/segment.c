@@ -389,7 +389,12 @@ void vGetSegmentData(ULONG thread_input)
 		segment_mute(acc_data->chips, &hspi2);
 
 		prev_state = current_state;
-		current_state = state_machine->bms_state;
+		current_state = BALANCING;
+
+		// mute when entering any state other than balancing or charging
+		if (prev_state != current_state && (current_state != BALANCING || current_state != CHARGING)) {
+		    segment_mute(acc_data->chips, &hspi2);
+		}
 
 		if (prev_state == BALANCING && current_state == CHARGING) {
 			tx_thread_sleep(MS_TO_TICKS(
@@ -418,17 +423,15 @@ void vGetSegmentData(ULONG thread_input)
 			}
 		}
 
-		if (current_state == CHARGING || current_state == BALANCING) {
-			segment_unmute(acc_data->chips, &hspi2);
-		}
-
 		if (current_state == BALANCING &&
 		    is_timer_expired(&pwm_timer) &&
 		    !is_timer_active(&pwm_timer)) {
 
+			segment_unmute(acc_data->chips, &hspi2);
+
 			// single shot SADC conversion to halt an SADC continuous conversion inhibiting PWM Balancing
 			get_s_adc_voltages(acc_data->chips, &hspi2);
-			
+
 			segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR, &hspi2);
 			tx_thread_sleep(MS_TO_TICKS(16)); 
 			segment_configure_balancing(acc_data->chips, acc_data->discharge_config, &hspi2);
