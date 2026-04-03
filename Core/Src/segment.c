@@ -62,7 +62,7 @@ void init_chip(cell_asic *chip)
 	set_discharge_timer_monitor(chip, DTMEN_OFF);
 
 	// set this to allow sleep mode
-	set_discharge_timeout(chip, 1);
+	set_discharge_timeout(chip, 0);
 
 	// Set discharge timer range to 0 to 63 minutes with 1 minute increments
 	set_discharge_timer_range(chip, RANG_0_TO_63_MIN);
@@ -425,6 +425,10 @@ void vGetSegmentData(ULONG thread_input)
 		if (current_state == BALANCING &&
 		    is_timer_expired(&pwm_timer) &&
 		    !is_timer_active(&pwm_timer)) {
+
+			// single shot SADC conversion to halt an SADC continuous conversion inhibiting PWM Balancing
+				get_s_adc_voltages(acc_data->chips, &hspi2);
+			
 			segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR, &hspi2);
 			tx_thread_sleep(MS_TO_TICKS(16)); 
 			segment_manual_balancing(acc_data->chips, &hspi2);

@@ -592,7 +592,7 @@ void get_c_and_s_adc_voltages(cell_asic chips[NUM_CHIPS],
 
 void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adBms6830_Adcv(NUM_CHIPS, chips, RD_OFF, CONTINUOUS, DCP_OFF, RSTF_ON, OW_OFF_ALL_CH);
+	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, CONTINUOUS, DCP_OFF, RSTF_ON, OW_OFF_ALL_CH);
 }
 
 // --- END ADC POLL ---
