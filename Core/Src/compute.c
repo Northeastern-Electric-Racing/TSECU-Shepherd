@@ -377,7 +377,7 @@ void read_shutdown(peripherals_t *peripherals)
 				 TS_MINUS_SENSE_Pin) &&
 		HAL_GPIO_ReadPin(TS_PLUS_SENSE_GPIO_Port, TS_PLUS_SENSE_Pin) &&
 		HAL_GPIO_ReadPin(ACC_SENSE_GPIO_Port, ACC_SENSE_Pin) &&
-		HAL_GPIO_ReadPin(TSIP_SENSE_GPIO_Port, TSIP_SENSE_Pin) && true;
+		HAL_GPIO_ReadPin(TSIP_SENSE_GPIO_Port, TSIP_SENSE_Pin);
 
 	debounce(shutdown, &shutdown_active_timer, MS_TO_TICKS(debounce_time),
 		 set_shutdown_active, peripherals);
