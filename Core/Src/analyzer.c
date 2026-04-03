@@ -374,6 +374,8 @@ void vAnalyzer(ULONG thread_input)
 	state_machine_t *state_machine = analyzer_args->state_machine;
 	hv_plate_t *hv_plate = analyzer_args->hv_plate;
 
+	memset(analyzer->chip_data, 0, sizeof(analyzer->chip_data));
+
 	for (;;) {
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 

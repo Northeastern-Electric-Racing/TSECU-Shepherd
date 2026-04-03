@@ -813,6 +813,14 @@ void receive_second_vcu_test_message(const can_msg_t *message, second_vcu_test_m
     second_vcu_test_message->six = (uint32_t)six_raw;
 }
 
+void receive_lv_box_fan_pwm(const can_msg_t *message, lv_box_fan_pwm_t *lv_box_fan_pwm) {
+    
+    uint8_t data = message->data[0];
+    uint64_t fan_pwm_percentage_mask = (1ULL << 8) - 1ULL;
+    uint64_t fan_pwm_percentage_raw = (data >> 0) & fan_pwm_percentage_mask;
+    lv_box_fan_pwm->fan_pwm_percentage = (uint8_t)fan_pwm_percentage_raw;
+}
+
 void receive_wheel_buttons(const can_msg_t *message, wheel_buttons_t *wheel_buttons) {
     
     uint8_t data = message->data[0];

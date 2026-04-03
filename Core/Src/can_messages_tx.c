@@ -770,7 +770,7 @@ uint8_t send_beta_cell_data_debug
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
 
-uint8_t send_chip_a_debug
+uint8_t send_alpha_chip_a_debug
 (uint8_t chip_id,float die_temp,float vpv,float vmv,bool va_ov,bool va_uv,bool vd_ov,bool vd_uv,bool vde,bool vdel,bool spiflt,bool sleep,bool thsd,bool tmodchk,bool oscchk)
 {
     can_msg_t msg;
@@ -860,11 +860,151 @@ uint8_t send_chip_a_debug
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
 
-uint8_t send_chip_b_debug
+uint8_t send_alpha_chip_b_debug
 (float vres,uint8_t chip_id,float vref2,float v_analog,float v_digital,bool otp1_med,bool opt2_med)
 {
     can_msg_t msg;
     msg.id = 0x6FF;
+    msg.id_is_extended = false;
+    
+            uint64_t data = 0;
+            msg.len = 8;
+                        uint32_t vres_i = (uint32_t)(vres*1000);
+                        if(vres_i > 8191ULL) {vres_i = 8191;
+                        }
+                        data |= ((vres_i) & 0x1FFFULL) << 51;
+            
+                        uint32_t chip_id_i = (uint32_t)(chip_id);
+                        if(chip_id_i > 15ULL) {chip_id_i = 15;
+                        }
+                        data |= ((chip_id_i) & 0xFULL) << 47;
+            
+                        uint32_t vref2_i = (uint32_t)(vref2*1000);
+                        if(vref2_i > 8191ULL) {vref2_i = 8191;
+                        }
+                        data |= ((vref2_i) & 0x1FFFULL) << 34;
+            
+                        uint32_t v_analog_i = (uint32_t)(v_analog*1000);
+                        if(v_analog_i > 8191ULL) {v_analog_i = 8191;
+                        }
+                        data |= ((v_analog_i) & 0x1FFFULL) << 21;
+            
+                        uint32_t v_digital_i = (uint32_t)(v_digital*1000);
+                        if(v_digital_i > 8191ULL) {v_digital_i = 8191;
+                        }
+                        data |= ((v_digital_i) & 0x1FFFULL) << 8;
+            
+                        uint32_t otp1_med_i = (uint32_t)(otp1_med);
+                        if(otp1_med_i > 1ULL) {otp1_med_i = 1;
+                        }
+                        data |= ((otp1_med_i) & 0x1ULL) << 7;
+            
+                        uint32_t opt2_med_i = (uint32_t)(opt2_med);
+                        if(opt2_med_i > 1ULL) {opt2_med_i = 1;
+                        }
+                        data |= ((opt2_med_i) & 0x1ULL) << 6;
+            
+            uint64_t data_bigendian = __builtin_bswap64(data);
+            memcpy(msg.data, &data_bigendian, 8);
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_beta_chip_a_debug
+(uint8_t chip_id,float die_temp,float vpv,float vmv,bool va_ov,bool va_uv,bool vd_ov,bool vd_uv,bool vde,bool vdel,bool spiflt,bool sleep,bool thsd,bool tmodchk,bool oscchk)
+{
+    can_msg_t msg;
+    msg.id = 0x6FD;
+    msg.id_is_extended = false;
+    
+            uint64_t data = 0;
+            msg.len = 8;
+                        uint32_t chip_id_i = (uint32_t)(chip_id);
+                        if(chip_id_i > 15ULL) {chip_id_i = 15;
+                        }
+                        data |= ((chip_id_i) & 0xFULL) << 60;
+            
+                        uint32_t die_temp_i = (uint32_t)(die_temp*100);
+                        if(die_temp_i > 8191ULL) {die_temp_i = 8191;
+                        }
+                        data |= ((die_temp_i) & 0x1FFFULL) << 47;
+            
+                        uint32_t vpv_i = (uint32_t)(vpv*100);
+                        if(vpv_i > 8191ULL) {vpv_i = 8191;
+                        }
+                        data |= ((vpv_i) & 0x1FFFULL) << 34;
+            
+                        uint32_t vmv_i = (uint32_t)(vmv*1000);
+                        if(vmv_i > 8191ULL) {vmv_i = 8191;
+                        }
+                        data |= ((vmv_i) & 0x1FFFULL) << 21;
+            
+                        uint32_t va_ov_i = (uint32_t)(va_ov);
+                        if(va_ov_i > 1ULL) {va_ov_i = 1;
+                        }
+                        data |= ((va_ov_i) & 0x1ULL) << 20;
+            
+                        uint32_t va_uv_i = (uint32_t)(va_uv);
+                        if(va_uv_i > 1ULL) {va_uv_i = 1;
+                        }
+                        data |= ((va_uv_i) & 0x1ULL) << 19;
+            
+                        uint32_t vd_ov_i = (uint32_t)(vd_ov);
+                        if(vd_ov_i > 1ULL) {vd_ov_i = 1;
+                        }
+                        data |= ((vd_ov_i) & 0x1ULL) << 18;
+            
+                        uint32_t vd_uv_i = (uint32_t)(vd_uv);
+                        if(vd_uv_i > 1ULL) {vd_uv_i = 1;
+                        }
+                        data |= ((vd_uv_i) & 0x1ULL) << 17;
+            
+                        uint32_t vde_i = (uint32_t)(vde);
+                        if(vde_i > 1ULL) {vde_i = 1;
+                        }
+                        data |= ((vde_i) & 0x1ULL) << 16;
+            
+                        uint32_t vdel_i = (uint32_t)(vdel);
+                        if(vdel_i > 1ULL) {vdel_i = 1;
+                        }
+                        data |= ((vdel_i) & 0x1ULL) << 15;
+            
+                        uint32_t spiflt_i = (uint32_t)(spiflt);
+                        if(spiflt_i > 1ULL) {spiflt_i = 1;
+                        }
+                        data |= ((spiflt_i) & 0x1ULL) << 14;
+            
+                        uint32_t sleep_i = (uint32_t)(sleep);
+                        if(sleep_i > 1ULL) {sleep_i = 1;
+                        }
+                        data |= ((sleep_i) & 0x1ULL) << 13;
+            
+                        uint32_t thsd_i = (uint32_t)(thsd);
+                        if(thsd_i > 1ULL) {thsd_i = 1;
+                        }
+                        data |= ((thsd_i) & 0x1ULL) << 12;
+            
+                        uint32_t tmodchk_i = (uint32_t)(tmodchk);
+                        if(tmodchk_i > 1ULL) {tmodchk_i = 1;
+                        }
+                        data |= ((tmodchk_i) & 0x1ULL) << 11;
+            
+                        uint32_t oscchk_i = (uint32_t)(oscchk);
+                        if(oscchk_i > 1ULL) {oscchk_i = 1;
+                        }
+                        data |= ((oscchk_i) & 0x1ULL) << 10;
+            
+            uint64_t data_bigendian = __builtin_bswap64(data);
+            memcpy(msg.data, &data_bigendian, 8);
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_beta_chip_b_debug
+(float vres,uint8_t chip_id,float vref2,float v_analog,float v_digital,bool otp1_med,bool opt2_med)
+{
+    can_msg_t msg;
+    msg.id = 0x6FE;
     msg.id_is_extended = false;
     
             uint64_t data = 0;

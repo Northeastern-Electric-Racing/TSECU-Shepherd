@@ -400,6 +400,12 @@ typedef struct {
 void receive_second_vcu_test_message(const can_msg_t *message, second_vcu_test_message_t *second_vcu_test_message);
 
 typedef struct {
+ uint8_t fan_pwm_percentage;
+} lv_box_fan_pwm_t;
+
+void receive_lv_box_fan_pwm(const can_msg_t *message, lv_box_fan_pwm_t *lv_box_fan_pwm);
+
+typedef struct {
  uint8_t button_id;
 } wheel_buttons_t;
 
