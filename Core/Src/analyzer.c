@@ -341,9 +341,6 @@ void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 		}
 
 		// Chip Diagnotics
-		chip_data->die_temp =
-			getVoltage(acc_data->chips[chip].stata.itmp / 0.0075) -
-			273;
 		chip_data->vpv =
 			20.0 *
 			getVoltage( // VPV is ra_code 11 w/ different scale
