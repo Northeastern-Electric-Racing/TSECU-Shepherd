@@ -384,6 +384,7 @@ typedef struct {
 typedef struct {
 	imu_data_t imu_data;
 	float onboard_temp;
+	bool shutdown_active;
 } peripherals_t;
 
 /* Task Args */
@@ -406,6 +407,7 @@ typedef struct {
 	acc_data_t *acc_data;
 	bms_algos_t *bms_algos;
 	sanitizer_t *sanitizer;
+	peripherals_t *peripherals;
 } state_machine_args_t;
 
 /**

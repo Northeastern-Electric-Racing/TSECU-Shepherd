@@ -10,6 +10,34 @@
 
 /**
 * Contents of this message:
+* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
+*/
+uint8_t send_max_ac_current_command
+(float max_current_ac_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
+*/
+uint8_t send_max_ac_brake_current_command
+(float max_ac_brake_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
+*/
+uint8_t send_max_dc_current_command
+(float max_dc_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
+*/
+uint8_t send_max_dc_brake_current_command
+(float max_dc_brake_current_target);
+
+/**
+* Contents of this message:
 * BMS/Status/State - The system state
 * BMS/Status/Temp_Average - Average of all thermistor readings
 */
@@ -181,34 +209,66 @@ uint8_t send_beta_cell_data_debug
 
 /**
 * Contents of this message:
-* BMS/PerCell/{1}/DieTemp - Temperatue of ADBMS die
-* BMS/PerCell/{1}/VPV - Positive ADBMS voltage
-* BMS/PerCell/{1}/VMV - Voltage of S1N to V- of ADBMS
-* BMS/PerCell/{1}/Faults/VA_OV - Whether 5V Analog rail went over
-* BMS/PerCell/{1}/Faults/VA_UV - Whether 5V Analog rail went under
-* BMS/PerCell/{1}/Faults/VD_OV - Whether 3V digital rail went over
-* BMS/PerCell/{1}/Faults/VD_UV - Whether 3V digital rail went under
-* BMS/PerCell/{1}/Faults/VDE - 5V supply differed from Vreg by 0.5V+
-* BMS/PerCell/{1}/Faults/VDEL - All 5V supply differed from Vreg by 0.5V+
-* BMS/PerCell/{1}/Faults/SPI - Redundant SPI slave mismatch
-* BMS/PerCell/{1}/Faults/SLEEP - Sleep mode previously occured
-* BMS/PerCell/{1}/Faults/THSD - Thermal shutdown occured/occuring
-* BMS/PerCell/{1}/Faults/TMOD_CHCK - Test mode occured/occuring
-* BMS/PerCell/{1}/Faults/OSC_CHCK - Oscillator drift during ADC conversion detected
+* BMS/PerCell/Alpha/{1}/DieTemp - Temperatue of ADBMS die
+* BMS/PerCell/Alpha/{1}/VPV - Positive ADBMS voltage
+* BMS/PerCell/Alpha/{1}/VMV - Voltage of S1N to V- of ADBMS
+* BMS/PerCell/Alpha/{1}/Faults/VA_OV - Whether 5V Analog rail went over
+* BMS/PerCell/Alpha/{1}/Faults/VA_UV - Whether 5V Analog rail went under
+* BMS/PerCell/Alpha/{1}/Faults/VD_OV - Whether 3V digital rail went over
+* BMS/PerCell/Alpha/{1}/Faults/VD_UV - Whether 3V digital rail went under
+* BMS/PerCell/Alpha/{1}/Faults/VDE - 5V supply differed from Vreg by 0.5V+
+* BMS/PerCell/Alpha/{1}/Faults/VDEL - All 5V supply differed from Vreg by 0.5V+
+* BMS/PerCell/Alpha/{1}/Faults/SPI - Redundant SPI slave mismatch
+* BMS/PerCell/Alpha/{1}/Faults/SLEEP - Sleep mode previously occured
+* BMS/PerCell/Alpha/{1}/Faults/THSD - Thermal shutdown occured/occuring
+* BMS/PerCell/Alpha/{1}/Faults/TMOD_CHCK - Test mode occured/occuring
+* BMS/PerCell/Alpha/{1}/Faults/OSC_CHCK - Oscillator drift during ADC conversion detected
 */
-uint8_t send_chip_a_debug
+uint8_t send_alpha_chip_a_debug
 (uint8_t chip_id,float die_temp,float vpv,float vmv,bool va_ov,bool va_uv,bool vd_ov,bool vd_uv,bool vde,bool vdel,bool spiflt,bool sleep,bool thsd,bool tmodchk,bool oscchk);
 
 /**
 * Contents of this message:
-* BMS/Alpha/{2}/Vres - Vref2 of ADBMS across resistor
-* BMS/Alpha/{2}/Vref2 - 3V reference voltage of ADBMS
-* BMS/Alpha/{2}/Vanalog - Vreg voltage of ADBMS
-* BMS/Alpha/{2}/Vdigital - Digital in voltage of ADBMS
-* BMS/Alpha/{2}/Faults/OTP1 - Single trim error in S-NVM
-* BMS/Alpha/{2}/Faults/OTP2 - Multiple trim errors in S-NVM
+* BMS/PerCell/Alpha/{2}/Vres - Vref2 of ADBMS across resistor
+* BMS/PerCell/Alpha/{2}/Vref2 - 3V reference voltage of ADBMS
+* BMS/PerCell/Alpha/{2}/Vanalog - Vreg voltage of ADBMS
+* BMS/PerCell/Alpha/{2}/Vdigital - Digital in voltage of ADBMS
+* BMS/PerCell/Alpha/{2}/Faults/OTP1 - Single trim error in S-NVM
+* BMS/PerCell/Alpha/{2}/Faults/OTP2 - Multiple trim errors in S-NVM
 */
-uint8_t send_chip_b_debug
+uint8_t send_alpha_chip_b_debug
+(float vres,uint8_t chip_id,float vref2,float v_analog,float v_digital,bool otp1_med,bool opt2_med);
+
+/**
+* Contents of this message:
+* BMS/PerCell/Beta/{1}/DieTemp - Temperatue of ADBMS die
+* BMS/PerCell/Beta/{1}/VPV - Positive ADBMS voltage
+* BMS/PerCell/Beta/{1}/VMV - Voltage of S1N to V- of ADBMS
+* BMS/PerCell/Beta/{1}/Faults/VA_OV - Whether 5V Analog rail went over
+* BMS/PerCell/Beta/{1}/Faults/VA_UV - Whether 5V Analog rail went under
+* BMS/PerCell/Beta/{1}/Faults/VD_OV - Whether 3V digital rail went over
+* BMS/PerCell/Beta/{1}/Faults/VD_UV - Whether 3V digital rail went under
+* BMS/PerCell/Beta/{1}/Faults/VDE - 5V supply differed from Vreg by 0.5V+
+* BMS/PerCell/Beta/{1}/Faults/VDEL - All 5V supply differed from Vreg by 0.5V+
+* BMS/PerCell/Beta/{1}/Faults/SPI - Redundant SPI slave mismatch
+* BMS/PerCell/Beta/{1}/Faults/SLEEP - Sleep mode previously occured
+* BMS/PerCell/Beta/{1}/Faults/THSD - Thermal shutdown occured/occuring
+* BMS/PerCell/Beta/{1}/Faults/TMOD_CHCK - Test mode occured/occuring
+* BMS/PerCell/Beta/{1}/Faults/OSC_CHCK - Oscillator drift during ADC conversion detected
+*/
+uint8_t send_beta_chip_a_debug
+(uint8_t chip_id,float die_temp,float vpv,float vmv,bool va_ov,bool va_uv,bool vd_ov,bool vd_uv,bool vde,bool vdel,bool spiflt,bool sleep,bool thsd,bool tmodchk,bool oscchk);
+
+/**
+* Contents of this message:
+* BMS/PerCell/Beta/{2}/Vres - Vref2 of ADBMS across resistor
+* BMS/PerCell/Beta/{2}/Vref2 - 3V reference voltage of ADBMS
+* BMS/PerCell/Beta/{2}/Vanalog - Vreg voltage of ADBMS
+* BMS/PerCell/Beta/{2}/Vdigital - Digital in voltage of ADBMS
+* BMS/PerCell/Beta/{2}/Faults/OTP1 - Single trim error in S-NVM
+* BMS/PerCell/Beta/{2}/Faults/OTP2 - Multiple trim errors in S-NVM
+*/
+uint8_t send_beta_chip_b_debug
 (float vres,uint8_t chip_id,float vref2,float v_analog,float v_digital,bool otp1_med,bool opt2_med);
 
 /**
@@ -220,9 +280,9 @@ uint8_t send_fan_duty_cycle_percentage
 
 /**
 * Contents of this message:
-* BMS/SegmentTemps/{1}/OnboardTemp1 - Temp of onboard therm 1
-* BMS/SegmentTemps/{1}/OnboardTemp2 - Temp of onboard therm 2
-* BMS/SegmentTemps/{1}/OnboardTemp3 - Temp of onboard therm 3
+* BMS/Segment_Temps/{1}/OnboardTemp1 - Temp of onboard therm 1
+* BMS/Segment_Temps/{1}/OnboardTemp2 - Temp of onboard therm 2
+* BMS/Segment_Temps/{1}/OnboardTemp3 - Temp of onboard therm 3
 */
 uint8_t send_onboard_therm_temperatures
 (uint8_t chip_id,float therm_temp_1,float therm_temp_2,float therm_temp_3);
@@ -313,31 +373,10 @@ uint8_t send_pack_soc_status
 
 /**
 * Contents of this message:
-* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
+* BMS/shutdown/state - 
 */
-uint8_t send_max_ac_current_command
-(float max_current_ac_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
-*/
-uint8_t send_max_ac_brake_current_command
-(float max_ac_brake_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
-*/
-uint8_t send_max_dc_current_command
-(float max_dc_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
-*/
-uint8_t send_max_dc_brake_current_command
-(float max_dc_brake_current_target);
+uint8_t send_shutdown_as_read_by_bms
+(bool shutdown);
 
 /**
 * Contents of this message:
