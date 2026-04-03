@@ -345,6 +345,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	state_machine_args->state_machine = state_machine;
 	state_machine_args->bms_algos = bms_algos;
 	state_machine_args->sanitizer = sanitizer;
+	state_machine_args->peripherals = peripherals;
 
 	hv_plate_args_t *hv_plate_args =
 		(hv_plate_args_t *)malloc(sizeof(hv_plate_args_t));
@@ -506,7 +507,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	thread_t _peripherals_thread = {
 		.name = "Peripherals Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 6, /* Priority */
+		.priority = 2, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)peripherals_args, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */

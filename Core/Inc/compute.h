@@ -56,7 +56,7 @@ void compute_set_fault(bool fault_state);
 /**
  * @brief Checks if the shutdown circuit is open.
  */
-bool read_shutdown();
+void read_shutdown(peripherals_t *peripherals);
 
 /**
  * @brief Initializes peripherals for compute thread.

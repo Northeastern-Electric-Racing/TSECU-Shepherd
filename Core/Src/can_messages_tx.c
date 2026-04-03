@@ -794,11 +794,10 @@ uint8_t send_alpha_chip_a_debug
                         }
                         data |= ((vpv_i) & 0x1FFFULL) << 34;
             
-                        int32_t vmv_i = (int32_t)(vmv*1000);
-                        if(vmv_i > 4095) {vmv_i = 4095;
-                        } else if(vmv_i < -4096) {vmv_i = -4096;
+                        uint32_t vmv_i = (uint32_t)(vmv*1000);
+                        if(vmv_i > 8191ULL) {vmv_i = 8191;
                         }
-                        data |= ((uint32_t)(vmv_i) & 0x1FFFULL) << 21;
+                        data |= ((vmv_i) & 0x1FFFULL) << 21;
             
                         uint32_t va_ov_i = (uint32_t)(va_ov);
                         if(va_ov_i > 1ULL) {va_ov_i = 1;
@@ -935,11 +934,10 @@ uint8_t send_beta_chip_a_debug
                         }
                         data |= ((vpv_i) & 0x1FFFULL) << 34;
             
-                        int32_t vmv_i = (int32_t)(vmv*1000);
-                        if(vmv_i > 4095) {vmv_i = 4095;
-                        } else if(vmv_i < -4096) {vmv_i = -4096;
+                        uint32_t vmv_i = (uint32_t)(vmv*1000);
+                        if(vmv_i > 8191ULL) {vmv_i = 8191;
                         }
-                        data |= ((uint32_t)(vmv_i) & 0x1FFFULL) << 21;
+                        data |= ((vmv_i) & 0x1FFFULL) << 21;
             
                         uint32_t va_ov_i = (uint32_t)(va_ov);
                         if(va_ov_i > 1ULL) {va_ov_i = 1;
