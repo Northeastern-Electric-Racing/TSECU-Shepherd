@@ -1,7 +1,7 @@
 #include "adBms6830CmdList.h"
 #include "adBms6830GenericType.h"
 #include "compute.h"
-#include "mcuWrapper.h"
+#include "adbmsCommonPal.h"
 #include "isospi_recovery.h"
 #include "can_messages_tx.h"
 #include "c_utils.h"

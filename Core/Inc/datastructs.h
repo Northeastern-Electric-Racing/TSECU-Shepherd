@@ -17,8 +17,12 @@
 #define DEBUG_FLAG		                (1U << 2)
 #define SPI_LINE_A_DMA_RX_CPLT_FLAG     (1U << 3)
 #define SPI_LINE_B_DMA_RX_CPLT_FLAG     (1U << 4)
-#define SPI_LINE_A_POLL_CONV_CPLT_FLAG  (1U << 5)
-#define SPI_LINE_B_POLL_CONV_CPLT_FLAG  (1U << 6)
+#define SPI_LINE_C_DMA_RX_CPLT_FLAG     (1U << 5)
+#define SPI_LINE_D_DMA_RX_CPLT_FLAG     (1U << 6)
+#define SPI_LINE_A_ADC_CONV_CPLT_FLAG  (1U << 7)
+#define SPI_LINE_B_ADC_CONV_CPLT_FLAG  (1U << 8)
+#define SPI_LINE_C_ADC_CONV_CPLT_FLAG  (1U << 9)
+#define SPI_LINE_D_ADC_CONV_CPLT_FLAG  (1U << 10)
 // clang-format on
 
 /**

@@ -2,12 +2,10 @@
 #include "adi_bms_2950cmdlist.h"
 #include "adi_bms_2950data.h"
 #include "adi_bms_utility.h"
-#include "pal.h"
+#include "adbmsCommonPal.h"
 #include "u_tx_debug.h"
 #include "can_messages_tx.h"
 #include "c_utils.h"
-
-#define TOTAL_IC_2950 1
 
 static uint16_t hv_plate_pec_errors = { 0U };
 static uint16_t prev_hv_plate_pec_errors = { 0U };
@@ -133,7 +131,7 @@ void start_adc_conversions(cell_asic_2950 *ic)
 {
 	cmd_description command;
 	adBms2950_Adi1(TOTAL_IC_2950, ic, RD_ON2950, OPT8_C, &command);
-	Delay_ms2950(ADI1_delay_ms);
+	delay_ms(ADI1_delay_ms);
 }
 
 void write_config(cell_asic_2950 *ic, ACCI count)
@@ -142,7 +140,6 @@ void write_config(cell_asic_2950 *ic, ACCI count)
 	ic->tx_cfga.vs1 = (VSB)VSMV_VREF1P25;
 	ic->tx_cfga.vs2 = (VSB)VSMV_VREF1P25;
 	ic->tx_cfga.vs7 = (VSB)VSMV_SGND;
-	adBmsWakeupIc2950(1);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
 }
 
@@ -186,7 +183,6 @@ void write_clear_flags_2950(cell_asic_2950 *ic)
 
 uint16_t read_conversion_count_registers(cell_asic_2950 *ic)
 {
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDFLAG, Flag, NONE2950);
 	return ic->flag.i1cnt;
 	if (ic->cccrc.flag_pec != 0) {
@@ -196,7 +192,6 @@ uint16_t read_conversion_count_registers(cell_asic_2950 *ic)
 
 void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 {
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDIVB1ACC, AccIvbat,
 			    NONE2950); /* Accumulated Battery Voltage Group*/
 	if (ic->cccrc.avgivbat_pec != 0) {
@@ -207,11 +202,9 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 
 void read_v7_register(cell_asic_2950 *ic)
 {
-	adBmsWakeupIc2950(1);
 	adBms2950_Adv(1, ic, OW_OFF, SM_V7_V9);
-	Delay_ms2950(Polling_Delay_ms2950);
+	delay_ms(Polling_Delay_ms2950);
 
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDV1C, GPV1, C_2950);
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
@@ -220,11 +213,9 @@ void read_v7_register(cell_asic_2950 *ic)
 
 void read_v2_register(cell_asic_2950 *ic)
 {
-	adBmsWakeupIc2950(1);
 	adBms2950_Adv(1, ic, OW_OFF, SM_V2);
-	Delay_ms2950(Polling_Delay_ms2950);
+	delay_ms(Polling_Delay_ms2950);
 
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDV1A, GPV1, A_2950);
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V2 register");
@@ -233,7 +224,6 @@ void read_v2_register(cell_asic_2950 *ic)
 
 void read_flag_register(cell_asic_2950 *ic)
 {
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDFLAG, Flag, FLAG_NOERR);
 	if (ic->cccrc.flag_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading flag register");
@@ -247,13 +237,10 @@ void poll_and_read_aux_registers(cell_asic_2950 *ic)
 	ic[0].pladc_count = adBmsPollAdc2950(TOTAL_IC_2950, ic, PLX);
 
 	// Read all relevant register groups
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDXA, Aux2950, A_2950);
 
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDXB, Aux2950, B_2950);
 
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDXC, Aux2950, C_2950);
 
 	if (ic->cccrc.aux_pec != 0) {
@@ -290,7 +277,6 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 			break;
 	}
 
-	adBmsWakeupIc2950(TOTAL_IC_2950);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
 	read_adbms2950_data(ic, RDCFGA2950, Config2950, A_2950);
 	if (ic->cccrc.cfgr_pec != 0) {
@@ -326,7 +312,6 @@ void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 			break;
 	}
 
-	adBmsWakeupIc2950(TOTAL_IC_2950);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
 	read_adbms2950_data(ic, RDCFGA2950, Config2950, A_2950);
 

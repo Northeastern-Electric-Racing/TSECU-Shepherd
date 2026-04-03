@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "adi_bms_2950data.h"
 
+#define TOTAL_IC_2950 1
+
 /**
  * @brief Sends PEC errors for hv plate over CAN and clears them for the next cycle.
  */

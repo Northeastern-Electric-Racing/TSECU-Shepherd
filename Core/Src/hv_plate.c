@@ -47,6 +47,7 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 		break;
 	}
 	hv_plate->last_total_converion_count = 0;
+	hv_plate->ic->isospi_line = ISOSPI_LINE_C;
 
 	write_config(hv_plate->ic, conversion_count);
 	write_clear_flags_2950(hv_plate->ic);
