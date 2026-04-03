@@ -377,7 +377,7 @@ void read_shutdown(peripherals_t *peripherals)
 				 TS_MINUS_SENSE_Pin) &&
 		HAL_GPIO_ReadPin(TS_PLUS_SENSE_GPIO_Port, TS_PLUS_SENSE_Pin) &&
 		HAL_GPIO_ReadPin(ACC_SENSE_GPIO_Port, ACC_SENSE_Pin) &&
-		HAL_GPIO_ReadPin(TSIP_SENSE_GPIO_Port, TSIP_SENSE_Pin);
+		HAL_GPIO_ReadPin(TSIP_SENSE_GPIO_Port, TSIP_SENSE_Pin) && true;
 
 	debounce(shutdown, &shutdown_active_timer, MS_TO_TICKS(debounce_time),
 		 set_shutdown_active, peripherals);
@@ -389,7 +389,7 @@ void read_shutdown(peripherals_t *peripherals)
 // PERIPHERALS THREAD
 void vPeripherals(ULONG thread_input)
 {
-	const uint32_t TELEM_TIMEOUT = 500; // ms
+	const uint32_t TELEM_TIMEOUT = MS_TO_TICKS(500); // ms
 
 	PRINTLN_INFO("Starting Peripherals thread...");
 
@@ -419,6 +419,7 @@ void vPeripherals(ULONG thread_input)
 		    !is_timer_active(&telem_timer)) {
 
 			// send shutdown state periodically
+			
 			send_shutdown_as_read_by_bms(peripherals->shutdown_active);
 
 			mutex_get(&peripherals_mutex);

@@ -482,7 +482,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	thread_t _peripherals_thread = {
 		.name = "Peripherals Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 6, /* Priority */
+		.priority = 2, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)peripherals_args, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
