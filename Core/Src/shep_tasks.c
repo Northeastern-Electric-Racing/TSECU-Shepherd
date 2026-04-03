@@ -16,6 +16,7 @@
 #include "main.h"
 #include "precharge_routine.h"
 #include "segment.h"
+#include "serialPrintResult.h"
 #include "u_queues.h"
 #include "soc.h"
 #include "state_machine.h"
@@ -105,6 +106,16 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 			PRINTLN_INFO(
 				"%.3f\t",
 				analyzer->chip_data[c].cell_voltages[cell]);
+		}
+		printf("\n");
+	}
+
+	PRINTLN_INFO("S ADC Voltages:");
+	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			PRINTLN_INFO(
+				"%.3f\t",
+				getVoltage(acc_data->chips[c].scell.sc_codes[cell]));
 		}
 		printf("\n");
 	}

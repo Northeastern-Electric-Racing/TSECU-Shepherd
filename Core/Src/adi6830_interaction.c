@@ -417,6 +417,7 @@ void write_clear_flags(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 		chips[chip].clflag.cl_spiflt = 1;
 		chips[chip].clflag.cl_vdel = 1;
 		chips[chip].clflag.cl_vde = 1;
+		chips[chip].clflag.cl_csflt = 0XFFFF;
 	}
 	write_adbms_data(chips, CLRFLAG, Clrflag, NONE, hspi);
 }
