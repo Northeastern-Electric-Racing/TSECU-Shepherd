@@ -314,8 +314,8 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 {
 	// clang-format off
 	bool discharge_confg[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -363,16 +363,16 @@ void vGetSegmentData(ULONG thread_input)
 	isospi_break_detection_init(acc_data->chips);
 
 	// must delay after init for ADC to start up
-	tx_thread_sleep(MS_TO_TICKS(200));
+	tx_thread_sleep(MS_TO_TICKS(500));
 
 	state_t prev_state = BOOT;
 	state_t current_state = BOOT;
 
 	segment_unmute(acc_data->chips, &hspi2);
+	segment_manual_balancing(&acc_data->chips, &hspi2);
 
 	for (;;) {
-		segment_unmute(acc_data->chips, &hspi2);
-		segment_manual_balancing(&acc_data->chips, &hspi2);
+
 		tx_thread_sleep(MS_TO_TICKS(100));
 
 		// segment_mute(acc_data->chips, &hspi2);
