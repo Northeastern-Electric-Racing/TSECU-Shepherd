@@ -415,7 +415,13 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 	}
 
 	// Do not balance if the shutdown circuit is open.
-	return !read_shutdown();
+
+	bool shutdown_active;
+	mutex_get(&shutdown_mutex);
+	shutdown_active = state_machine_args->peripherals->shutdown_active;
+	mutex_put(&shutdown_mutex);
+
+	return !shutdown_active;
 }
 
 void set_segment_comms_fault(state_machine_t *state_mach)

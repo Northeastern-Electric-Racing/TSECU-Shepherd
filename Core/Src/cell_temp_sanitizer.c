@@ -41,9 +41,7 @@ static void sanitized_max_temp(sanitizer_t *sanitizer, analyzer_t *analyzer, int
 				cell &&
 			sanitizer->max_sanitized_temp.chipIndex ==
 				chip) {
-		sanitizer->max_sanitized_temp.val = FLT_MIN;
-		sanitizer->max_sanitized_temp.cellNum = 0;
-		sanitizer->max_sanitized_temp.chipIndex = 0;
+		sanitizer->max_sanitized_temp.val = analyzer->avg_temp;
 	}
 }
 	
@@ -66,9 +64,7 @@ static void sanitized_min_temp(sanitizer_t *sanitizer, analyzer_t *analyzer, int
 			cell &&
 		sanitizer->min_sanitized_temp.chipIndex ==
 			chip) {
-		sanitizer->min_sanitized_temp.val = FLT_MAX;
-		sanitizer->min_sanitized_temp.cellNum = 0;
-		sanitizer->min_sanitized_temp.chipIndex = 0;
+		sanitizer->max_sanitized_temp.val = analyzer->avg_temp;
 	}
 }
 		
@@ -80,8 +76,7 @@ void temp_sanitizer_run(sanitizer_t *sanitizer, analyzer_t *analyzer)
 			therm_state_t *therm_state =
 				&sanitizer->sanitized_therms[chip][cell];
 
-			float cell_temp =
-				get_chip_data(analyzer, chip)->cell_temp[cell];
+			float cell_temp = analyzer->chip_data[chip].cell_temp[cell];
 			if (!first_reading &&
 			    cell_temp >
 				    therm_state->last_temp *
