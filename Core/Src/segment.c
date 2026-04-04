@@ -383,15 +383,13 @@ void vGetSegmentData(ULONG thread_input)
 
 	nertimer_t pwm_timer;
 	// assumes a DCTO of 1 minute for PWM balancing in extended balancing mode
-	const uint32_t pwm_update_frequency = MS_TO_TICKS(55000); 
+	const uint32_t pwm_update_frequency = MS_TO_TICKS(55000);
 
 	start_timer(&pwm_timer, 0); // start timer immeditately on first run
 
 	for (;;) {
-		segment_mute(acc_data->chips, &hspi2);
-
 		prev_state = current_state;
-		current_state = BALANCING;
+		current_state = state_machine->bms_state;
 
 		// mute when entering any state other than balancing or charging
 		if (prev_state != current_state && (current_state != BALANCING || current_state != CHARGING)) {
@@ -435,7 +433,7 @@ void vGetSegmentData(ULONG thread_input)
 			get_s_adc_voltages(acc_data->chips, &hspi2);
 
 			segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR, &hspi2);
-			tx_thread_sleep(MS_TO_TICKS(16)); 
+			tx_thread_sleep(MS_TO_TICKS(16));
 			segment_configure_balancing(acc_data->chips, acc_data->discharge_config, &hspi2);
 			start_timer(&pwm_timer, pwm_update_frequency);
 		}
