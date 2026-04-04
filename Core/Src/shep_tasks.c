@@ -16,6 +16,7 @@
 #include "main.h"
 #include "precharge_routine.h"
 #include "segment.h"
+#include "serialPrintResult.h"
 #include "u_queues.h"
 #include "soc.h"
 #include "state_machine.h"
@@ -109,6 +110,16 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 		printf("\n");
 	}
 
+	PRINTLN_INFO("S ADC Voltages:");
+	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			PRINTLN_INFO(
+				"%.3f\t",
+				getVoltage(acc_data->chips[c].scell.sc_codes[cell]));
+		}
+		printf("\n");
+	}
+
 	PRINTLN_INFO("Raw Cell OCV:");
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
@@ -124,14 +135,14 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	PRINTLN_INFO("Therm Temps:");
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			PRINTLN_INFO("%.1f\t",
-				     analyzer->chip_data[c].cell_temp[cell]);
+			PRINTLN_INFO("Chip %d, Cell: %d, %.1f C\t",
+				     c, cell, analyzer->chip_data[c].cell_temp[cell]);
 		}
 		printf("\n");
 	}
 	PRINTLN_INFO("CHIP TEMPS: \n");
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		PRINTLN_INFO("%.1f\t", analyzer->chip_data[c].die_temp);
+		PRINTLN_INFO("Chip: %d, %.1f\t C", c, analyzer->chip_data[c].die_temp);
 	}
 	printf("\n");
 #endif
