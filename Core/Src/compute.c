@@ -174,6 +174,8 @@ static const stmdev_ctx_t imu = { .handle = &hspi6,
 				  .read_reg = _lsm6dsv_read,
 				  .write_reg = _lsm6dsv_write };
 
+static bool imu_available = false;
+
 int imu_init(void)
 {
 	HAL_StatusTypeDef status;
@@ -320,9 +322,21 @@ int imu_getAngularRate(vector3_t *data)
 int init_compute(peripherals_t *peripherals)
 {
 	int status;
-	CATCH_ERROR(status = imu_init(), U_SUCCESS);
+
+	assert(peripherals);
+
+	status = imu_init();
+	if (status == U_SUCCESS) {
+		imu_available = true;
+		PRINTLN_INFO("IMU initialized successfully.");
+	} else {
+		imu_available = false;
+		PRINTLN_ERROR("IMU failed to initialize. Continuing without IMU.");
+	}
+
 	CATCH_ERROR(status = p3t_init(), U_SUCCESS);
-	return status;
+
+	return U_SUCCESS;
 }
 
 void compute_set_fault(bool fault_state)
@@ -407,8 +421,29 @@ void vPeripherals(ULONG thread_input)
 	for (;;) {
 		mutex_get(&peripherals_mutex);
 
-		imu_getAcceleration(&peripherals->imu_data.accel_data);
-		imu_getAngularRate(&peripherals->imu_data.ang_rate_data);
+		if (imu_available) { // guarded method to ensure things still work if the IMU chip doesn't
+			if (imu_getAcceleration(&peripherals->imu_data.accel_data) != U_SUCCESS) {
+				PRINTLN_ERROR("IMU accel read failed. Disabling IMU.");
+				imu_available = false;
+			}
+
+			if (imu_available &&
+			    imu_getAngularRate(&peripherals->imu_data.ang_rate_data) != U_SUCCESS) {
+				PRINTLN_ERROR("IMU gyro read failed. Disabling IMU.");
+				imu_available = false;
+			}
+		}
+
+		if (!imu_available) {
+			peripherals->imu_data.accel_data.x = 0; // IMU will return 0's in the case it is not functioning
+			peripherals->imu_data.accel_data.y = 0;
+			peripherals->imu_data.accel_data.z = 0;
+
+			peripherals->imu_data.ang_rate_data.x = 0;
+			peripherals->imu_data.ang_rate_data.y = 0;
+			peripherals->imu_data.ang_rate_data.z = 0;
+		}
+
 		p3t1755_getBoardTemp(&peripherals->onboard_temp);
 
 		mutex_put(&peripherals_mutex);
