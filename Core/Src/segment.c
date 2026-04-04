@@ -1,6 +1,8 @@
 
 #include "segment.h"
+#include "adBms6830Data.h"
 #include "adi6830_interation.h"
+#include "bms_config.h"
 #include "c_utils.h"
 #include "isospi_recovery.h"
 #include "serialPrintResult.h"
@@ -25,7 +27,7 @@ void init_chip(cell_asic *chip)
 
 	set_REFON(chip, PWR_UP);
 
-	set_volt_adc_comp_thresh(chip, CVT_135mV);
+	set_volt_adc_comp_thresh(chip, CVT_22_5mV);
 	clear_diagnostic_flags(chip);
 
 	// Short soak on ADAX
@@ -81,7 +83,7 @@ void segment_init(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 	// One-time init for isoSPI line and comm_break.
 	static bool is_first_init = true;
 
-	/* 
+	/*
 	 * These fields are later controlled by isoSPI recovery to
 	 * manage communication on each line after an isoSPI break,
 	 * so re-inits from segment_restart() must not overwrite them.
@@ -155,15 +157,15 @@ void segment_monitor_flts(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		// printf("CHIP %d :", chip);
-		printf("MUTE: %d, %d\n", chip, chips[chip].rx_cfga.mute_st);
+		//printf("MUTE: %d, %d\n", chip, chips[chip].rx_cfga.mute_st);
 		if (chips[chip].statc.cs_flt > 0) {
-			// printf("C VS S MISMATCH on cells ");
-			for (int i = 0; i < 16; i++) {
+			printf("C VS S MISMATCH on cells ");
+			for (int i = 0; i < NUM_CELLS_PER_CHIP; i++) {
 				if (NER_GET_BIT(chips[chip].statc.cs_flt, i)) {
-					//	printf("%d, ", i);
+					printf("%d, ", i);
 				}
 			}
-			// printf("\n");
+			printf(" of c%d\n", chip);
 		}
 		if (chips[chip].statc.va_ov) {
 			printf("A OV FLT c%d\n", chip);
