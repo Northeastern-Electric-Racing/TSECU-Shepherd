@@ -71,6 +71,16 @@ void clear_diagnostic_flags(cell_asic *chip);
  * @param discharge Cell discharge state.
  */
 void set_cell_discharge(cell_asic *chip, DCC cell, DCC_BIT discharge);
+
+/**
+ * @brief Set the cell pwm state
+ * 
+ * @param chip Pointer to chip with cell to modify.
+ * @param cell ID of cell to modify.
+ * @param discharge  PWM duty cycle to set for the cell.
+ */
+void set_cell_pwm(cell_asic *chip, DCC cell, PWM_DUTY discharge);
+
 /**
  * @brief Clear the discharge state of the cell (turn off dcc)
  *
@@ -213,6 +223,14 @@ void unsnap_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
  * @param chips Array of chips to write config registers of.
  */
 void write_config_regs(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
+
+/**
+ * @brief Write PWM registers. Wakes chips before writing.
+ * 
+ * @param chips Array of chips to write PWM registers of.
+ * @param hspi The SPI handle to use for communication with the chips.
+ */
+void write_pwm_regs(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
 
 /**
  * @brief Clears all status regster C flags except the CS FLT
