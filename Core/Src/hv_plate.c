@@ -47,11 +47,11 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 		break;
 	}
 	hv_plate->last_total_converion_count = 0;
-	hv_plate->ic.isospi_line = ISOSPI_LINE_C;
+	hv_plate->ic->isospi_line = ISOSPI_LINE_C;
 
-	write_config(&hv_plate->ic, conversion_count);
-	write_clear_flags_2950(&hv_plate->ic);
-	start_adc_conversions(&hv_plate->ic);
+	write_config(hv_plate->ic, conversion_count);
+	write_clear_flags_2950(hv_plate->ic);
+	start_adc_conversions(hv_plate->ic);
 
 	hv_plate->adbms_flags.raw = 0; // reset flags
 }
@@ -59,13 +59,13 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 				       uint16_t request_rate)
 {
-	snap_2950(&hv_plate->ic);
+	snap_2950(hv_plate->ic);
 	const uint16_t expected_conversions =
 		request_rate / hv_plate->conversion_count;
 
-	read_accumulated_current_vbat_registers(&hv_plate->ic);
+	read_accumulated_current_vbat_registers(hv_plate->ic);
 	uint16_t num_conversitions =
-		read_conversion_count_registers(&hv_plate->ic);
+		read_conversion_count_registers(hv_plate->ic);
 
 	// indicates that the I1CNT register wrapped around
 	if (num_conversitions < hv_plate->last_total_converion_count) {
@@ -81,24 +81,24 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 		// R1: 3.6 MOhms, R2: 9.1 kOhms
 		hv_plate->batt_volts =
 			((3600000 + 9100) *
-			 get_voltage_conversion(hv_plate->ic.i_vbacc.vb1acc) /
+			 get_voltage_conversion(hv_plate->ic->i_vbacc.vb1acc) /
 			 9100) /
 			hv_plate->conversion_count;
 
 		hv_plate->pack_current =
-			get_current_conversion(hv_plate->ic.i_vbacc.i1acc) /
+			get_current_conversion(hv_plate->ic->i_vbacc.i1acc) /
 			hv_plate->conversion_count;
 
 		hv_plate->last_total_converion_count = num_conversitions;
 	}
-	unsnap_2950(&hv_plate->ic);
+	unsnap_2950(hv_plate->ic);
 }
 
 void get_ts_voltage(hv_plate_t *hv_plate)
 {
-	read_v2_register(&hv_plate->ic);
+	read_v2_register(hv_plate->ic);
 
-	float volts = get_voltage_conversion(hv_plate->ic.vr.v_codes[1]); // V2
+	float volts = get_voltage_conversion(hv_plate->ic->vr.v_codes[1]); // V2
 
 	// Equation is based on resistances of voltage divider:
 	// R1: 3.6 MOhms, R2: 4.53 kOhms (+ V1P25 reference)
@@ -107,10 +107,10 @@ void get_ts_voltage(hv_plate_t *hv_plate)
 
 void get_shunt_temp(hv_plate_t *hv_plate)
 {
-	read_v7_register(&hv_plate->ic);
+	read_v7_register(hv_plate->ic);
 
 	float volts =
-		get_voltage_conversion(hv_plate->ic.vr.v_codes[6]); // V7A
+		get_voltage_conversion(hv_plate->ic->vr.v_codes[6]); // V7A
 
 	// Equation derived from voltage divider on V1P25:
 	// R1: 10 kOhms, R2: Therm Resistance
@@ -125,8 +125,8 @@ void get_shunt_temp(hv_plate_t *hv_plate)
 
 void get_flags(hv_plate_t *hv_plate)
 {
-	read_flag_register(&hv_plate->ic);
-	cell_asic_2950 *ic = &hv_plate->ic;
+	read_flag_register(hv_plate->ic);
+	cell_asic_2950 *ic = hv_plate->ic;
 	hv_plate->adbms_flags.flags.vreguv = ic->flag.vreguv;
 	hv_plate->adbms_flags.flags.vregov = ic->flag.vregov;
 	hv_plate->adbms_flags.flags.vdduv = ic->flag.vdduv;
@@ -143,9 +143,9 @@ void get_flags(hv_plate_t *hv_plate)
 
 void get_aux_adc_data(hv_plate_t *hv_plate)
 {
-	poll_and_read_aux_registers(&hv_plate->ic);
+	poll_and_read_aux_registers(hv_plate->ic);
 
-	cell_asic_2950 *ic = &hv_plate->ic;
+	cell_asic_2950 *ic = hv_plate->ic;
 	// Read voltage results into struct
 	hv_plate->vreg = ic->auxa.vreg * microV(240);
 	hv_plate->vref1p25 = get_voltage_conversion(ic->auxa.vref1p25);
@@ -187,7 +187,7 @@ void vHvPlateData(ULONG thread_input)
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
-	set_gpo(&hv_plate->ic,
+	set_gpo(hv_plate->ic,
 		GPO2_2950); // enable HV1 readings on ADBMS2950 devkit
 
 	soc_init();

@@ -144,7 +144,7 @@ typedef union {
  * @brief data read from the ADBMS2950 on our HV Plate
  */
 typedef struct {
-	cell_asic_2950 ic; // ADBMS2950 struct
+	cell_asic_2950 *ic; // ADBMS2950 struct
 	float ts_volts; // TS Voltage (V)
 	float batt_volts; // BATT Voltage (V)
 	float shunt_temp; // Temperature of shunt resistor (C)
