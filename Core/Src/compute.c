@@ -175,6 +175,7 @@ static const stmdev_ctx_t imu = { .handle = &hspi6,
 				  .write_reg = _lsm6dsv_write };
 
 static bool imu_available = false;
+static bool p3t_available = false;
 
 int imu_init(void)
 {
@@ -334,7 +335,14 @@ int init_compute(peripherals_t *peripherals)
 		PRINTLN_ERROR("IMU failed to initialize. Continuing without IMU.");
 	}
 
-	CATCH_ERROR(status = p3t_init(), U_SUCCESS);
+	status = p3t_init();
+	if (status == U_SUCCESS) {
+		p3t_available = true;
+		PRINTLN_INFO("P3T initialized successfully.");
+	} else {
+		p3t_available = false;
+		PRINTLN_ERROR("P3T init failed. Continuing without temperature sensor.");
+	}
 
 	return U_SUCCESS;
 }
@@ -444,7 +452,16 @@ void vPeripherals(ULONG thread_input)
 			peripherals->imu_data.ang_rate_data.z = 0;
 		}
 
-		p3t1755_getBoardTemp(&peripherals->onboard_temp);
+		if (p3t_available) {
+			if (p3t1755_getBoardTemp(&peripherals->onboard_temp) != U_SUCCESS) {
+				PRINTLN_ERROR("P3T read failed. Disabling sensor.");
+				p3t_available = false;
+			}
+		}
+
+		if (!p3t_available) {
+			peripherals->onboard_temp = 0;
+		}
 
 		mutex_put(&peripherals_mutex);
 
