@@ -101,6 +101,11 @@ void send_hv_plate_pec_errors_message(void)
 	current_pec_errors = 0U;
 }
 
+void set_hv_plate_chips_isospi_line(cell_asic_2950 *ic, isospi_line_2950_ line)
+{
+	ic->isospi_line = line;
+}
+
 /**
  * @brief Read data from hv plate 2950.
  *

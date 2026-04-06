@@ -146,7 +146,7 @@ void send_segment_pec_errors_message(void)
 
 // --- BEGIN SET HELPERS ---
 
-void set_iso_spi_line(cell_asic *chip, isospi_line_ line)
+void set_segment_chips_isospi_line(cell_asic *chip, isospi_line_6830_ line)
 {
 	chip->isospi_line = line;
 }
@@ -256,18 +256,18 @@ void set_discharge_timeout(cell_asic *chip, DCTO timeout)
 /**
  * @brief Wake the chip of every ADBMS6830 IC.  Blocking critical section wait about 1ms * NUM_CHIPS
  *
- * @param line   isoSPI line to wake (ISOSPI_LINE_A or ISOSPI_LINE_B).
+ * @param line   isoSPI line to wake (LINE_A or LINE_B).
  * @param num_ic Number of ICs present on the specified isoSPI line.
  */
-void adbms_wake_core(isospi_line_ line, uint8_t num_ic)
+void adbms_wake_core(isospi_line_6830_ line, uint8_t num_ic)
 {
 	switch (line) {
-		case ISOSPI_LINE_A:
-		case ISOSPI_LINE_B:
+		case ADBMS6830_ISOSPI_LINE_A:
+		case ADBMS6830_ISOSPI_LINE_B:
 			for (uint8_t ic = 0; ic < num_ic; ic++) {
-				adBmsLineCsLow(line);
-				adBmsLineCsHigh(line);
-				delay_us(4000);
+				adBmsLineCsLow6830(line);
+				adBmsLineCsHigh6830(line);
+				delay_us_6830(4000);
 			}
 			break;
 		default:
@@ -287,7 +287,7 @@ void adbms_wake_core(isospi_line_ line, uint8_t num_ic)
 void write_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 		      GRP group, SPI_HandleTypeDef *hspi)
 {
-	adBmsWriteData(NUM_CHIPS, chips, command, type, group);
+	adBmsWriteData6830(NUM_CHIPS, chips, command, type, group);
 }
 
 /**
@@ -301,7 +301,7 @@ void write_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 void read_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 		     GRP group, SPI_HandleTypeDef *hspi)
 {
-	adBmsReadData(NUM_CHIPS, chips, command, type, group);
+	adBmsReadData6830(NUM_CHIPS, chips, command, type, group);
 
 	update_segment_pec_errors(chips, type);
 }
@@ -309,7 +309,7 @@ void read_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 uint32_t adBmsPollAdc_indicator(cell_asic chips[NUM_CHIPS],
 				uint8_t poll_type[2])
 {
-	uint32_t result = adBmsPollAdc(NUM_CHIPS, chips, poll_type);
+	uint32_t result = adBmsPollAdc6830(NUM_CHIPS, chips, poll_type);
 	return result;
 }
 
@@ -319,17 +319,17 @@ void soft_reset_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	uint8_t ic_count_a = 0U, ic_count_b = 0U;
 
-	getIsoSPILineChipCount(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	getIsoSPILineChipCount6830(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
 	if (ic_count_a > 0) {
-		adBmsWakeISOSPILine(ISOSPI_LINE_A, ic_count_a);
-		spiSendCmd(ISOSPI_LINE_A, SRST);
-		adbms_wake_core(ISOSPI_LINE_A, ic_count_a);
+		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_A, ic_count_a);
+		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_A, SRST);
+		adbms_wake_core(ADBMS6830_ISOSPI_LINE_A, ic_count_a);
 	}
 
 	if (ic_count_b > 0) {
-		adBmsWakeISOSPILine(ISOSPI_LINE_B, ic_count_b);
-		spiSendCmd(ISOSPI_LINE_B, SRST);
-		adbms_wake_core(ISOSPI_LINE_B, ic_count_b);
+		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_B, ic_count_b);
+		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_B, SRST);
+		adbms_wake_core(ADBMS6830_ISOSPI_LINE_B, ic_count_b);
 	}
 }
 
@@ -337,15 +337,15 @@ void mute_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	uint8_t ic_count_a = 0U, ic_count_b = 0U;
 
-	getIsoSPILineChipCount(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	getIsoSPILineChipCount6830(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
 	if (ic_count_a > 0) {
-		adBmsWakeISOSPILine(ISOSPI_LINE_A, ic_count_a);
-		spiSendCmd(ISOSPI_LINE_A, MUTE);
+		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_A, ic_count_a);
+		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_A, MUTE);
 	}
 
 	if (ic_count_b > 0) {
-		adBmsWakeISOSPILine(ISOSPI_LINE_B, ic_count_b);
-		spiSendCmd(ISOSPI_LINE_B, MUTE);
+		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_B, ic_count_b);
+		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_B, MUTE);
 	}
 }
 
@@ -353,15 +353,15 @@ void unmute_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	uint8_t ic_count_a = 0U, ic_count_b = 0U;
 
-	getIsoSPILineChipCount(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	getIsoSPILineChipCount6830(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
 	if (ic_count_a > 0) {
-		adBmsWakeISOSPILine(ISOSPI_LINE_A, ic_count_a);
-		spiSendCmd(ISOSPI_LINE_A, UNMUTE);
+		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_A, ic_count_a);
+		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_A, UNMUTE);
 	}
 
 	if (ic_count_b > 0) {
-		adBmsWakeISOSPILine(ISOSPI_LINE_B, ic_count_b);
-		spiSendCmd(ISOSPI_LINE_B, UNMUTE);
+		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_B, ic_count_b);
+		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_B, UNMUTE);
 	}
 }
 
@@ -369,15 +369,15 @@ void snap_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	uint8_t ic_count_a = 0U, ic_count_b = 0U;
 
-	getIsoSPILineChipCount(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	getIsoSPILineChipCount6830(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
 	if (ic_count_a > 0) {
-		adBmsWakeISOSPILine(ISOSPI_LINE_A, ic_count_a);
-		spiSendCmd(ISOSPI_LINE_A, SNAP);
+		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_A, ic_count_a);
+		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_A, SNAP);
 	}
 
 	if (ic_count_b > 0) {
-		adBmsWakeISOSPILine(ISOSPI_LINE_B, ic_count_b);
-		spiSendCmd(ISOSPI_LINE_B, SNAP);
+		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_B, ic_count_b);
+		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_B, SNAP);
 	}
 }
 
@@ -385,15 +385,15 @@ void unsnap_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	uint8_t ic_count_a = 0U, ic_count_b = 0U;
 
-	getIsoSPILineChipCount(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	getIsoSPILineChipCount6830(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
 	if (ic_count_a > 0) {
-		adBmsWakeISOSPILine(ISOSPI_LINE_A, ic_count_a);
-		spiSendCmd(ISOSPI_LINE_A, UNSNAP);
+		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_A, ic_count_a);
+		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_A, UNSNAP);
 	}
 
 	if (ic_count_b > 0) {
-		adBmsWakeISOSPILine(ISOSPI_LINE_B, ic_count_b);
-		spiSendCmd(ISOSPI_LINE_B, UNSNAP);
+		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_B, ic_count_b);
+		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_B, UNSNAP);
 	}
 }
 

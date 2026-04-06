@@ -320,8 +320,6 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	state_machine_t *state_machine =
 		(state_machine_t *)malloc(sizeof(state_machine_t));
 	hv_plate_t *hv_plate = (hv_plate_t *)malloc(sizeof(hv_plate_t));
-	cell_asic_2950 hv_plate_ic;
-	hv_plate->ic = &hv_plate_ic;
 	sanitizer_t *sanitizer = (sanitizer_t *)malloc(sizeof(sanitizer_t));
 	bms_algos_t *bms_algos = (bms_algos_t *)malloc(sizeof(bms_algos_t));
 	peripherals_t *peripherals =

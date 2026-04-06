@@ -91,7 +91,7 @@ void segment_init(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 	if (is_first_init) {
 		for (int chip = 0; chip < NUM_CHIPS; chip++) {
 			// Set chip to primary isoSPI line A
-			set_iso_spi_line(&chips[chip], ISOSPI_LINE_A);
+			set_segment_chips_isospi_line(&chips[chip], ADBMS6830_ISOSPI_LINE_A);
 
 			// Not an endpoint in the daisy chain
 			set_comm_break(&chips[chip], COMM_BK_OFF);

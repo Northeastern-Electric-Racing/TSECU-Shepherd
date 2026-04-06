@@ -213,7 +213,7 @@ static void isospi_recover_break(cell_asic chips[NUM_CHIPS],
 
 	// Switch all chips after the break to use the other isoSPI line
 	for (uint8_t i = break_chip_idx; i < NUM_CHIPS; i++) {
-		set_iso_spi_line(&chips[i], ISOSPI_LINE_B);
+		set_segment_chips_isospi_line(&chips[i], ADBMS6830_ISOSPI_LINE_B);
 	}
 
 	// Only set COMM_BK if we're not rerouting the entire chain

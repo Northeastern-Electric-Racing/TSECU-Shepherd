@@ -100,12 +100,12 @@ static void MX_SPI4_Init(void);
 static void MX_I2C2_Init(void);
 static void MX_SPI6_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_TIM5_Init(void);
 static void MX_UART4_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM6_Init(void);
 static void MX_IWDG_Init(void);
-static void MX_TIM5_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -174,12 +174,12 @@ int main(void)
   MX_I2C2_Init();
   MX_SPI6_Init();
   MX_TIM3_Init();
+  MX_TIM5_Init();
   MX_UART4_Init();
   MX_TIM2_Init();
   MX_TIM4_Init();
   MX_TIM6_Init();
   MX_IWDG_Init();
-  MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
   init_can1(&hfdcan2);
   /* USER CODE END 2 */
@@ -1162,9 +1162,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SPI4_CONV_CPLT_Pin PHY_IRQ_Pin */
-  GPIO_InitStruct.Pin = SPI4_CONV_CPLT_Pin|PHY_IRQ_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  /*Configure GPIO pins : PE6 PHY_GPIO_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_6|PHY_GPIO_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
@@ -1199,11 +1199,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(SPI1_CONV_CPLT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PHY_GPIO_Pin */
-  GPIO_InitStruct.Pin = PHY_GPIO_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pin : PHY_IRQ_Pin */
+  GPIO_InitStruct.Pin = PHY_IRQ_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(PHY_GPIO_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(PHY_IRQ_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TRACEX_TRIG_Pin */
   GPIO_InitStruct.Pin = TRACEX_TRIG_Pin;
@@ -1218,9 +1218,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD13 PD14 PD15 SPI3_CONV_CPLT_Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15|SPI3_CONV_CPLT_Pin;
+  /*Configure GPIO pins : PD13 PD14 PD15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PD0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
@@ -1232,14 +1238,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-
   HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-
-  HAL_NVIC_SetPriority(EXTI6_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI6_IRQn);
 
   HAL_NVIC_SetPriority(EXTI8_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI8_IRQn);

@@ -172,20 +172,6 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles EXTI Line0 interrupt.
-  */
-void EXTI0_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI0_IRQn 0 */
-
-  /* USER CODE END EXTI0_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(SPI3_CONV_CPLT_Pin);
-  /* USER CODE BEGIN EXTI0_IRQn 1 */
-
-  /* USER CODE END EXTI0_IRQn 1 */
-}
-
-/**
   * @brief This function handles EXTI Line2 interrupt.
   */
 void EXTI2_IRQHandler(void)
@@ -197,20 +183,6 @@ void EXTI2_IRQHandler(void)
   /* USER CODE BEGIN EXTI2_IRQn 1 */
 
   /* USER CODE END EXTI2_IRQn 1 */
-}
-
-/**
-  * @brief This function handles EXTI Line6 interrupt.
-  */
-void EXTI6_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI6_IRQn 0 */
-
-  /* USER CODE END EXTI6_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(SPI4_CONV_CPLT_Pin);
-  /* USER CODE BEGIN EXTI6_IRQn 1 */
-
-  /* USER CODE END EXTI6_IRQn 1 */
 }
 
 /**

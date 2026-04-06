@@ -12,6 +12,14 @@
 void send_hv_plate_pec_errors_message(void);
 
 /**
+ * @brief Set the isoSPI line of the chip.
+ *
+ * @param ic Pointer to the chip to modify.
+ * @param line isoSPI line of chip.
+ */
+void set_hv_plate_chips_isospi_line(cell_asic_2950 *ic, isospi_line_2950_ line);
+
+/**
  * Snaps registers of ADBMS2950
  *
  * @param ic Pointer to the adbms2950 data structure.

@@ -19,7 +19,7 @@ void send_segment_pec_errors_message(void);
  * @param chip Pointer to the chip to modify.
  * @param line isoSPI line of chip.
  */
-void set_iso_spi_line(cell_asic *chip, isospi_line_ line);
+void set_segment_chips_isospi_line(cell_asic *chip, isospi_line_6830_ line);
 
 /**
  * @brief Set the status of the REFON bit.

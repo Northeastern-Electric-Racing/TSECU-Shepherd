@@ -65,9 +65,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define SPI4_CS_Pin GPIO_PIN_4
 #define SPI4_CS_GPIO_Port GPIOE
-#define SPI4_CONV_CPLT_Pin GPIO_PIN_6
-#define SPI4_CONV_CPLT_GPIO_Port GPIOE
-#define SPI4_CONV_CPLT_EXTI_IRQn EXTI6_IRQn
 #define SPI2_CONV_CPLT_Pin GPIO_PIN_9
 #define SPI2_CONV_CPLT_GPIO_Port GPIOF
 #define SPI2_CONV_CPLT_EXTI_IRQn EXTI9_IRQn
@@ -101,9 +98,6 @@ void Error_Handler(void);
 #define FAN_PWM1_GPIO_Port GPIOC
 #define FAN_PWM0_Pin GPIO_PIN_7
 #define FAN_PWM0_GPIO_Port GPIOC
-#define SPI3_CONV_CPLT_Pin GPIO_PIN_0
-#define SPI3_CONV_CPLT_GPIO_Port GPIOD
-#define SPI3_CONV_CPLT_EXTI_IRQn EXTI0_IRQn
 #define SPI1_CS_Pin GPIO_PIN_10
 #define SPI1_CS_GPIO_Port GPIOG
 #define FAULT_MCU_Pin GPIO_PIN_15
