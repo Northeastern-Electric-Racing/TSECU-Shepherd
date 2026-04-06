@@ -41,7 +41,6 @@ enable_language(C ASM)
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
 
-# Prevent mixing isoSPI line enums between 6830 and 2950
 target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
     -Wenum-conversion
 )
