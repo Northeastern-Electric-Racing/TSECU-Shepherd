@@ -24,6 +24,7 @@ set(MX_Include_Dirs
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/CMSIS/Device/ST/STM32H5xx/Include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/netxduo/common/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/netxduo/ports/cortex_m33/gnu/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/netxduo/addons/mqtt
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/threadx/ports/cortex_m33/gnu/inc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/CMSIS/Include
 )
@@ -31,8 +32,8 @@ set(MX_Include_Dirs
 # STM32CubeMX generated application sources
 set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../AZURE_RTOS/App/app_azure_rtos.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../NetXDuo/App/app_netxduo.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../NetXDuo/Target/nx_stm32_phy_custom_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../NetXDuo/App/app_netxduo.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/tx_initialize_low_level.S
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/main.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/app_threadx.c
@@ -262,6 +263,7 @@ set(ThreadX_Src
 )
 set(NetXDuo_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/netxduo/common/drivers/ethernet/nx_stm32_eth_driver.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/netxduo/addons/mqtt/nxd_mqtt_client.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/netxduo/common/src/nx_arp_announce_send.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/netxduo/common/src/nx_arp_dynamic_entries_invalidate.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Middlewares/ST/netxduo/common/src/nx_arp_dynamic_entry_delete.c

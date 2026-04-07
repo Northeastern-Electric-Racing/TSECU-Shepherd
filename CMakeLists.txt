@@ -86,6 +86,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/NetX/src/nxd_ptp_client.c"
     "Drivers/Embedded-Base/NetX/src/u_nx_debug.c"
     "Drivers/Embedded-Base/NetX/src/u_nx_ethernet.c"
+    "Drivers/Embedded-Base/NetX/src/u_nx_protobuf.c"
     "Drivers/Embedded-Base/traceX/src/tracex.c"
     "Drivers/Embedded-Base/traceX/src/traceout.c"
     "Drivers/Embedded-Base/middleware/src/c_utils.c"
@@ -143,3 +144,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
     # Add user defined libraries
 )
+
+# NER add nanopb
+add_subdirectory(Drivers/Embedded-Base/dev/nanopb)

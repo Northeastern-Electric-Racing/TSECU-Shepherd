@@ -429,24 +429,14 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vCanDispatch /* Thread Function */
 	};
 
-	thread_t _ethernet_incoming_thread = {
-		.name = "Ethernet Incoming Thread", /* Name */
+	thread_t _ethernet_manager = {
+		.name = "Ethernet Manager Thread", /* Name */
 		.size = 1024, /* Stack Size (in bytes) */
 		.priority = 1, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vEthernetIncoming /* Thread Function */
-	};
-
-	thread_t _ethernet_outgoing_thread = {
-		.name = "Ethernet Outgoing Thread", /* Name */
-		.size = 1024, /* Stack Size (in bytes) */
-		.priority = 1, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vEthernetOutgoing /* Thread Function */
+		.function = vEthernetManager /* Thread Function */
 	};
 
 	thread_t _analyzer_thread = {
@@ -557,9 +547,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
+	CATCH_ERROR(create_thread(byte_pool, &_ethernet_manager),
 		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),

@@ -2,6 +2,7 @@
 #include "fdcan.h"
 #include "u_tx_debug.h"
 #include "u_nx_ethernet.h"
+#include "ethernet.h"
 
 /* Incoming CAN Queue */
 queue_t can_incoming = {
@@ -19,19 +20,11 @@ queue_t can_outgoing = {
 	.capacity = 200 /* Number of messages the queue can hold. */
 };
 
-/* Incoming CAN Queue */
-queue_t eth_incoming = {
-	.name = "Incoming Ethernet Queue", /* Name of the queue. */
+/* Ethernet CMgr Queue */
+queue_t eth_manager = {
+	.name = "Ethernet Manager Queue", /* Name of the queue. */
 	.message_size = sizeof(
-		ethernet_message_t), /* Size of each queue message, in bytes. */
-	.capacity = 10 /* Number of messages the queue can hold. */
-};
-
-/* Outgoing CAN Queue */
-queue_t eth_outgoing = {
-	.name = "Outgoing Ethernet Queue", /* Name of the queue. */
-	.message_size = sizeof(
-		ethernet_message_t), /* Size of each queue message, in bytes. */
+		ethernet_mqtt_message_t), /* Size of each queue message, in bytes. */
 	.capacity = 10 /* Number of messages the queue can hold. */
 };
 
@@ -45,10 +38,8 @@ uint8_t queues_init(TX_BYTE_POOL *byte_pool)
 		    U_SUCCESS); // Create Incoming CAN Queue
 	CATCH_ERROR(create_queue(byte_pool, &can_outgoing),
 		    U_SUCCESS); // Create Outgoing CAN Queue
-	CATCH_ERROR(create_queue(byte_pool, &eth_incoming),
-		    U_SUCCESS); // Create Incoming Ethernet Queue
-	CATCH_ERROR(create_queue(byte_pool, &eth_outgoing),
-		    U_SUCCESS); // Create Outgoing Ethernet Queue
+	CATCH_ERROR(create_queue(byte_pool, &eth_manager),
+		    U_SUCCESS); // Create Ethernet Manager Queue
 
 	PRINTLN_INFO("Ran queues_init().");
 	return U_SUCCESS;

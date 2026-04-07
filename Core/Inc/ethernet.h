@@ -1,33 +1,29 @@
-#ifndef _ETHERNET_H
-#define _ETHERNET_H
+#pragma once
+#include "serverdata.pb.h"
+#include "u_nx_protobuf.h"
+#include "tx_api.h"
+#include <stdint.h>
 
-#include "nx_stm32_eth_driver.h"
-#include "u_nx_ethernet.h"
-#include "main.h"
-#include "u_queues.h"
+#define ETH_MAX_TOPIC_SIZE 100
+
+/* API */
+/**
+ * Initialize ethernet
+ */
+UINT ethernet1_init(void);
+/**
+ * Send a protobuf message over MQTT
+ */
+UINT ethernet1_mqtt_send(char* topic, uint8_t topic_size, char* unit, uint8_t unit_size, float* values, uint8_t values_len, uint64_t time_us);
+
+typedef struct {
+    uint8_t type;
+    char topic[ETH_MAX_TOPIC_SIZE];
+    uint8_t topic_size;
+    serverdata_v2_ServerData msg;
+} eth_mqtt_queue_message_t;
 
 /**
- * @brief Initializes ethernet.
- *
- * @return Status.
+ * Main ethernet manager, only one to access ethernet functions
  */
-uint8_t ethernet1_init(void);
-
-/**
- * @brief Processes received ethernet messages.
- *
- */
-void ethernet_inbox(ethernet_message_t *message);
-
-/**
- * @brief Queue message over ethernet
- *
- * @return Status.
- */
-uint8_t queue_eth_msg(ethernet_message_t eth_msg);
-
-void vEthernetIncoming(ULONG thread_input);
-
-void vEthernetOutgoing(ULONG thread_input);
-
-#endif
+void vEthernetManager(ULONG thread_input);
