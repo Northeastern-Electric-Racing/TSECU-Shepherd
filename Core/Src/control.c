@@ -105,8 +105,7 @@ void control_message_fans(can_msg_t msg)
 
 void control_message_fans_lv(can_msg_t msg)
 {
-	uint8_t temp_c = *(msg.data);
-	uint8_t duty_cycle = temp_c >= 35 ? 100 : 75;
+	uint8_t duty_cycle = *(msg.data);
 	device_fan1.requested_duty = _PERCENT_16(duty_cycle);
 }
 
