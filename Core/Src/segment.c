@@ -379,7 +379,7 @@ void vGetSegmentData(ULONG thread_input)
 	state_t current_state = BOOT;
 
 	segment_unmute(acc_data->chips, &hspi2);
-	segment_manual_balancing(&acc_data->chips, &hspi2);
+	segment_manual_balancing(acc_data->chips, &hspi2);
 
 	nertimer_t pwm_timer;
 	// assumes a DCTO of 1 minute for PWM balancing in extended balancing mode
