@@ -15,7 +15,7 @@ set(CMAKE_C_EXTENSIONS ON)
 
 # Define the build type
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Debug")
+  set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
 # Set the project name
@@ -29,8 +29,8 @@ message("Build type: " ${CMAKE_BUILD_TYPE})
 
 # Display ASCII art at start of build
 if(EXISTS "${CMAKE_SOURCE_DIR}/art")
-    file(READ "${CMAKE_SOURCE_DIR}/art" ASCII_ART)
-    message("${ASCII_ART}")
+  file(READ "${CMAKE_SOURCE_DIR}/art" ASCII_ART)
+  message("${ASCII_ART}")
 endif()
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -u _printf_float")
@@ -41,7 +41,16 @@ enable_language(C ASM)
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
 
+# NER Compiler options
 target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
+    -Wno-unused-parameter
+    -Wdouble-promotion # do not allow passing to a function that will cast to double
+    -fsingle-precision-constant # when using constants, make them floats
+    -Werror=undef # do not allow undefined macros
+    -fno-common # do not allow duplicate global variables
+    -Wformat # check the types going to printf
+    -Wshadow # prevent redefinition of unsassigned global vars
+    -fanalyzer # GCC static analysis
     -Wenum-conversion
 )
 
@@ -125,11 +134,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/NetX/inc"
     "NetXDuo"
     "Drivers/Embedded-Base/traceX/inc"
-)
-
-# Add project symbols (macros)
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined symbols
 )
 
 # Remove wrong libob.a library dependency when using cpp files
