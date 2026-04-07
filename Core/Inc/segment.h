@@ -96,6 +96,11 @@ void segment_restart(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
  */
 void read_serial_id(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
 
+/**
+ * Sets the discharge timeout for all cells in the segment
+ */
+void segment_set_dcto(cell_asic chips[NUM_CHIPS], uint8_t dcto, SPI_HandleTypeDef *hspi);
+
 void vGetSegmentData(ULONG thread_input);
 
 #endif

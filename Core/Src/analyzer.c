@@ -122,7 +122,7 @@ void calc_pack_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 		/* only for NERO */
 		if (chip % 2 == 1) {
 			analyzer->segment_average_temps[chip / 2] =
-				total_seg_temp / ((float)(NUM_CELLS * 2));
+				total_seg_temp / ((float)(NUM_CELLS));
 			total_seg_temp = 0;
 		}
 
@@ -231,7 +231,7 @@ void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data)
 		if (c % 2 == 1) {
 			// calc averge volatage across a segment
 			analyzer->segment_average_volts[c / 2] =
-				total_seg_volt / ((float)(NUM_CELLS * 2));
+				total_seg_volt / ((float)(NUM_CELLS));
 			analyzer->segment_total_volts[c / 2] = total_seg_volt;
 			analyzer->segment_delt_volts[c / 2] =
 				analyzer->max_voltage.val -
@@ -341,9 +341,6 @@ void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 		}
 
 		// Chip Diagnotics
-		chip_data->die_temp =
-			getVoltage(acc_data->chips[chip].stata.itmp / 0.0075) -
-			273;
 		chip_data->vpv =
 			20.0 *
 			getVoltage( // VPV is ra_code 11 w/ different scale
