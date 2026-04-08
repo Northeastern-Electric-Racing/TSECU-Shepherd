@@ -179,7 +179,8 @@ void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
 		float curr_bal = 0.031f;
 		if (state_machine->bms_state == CHARGING || state_machine->bms_state == BALANCING) {
 		    // measured on 4/5/2026, the current through the cells when in charging mode single shot C ADCs
-		    curr_bal = 0.017f;
+			// redone to be higher 4/8 sans measurement
+		    curr_bal = 0.029f;
 		}
 		// I*R is the way
 		analyzer->chip_data[chip].cell_voltages[cell] += curr_bal * res;
