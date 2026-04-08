@@ -409,10 +409,10 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 		return false;
 
 	// Do not balance during settling.
-	if (state_machine->charging_stage != LONG_SETTLE &&
-	    state_machine->charging_stage != SHORT_SETTLE) {
-		return false;
-	}
+	// if (state_machine->charging_stage != LONG_SETTLE &&
+	//     state_machine->charging_stage != SHORT_SETTLE) {
+	// 	return false;
+	// }
 
 	// Do not balance if the shutdown circuit is open.
 
