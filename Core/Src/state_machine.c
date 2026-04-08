@@ -332,13 +332,7 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 			break;
 		case LONG_SETTLE:
 			if (is_timer_expired(state_timer)) {
-				if (analyzer->max_voltage.val <
-				    MAX_CHARGE_VOLT) {
-					next_stage =
-						LONG_CHARGE_UP; // continue charging
-				} else {
-					next_stage = SHORT_CHARGE_UP;
-				}
+				 next_stage = SHORT_CHARGE_UP;
 			}
 			break;
 		case SHORT_CHARGE_UP:
