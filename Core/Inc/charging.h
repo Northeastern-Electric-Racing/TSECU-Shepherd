@@ -12,7 +12,11 @@
  */
 void pwm_duty_cycle_set(uint8_t duty_cycle_req_get);
 
-
+/**
+ * @brief get the duty cycle (atomic)
+ *
+ * @returns the duty cycle enum for the driver (PWM_DUTY)
+ */
 PWM_DUTY pwm_duty_cycle_get();
 
 /**
