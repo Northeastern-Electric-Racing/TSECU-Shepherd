@@ -113,9 +113,9 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	PRINTLN_INFO("S ADC Voltages:");
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			PRINTLN_INFO(
-				"%.3f\t",
-				getVoltage(acc_data->chips[c].scell.sc_codes[cell]));
+			PRINTLN_INFO("%.3f\t",
+				     getVoltage(acc_data->chips[c]
+							.scell.sc_codes[cell]));
 		}
 		printf("\n");
 	}
@@ -135,14 +135,15 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	PRINTLN_INFO("Therm Temps:");
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			PRINTLN_INFO("Chip %d, Cell: %d, %.1f C\t",
-				     c, cell, analyzer->chip_data[c].cell_temp[cell]);
+			PRINTLN_INFO("Chip %d, Cell: %d, %.1f C\t", c, cell,
+				     analyzer->chip_data[c].cell_temp[cell]);
 		}
 		printf("\n");
 	}
 	PRINTLN_INFO("CHIP TEMPS: \n");
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		PRINTLN_INFO("Chip: %d, %.1f\t C", c, analyzer->chip_data[c].die_temp);
+		PRINTLN_INFO("Chip: %d, %.1f\t C", c,
+			     analyzer->chip_data[c].die_temp);
 	}
 	printf("\n");
 #endif
@@ -255,55 +256,60 @@ void vDebug(ULONG thread_input)
 				tx_thread_sleep(10); // TODO: enhance timing
 			}
 
-
 			if (chip % 2 == 0) {
-			    send_alpha_chip_a_debug(chip / 2, chip_data->die_temp,
-					  chip_data->vpv, chip_data->vmv,
-					  chip_data->flt_reg.va_ov > 0,
-					  chip_data->flt_reg.va_uv > 0,
-					  chip_data->flt_reg.vd_ov > 0,
-					  chip_data->flt_reg.vd_uv > 0,
-					  chip_data->flt_reg.vde > 0,
-					  chip_data->flt_reg.vdel > 0,
-					  chip_data->flt_reg.spiflt > 0,
-					  chip_data->flt_reg.sleep > 0,
-					  chip_data->flt_reg.thsd > 0,
-					  chip_data->flt_reg.tmodchk > 0,
-					  chip_data->flt_reg.oscchk > 0);
+				send_alpha_chip_a_debug(
+					chip / 2, chip_data->die_temp,
+					chip_data->vpv, chip_data->vmv,
+					chip_data->flt_reg.va_ov > 0,
+					chip_data->flt_reg.va_uv > 0,
+					chip_data->flt_reg.vd_ov > 0,
+					chip_data->flt_reg.vd_uv > 0,
+					chip_data->flt_reg.vde > 0,
+					chip_data->flt_reg.vdel > 0,
+					chip_data->flt_reg.spiflt > 0,
+					chip_data->flt_reg.sleep > 0,
+					chip_data->flt_reg.thsd > 0,
+					chip_data->flt_reg.tmodchk > 0,
+					chip_data->flt_reg.oscchk > 0);
 
 				tx_thread_sleep(30); // TODO: enhance timing
 
-				send_alpha_chip_b_debug(chip_data->v_res, chip / 2,
+				send_alpha_chip_b_debug(
+					chip_data->v_res, chip / 2,
 					chip_data->vref2, chip_data->v_analog,
-				    chip_data->v_digital,
+					chip_data->v_digital,
 					chip_data->flt_reg.otp1_med > 0,
-				    chip_data->flt_reg.otp2_med > 0);
+					chip_data->flt_reg.otp2_med > 0);
 			} else {
-                send_beta_chip_a_debug(chip / 2, chip_data->die_temp,
-                    chip_data->vpv, chip_data->vmv,
-                    chip_data->flt_reg.va_ov > 0,
-                    chip_data->flt_reg.va_uv > 0,
-                    chip_data->flt_reg.vd_ov > 0,
-                    chip_data->flt_reg.vd_uv > 0,
-                    chip_data->flt_reg.vde > 0,
-                    chip_data->flt_reg.vdel > 0,
-                    chip_data->flt_reg.spiflt > 0,
-                    chip_data->flt_reg.sleep > 0,
-                    chip_data->flt_reg.thsd > 0,
-                    chip_data->flt_reg.tmodchk > 0,
-                    chip_data->flt_reg.oscchk > 0);
+				send_beta_chip_a_debug(
+					chip / 2, chip_data->die_temp,
+					chip_data->vpv, chip_data->vmv,
+					chip_data->flt_reg.va_ov > 0,
+					chip_data->flt_reg.va_uv > 0,
+					chip_data->flt_reg.vd_ov > 0,
+					chip_data->flt_reg.vd_uv > 0,
+					chip_data->flt_reg.vde > 0,
+					chip_data->flt_reg.vdel > 0,
+					chip_data->flt_reg.spiflt > 0,
+					chip_data->flt_reg.sleep > 0,
+					chip_data->flt_reg.thsd > 0,
+					chip_data->flt_reg.tmodchk > 0,
+					chip_data->flt_reg.oscchk > 0);
 
-                tx_thread_sleep(30); // TODO: enhance timing
+				tx_thread_sleep(30); // TODO: enhance timing
 
-                send_beta_chip_b_debug(chip_data->v_res, chip / 2,
-                    chip_data->vref2, chip_data->v_analog,
-                    chip_data->v_digital,
-                    chip_data->flt_reg.otp1_med > 0,
-                    chip_data->flt_reg.otp2_med > 0);
+				send_beta_chip_b_debug(
+					chip_data->v_res, chip / 2,
+					chip_data->vref2, chip_data->v_analog,
+					chip_data->v_digital,
+					chip_data->flt_reg.otp1_med > 0,
+					chip_data->flt_reg.otp2_med > 0);
 			}
 
-
-
+			PRINTLN_INFO("ONBOARD TEMPS: %f, %f, %f ------------------------ ",
+				     chip_data->on_board_temp[0],
+				     chip_data->on_board_temp[1],
+				     chip_data->on_board_temp[2]);
 			send_onboard_therm_temperatures(
 				chip, chip_data->on_board_temp[0],
 				chip_data->on_board_temp[1],
