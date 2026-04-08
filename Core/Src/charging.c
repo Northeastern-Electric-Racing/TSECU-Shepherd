@@ -3,9 +3,6 @@
 #include "bms_config.h"
 #include "c_utils.h"
 #include "analyzer.h"
-#include "adBms6830Data.h"
-
-
 
 /// @brief A struct to hold the original float value and the index originally,
 /// as that holds meaning
@@ -22,7 +19,7 @@ void pwm_duty_cycle_set(uint8_t duty_cycle_req_get) {
 
 PWM_DUTY pwm_duty_cycle_get() {
     switch (duty_cycle_req) {
-        case 0 ... 6:
+        case 1 ... 6:
             return PWM_6_6_PCT;
         case 7 ... 13:
             return PWM_13_2_PCT;

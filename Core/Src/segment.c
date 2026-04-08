@@ -4,6 +4,8 @@
 #include "adi6830_interation.h"
 #include "bms_config.h"
 #include "c_utils.h"
+#include "charging.h"
+#include "datastructs.h"
 #include "isospi_recovery.h"
 #include "serialPrintResult.h"
 #include "u_tx_flags.h"
@@ -314,9 +316,9 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 			      SPI_HandleTypeDef *hspi)
 {
 	// clang-format off
-	PWM_DUTY discharge_confg[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
+	bool discharge_confg_en[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -326,6 +328,15 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 	};
+	PWM_DUTY cycle = pwm_duty_cycle_get();
+	PWM_DUTY discharge_confg[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
+	for (int chip = 0; chip < NUM_CHIPS; chip++) {
+		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			if (discharge_confg_en[chip][cell]) {
+                discharge_confg[chip][cell] = cycle;
+			}
+		}
+	}
 	// clang-format on
 
 	segment_configure_balancing(chips, discharge_confg, hspi);
@@ -386,10 +397,10 @@ void vGetSegmentData(ULONG thread_input)
 
 	for (;;) {
 		prev_state = current_state;
-		current_state = state_machine->bms_state;
+		current_state = BALANCING;
 
 		// mute when entering any state other than balancing or charging
-		if (prev_state != current_state && (current_state != BALANCING || current_state != CHARGING)) {
+		if (prev_state != current_state && (current_state != BALANCING && current_state != CHARGING)) {
 		    segment_mute(acc_data->chips, &hspi2);
 		}
 
@@ -431,7 +442,8 @@ void vGetSegmentData(ULONG thread_input)
 
 			segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR, &hspi2);
 			tx_thread_sleep(MS_TO_TICKS(16));
-			segment_configure_balancing(acc_data->chips, acc_data->discharge_config, &hspi2);
+			segment_manual_balancing(acc_data->chips, &hspi2);
+			//segment_configure_balancing(acc_data->chips, acc_data->discharge_config, &hspi2);
 			start_timer(&pwm_timer, pwm_update_frequency);
 		}
 

@@ -345,11 +345,11 @@ void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 
 		// Chip Diagnotics
 		chip_data->vpv =
-			20.0 *
+			20.0f *
 			getVoltage( // VPV is ra_code 11 w/ different scale
 				acc_data->chips[chip].aux.a_codes[11]),
 		chip_data->vmv =
-			(20.0 * getVoltage( // VMV is ra_code 10
+			(20.0f * getVoltage( // VMV is ra_code 10
 					acc_data->chips[chip].aux.a_codes[10])),
 		chip_data->flt_reg = acc_data->chips[chip].statc;
 		chip_data->v_res = getVoltage(acc_data->chips[chip].statb.vr4k);

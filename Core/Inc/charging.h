@@ -2,6 +2,8 @@
 #define _CHARGING_H
 
 #include "datastructs.h"
+#include "adBms6830Data.h"
+
 
 /**
  * @brief set the duty cycle (atomic)
@@ -9,6 +11,9 @@
  * @param duty_cycle_req_get the duty cycle 0-100, will be rounded UP appropriately
  */
 void pwm_duty_cycle_set(uint8_t duty_cycle_req_get);
+
+
+PWM_DUTY pwm_duty_cycle_get();
 
 /**
  * @brief entrypoint for handling balancing of cells.  DOES NOT ENABLE BALANCING, but does configure it.
