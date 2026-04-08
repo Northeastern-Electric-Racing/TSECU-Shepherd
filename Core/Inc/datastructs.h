@@ -361,6 +361,7 @@ typedef struct {
 	bool hv_plate_comms_fault_flag;
 
 	bool balancing_active;
+	bool is_charger_connected;
 
 } state_machine_t;
 

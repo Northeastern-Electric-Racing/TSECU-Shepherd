@@ -59,17 +59,20 @@ void init_boot(state_machine_args_t *state_machine_args)
 void handle_boot(state_machine_args_t *state_machine_args)
 {
 	request_transition(state_machine_args, READY);
-	return;
 }
 
 void init_ready(state_machine_args_t *state_machine_args)
 {
-	compute_set_fault(false); // TODO: Make BMS Utils
+	compute_set_fault(false); 
 	return;
 }
 
 void handle_ready(state_machine_args_t *state_machine_args)
 {
+	if (state_machine_args->state_machine->is_charger_connected) {
+		request_transition(state_machine_args, CHARGING);
+	}
+
 	return;
 }
 
@@ -121,6 +124,7 @@ void handle_charging(state_machine_args_t *state_machine_args)
 void charger_message_recieved(state_machine_args_t *state_machine_args)
 {
 	// this is irreversible, a LV power cycle occurs before re-connection to car
+	state_machine_args->state_machine->is_charger_connected = true;
 	request_transition(state_machine_args, CHARGING);
 }
 
@@ -378,7 +382,7 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 
 // check if balancing is allowed
 bool sm_balancing_check(state_machine_args_t *state_machine_args)
-{
+{		
 	//state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
 
@@ -586,6 +590,7 @@ void vStateMachine(ULONG thread_input)
 
 	state_machine->bms_state = BOOT;
 	state_machine->balancing_active = false;
+	state_machine->is_charger_connected = false;
 
 	nertimer_t telem_timer;
 	// sends unimportant telemetry messages every 500ms
@@ -593,7 +598,7 @@ void vStateMachine(ULONG thread_input)
 
 	for (;;) {
 		sm_handle_state(state_machine_args);
-
+		
 		// send unimportant messages less frequently
 		if (is_timer_expired(&telem_timer)) {
 			send_bms_status(state_machine->bms_state,
