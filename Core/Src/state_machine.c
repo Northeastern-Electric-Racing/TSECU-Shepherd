@@ -399,7 +399,7 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 // check if balancing is allowed
 bool sm_balancing_check(state_machine_args_t *state_machine_args)
 {
-	state_machine_t *state_machine = state_machine_args->state_machine;
+	//state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
 
 	// TODO: replace with mutexed getter
