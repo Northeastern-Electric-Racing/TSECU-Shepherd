@@ -88,14 +88,12 @@ bool get_fault(fault_code_t fault);
 void init_boot(state_machine_args_t *state_machine_args);
 void init_ready(state_machine_args_t *state_machine_args);
 void init_charging(state_machine_args_t *state_machine_args);
-void init_balancing(state_machine_args_t *state_machine_args);
 void init_faulted(state_machine_args_t *state_machine_args);
 
 // handle functions
 void handle_boot(state_machine_args_t *state_machine_args);
 void handle_ready(state_machine_args_t *state_machine_args);
 void handle_charging(state_machine_args_t *state_machine_args);
-void handle_balancing(state_machine_args_t *state_machine_args);
 void handle_faulted(state_machine_args_t *state_machine_args);
 
 /**

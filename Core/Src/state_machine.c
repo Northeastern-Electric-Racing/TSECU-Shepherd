@@ -585,6 +585,7 @@ void vStateMachine(ULONG thread_input)
 	analyzer_t *analyzer = state_machine_args->analyzer;
 
 	state_machine->bms_state = BOOT;
+	state_machine->balancing_active = false;
 
 	nertimer_t telem_timer;
 	// sends unimportant telemetry messages every 500ms
