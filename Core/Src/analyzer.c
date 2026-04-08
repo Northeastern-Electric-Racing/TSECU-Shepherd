@@ -332,8 +332,11 @@ void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 		// Cell Diagnostics
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			// balancing status
-			chip_data->is_balancing[cell] =
-				(acc_data->chips[chip].tx_cfgb.dcc >> cell) & 1;
+			if (cell < PWMA) {
+			    chip_data->is_balancing[cell] = acc_data->chips[chip].PwmA.pwma[cell] > 0;
+			} else {
+			    chip_data->is_balancing[cell] = acc_data->chips[chip].PwmB.pwmb[cell - PWMA] > 0;
+			}
 			// S_C fault status
 			chip_data->cs_fault[cell] =
 				(acc_data->chips[chip].statc.cs_flt >> cell) &

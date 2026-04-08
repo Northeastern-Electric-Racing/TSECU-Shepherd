@@ -279,13 +279,12 @@ bool segment_is_balancing(cell_asic chips[NUM_CHIPS])
 		if (chips[chip].rx_cfgb.dcc > 0) {
 			return true;
 		}
-		// right now this checks all cells, even depop-ed ones
-		for (uint8_t i = 0; i < 12; i++) {
+		for (uint8_t i = 0; i < PWMA; i++) {
 			if (chips[chip].PwmA.pwma[i] > 0) {
 				return true;
 			}
 		}
-		for (uint8_t i = 0; i < 4; i++) {
+		for (uint8_t i = 0; i < NUM_CELLS_PER_CHIP - PWMA; i++) {
 			if (chips[chip].PwmB.pwmb[i] > 0) {
 				return true;
 			}

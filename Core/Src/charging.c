@@ -111,7 +111,7 @@ void handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
 	// the low cell, eventually they all must get there
 	float low = analyzer->min_ocv.val;
 	// the margin above the low cell to ignore, which is usually X% of the delta
-	float min_thresh = analyzer->delt_ocv * 0.4;
+	float min_thresh = analyzer->delt_ocv * 0.4f;
 
 	val_idexed_t new_ocv_map[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
 
