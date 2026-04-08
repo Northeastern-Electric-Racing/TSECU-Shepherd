@@ -19,12 +19,11 @@ static _Atomic uint32_t severity_mask = 0;
 static _Atomic uint32_t fault_flags = 0;
 
 const bool valid_transition_from_to[NUM_STATES][NUM_STATES] = {
-	/*   BOOT, READY, CHARGING, BALANCING, FAULTED */
-	{ true, true, true, false, true }, /* BOOT */
-	{ false, true, true, false, true }, /* READY */
-	{ false, true, true, true, true }, /* CHARGING */
-	{ false, true, true, true, true }, /* BALANCING */
-	{ true, false, false, false, true } /* FAULTED */
+	/*   BOOT, READY, CHARGING, FAULTED */
+	{ true, true, true, true }, /* BOOT */
+	{ false, true, true, true }, /* READY */
+	{ false, true, true, true }, /* CHARGING */
+	{ true, false, false, true } /* FAULTED */
 };
 
 /* private function prototypes */
@@ -37,12 +36,10 @@ typedef void (*HandlerFunction_t)(state_machine_args_t *state_machine_args);
 typedef void (*InitFunction_t)(state_machine_args_t *state_machine_args);
 
 const InitFunction_t init_LUT[NUM_STATES] = { &init_boot, &init_ready,
-					      &init_charging, &init_balancing,
-					      &init_faulted };
+					      &init_charging, &init_faulted };
 
 const HandlerFunction_t handler_LUT[NUM_STATES] = { &handle_boot, &handle_ready,
 						    &handle_charging,
-						    &handle_balancing,
 						    &handle_faulted };
 
 void init_boot(state_machine_args_t *state_machine_args)
@@ -81,25 +78,9 @@ void init_charging(state_machine_args_t *state_machine_args)
 	state_machine_args->state_machine->charging_stage = LONG_CHARGE_UP;
 	start_timer(&state_machine_args->state_machine->charging_stage_timer,
 		    15 * 60 * 1000); // 15 minutes
-}
 
-void init_balancing(state_machine_args_t *state_machine_args)
-{
-	// disable discharge and charge from the MC
 	send_max_dc_current_command(0);
 	send_max_dc_brake_current_command(0);
-	return;
-}
-
-void handle_balancing(state_machine_args_t *state_machine_args)
-{
-	if (sm_balancing_check(state_machine_args)) {
-		handle_balance_cells(state_machine_args->analyzer,
-				     state_machine_args->acc_data);
-	} else {
-		request_transition(state_machine_args, CHARGING);
-	}
-	return;
 }
 
 void handle_charging(state_machine_args_t *state_machine_args)
@@ -128,8 +109,13 @@ void handle_charging(state_machine_args_t *state_machine_args)
 	send_max_dc_brake_current_command(0);
 
 	/* Check if we should balance */
-	if (sm_balancing_check(state_machine_args))
-		request_transition(state_machine_args, BALANCING);
+	if (sm_balancing_check(state_machine_args)) {
+		handle_balance_cells(state_machine_args->analyzer,
+				     state_machine_args->acc_data);
+		state_machine_args->state_machine->balancing_active = true;
+	} else {
+		state_machine_args->state_machine->balancing_active = false;
+	}
 }
 
 void charger_message_recieved(state_machine_args_t *state_machine_args)
@@ -138,11 +124,12 @@ void charger_message_recieved(state_machine_args_t *state_machine_args)
 	request_transition(state_machine_args, CHARGING);
 }
 
-void init_faulted(state_machine_args_t *bmsdata)
+void init_faulted(state_machine_args_t *state_machine_args)
 {
 	send_max_dc_current_command(0);
 	send_max_dc_brake_current_command(0);
 	send_bms_charge_message_send(0, 0, 0xFF);
+	state_machine_args->state_machine->balancing_active = false;
 }
 
 void handle_faulted(state_machine_args_t *state_machine_args)
@@ -170,7 +157,6 @@ void sm_handle_state(state_machine_args_t *state_machine_args)
 void request_transition(state_machine_args_t *state_machine_args,
 			state_t next_state)
 {
-
 	state_machine_t *state_machine = state_machine_args->state_machine;
 
 	mutex_get(&state_mutex);
@@ -332,7 +318,7 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 			break;
 		case LONG_SETTLE:
 			if (is_timer_expired(state_timer)) {
-				 next_stage = SHORT_CHARGE_UP;
+				next_stage = SHORT_CHARGE_UP;
 			}
 			break;
 		case SHORT_CHARGE_UP:
