@@ -259,13 +259,13 @@ void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
 	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			// Cell resistance drops when there is current running through the pack
-			if (fabs(hv_plate->pack_current) >= 0.001) {
+			if (fabsf(hv_plate->pack_current) >= 0.001f) {
 				analyzer->chip_data[c].cell_resistance[cell] =
 					(analyzer->chip_data[c]
 						 .open_cell_voltage[cell] -
 					 analyzer->chip_data[c]
 						 .cell_voltages[cell]) /
-					fabs(hv_plate->pack_current);
+					fabsf(hv_plate->pack_current);
 			} else {
 				analyzer->chip_data[c].cell_resistance[cell] =
 					0.015; // default resistance from data sheet

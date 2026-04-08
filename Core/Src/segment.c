@@ -298,7 +298,7 @@ void segment_disable_balancing(cell_asic chips[NUM_CHIPS],
 			       SPI_HandleTypeDef *hspi)
 {
 	// Initializes all array elements to zero
-	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
+	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
 	segment_configure_balancing(chips, discharge_config, hspi);
 
 	// force balancing muted
@@ -315,7 +315,7 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 			      SPI_HandleTypeDef *hspi)
 {
 	// clang-format off
-	bool discharge_confg[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
+	PWM_DUTY discharge_confg[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -334,15 +334,13 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 
 void segment_configure_balancing(
 	cell_asic chips[NUM_CHIPS],
-	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP],
+	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP],
 	SPI_HandleTypeDef *hspi)
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			set_cell_pwm(&chips[chip], cell,
-				     discharge_config[chip][cell] ?
-					     PWM_52_8_PCT :
-					     PWM_0_0_PCT);
+				     discharge_config[chip][cell]);
 		}
 	}
 	write_pwm_regs(chips, hspi);
