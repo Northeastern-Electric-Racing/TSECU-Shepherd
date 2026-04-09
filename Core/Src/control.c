@@ -15,6 +15,8 @@ uint8_t control_device_signals[NUM_DEVICES];
 pwm_device_t device_fan0;
 pwm_device_t device_fan1;
 
+static uint8_t balancing_pwm_duty = 0; //defaults to 0% duty cycle
+
 static HAL_StatusTypeDef _init_pwm_device(pwm_device_t *device) {
   HAL_StatusTypeDef status;
 
@@ -88,11 +90,22 @@ void control_message_fans(can_msg_t msg) {
   calypso_signals[DEVICE_FAN0] = duty;
 }
 
+
 void control_message_fans_lv(can_msg_t msg) {
   uint8_t temp_c = *(msg.data);
   uint8_t duty_cycle = temp_c >= 35 ? 100 : 75;
   calypso_signals[DEVICE_FAN1] = duty_cycle;
 }
+
+
+void control_message_balancing_pwm(can_msg_t msg) {
+	// First byte is the requested duty cycle (0-100)
+	uint8_t duty = *(msg.data);
+	if (duty > 100) {
+		duty = 100;
+	}
+	balancing_pwm_duty = duty; //stores it in global variable
+  }
 
 #undef _PERCENT_16
 

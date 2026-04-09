@@ -42,4 +42,5 @@ void control_message_fans_lv(can_msg_t msg);
 
 void vControl(ULONG thread_input);
 
+void control_message_balancing_pwm(can_msg_t msg);
 #endif

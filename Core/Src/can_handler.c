@@ -45,6 +45,18 @@ uint8_t init_can1(FDCAN_HandleTypeDef *hcan) {
     return U_ERROR;
   }
 
+  uint16_t standard3[] = {CALYPSO_PWM_CONTROL_CANID, 0x00};
+  status = can_add_filter_standard(&can1, standard3);
+  if (status != HAL_OK) {
+    PRINTLN_ERROR("Failed to add standard filter to can1 (Status: %d/%s, ID1: "
+                  "%d, ID2: %d).",
+                  status, hal_status_toString(status), standard3[0],
+                  standard3[1]);
+    return U_ERROR;
+  }
+
+
+
   /* Add fitlers for extended IDs */
   uint32_t extended1[] = {CHARGERBOX_CANID, 0x00};
   status = can_add_filter_extended(&can1, extended1);
@@ -127,7 +139,11 @@ void vCanReceive(ULONG thred_input) {
         control_message_fans(message);
         break;
       case BATTBOX_TEMP_CANID:
+        printf("Received BATTBOX_TEMP_CANID message with data: %d\n", message.data[0]);
         control_message_fans_lv(message);
+        break;
+      case CALYPSO_PWM_CONTROL_CANID:
+        control_message_balancing_pwm(message);
         break;
       default:
         break;
@@ -154,7 +170,7 @@ void vCanDispatch(ULONG thread_input) {
                         "outgoing queue (Message ID: %ld) - Status %d",
                         message.id, status);
       } else {
-        PRINTLN_INFO("Sent CAN message with ID: %ld", message.id);
+        // PRINTLN_INFO("Sent CAN message with ID: %ld", message.id);
       }
     }
   }
