@@ -306,10 +306,6 @@ void vDebug(ULONG thread_input)
 					chip_data->flt_reg.otp2_med > 0);
 			}
 
-			PRINTLN_INFO("ONBOARD TEMPS: %f, %f, %f ------------------------ ",
-				     chip_data->on_board_temp[0],
-				     chip_data->on_board_temp[1],
-				     chip_data->on_board_temp[2]);
 			send_onboard_therm_temperatures(
 				chip, chip_data->on_board_temp[0],
 				chip_data->on_board_temp[1],
