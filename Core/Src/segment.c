@@ -4,6 +4,8 @@
 #include "adi6830_interation.h"
 #include "bms_config.h"
 #include "c_utils.h"
+#include "charging.h"
+#include "datastructs.h"
 #include "isospi_recovery.h"
 #include "serialPrintResult.h"
 #include "u_tx_flags.h"
@@ -279,13 +281,12 @@ bool segment_is_balancing(cell_asic chips[NUM_CHIPS])
 		if (chips[chip].rx_cfgb.dcc > 0) {
 			return true;
 		}
-		// right now this checks all cells, even depop-ed ones
-		for (uint8_t i = 0; i < 12; i++) {
+		for (uint8_t i = 0; i < PWMA; i++) {
 			if (chips[chip].PwmA.pwma[i] > 0) {
 				return true;
 			}
 		}
-		for (uint8_t i = 0; i < 4; i++) {
+		for (uint8_t i = 0; i < NUM_CELLS_PER_CHIP - PWMA; i++) {
 			if (chips[chip].PwmB.pwmb[i] > 0) {
 				return true;
 			}
@@ -298,7 +299,7 @@ void segment_disable_balancing(cell_asic chips[NUM_CHIPS],
 			       SPI_HandleTypeDef *hspi)
 {
 	// Initializes all array elements to zero
-	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
+	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
 	segment_configure_balancing(chips, discharge_config, hspi);
 
 	// force balancing muted
@@ -315,7 +316,7 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 			      SPI_HandleTypeDef *hspi)
 {
 	// clang-format off
-	bool discharge_confg[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
+	bool discharge_config_en[NUM_CHIPS][NUM_CELLS_PER_CHIP] = {
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -327,6 +328,15 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 	};
+	PWM_DUTY cycle = pwm_duty_cycle_get();
+	PWM_DUTY discharge_confg[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
+	for (int chip = 0; chip < NUM_CHIPS; chip++) {
+		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			if (discharge_config_en[chip][cell]) {
+                discharge_confg[chip][cell] = cycle;
+			}
+		}
+	}
 	// clang-format on
 
 	segment_configure_balancing(chips, discharge_confg, hspi);
@@ -334,15 +344,13 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 
 void segment_configure_balancing(
 	cell_asic chips[NUM_CHIPS],
-	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP],
+	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP],
 	SPI_HandleTypeDef *hspi)
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
 			set_cell_pwm(&chips[chip], cell,
-				     discharge_config[chip][cell] ?
-					     PWM_52_8_PCT :
-					     PWM_0_0_PCT);
+				     discharge_config[chip][cell]);
 		}
 	}
 	write_pwm_regs(chips, hspi);
@@ -389,7 +397,7 @@ void vGetSegmentData(ULONG thread_input)
 		current_state = state_machine->bms_state;
 
 		// mute when entering any state other than balancing or charging
-		if (prev_state != current_state && (current_state != BALANCING || current_state != CHARGING)) {
+		if (prev_state != current_state && (current_state != BALANCING && current_state != CHARGING)) {
 		    segment_mute(acc_data->chips, &hspi2);
 		}
 

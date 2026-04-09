@@ -332,13 +332,7 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 			break;
 		case LONG_SETTLE:
 			if (is_timer_expired(state_timer)) {
-				if (analyzer->max_voltage.val <
-				    MAX_CHARGE_VOLT) {
-					next_stage =
-						LONG_CHARGE_UP; // continue charging
-				} else {
-					next_stage = SHORT_CHARGE_UP;
-				}
+				 next_stage = SHORT_CHARGE_UP;
 			}
 			break;
 		case SHORT_CHARGE_UP:
@@ -399,7 +393,7 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 // check if balancing is allowed
 bool sm_balancing_check(state_machine_args_t *state_machine_args)
 {
-	state_machine_t *state_machine = state_machine_args->state_machine;
+	//state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
 
 	// TODO: replace with mutexed getter
@@ -409,10 +403,10 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 		return false;
 
 	// Do not balance during settling.
-	if (state_machine->charging_stage != LONG_SETTLE &&
-	    state_machine->charging_stage != SHORT_SETTLE) {
-		return false;
-	}
+	// if (state_machine->charging_stage != LONG_SETTLE &&
+	//     state_machine->charging_stage != SHORT_SETTLE) {
+	// 	return false;
+	// }
 
 	// Do not balance if the shutdown circuit is open.
 

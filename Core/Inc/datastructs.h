@@ -170,7 +170,7 @@ typedef struct {
 	cell_asic chips[NUM_CHIPS];
 
 	// the current discharge configuration the state machine wants
-	bool discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
 } acc_data_t;
 
 /**

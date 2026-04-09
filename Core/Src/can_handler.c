@@ -5,6 +5,7 @@
 #include "u_queues.h"
 #include "u_tx_debug.h"
 #include "u_tx_general.h"
+#include "charging.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,6 +28,16 @@ uint8_t init_can1(FDCAN_HandleTypeDef *hcan) {
   /* Add filters for standard IDs */
   uint16_t standard1[] = {BATTBOX_DUTY_CYCLE_CANID, CALYPSO_CONTROL_CANID};
   status = can_add_filter_standard(&can1, standard1);
+  if (status != HAL_OK) {
+    PRINTLN_ERROR("Failed to add standard filter to can1 (Status: %d/%s, ID1: "
+                  "%d, ID2: %d).",
+                  status, hal_status_toString(status), standard1[0],
+                  standard1[1]);
+    return U_ERROR;
+  }
+
+  uint16_t standard2[] = {CALYPSO_PWM_BAL_CANID, 0x01};
+  status = can_add_filter_standard(&can1, standard2);
   if (status != HAL_OK) {
     PRINTLN_ERROR("Failed to add standard filter to can1 (Status: %d/%s, ID1: "
                   "%d, ID2: %d).",
@@ -116,6 +127,9 @@ void vCanReceive(ULONG thread_input) {
         break;
       case BATTBOX_DUTY_CYCLE_CANID:
         control_message_fans_lv(message);
+        break;
+      case CALYPSO_PWM_BAL_CANID:
+        pwm_duty_cycle_set(message.data[0]);
         break;
       default:
         break;

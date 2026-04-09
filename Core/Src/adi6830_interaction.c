@@ -184,8 +184,11 @@ void set_cell_discharge(cell_asic *chip, DCC cell, DCC_BIT discharge)
 }
 
 void set_cell_pwm(cell_asic *chip, DCC cell, PWM_DUTY discharge) {
-	if (cell < 12)chip->PwmA.pwma[cell] = discharge;
-	else chip->PwmB.pwmb[cell - 12] = discharge;
+    if (cell < PWMA) {
+        chip->PwmA.pwma[cell] = discharge;
+    } else {
+        chip->PwmB.pwmb[cell - PWMA] = discharge;
+    }
 }
 
 void clear_cell_discharge(cell_asic *chip)
