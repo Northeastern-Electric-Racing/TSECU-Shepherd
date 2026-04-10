@@ -1,5 +1,6 @@
 
 #include <assert.h>
+#include <stdlib.h>
 
 #include "shep_tasks.h"
 #include "can_handler.h"
@@ -317,39 +318,39 @@ void vDebug(ULONG thread_input)
 uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 {
 	/* Init Interfaces Start */
-	acc_data_t *acc_data = (acc_data_t *)malloc(sizeof(acc_data_t));
-	analyzer_t *analyzer = (analyzer_t *)malloc(sizeof(analyzer_t));
+	acc_data_t *acc_data = (acc_data_t *)calloc(1, sizeof(acc_data_t));
+	analyzer_t *analyzer = (analyzer_t *)calloc(1, sizeof(analyzer_t));
 	state_machine_t *state_machine =
-		(state_machine_t *)malloc(sizeof(state_machine_t));
-	hv_plate_t *hv_plate = (hv_plate_t *)malloc(sizeof(hv_plate_t));
+		(state_machine_t *)calloc(1, sizeof(state_machine_t));
+	hv_plate_t *hv_plate = (hv_plate_t *)calloc(1, sizeof(hv_plate_t));
 	cell_asic_2950 hv_plate_ic;
 	hv_plate->ic = &hv_plate_ic;
-	sanitizer_t *sanitizer = (sanitizer_t *)malloc(sizeof(sanitizer_t));
-	bms_algos_t *bms_algos = (bms_algos_t *)malloc(sizeof(bms_algos_t));
+	sanitizer_t *sanitizer = (sanitizer_t *)calloc(1, sizeof(sanitizer_t));
+	bms_algos_t *bms_algos = (bms_algos_t *)calloc(1, sizeof(bms_algos_t));
 	peripherals_t *peripherals =
-		(peripherals_t *)malloc(sizeof(peripherals_t));
+		(peripherals_t *)calloc(1, sizeof(peripherals_t));
 
 	default_task_args_t *default_task_args =
-		(default_task_args_t *)malloc(sizeof(default_task_args_t));
+		(default_task_args_t *)calloc(1, sizeof(default_task_args_t));
 	default_task_args->analyzer = analyzer;
 	default_task_args->acc_data = acc_data;
 	default_task_args->hv_plate = hv_plate;
 	default_task_args->bms_algos = bms_algos;
 
 	analyzer_args_t *analyzer_args =
-		(analyzer_args_t *)malloc(sizeof(analyzer_args_t));
+		(analyzer_args_t *)calloc(1, sizeof(analyzer_args_t));
 	analyzer_args->acc_data = acc_data;
 	analyzer_args->hv_plate = hv_plate;
 	analyzer_args->analyzer = analyzer;
 	analyzer_args->state_machine = state_machine;
 
 	acc_data_args_t *acc_data_args =
-		(acc_data_args_t *)malloc(sizeof(acc_data_args_t));
+		(acc_data_args_t *)calloc(1, sizeof(acc_data_args_t));
 	acc_data_args->acc_data = acc_data;
 	acc_data_args->state_machine = state_machine;
 
 	state_machine_args_t *state_machine_args =
-		(state_machine_args_t *)malloc(sizeof(state_machine_args_t));
+		(state_machine_args_t *)calloc(1, sizeof(state_machine_args_t));
 	state_machine_args->acc_data = acc_data;
 	state_machine_args->analyzer = analyzer;
 	state_machine_args->hv_plate = hv_plate;
@@ -359,25 +360,25 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	state_machine_args->peripherals = peripherals;
 
 	hv_plate_args_t *hv_plate_args =
-		(hv_plate_args_t *)malloc(sizeof(hv_plate_args_t));
+		(hv_plate_args_t *)calloc(1, sizeof(hv_plate_args_t));
 	hv_plate_args->hv_plate = hv_plate;
 	hv_plate_args->analyzer = analyzer;
 	hv_plate_args->state_machine = state_machine;
 	hv_plate_args->bms_algos = bms_algos;
 
 	sanitizer_args_t *sanitizer_args =
-		(sanitizer_args_t *)malloc(sizeof(sanitizer_args_t));
+		(sanitizer_args_t *)calloc(1, sizeof(sanitizer_args_t));
 	sanitizer_args->analyzer = analyzer;
 	sanitizer_args->sanitizer = sanitizer;
 
 	bms_algos_args_t *bms_algos_args =
-		(bms_algos_args_t *)malloc(sizeof(bms_algos_args_t));
+		(bms_algos_args_t *)calloc(1, sizeof(bms_algos_args_t));
 	bms_algos_args->analyzer = analyzer;
 	bms_algos_args->sanitizer = sanitizer;
 	bms_algos_args->bms_algos = bms_algos;
 
 	peripherals_args_t *peripherals_args =
-		(peripherals_args_t *)malloc(sizeof(peripherals_args_t));
+		(peripherals_args_t *)calloc(1, sizeof(peripherals_args_t));
 	peripherals_args->peripherals = peripherals;
 
 	PRINTLN_INFO("FINISHED INITIALIZING INTERFACES");
