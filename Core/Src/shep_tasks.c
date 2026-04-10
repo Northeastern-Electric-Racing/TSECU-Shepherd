@@ -319,8 +319,6 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	static analyzer_t analyzer = { 0 };
 	static state_machine_t state_machine = { 0 };
 	static hv_plate_t hv_plate = { 0 };
-	static cell_asic_2950 hv_plate_ic;
-	hv_plate.ic = hv_plate_ic;
 	static sanitizer_t sanitizer = { 0 };
 	static bms_algos_t bms_algos = { 0 };
 	static peripherals_t peripherals = { 0 };
