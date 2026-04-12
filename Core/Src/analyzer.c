@@ -145,7 +145,7 @@ void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
 {
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			if (state_machine->bms_state == CHARGING || state_machine->bms_state == BALANCING) {
+			if (state_machine->bms_state == CHARGING) {
 				analyzer->chip_data[chip].cell_voltages[cell] =
 					getVoltage(acc_data->chips[chip]
 							   .cell.c_codes[cell]);
@@ -177,7 +177,7 @@ void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
 		}
 		// measured on 4/5/2026, the current through the cells when in active mode continous C/S read compare
 		float curr_bal = 0.031f;
-		if (state_machine->bms_state == CHARGING || state_machine->bms_state == BALANCING) {
+		if (state_machine->bms_state == CHARGING) {
 		    // measured on 4/5/2026, the current through the cells when in charging mode single shot C ADCs
 			// redone to be higher 4/8 sans measurement
 		    curr_bal = 0.029f;

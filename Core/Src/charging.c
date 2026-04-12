@@ -1,5 +1,6 @@
 
 #include "charging.h"
+#include "adBms6830Data.h"
 #include "bms_config.h"
 #include "c_utils.h"
 #include "analyzer.h"
@@ -76,20 +77,20 @@ chipsSelectionSort(analyzer_t *analyzer,
 		// now actually sort it
 		for (size_t i = 0; i < NUM_CELLS_PER_CHIP - 1; i++) {
 			// Assume the current position holds
-			// the minimum element
+			// the maximum element
 			size_t max_idx = i;
 
 			// Iterate through the unsorted portion
-			// to find the actual minimum
+			// to find the actual maximum
 			for (size_t j = i + 1; j < NUM_CELLS_PER_CHIP; j++) {
 				if (replaced_val[chip][j].val >
 				    replaced_val[chip][max_idx].val) {
-					// Update min_idx if a smaller element is found
+					// Update max_idx if a smaller element is found
 					max_idx = j;
 				}
 			}
 
-			// Move minimum element to its
+			// Move maximum element to its
 			// correct position
 			val_idexed_t temp = replaced_val[chip][i];
 			replaced_val[chip][i] = replaced_val[chip][max_idx];
@@ -107,8 +108,9 @@ void handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
 
 	// the low cell, eventually they all must get there
 	float low = analyzer->min_ocv.val;
-	// the margin above the low cell to ignore, which is usually X% of the delta
-	float min_thresh = analyzer->delt_ocv * 0.4f;
+	// the margin above the low cell to ignore, which is usually X% of the delta, gate at 0
+	//float min_thresh = //fmaxf(analyzer->delt_ocv * 0.4f, 0.0f);
+	float min_thresh = 0.02f;
 
 	val_idexed_t new_ocv_map[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
 
@@ -122,8 +124,11 @@ void handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
 	for (size_t chip = 0; chip < NUM_CHIPS; chip++) {
 		// ONLY iterate to MAX_BAL or the number of cells, whatever is lower.
 		// this is OK because they are sorted greatest to least in delta
-		int cell_max = min(NUM_CELLS_PER_CHIP, MAX_BAL_CHIP);
-		for (size_t cell = 0; cell < cell_max; cell++) {
+		for (size_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+		    if (cell >= MAX_BAL_CHIP) {
+				acc_data->discharge_config[chip][new_ocv_map[chip][cell].idex] = PWM_0_0_PCT;
+				continue;
+			}
 			/* Check if cell voltage is above (low + threshold) */
 			if (new_ocv_map[chip][cell].val > (low + min_thresh)) {
 				/* Balance cell */

@@ -1076,29 +1076,33 @@ uint8_t send_onboard_therm_temperatures
     msg.id = 0x93;
     msg.id_is_extended = false;
     
-            uint8_t data = 0;
-            msg.len = 1;
+            uint64_t data = 0;
+            msg.len = 8;
                         uint32_t chip_id_i = (uint32_t)(chip_id);
-                        if(chip_id_i > 1ULL) {chip_id_i = 1;
+                        if(chip_id_i > 255ULL) {chip_id_i = 255;
                         }
-                        data |= ((chip_id_i) & 0x1ULL) << 7;
+                        data |= ((chip_id_i) & 0xFFULL) << 56;
             
-                        uint32_t therm_temp_1_i = (uint32_t)(therm_temp_1);
-                        if(therm_temp_1_i > 3ULL) {therm_temp_1_i = 3;
+                        int32_t therm_temp_1_i = (int32_t)(therm_temp_1*100);
+                        if(therm_temp_1_i > 32767) {therm_temp_1_i = 32767;
+                        } else if(therm_temp_1_i < -32768) {therm_temp_1_i = -32768;
                         }
-                        data |= ((therm_temp_1_i) & 0x3ULL) << 5;
+                        data |= ((uint32_t)(therm_temp_1_i) & 0xFFFFULL) << 40;
             
-                        uint32_t therm_temp_2_i = (uint32_t)(therm_temp_2);
-                        if(therm_temp_2_i > 3ULL) {therm_temp_2_i = 3;
+                        int32_t therm_temp_2_i = (int32_t)(therm_temp_2*100);
+                        if(therm_temp_2_i > 32767) {therm_temp_2_i = 32767;
+                        } else if(therm_temp_2_i < -32768) {therm_temp_2_i = -32768;
                         }
-                        data |= ((therm_temp_2_i) & 0x3ULL) << 3;
+                        data |= ((uint32_t)(therm_temp_2_i) & 0xFFFFULL) << 24;
             
-                        uint32_t therm_temp_3_i = (uint32_t)(therm_temp_3);
-                        if(therm_temp_3_i > 3ULL) {therm_temp_3_i = 3;
+                        int32_t therm_temp_3_i = (int32_t)(therm_temp_3*100);
+                        if(therm_temp_3_i > 32767) {therm_temp_3_i = 32767;
+                        } else if(therm_temp_3_i < -32768) {therm_temp_3_i = -32768;
                         }
-                        data |= ((therm_temp_3_i) & 0x3ULL) << 1;
+                        data |= ((uint32_t)(therm_temp_3_i) & 0xFFFFULL) << 8;
             
-            msg.data[0] = data;
+            uint64_t data_bigendian = __builtin_bswap64(data);
+            memcpy(msg.data, &data_bigendian, 8);
 
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }

@@ -356,7 +356,8 @@ void segment_configure_balancing(
 	write_pwm_regs(chips, hspi);
 }
 
-void segment_set_dcto(cell_asic chips[NUM_CHIPS], uint8_t dcto, SPI_HandleTypeDef *hspi)
+void segment_set_dcto(cell_asic chips[NUM_CHIPS], uint8_t dcto,
+		      SPI_HandleTypeDef *hspi)
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		set_discharge_timeout(&chips[chip], dcto);
@@ -400,16 +401,11 @@ void vGetSegmentData(ULONG thread_input)
 		current_state = state_machine->bms_state;
 
 		// mute when entering any state other than balancing or charging
-		if (prev_state != current_state && (current_state != BALANCING && current_state != CHARGING)) {
-		    segment_mute(acc_data->chips, &hspi2);
+		if (prev_state != current_state && current_state != CHARGING) {
+			segment_mute(acc_data->chips, &hspi2);
 		}
 
-		if (prev_state == BALANCING && current_state == CHARGING) {
-			tx_thread_sleep(MS_TO_TICKS(
-				balancing_delay)); // delay after balancing to let cells settle
-		}
-
-		if (current_state == CHARGING || current_state == BALANCING) {
+		if (current_state == CHARGING) {
 			// in charging, debug data is required to get things like die temp
 			segment_retrieve_charging_data(acc_data->chips, &hspi2);
 			send_segment_pec_errors_message();
@@ -431,18 +427,21 @@ void vGetSegmentData(ULONG thread_input)
 			}
 		}
 
-		if (current_state == BALANCING &&
+		if (current_state == CHARGING &&
+		    state_machine->balancing_active &&
 		    is_timer_expired(&pwm_timer) &&
 		    !is_timer_active(&pwm_timer)) {
-
 			segment_unmute(acc_data->chips, &hspi2);
 
 			// single shot SADC conversion to halt an SADC continuous conversion inhibiting PWM Balancing
 			get_s_adc_voltages(acc_data->chips, &hspi2);
 
-			segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR, &hspi2);
+			segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR,
+					 &hspi2);
 			tx_thread_sleep(MS_TO_TICKS(16));
-			segment_configure_balancing(acc_data->chips, acc_data->discharge_config, &hspi2);
+			segment_configure_balancing(acc_data->chips,
+						    acc_data->discharge_config,
+						    &hspi2);
 			start_timer(&pwm_timer, pwm_update_frequency);
 		}
 
