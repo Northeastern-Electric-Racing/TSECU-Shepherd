@@ -15,6 +15,24 @@
 #include "bitstream.h"
 
 typedef struct {
+ float current_target_ac;
+} ac_current_command_t;
+
+void receive_ac_current_command(const can_msg_t *message, ac_current_command_t *ac_current_command);
+
+typedef struct {
+ float brake_ac_current;
+} brake_current_command_t;
+
+void receive_brake_current_command(const can_msg_t *message, brake_current_command_t *brake_current_command);
+
+typedef struct {
+ uint8_t drive_enable;
+} drive_enable_command_t;
+
+void receive_drive_enable_command(const can_msg_t *message, drive_enable_command_t *drive_enable_command);
+
+typedef struct {
  uint8_t pwm_duty;
 } shepherd_bms_fan_percent_t;
 
@@ -91,176 +109,6 @@ typedef struct {
 } rtds_command_message_t;
 
 void receive_rtds_command_message(const can_msg_t *message, rtds_command_message_t *rtds_command_message);
-
-typedef struct {
- float current_target_ac;
-} ac_current_command_t;
-
-void receive_ac_current_command(const can_msg_t *message, ac_current_command_t *ac_current_command);
-
-typedef struct {
- float brake_ac_current;
-} brake_current_command_t;
-
-void receive_brake_current_command(const can_msg_t *message, brake_current_command_t *brake_current_command);
-
-typedef struct {
- uint8_t drive_enable;
-} drive_enable_command_t;
-
-void receive_drive_enable_command(const can_msg_t *message, drive_enable_command_t *drive_enable_command);
-
-typedef struct {
- float accel_x;
- float accel_y;
- float accel_z;
-} lightning_board_imu_acceleration_data_t;
-
-void receive_lightning_board_imu_acceleration_data(const can_msg_t *message, lightning_board_imu_acceleration_data_t *lightning_board_imu_acceleration_data);
-
-typedef struct {
- float gyro_x;
- float gyro_y;
- float gyro_z;
-} lightning_board_imu_gyro_data_t;
-
-void receive_lightning_board_imu_gyro_data(const can_msg_t *message, lightning_board_imu_gyro_data_t *lightning_board_imu_gyro_data);
-
-typedef struct {
- uint8_t interrupt;
- uint8_t distance;
- uint32_t energy;
-} lightning_board_lightning_sensor_information_t;
-
-void receive_lightning_board_lightning_sensor_information(const can_msg_t *message, lightning_board_lightning_sensor_information_t *lightning_board_lightning_sensor_information);
-
-typedef struct {
- float mag_x;
- float mag_y;
- float mag_z;
-} lightning_board_magnometer_sensor_information_t;
-
-void receive_lightning_board_magnometer_sensor_information(const can_msg_t *message, lightning_board_magnometer_sensor_information_t *lightning_board_magnometer_sensor_information);
-
-typedef struct {
- uint8_t button_id;
-} wheel_buttons_t;
-
-void receive_wheel_buttons(const can_msg_t *message, wheel_buttons_t *wheel_buttons);
-
-typedef struct {
- float temp;
- float humidity;
-} front_msb_env_t;
-
-void receive_front_msb_env(const can_msg_t *message, front_msb_env_t *front_msb_env);
-
-typedef struct {
- float x_force;
- float y_force;
- float z_force;
-} front_msb_accel_t;
-
-void receive_front_msb_accel(const can_msg_t *message, front_msb_accel_t *front_msb_accel);
-
-typedef struct {
- float x_deg;
- float y_deg;
- float z_deg;
-} front_msb_gyro_t;
-
-void receive_front_msb_gyro(const can_msg_t *message, front_msb_gyro_t *front_msb_gyro);
-
-typedef struct {
- uint32_t strain1;
- uint32_t strain2;
-} front_msb_strain_t;
-
-void receive_front_msb_strain(const can_msg_t *message, front_msb_strain_t *front_msb_strain);
-
-typedef struct {
- float shock1;
- uint16_t shock1_raw;
-} front_shockpot_t;
-
-void receive_front_shockpot(const can_msg_t *message, front_shockpot_t *front_shockpot);
-
-typedef struct {
- float rh;
-} front_ride_height_t;
-
-void receive_front_ride_height(const can_msg_t *message, front_ride_height_t *front_ride_height);
-
-typedef struct {
- float wheel_temp;
-} front_wheel_temp_t;
-
-void receive_front_wheel_temp(const can_msg_t *message, front_wheel_temp_t *front_wheel_temp);
-
-typedef struct {
- float x_fdeg;
- float y_fdeg;
- float z_fdeg;
-} front_msb_orientation_t;
-
-void receive_front_msb_orientation(const can_msg_t *message, front_msb_orientation_t *front_msb_orientation);
-
-typedef struct {
- float temp;
- float humidity;
-} back_msb_env_t;
-
-void receive_back_msb_env(const can_msg_t *message, back_msb_env_t *back_msb_env);
-
-typedef struct {
- float x_force;
- float y_force;
- float z_force;
-} back_msb_accel_t;
-
-void receive_back_msb_accel(const can_msg_t *message, back_msb_accel_t *back_msb_accel);
-
-typedef struct {
- float x_deg;
- float y_deg;
- float z_deg;
-} back_msb_gyro_t;
-
-void receive_back_msb_gyro(const can_msg_t *message, back_msb_gyro_t *back_msb_gyro);
-
-typedef struct {
- uint32_t strain1;
- uint32_t strain2;
-} back_msb_strain_t;
-
-void receive_back_msb_strain(const can_msg_t *message, back_msb_strain_t *back_msb_strain);
-
-typedef struct {
- float shock1;
- uint16_t shock1_raw;
-} back_shockpot_t;
-
-void receive_back_shockpot(const can_msg_t *message, back_shockpot_t *back_shockpot);
-
-typedef struct {
- float rh;
-} back_ride_height_t;
-
-void receive_back_ride_height(const can_msg_t *message, back_ride_height_t *back_ride_height);
-
-typedef struct {
- float wheel_temp;
-} back_wheel_temp_t;
-
-void receive_back_wheel_temp(const can_msg_t *message, back_wheel_temp_t *back_wheel_temp);
-
-typedef struct {
- float x_fdeg;
- float y_fdeg;
- float z_fdeg;
-} back_msb_orientation_t;
-
-void receive_back_msb_orientation(const can_msg_t *message, back_msb_orientation_t *back_msb_orientation);
 
 typedef struct {
  uint16_t ADC;
@@ -562,6 +410,158 @@ typedef struct {
 } lv_box_fan_pwm_t;
 
 void receive_lv_box_fan_pwm(const can_msg_t *message, lv_box_fan_pwm_t *lv_box_fan_pwm);
+
+typedef struct {
+ uint8_t button_id;
+} wheel_buttons_t;
+
+void receive_wheel_buttons(const can_msg_t *message, wheel_buttons_t *wheel_buttons);
+
+typedef struct {
+ float accel_x;
+ float accel_y;
+ float accel_z;
+} lightning_board_imu_acceleration_data_t;
+
+void receive_lightning_board_imu_acceleration_data(const can_msg_t *message, lightning_board_imu_acceleration_data_t *lightning_board_imu_acceleration_data);
+
+typedef struct {
+ float gyro_x;
+ float gyro_y;
+ float gyro_z;
+} lightning_board_imu_gyro_data_t;
+
+void receive_lightning_board_imu_gyro_data(const can_msg_t *message, lightning_board_imu_gyro_data_t *lightning_board_imu_gyro_data);
+
+typedef struct {
+ uint8_t interrupt;
+ uint8_t distance;
+ uint32_t energy;
+} lightning_board_lightning_sensor_information_t;
+
+void receive_lightning_board_lightning_sensor_information(const can_msg_t *message, lightning_board_lightning_sensor_information_t *lightning_board_lightning_sensor_information);
+
+typedef struct {
+ float mag_x;
+ float mag_y;
+ float mag_z;
+} lightning_board_magnometer_sensor_information_t;
+
+void receive_lightning_board_magnometer_sensor_information(const can_msg_t *message, lightning_board_magnometer_sensor_information_t *lightning_board_magnometer_sensor_information);
+
+typedef struct {
+ float temp;
+ float humidity;
+} front_msb_env_t;
+
+void receive_front_msb_env(const can_msg_t *message, front_msb_env_t *front_msb_env);
+
+typedef struct {
+ float x_force;
+ float y_force;
+ float z_force;
+} front_msb_accel_t;
+
+void receive_front_msb_accel(const can_msg_t *message, front_msb_accel_t *front_msb_accel);
+
+typedef struct {
+ float x_deg;
+ float y_deg;
+ float z_deg;
+} front_msb_gyro_t;
+
+void receive_front_msb_gyro(const can_msg_t *message, front_msb_gyro_t *front_msb_gyro);
+
+typedef struct {
+ uint32_t strain1;
+ uint32_t strain2;
+} front_msb_strain_t;
+
+void receive_front_msb_strain(const can_msg_t *message, front_msb_strain_t *front_msb_strain);
+
+typedef struct {
+ float shock1;
+ uint16_t shock1_raw;
+} front_shockpot_t;
+
+void receive_front_shockpot(const can_msg_t *message, front_shockpot_t *front_shockpot);
+
+typedef struct {
+ float rh;
+} front_ride_height_t;
+
+void receive_front_ride_height(const can_msg_t *message, front_ride_height_t *front_ride_height);
+
+typedef struct {
+ float wheel_temp;
+} front_wheel_temp_t;
+
+void receive_front_wheel_temp(const can_msg_t *message, front_wheel_temp_t *front_wheel_temp);
+
+typedef struct {
+ float x_fdeg;
+ float y_fdeg;
+ float z_fdeg;
+} front_msb_orientation_t;
+
+void receive_front_msb_orientation(const can_msg_t *message, front_msb_orientation_t *front_msb_orientation);
+
+typedef struct {
+ float temp;
+ float humidity;
+} back_msb_env_t;
+
+void receive_back_msb_env(const can_msg_t *message, back_msb_env_t *back_msb_env);
+
+typedef struct {
+ float x_force;
+ float y_force;
+ float z_force;
+} back_msb_accel_t;
+
+void receive_back_msb_accel(const can_msg_t *message, back_msb_accel_t *back_msb_accel);
+
+typedef struct {
+ float x_deg;
+ float y_deg;
+ float z_deg;
+} back_msb_gyro_t;
+
+void receive_back_msb_gyro(const can_msg_t *message, back_msb_gyro_t *back_msb_gyro);
+
+typedef struct {
+ uint32_t strain1;
+ uint32_t strain2;
+} back_msb_strain_t;
+
+void receive_back_msb_strain(const can_msg_t *message, back_msb_strain_t *back_msb_strain);
+
+typedef struct {
+ float shock1;
+ uint16_t shock1_raw;
+} back_shockpot_t;
+
+void receive_back_shockpot(const can_msg_t *message, back_shockpot_t *back_shockpot);
+
+typedef struct {
+ float rh;
+} back_ride_height_t;
+
+void receive_back_ride_height(const can_msg_t *message, back_ride_height_t *back_ride_height);
+
+typedef struct {
+ float wheel_temp;
+} back_wheel_temp_t;
+
+void receive_back_wheel_temp(const can_msg_t *message, back_wheel_temp_t *back_wheel_temp);
+
+typedef struct {
+ float x_fdeg;
+ float y_fdeg;
+ float z_fdeg;
+} back_msb_orientation_t;
+
+void receive_back_msb_orientation(const can_msg_t *message, back_msb_orientation_t *back_msb_orientation);
 
 
 void receive_can(const can_msg_t *msg);
