@@ -96,7 +96,6 @@ typedef enum {
 	BOOT,
 	READY,
 	CHARGING,
-	BALANCING,
 	FAULTED,
 	NUM_STATES,
 } state_t;
@@ -376,6 +375,9 @@ typedef struct {
 
 	bool segment_comms_fault_flag;
 	bool hv_plate_comms_fault_flag;
+
+	bool balancing_active;
+	bool is_charger_connected;
 
 } state_machine_t;
 

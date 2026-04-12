@@ -399,17 +399,11 @@ void vGetSegmentData(ULONG thread_input)
 		current_state = state_machine->bms_state;
 
 		// mute when entering any state other than balancing or charging
-		if (prev_state != current_state &&
-		    (current_state != BALANCING && current_state != CHARGING)) {
+		if (prev_state != current_state && current_state != CHARGING) {
 			segment_mute(acc_data->chips, &hspi2);
 		}
 
-		if (prev_state == BALANCING && current_state == CHARGING) {
-			tx_thread_sleep(MS_TO_TICKS(
-				balancing_delay)); // delay after balancing to let cells settle
-		}
-
-		if (current_state == CHARGING || current_state == BALANCING) {
+		if (current_state == CHARGING) {
 			// in charging, debug data is required to get things like die temp
 			segment_retrieve_charging_data(acc_data->chips, &hspi2);
 			send_segment_pec_errors_message();
@@ -431,7 +425,8 @@ void vGetSegmentData(ULONG thread_input)
 			}
 		}
 
-		if (current_state == BALANCING &&
+		if (current_state == CHARGING &&
+		    state_machine->balancing_active &&
 		    is_timer_expired(&pwm_timer) &&
 		    !is_timer_active(&pwm_timer)) {
 			segment_unmute(acc_data->chips, &hspi2);

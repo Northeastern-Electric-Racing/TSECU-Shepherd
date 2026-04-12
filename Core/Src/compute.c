@@ -332,7 +332,8 @@ int init_compute(peripherals_t *peripherals)
 		PRINTLN_INFO("IMU initialized successfully.");
 	} else {
 		imu_available = false;
-		PRINTLN_ERROR("IMU failed to initialize. Continuing without IMU.");
+		PRINTLN_ERROR(
+			"IMU failed to initialize. Continuing without IMU.");
 	}
 
 	status = p3t_init();
@@ -341,7 +342,8 @@ int init_compute(peripherals_t *peripherals)
 		PRINTLN_INFO("P3T initialized successfully.");
 	} else {
 		p3t_available = false;
-		PRINTLN_ERROR("P3T init failed. Continuing without temperature sensor.");
+		PRINTLN_ERROR(
+			"P3T init failed. Continuing without temperature sensor.");
 	}
 
 	return U_SUCCESS;
@@ -394,18 +396,17 @@ void read_shutdown(peripherals_t *peripherals)
 	static const uint16_t debounce_time = 200; // ms
 
 	// Read shutdown sense using TS_MINUS_SENSE pin
-	bool shutdown =
+	bool shutdown_inactive =
 		HAL_GPIO_ReadPin(TS_MINUS_SENSE_GPIO_Port,
 				 TS_MINUS_SENSE_Pin) &&
 		HAL_GPIO_ReadPin(TS_PLUS_SENSE_GPIO_Port, TS_PLUS_SENSE_Pin) &&
 		HAL_GPIO_ReadPin(ACC_SENSE_GPIO_Port, ACC_SENSE_Pin) &&
 		HAL_GPIO_ReadPin(TSIP_SENSE_GPIO_Port, TSIP_SENSE_Pin);
 
-	debounce(shutdown, &shutdown_active_timer, MS_TO_TICKS(debounce_time),
+	debounce(!shutdown_inactive, &shutdown_active_timer, debounce_time,
 		 set_shutdown_active, peripherals);
-	debounce(!shutdown, &shutdown_inactive_timer,
-		 MS_TO_TICKS(debounce_time), set_shutdown_inactive,
-		 peripherals);
+	debounce(shutdown_inactive, &shutdown_inactive_timer, debounce_time,
+		 set_shutdown_inactive, peripherals);
 }
 
 // PERIPHERALS THREAD
@@ -430,20 +431,27 @@ void vPeripherals(ULONG thread_input)
 		mutex_get(&peripherals_mutex);
 
 		if (imu_available) { // guarded method to ensure things still work if the IMU chip doesn't
-			if (imu_getAcceleration(&peripherals->imu_data.accel_data) != U_SUCCESS) {
-				PRINTLN_ERROR("IMU accel read failed. Disabling IMU.");
+			if (imu_getAcceleration(
+				    &peripherals->imu_data.accel_data) !=
+			    U_SUCCESS) {
+				PRINTLN_ERROR(
+					"IMU accel read failed. Disabling IMU.");
 				imu_available = false;
 			}
 
 			if (imu_available &&
-			    imu_getAngularRate(&peripherals->imu_data.ang_rate_data) != U_SUCCESS) {
-				PRINTLN_ERROR("IMU gyro read failed. Disabling IMU.");
+			    imu_getAngularRate(
+				    &peripherals->imu_data.ang_rate_data) !=
+				    U_SUCCESS) {
+				PRINTLN_ERROR(
+					"IMU gyro read failed. Disabling IMU.");
 				imu_available = false;
 			}
 		}
 
 		if (!imu_available) {
-			peripherals->imu_data.accel_data.x = 0; // IMU will return 0's in the case it is not functioning
+			peripherals->imu_data.accel_data.x =
+				0; // IMU will return 0's in the case it is not functioning
 			peripherals->imu_data.accel_data.y = 0;
 			peripherals->imu_data.accel_data.z = 0;
 
@@ -453,8 +461,10 @@ void vPeripherals(ULONG thread_input)
 		}
 
 		if (p3t_available) {
-			if (p3t1755_getBoardTemp(&peripherals->onboard_temp) != U_SUCCESS) {
-				PRINTLN_ERROR("P3T read failed. Disabling sensor.");
+			if (p3t1755_getBoardTemp(&peripherals->onboard_temp) !=
+			    U_SUCCESS) {
+				PRINTLN_ERROR(
+					"P3T read failed. Disabling sensor.");
 				p3t_available = false;
 			}
 		}
@@ -469,10 +479,10 @@ void vPeripherals(ULONG thread_input)
 
 		if (is_timer_expired(&telem_timer) &&
 		    !is_timer_active(&telem_timer)) {
-
 			// send shutdown state periodically
-			
-			send_shutdown_as_read_by_bms(peripherals->shutdown_active);
+
+			send_shutdown_as_read_by_bms(
+				peripherals->shutdown_active);
 
 			mutex_get(&peripherals_mutex);
 			send_bms_onboard_temperature(peripherals->onboard_temp);
