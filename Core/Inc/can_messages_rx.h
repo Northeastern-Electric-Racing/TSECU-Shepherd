@@ -15,6 +15,84 @@
 #include "bitstream.h"
 
 typedef struct {
+ uint8_t pwm_duty;
+} shepherd_bms_fan_percent_t;
+
+void receive_shepherd_bms_fan_percent(const can_msg_t *message, shepherd_bms_fan_percent_t *shepherd_bms_fan_percent);
+
+typedef struct {
+ uint8_t state;
+} dashboard_efuse_state_t;
+
+void receive_dashboard_efuse_state(const can_msg_t *message, dashboard_efuse_state_t *dashboard_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} brake_efuse_state_t;
+
+void receive_brake_efuse_state(const can_msg_t *message, brake_efuse_state_t *brake_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} shutdown_efuse_state_t;
+
+void receive_shutdown_efuse_state(const can_msg_t *message, shutdown_efuse_state_t *shutdown_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} lv_efuse_state_t;
+
+void receive_lv_efuse_state(const can_msg_t *message, lv_efuse_state_t *lv_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} radfan_efuse_state_t;
+
+void receive_radfan_efuse_state(const can_msg_t *message, radfan_efuse_state_t *radfan_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} fanbatt_efuse_state_t;
+
+void receive_fanbatt_efuse_state(const can_msg_t *message, fanbatt_efuse_state_t *fanbatt_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} pumpone_efuse_state_t;
+
+void receive_pumpone_efuse_state(const can_msg_t *message, pumpone_efuse_state_t *pumpone_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} pumptwo_efuse_state_t;
+
+void receive_pumptwo_efuse_state(const can_msg_t *message, pumptwo_efuse_state_t *pumptwo_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} battbox_efuse_state_t;
+
+void receive_battbox_efuse_state(const can_msg_t *message, battbox_efuse_state_t *battbox_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} mc_efuse_state_t;
+
+void receive_mc_efuse_state(const can_msg_t *message, mc_efuse_state_t *mc_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} spare_efuse_state_t;
+
+void receive_spare_efuse_state(const can_msg_t *message, spare_efuse_state_t *spare_efuse_state);
+
+typedef struct {
+ uint8_t command;
+} rtds_command_message_t;
+
+void receive_rtds_command_message(const can_msg_t *message, rtds_command_message_t *rtds_command_message);
+
+typedef struct {
  float current_target_ac;
 } ac_current_command_t;
 
@@ -31,6 +109,44 @@ typedef struct {
 } drive_enable_command_t;
 
 void receive_drive_enable_command(const can_msg_t *message, drive_enable_command_t *drive_enable_command);
+
+typedef struct {
+ float accel_x;
+ float accel_y;
+ float accel_z;
+} lightning_board_imu_acceleration_data_t;
+
+void receive_lightning_board_imu_acceleration_data(const can_msg_t *message, lightning_board_imu_acceleration_data_t *lightning_board_imu_acceleration_data);
+
+typedef struct {
+ float gyro_x;
+ float gyro_y;
+ float gyro_z;
+} lightning_board_imu_gyro_data_t;
+
+void receive_lightning_board_imu_gyro_data(const can_msg_t *message, lightning_board_imu_gyro_data_t *lightning_board_imu_gyro_data);
+
+typedef struct {
+ uint8_t interrupt;
+ uint8_t distance;
+ uint32_t energy;
+} lightning_board_lightning_sensor_information_t;
+
+void receive_lightning_board_lightning_sensor_information(const can_msg_t *message, lightning_board_lightning_sensor_information_t *lightning_board_lightning_sensor_information);
+
+typedef struct {
+ float mag_x;
+ float mag_y;
+ float mag_z;
+} lightning_board_magnometer_sensor_information_t;
+
+void receive_lightning_board_magnometer_sensor_information(const can_msg_t *message, lightning_board_magnometer_sensor_information_t *lightning_board_magnometer_sensor_information);
+
+typedef struct {
+ uint8_t button_id;
+} wheel_buttons_t;
+
+void receive_wheel_buttons(const can_msg_t *message, wheel_buttons_t *wheel_buttons);
 
 typedef struct {
  float temp;
@@ -446,116 +562,6 @@ typedef struct {
 } lv_box_fan_pwm_t;
 
 void receive_lv_box_fan_pwm(const can_msg_t *message, lv_box_fan_pwm_t *lv_box_fan_pwm);
-
-typedef struct {
- float accel_x;
- float accel_y;
- float accel_z;
-} lightning_board_imu_acceleration_data_t;
-
-void receive_lightning_board_imu_acceleration_data(const can_msg_t *message, lightning_board_imu_acceleration_data_t *lightning_board_imu_acceleration_data);
-
-typedef struct {
- float gyro_x;
- float gyro_y;
- float gyro_z;
-} lightning_board_imu_gyro_data_t;
-
-void receive_lightning_board_imu_gyro_data(const can_msg_t *message, lightning_board_imu_gyro_data_t *lightning_board_imu_gyro_data);
-
-typedef struct {
- uint8_t interrupt;
- uint8_t distance;
- uint32_t energy;
-} lightning_board_lightning_sensor_information_t;
-
-void receive_lightning_board_lightning_sensor_information(const can_msg_t *message, lightning_board_lightning_sensor_information_t *lightning_board_lightning_sensor_information);
-
-typedef struct {
- float mag_x;
- float mag_y;
- float mag_z;
-} lightning_board_magnometer_sensor_information_t;
-
-void receive_lightning_board_magnometer_sensor_information(const can_msg_t *message, lightning_board_magnometer_sensor_information_t *lightning_board_magnometer_sensor_information);
-
-typedef struct {
- uint8_t state;
-} dashboard_efuse_state_t;
-
-void receive_dashboard_efuse_state(const can_msg_t *message, dashboard_efuse_state_t *dashboard_efuse_state);
-
-typedef struct {
- uint8_t state;
-} brake_efuse_state_t;
-
-void receive_brake_efuse_state(const can_msg_t *message, brake_efuse_state_t *brake_efuse_state);
-
-typedef struct {
- uint8_t state;
-} shutdown_efuse_state_t;
-
-void receive_shutdown_efuse_state(const can_msg_t *message, shutdown_efuse_state_t *shutdown_efuse_state);
-
-typedef struct {
- uint8_t state;
-} lv_efuse_state_t;
-
-void receive_lv_efuse_state(const can_msg_t *message, lv_efuse_state_t *lv_efuse_state);
-
-typedef struct {
- uint8_t state;
-} radfan_efuse_state_t;
-
-void receive_radfan_efuse_state(const can_msg_t *message, radfan_efuse_state_t *radfan_efuse_state);
-
-typedef struct {
- uint8_t state;
-} fanbatt_efuse_state_t;
-
-void receive_fanbatt_efuse_state(const can_msg_t *message, fanbatt_efuse_state_t *fanbatt_efuse_state);
-
-typedef struct {
- uint8_t state;
-} pumpone_efuse_state_t;
-
-void receive_pumpone_efuse_state(const can_msg_t *message, pumpone_efuse_state_t *pumpone_efuse_state);
-
-typedef struct {
- uint8_t state;
-} pumptwo_efuse_state_t;
-
-void receive_pumptwo_efuse_state(const can_msg_t *message, pumptwo_efuse_state_t *pumptwo_efuse_state);
-
-typedef struct {
- uint8_t state;
-} battbox_efuse_state_t;
-
-void receive_battbox_efuse_state(const can_msg_t *message, battbox_efuse_state_t *battbox_efuse_state);
-
-typedef struct {
- uint8_t state;
-} mc_efuse_state_t;
-
-void receive_mc_efuse_state(const can_msg_t *message, mc_efuse_state_t *mc_efuse_state);
-
-typedef struct {
- uint8_t state;
-} spare_efuse_state_t;
-
-void receive_spare_efuse_state(const can_msg_t *message, spare_efuse_state_t *spare_efuse_state);
-
-typedef struct {
- uint8_t command;
-} rtds_command_message_t;
-
-void receive_rtds_command_message(const can_msg_t *message, rtds_command_message_t *rtds_command_message);
-
-typedef struct {
- uint8_t button_id;
-} wheel_buttons_t;
-
-void receive_wheel_buttons(const can_msg_t *message, wheel_buttons_t *wheel_buttons);
 
 
 void receive_can(const can_msg_t *msg);

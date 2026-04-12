@@ -2,11 +2,10 @@
 #include "adBms6830GenericType.h"
 #include "compute.h"
 #include "adbmsCommonPal.h"
-#include "isospi_recovery.h"
+#include "segment_isospi_recovery.h"
+#include "isospi_recovery_common_config.h"
 #include "can_messages_tx.h"
 #include "c_utils.h"
-
-#define MAX_PEC_ERROR_ACCUM (100U) // Max accumulated PECs
 
 static uint16_t segment_pec_errors[NUM_CHIPS] = { 0U };
 static uint16_t prev_segment_pec_errors[NUM_CHIPS] = { 0U };
@@ -23,7 +22,7 @@ static void accumulate_segment_pec_errors(cell_asic *const chip,
 	// Accumulate PEC errors only after startup mask timer ends
 	if (pec_mask_timer_expired) {
 		// Saturate at MAX_PEC_ERROR_ACCUM
-		if (chip->pec_error_sum < MAX_PEC_ERROR_ACCUM) {
+		if (chip->pec_error_sum < ISOSPI_RECOVERY_MAX_PEC_ERROR_ACCUM) {
 			chip->pec_error_sum += 1U;
 		}
 	}
@@ -37,7 +36,8 @@ static void accumulate_segment_pec_errors(cell_asic *const chip,
  */
 static void update_segment_pec_errors(cell_asic chips[NUM_CHIPS], TYPE type)
 {
-	const bool pec_mask_timer_expired = is_startup_pec_mask_timer_expired();
+	const bool pec_mask_timer_expired =
+		is_segment_startup_pec_mask_timer_expired();
 
 	for (uint8_t chip = 0U; chip < NUM_CHIPS; chip++) {
 		// clang-format off
@@ -183,12 +183,13 @@ void set_cell_discharge(cell_asic *chip, DCC cell, DCC_BIT discharge)
 	}
 }
 
-void set_cell_pwm(cell_asic *chip, DCC cell, PWM_DUTY discharge) {
-    if (cell < PWMA) {
-        chip->PwmA.pwma[cell] = discharge;
-    } else {
-        chip->PwmB.pwmb[cell - PWMA] = discharge;
-    }
+void set_cell_pwm(cell_asic *chip, DCC cell, PWM_DUTY discharge)
+{
+	if (cell < PWMA) {
+		chip->PwmA.pwma[cell] = discharge;
+	} else {
+		chip->PwmB.pwmb[cell - PWMA] = discharge;
+	}
 }
 
 void clear_cell_discharge(cell_asic *chip)
@@ -596,7 +597,8 @@ void get_c_and_s_adc_voltages(cell_asic chips[NUM_CHIPS],
 
 void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, CONTINUOUS, DCP_OFF, RSTF_ON, OW_OFF_ALL_CH);
+	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, CONTINUOUS, DCP_OFF, RSTF_ON,
+		       OW_OFF_ALL_CH);
 }
 
 // --- END ADC POLL ---

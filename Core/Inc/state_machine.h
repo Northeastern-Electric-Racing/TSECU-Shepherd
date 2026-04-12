@@ -7,9 +7,9 @@
 
 /**
  * @brief Called when we receive a message from the charger
- * 
+ *
  * @param state_machine_args pointer to state_machine_args data
- * 
+ *
  */
 void charger_message_recieved(state_machine_args_t *state_machine_args);
 
@@ -57,28 +57,42 @@ void sm_handle_state(state_machine_args_t *state_machine_args);
 
 /**
  * @brief Sets the segment communication fault.
- * 
+ *
  * @param state_mach Pointer to the state machine data structure.
  */
 void set_segment_comms_fault(state_machine_t *state_mach);
 
 /**
  * @brief Clears the segment communication fault.
- * 
+ *
  * @param state_mach Pointer to the state machine data structure.
  */
 void clear_segment_comms_fault(state_machine_t *state_mach);
 
 /**
+ * @brief Sets the hv plate communication fault.
+ *
+ * @param state_mach Pointer to the state machine data structure.
+ */
+void set_hv_plate_comms_fault(state_machine_t *state_mach);
+
+/**
+ * @brief Clears the hv plate communication fault.
+ *
+ * @param state_mach Pointer to the state machine data structure.
+ */
+void clear_hv_plate_comms_fault(state_machine_t *state_mach);
+
+/**
  * @brief Determines if there is a critical fault that is active.
- * 
+ *
  * @return true if critical faults are active, false otherwise
  */
 bool are_critical_faults_active();
 
 /**
  * @brief Gets the status of a given fault code.
- * 
+ *
  * @param fault The fault code to check
  * @return true if the fault is active, false otherwise
  */
@@ -100,7 +114,7 @@ void handle_faulted(state_machine_args_t *state_machine_args);
 
 /**
  * @brief State machine thread function for BMS state management.
- * 
+ *
  * @param thread_input Pointer to state_machine_args_t structure
  */
 void vStateMachine(ULONG thread_input);

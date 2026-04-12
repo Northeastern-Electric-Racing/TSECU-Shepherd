@@ -185,7 +185,7 @@ typedef enum {
 } isospi_comm_state_t;
 
 /**
- * @brief ISO SPI break detection and recovery status structure.
+ * @brief Segment isoSPI break detection and recovery status structure.
  */
 typedef struct {
 	isospi_comm_state_t state;
@@ -193,7 +193,21 @@ typedef struct {
 	uint8_t verification_attempts;
 	uint8_t recovery_successful;
 	uint8_t fault_latched;
-} isospi_status_t;
+	nertimer_t startup_pec_mask_timer;
+	nertimer_t pec_accum_timer;
+} segment_isospi_status_t;
+
+/**
+ * @brief HV plate isoSPI break detection and recovery status structure.
+ */
+typedef struct {
+	isospi_comm_state_t state;
+	uint8_t verification_attempts;
+	uint8_t recovery_successful;
+	uint8_t fault_latched;
+	nertimer_t startup_pec_mask_timer;
+	nertimer_t pec_accum_timer;
+} hv_plate_isospi_status_t;
 
 /**
  * @brief SoC estimator state machine states.

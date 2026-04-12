@@ -10,34 +10,6 @@
 
 /**
 * Contents of this message:
-* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
-*/
-uint8_t send_max_ac_current_command
-(float max_current_ac_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
-*/
-uint8_t send_max_ac_brake_current_command
-(float max_ac_brake_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
-*/
-uint8_t send_max_dc_current_command
-(float max_dc_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
-*/
-uint8_t send_max_dc_brake_current_command
-(float max_dc_brake_current_target);
-
-/**
-* Contents of this message:
 * BMS/Status/State - The system state
 * BMS/Status/Temp_Average - Average of all thermistor readings
 */
@@ -377,6 +349,44 @@ uint8_t send_pack_soc_status
 */
 uint8_t send_shutdown_as_read_by_bms
 (bool shutdown);
+
+/**
+* Contents of this message:
+* BMS/HV_Plate_Comms/State - Current IsoSPI state
+* BMS/HV_Plate_Comms/Verification_Attempts - Number of required recovery verification attempts
+* BMS/HV_Plate_Comms/Extra - Reserved
+* BMS/HV_Plate_Comms/Recovery_Successful - IsoSPI recovery completed successfully
+*/
+uint8_t send_hv_plate_isospi_communication_status
+(uint8_t state,uint8_t verification_attempts,uint8_t recovery_successful);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
+*/
+uint8_t send_max_ac_current_command
+(float max_current_ac_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
+*/
+uint8_t send_max_ac_brake_current_command
+(float max_ac_brake_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
+*/
+uint8_t send_max_dc_current_command
+(float max_dc_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
+*/
+uint8_t send_max_dc_brake_current_command
+(float max_dc_brake_current_target);
 
 /**
 * Contents of this message:

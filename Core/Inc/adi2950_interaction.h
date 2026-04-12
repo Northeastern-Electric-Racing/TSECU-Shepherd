@@ -20,6 +20,13 @@ void send_hv_plate_pec_errors_message(void);
 void set_hv_plate_chips_isospi_line(cell_asic_2950 *ic, isospi_line_2950_ line);
 
 /**
+ * @brief Soft reset hv plate 2950 chip, then re-wake the chip
+ *
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void soft_reset_chip_2950(cell_asic_2950 *ic);
+
+/**
  * Snaps registers of ADBMS2950
  *
  * @param ic Pointer to the adbms2950 data structure.

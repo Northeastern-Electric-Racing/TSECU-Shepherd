@@ -1,5 +1,109 @@
 #include "can_messages_rx.h"
 
+void receive_shepherd_bms_fan_percent(const can_msg_t *message, shepherd_bms_fan_percent_t *shepherd_bms_fan_percent) {
+    
+    uint8_t data = message->data[0];
+    uint64_t pwm_duty_mask = (1ULL << 8) - 1ULL;
+    uint64_t pwm_duty_raw = (data >> 0) & pwm_duty_mask;
+    shepherd_bms_fan_percent->pwm_duty = (uint8_t)pwm_duty_raw;
+}
+
+void receive_dashboard_efuse_state(const can_msg_t *message, dashboard_efuse_state_t *dashboard_efuse_state) {
+    
+    uint8_t data = message->data[0];
+    uint64_t state_mask = (1ULL << 8) - 1ULL;
+    uint64_t state_raw = (data >> 0) & state_mask;
+    dashboard_efuse_state->state = (uint8_t)state_raw;
+}
+
+void receive_brake_efuse_state(const can_msg_t *message, brake_efuse_state_t *brake_efuse_state) {
+    
+    uint8_t data = message->data[0];
+    uint64_t state_mask = (1ULL << 8) - 1ULL;
+    uint64_t state_raw = (data >> 0) & state_mask;
+    brake_efuse_state->state = (uint8_t)state_raw;
+}
+
+void receive_shutdown_efuse_state(const can_msg_t *message, shutdown_efuse_state_t *shutdown_efuse_state) {
+    
+    uint8_t data = message->data[0];
+    uint64_t state_mask = (1ULL << 8) - 1ULL;
+    uint64_t state_raw = (data >> 0) & state_mask;
+    shutdown_efuse_state->state = (uint8_t)state_raw;
+}
+
+void receive_lv_efuse_state(const can_msg_t *message, lv_efuse_state_t *lv_efuse_state) {
+    
+    uint8_t data = message->data[0];
+    uint64_t state_mask = (1ULL << 8) - 1ULL;
+    uint64_t state_raw = (data >> 0) & state_mask;
+    lv_efuse_state->state = (uint8_t)state_raw;
+}
+
+void receive_radfan_efuse_state(const can_msg_t *message, radfan_efuse_state_t *radfan_efuse_state) {
+    
+    uint8_t data = message->data[0];
+    uint64_t state_mask = (1ULL << 8) - 1ULL;
+    uint64_t state_raw = (data >> 0) & state_mask;
+    radfan_efuse_state->state = (uint8_t)state_raw;
+}
+
+void receive_fanbatt_efuse_state(const can_msg_t *message, fanbatt_efuse_state_t *fanbatt_efuse_state) {
+    
+    uint8_t data = message->data[0];
+    uint64_t state_mask = (1ULL << 8) - 1ULL;
+    uint64_t state_raw = (data >> 0) & state_mask;
+    fanbatt_efuse_state->state = (uint8_t)state_raw;
+}
+
+void receive_pumpone_efuse_state(const can_msg_t *message, pumpone_efuse_state_t *pumpone_efuse_state) {
+    
+    uint8_t data = message->data[0];
+    uint64_t state_mask = (1ULL << 8) - 1ULL;
+    uint64_t state_raw = (data >> 0) & state_mask;
+    pumpone_efuse_state->state = (uint8_t)state_raw;
+}
+
+void receive_pumptwo_efuse_state(const can_msg_t *message, pumptwo_efuse_state_t *pumptwo_efuse_state) {
+    
+    uint8_t data = message->data[0];
+    uint64_t state_mask = (1ULL << 8) - 1ULL;
+    uint64_t state_raw = (data >> 0) & state_mask;
+    pumptwo_efuse_state->state = (uint8_t)state_raw;
+}
+
+void receive_battbox_efuse_state(const can_msg_t *message, battbox_efuse_state_t *battbox_efuse_state) {
+    
+    uint8_t data = message->data[0];
+    uint64_t state_mask = (1ULL << 8) - 1ULL;
+    uint64_t state_raw = (data >> 0) & state_mask;
+    battbox_efuse_state->state = (uint8_t)state_raw;
+}
+
+void receive_mc_efuse_state(const can_msg_t *message, mc_efuse_state_t *mc_efuse_state) {
+    
+    uint8_t data = message->data[0];
+    uint64_t state_mask = (1ULL << 8) - 1ULL;
+    uint64_t state_raw = (data >> 0) & state_mask;
+    mc_efuse_state->state = (uint8_t)state_raw;
+}
+
+void receive_spare_efuse_state(const can_msg_t *message, spare_efuse_state_t *spare_efuse_state) {
+    
+    uint8_t data = message->data[0];
+    uint64_t state_mask = (1ULL << 8) - 1ULL;
+    uint64_t state_raw = (data >> 0) & state_mask;
+    spare_efuse_state->state = (uint8_t)state_raw;
+}
+
+void receive_rtds_command_message(const can_msg_t *message, rtds_command_message_t *rtds_command_message) {
+    
+    uint8_t data = message->data[0];
+    uint64_t command_mask = (1ULL << 8) - 1ULL;
+    uint64_t command_raw = (data >> 0) & command_mask;
+    rtds_command_message->command = (uint8_t)command_raw;
+}
+
 void receive_ac_current_command(const can_msg_t *message, ac_current_command_t *ac_current_command) {
     
     uint16_t data_bigendian;
@@ -32,6 +136,105 @@ void receive_drive_enable_command(const can_msg_t *message, drive_enable_command
     uint64_t drive_enable_mask = (1ULL << 8) - 1ULL;
     uint64_t drive_enable_raw = (data >> 0) & drive_enable_mask;
     drive_enable_command->drive_enable = (uint8_t)drive_enable_raw;
+}
+
+void receive_lightning_board_imu_acceleration_data(const can_msg_t *message, lightning_board_imu_acceleration_data_t *lightning_board_imu_acceleration_data) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t accel_x_mask = (1ULL << 16) - 1ULL;
+    uint64_t accel_x_bits = (data >> 48) & accel_x_mask;
+    int64_t accel_x_raw = (accel_x_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(accel_x_bits | ~accel_x_mask)
+        : (int64_t)accel_x_bits;
+    lightning_board_imu_acceleration_data->accel_x = (float)(accel_x_raw / 1000);
+    uint64_t accel_y_mask = (1ULL << 16) - 1ULL;
+    uint64_t accel_y_bits = (data >> 32) & accel_y_mask;
+    int64_t accel_y_raw = (accel_y_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(accel_y_bits | ~accel_y_mask)
+        : (int64_t)accel_y_bits;
+    lightning_board_imu_acceleration_data->accel_y = (float)(accel_y_raw / 1000);
+    uint64_t accel_z_mask = (1ULL << 16) - 1ULL;
+    uint64_t accel_z_bits = (data >> 16) & accel_z_mask;
+    int64_t accel_z_raw = (accel_z_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(accel_z_bits | ~accel_z_mask)
+        : (int64_t)accel_z_bits;
+    lightning_board_imu_acceleration_data->accel_z = (float)(accel_z_raw / 1000);
+}
+
+void receive_lightning_board_imu_gyro_data(const can_msg_t *message, lightning_board_imu_gyro_data_t *lightning_board_imu_gyro_data) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t gyro_x_mask = (1ULL << 16) - 1ULL;
+    uint64_t gyro_x_bits = (data >> 48) & gyro_x_mask;
+    int64_t gyro_x_raw = (gyro_x_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(gyro_x_bits | ~gyro_x_mask)
+        : (int64_t)gyro_x_bits;
+    lightning_board_imu_gyro_data->gyro_x = (float)(gyro_x_raw / 1000);
+    uint64_t gyro_y_mask = (1ULL << 16) - 1ULL;
+    uint64_t gyro_y_bits = (data >> 32) & gyro_y_mask;
+    int64_t gyro_y_raw = (gyro_y_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(gyro_y_bits | ~gyro_y_mask)
+        : (int64_t)gyro_y_bits;
+    lightning_board_imu_gyro_data->gyro_y = (float)(gyro_y_raw / 1000);
+    uint64_t gyro_z_mask = (1ULL << 16) - 1ULL;
+    uint64_t gyro_z_bits = (data >> 16) & gyro_z_mask;
+    int64_t gyro_z_raw = (gyro_z_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(gyro_z_bits | ~gyro_z_mask)
+        : (int64_t)gyro_z_bits;
+    lightning_board_imu_gyro_data->gyro_z = (float)(gyro_z_raw / 1000);
+}
+
+void receive_lightning_board_lightning_sensor_information(const can_msg_t *message, lightning_board_lightning_sensor_information_t *lightning_board_lightning_sensor_information) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t interrupt_mask = (1ULL << 8) - 1ULL;
+    uint64_t interrupt_raw = (data >> 56) & interrupt_mask;
+    lightning_board_lightning_sensor_information->interrupt = (uint8_t)interrupt_raw;
+    uint64_t distance_mask = (1ULL << 8) - 1ULL;
+    uint64_t distance_raw = (data >> 48) & distance_mask;
+    lightning_board_lightning_sensor_information->distance = (uint8_t)distance_raw;
+    uint64_t energy_mask = (1ULL << 32) - 1ULL;
+    uint64_t energy_raw = (data >> 16) & energy_mask;
+    lightning_board_lightning_sensor_information->energy = (uint32_t)energy_raw;
+}
+
+void receive_lightning_board_magnometer_sensor_information(const can_msg_t *message, lightning_board_magnometer_sensor_information_t *lightning_board_magnometer_sensor_information) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t mag_x_mask = (1ULL << 16) - 1ULL;
+    uint64_t mag_x_bits = (data >> 48) & mag_x_mask;
+    int64_t mag_x_raw = (mag_x_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(mag_x_bits | ~mag_x_mask)
+        : (int64_t)mag_x_bits;
+    lightning_board_magnometer_sensor_information->mag_x = (float)(mag_x_raw / 1000);
+    uint64_t mag_y_mask = (1ULL << 16) - 1ULL;
+    uint64_t mag_y_bits = (data >> 32) & mag_y_mask;
+    int64_t mag_y_raw = (mag_y_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(mag_y_bits | ~mag_y_mask)
+        : (int64_t)mag_y_bits;
+    lightning_board_magnometer_sensor_information->mag_y = (float)(mag_y_raw / 1000);
+    uint64_t mag_z_mask = (1ULL << 16) - 1ULL;
+    uint64_t mag_z_bits = (data >> 16) & mag_z_mask;
+    int64_t mag_z_raw = (mag_z_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(mag_z_bits | ~mag_z_mask)
+        : (int64_t)mag_z_bits;
+    lightning_board_magnometer_sensor_information->mag_z = (float)(mag_z_raw / 1000);
+}
+
+void receive_wheel_buttons(const can_msg_t *message, wheel_buttons_t *wheel_buttons) {
+    
+    uint8_t data = message->data[0];
+    uint64_t button_id_mask = (1ULL << 8) - 1ULL;
+    uint64_t button_id_raw = (data >> 0) & button_id_mask;
+    wheel_buttons->button_id = (uint8_t)button_id_raw;
 }
 
 void receive_front_msb_env(const can_msg_t *message, front_msb_env_t *front_msb_env) {
@@ -1013,200 +1216,5 @@ void receive_lv_box_fan_pwm(const can_msg_t *message, lv_box_fan_pwm_t *lv_box_f
     uint64_t fan_pwm_percentage_mask = (1ULL << 8) - 1ULL;
     uint64_t fan_pwm_percentage_raw = (data >> 0) & fan_pwm_percentage_mask;
     lv_box_fan_pwm->fan_pwm_percentage = (uint8_t)fan_pwm_percentage_raw;
-}
-
-void receive_lightning_board_imu_acceleration_data(const can_msg_t *message, lightning_board_imu_acceleration_data_t *lightning_board_imu_acceleration_data) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t accel_x_mask = (1ULL << 16) - 1ULL;
-    uint64_t accel_x_bits = (data >> 48) & accel_x_mask;
-    int64_t accel_x_raw = (accel_x_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(accel_x_bits | ~accel_x_mask)
-        : (int64_t)accel_x_bits;
-    lightning_board_imu_acceleration_data->accel_x = (float)(accel_x_raw / 1000);
-    uint64_t accel_y_mask = (1ULL << 16) - 1ULL;
-    uint64_t accel_y_bits = (data >> 32) & accel_y_mask;
-    int64_t accel_y_raw = (accel_y_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(accel_y_bits | ~accel_y_mask)
-        : (int64_t)accel_y_bits;
-    lightning_board_imu_acceleration_data->accel_y = (float)(accel_y_raw / 1000);
-    uint64_t accel_z_mask = (1ULL << 16) - 1ULL;
-    uint64_t accel_z_bits = (data >> 16) & accel_z_mask;
-    int64_t accel_z_raw = (accel_z_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(accel_z_bits | ~accel_z_mask)
-        : (int64_t)accel_z_bits;
-    lightning_board_imu_acceleration_data->accel_z = (float)(accel_z_raw / 1000);
-}
-
-void receive_lightning_board_imu_gyro_data(const can_msg_t *message, lightning_board_imu_gyro_data_t *lightning_board_imu_gyro_data) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t gyro_x_mask = (1ULL << 16) - 1ULL;
-    uint64_t gyro_x_bits = (data >> 48) & gyro_x_mask;
-    int64_t gyro_x_raw = (gyro_x_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(gyro_x_bits | ~gyro_x_mask)
-        : (int64_t)gyro_x_bits;
-    lightning_board_imu_gyro_data->gyro_x = (float)(gyro_x_raw / 1000);
-    uint64_t gyro_y_mask = (1ULL << 16) - 1ULL;
-    uint64_t gyro_y_bits = (data >> 32) & gyro_y_mask;
-    int64_t gyro_y_raw = (gyro_y_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(gyro_y_bits | ~gyro_y_mask)
-        : (int64_t)gyro_y_bits;
-    lightning_board_imu_gyro_data->gyro_y = (float)(gyro_y_raw / 1000);
-    uint64_t gyro_z_mask = (1ULL << 16) - 1ULL;
-    uint64_t gyro_z_bits = (data >> 16) & gyro_z_mask;
-    int64_t gyro_z_raw = (gyro_z_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(gyro_z_bits | ~gyro_z_mask)
-        : (int64_t)gyro_z_bits;
-    lightning_board_imu_gyro_data->gyro_z = (float)(gyro_z_raw / 1000);
-}
-
-void receive_lightning_board_lightning_sensor_information(const can_msg_t *message, lightning_board_lightning_sensor_information_t *lightning_board_lightning_sensor_information) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t interrupt_mask = (1ULL << 8) - 1ULL;
-    uint64_t interrupt_raw = (data >> 56) & interrupt_mask;
-    lightning_board_lightning_sensor_information->interrupt = (uint8_t)interrupt_raw;
-    uint64_t distance_mask = (1ULL << 8) - 1ULL;
-    uint64_t distance_raw = (data >> 48) & distance_mask;
-    lightning_board_lightning_sensor_information->distance = (uint8_t)distance_raw;
-    uint64_t energy_mask = (1ULL << 32) - 1ULL;
-    uint64_t energy_raw = (data >> 16) & energy_mask;
-    lightning_board_lightning_sensor_information->energy = (uint32_t)energy_raw;
-}
-
-void receive_lightning_board_magnometer_sensor_information(const can_msg_t *message, lightning_board_magnometer_sensor_information_t *lightning_board_magnometer_sensor_information) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t mag_x_mask = (1ULL << 16) - 1ULL;
-    uint64_t mag_x_bits = (data >> 48) & mag_x_mask;
-    int64_t mag_x_raw = (mag_x_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(mag_x_bits | ~mag_x_mask)
-        : (int64_t)mag_x_bits;
-    lightning_board_magnometer_sensor_information->mag_x = (float)(mag_x_raw / 1000);
-    uint64_t mag_y_mask = (1ULL << 16) - 1ULL;
-    uint64_t mag_y_bits = (data >> 32) & mag_y_mask;
-    int64_t mag_y_raw = (mag_y_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(mag_y_bits | ~mag_y_mask)
-        : (int64_t)mag_y_bits;
-    lightning_board_magnometer_sensor_information->mag_y = (float)(mag_y_raw / 1000);
-    uint64_t mag_z_mask = (1ULL << 16) - 1ULL;
-    uint64_t mag_z_bits = (data >> 16) & mag_z_mask;
-    int64_t mag_z_raw = (mag_z_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(mag_z_bits | ~mag_z_mask)
-        : (int64_t)mag_z_bits;
-    lightning_board_magnometer_sensor_information->mag_z = (float)(mag_z_raw / 1000);
-}
-
-void receive_dashboard_efuse_state(const can_msg_t *message, dashboard_efuse_state_t *dashboard_efuse_state) {
-    
-    uint8_t data = message->data[0];
-    uint64_t state_mask = (1ULL << 8) - 1ULL;
-    uint64_t state_raw = (data >> 0) & state_mask;
-    dashboard_efuse_state->state = (uint8_t)state_raw;
-}
-
-void receive_brake_efuse_state(const can_msg_t *message, brake_efuse_state_t *brake_efuse_state) {
-    
-    uint8_t data = message->data[0];
-    uint64_t state_mask = (1ULL << 8) - 1ULL;
-    uint64_t state_raw = (data >> 0) & state_mask;
-    brake_efuse_state->state = (uint8_t)state_raw;
-}
-
-void receive_shutdown_efuse_state(const can_msg_t *message, shutdown_efuse_state_t *shutdown_efuse_state) {
-    
-    uint8_t data = message->data[0];
-    uint64_t state_mask = (1ULL << 8) - 1ULL;
-    uint64_t state_raw = (data >> 0) & state_mask;
-    shutdown_efuse_state->state = (uint8_t)state_raw;
-}
-
-void receive_lv_efuse_state(const can_msg_t *message, lv_efuse_state_t *lv_efuse_state) {
-    
-    uint8_t data = message->data[0];
-    uint64_t state_mask = (1ULL << 8) - 1ULL;
-    uint64_t state_raw = (data >> 0) & state_mask;
-    lv_efuse_state->state = (uint8_t)state_raw;
-}
-
-void receive_radfan_efuse_state(const can_msg_t *message, radfan_efuse_state_t *radfan_efuse_state) {
-    
-    uint8_t data = message->data[0];
-    uint64_t state_mask = (1ULL << 8) - 1ULL;
-    uint64_t state_raw = (data >> 0) & state_mask;
-    radfan_efuse_state->state = (uint8_t)state_raw;
-}
-
-void receive_fanbatt_efuse_state(const can_msg_t *message, fanbatt_efuse_state_t *fanbatt_efuse_state) {
-    
-    uint8_t data = message->data[0];
-    uint64_t state_mask = (1ULL << 8) - 1ULL;
-    uint64_t state_raw = (data >> 0) & state_mask;
-    fanbatt_efuse_state->state = (uint8_t)state_raw;
-}
-
-void receive_pumpone_efuse_state(const can_msg_t *message, pumpone_efuse_state_t *pumpone_efuse_state) {
-    
-    uint8_t data = message->data[0];
-    uint64_t state_mask = (1ULL << 8) - 1ULL;
-    uint64_t state_raw = (data >> 0) & state_mask;
-    pumpone_efuse_state->state = (uint8_t)state_raw;
-}
-
-void receive_pumptwo_efuse_state(const can_msg_t *message, pumptwo_efuse_state_t *pumptwo_efuse_state) {
-    
-    uint8_t data = message->data[0];
-    uint64_t state_mask = (1ULL << 8) - 1ULL;
-    uint64_t state_raw = (data >> 0) & state_mask;
-    pumptwo_efuse_state->state = (uint8_t)state_raw;
-}
-
-void receive_battbox_efuse_state(const can_msg_t *message, battbox_efuse_state_t *battbox_efuse_state) {
-    
-    uint8_t data = message->data[0];
-    uint64_t state_mask = (1ULL << 8) - 1ULL;
-    uint64_t state_raw = (data >> 0) & state_mask;
-    battbox_efuse_state->state = (uint8_t)state_raw;
-}
-
-void receive_mc_efuse_state(const can_msg_t *message, mc_efuse_state_t *mc_efuse_state) {
-    
-    uint8_t data = message->data[0];
-    uint64_t state_mask = (1ULL << 8) - 1ULL;
-    uint64_t state_raw = (data >> 0) & state_mask;
-    mc_efuse_state->state = (uint8_t)state_raw;
-}
-
-void receive_spare_efuse_state(const can_msg_t *message, spare_efuse_state_t *spare_efuse_state) {
-    
-    uint8_t data = message->data[0];
-    uint64_t state_mask = (1ULL << 8) - 1ULL;
-    uint64_t state_raw = (data >> 0) & state_mask;
-    spare_efuse_state->state = (uint8_t)state_raw;
-}
-
-void receive_rtds_command_message(const can_msg_t *message, rtds_command_message_t *rtds_command_message) {
-    
-    uint8_t data = message->data[0];
-    uint64_t command_mask = (1ULL << 8) - 1ULL;
-    uint64_t command_raw = (data >> 0) & command_mask;
-    rtds_command_message->command = (uint8_t)command_raw;
-}
-
-void receive_wheel_buttons(const can_msg_t *message, wheel_buttons_t *wheel_buttons) {
-    
-    uint8_t data = message->data[0];
-    uint64_t button_id_mask = (1ULL << 8) - 1ULL;
-    uint64_t button_id_raw = (data >> 0) & button_id_mask;
-    wheel_buttons->button_id = (uint8_t)button_id_raw;
 }
 

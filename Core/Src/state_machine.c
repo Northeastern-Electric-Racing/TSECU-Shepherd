@@ -170,7 +170,6 @@ void sm_handle_state(state_machine_args_t *state_machine_args)
 void request_transition(state_machine_args_t *state_machine_args,
 			state_t next_state)
 {
-
 	state_machine_t *state_machine = state_machine_args->state_machine;
 
 	mutex_get(&state_mutex);
@@ -332,7 +331,7 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 			break;
 		case LONG_SETTLE:
 			if (is_timer_expired(state_timer)) {
-				 next_stage = SHORT_CHARGE_UP;
+				next_stage = SHORT_CHARGE_UP;
 			}
 			break;
 		case SHORT_CHARGE_UP:
@@ -429,6 +428,20 @@ void clear_segment_comms_fault(state_machine_t *state_mach)
 {
 	mutex_get(&state_mutex);
 	state_mach->segment_comms_fault_flag = false;
+	mutex_put(&state_mutex);
+}
+
+void set_hv_plate_comms_fault(state_machine_t *state_mach)
+{
+	mutex_get(&state_mutex);
+	state_mach->hv_plate_comms_fault_flag = true;
+	mutex_put(&state_mutex);
+}
+
+void clear_hv_plate_comms_fault(state_machine_t *state_mach)
+{
+	mutex_get(&state_mutex);
+	state_mach->hv_plate_comms_fault_flag = false;
 	mutex_put(&state_mutex);
 }
 

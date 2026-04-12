@@ -9,6 +9,7 @@
 #include "shep_mutexes.h"
 #include "application.h"
 #include "can_messages_tx.h"
+#include "hv_plate_isospi_recovery.h"
 #include <math.h>
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
@@ -31,23 +32,37 @@ static float get_voltage_conversion(int16_t data)
 void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 {
 	switch (conversion_count) {
-	case ACCI_8:
-		hv_plate->conversion_count = 8;
-		break;
-	case ACCI_16:
-		hv_plate->conversion_count = 16;
-		break;
-	case ACCI_32:
-		hv_plate->conversion_count = 32;
-		break;
-	default:
-		PRINTLN_WARNING(
-			"Unsupported accumulation count, defaulting to 8");
-		hv_plate->conversion_count = 8;
-		break;
+		case ACCI_8:
+			hv_plate->conversion_count = 8;
+			break;
+		case ACCI_16:
+			hv_plate->conversion_count = 16;
+			break;
+		case ACCI_32:
+			hv_plate->conversion_count = 32;
+			break;
+		default:
+			PRINTLN_WARNING(
+				"Unsupported accumulation count, defaulting to 8");
+			hv_plate->conversion_count = 8;
+			break;
 	}
 	hv_plate->last_total_converion_count = 0;
-	set_hv_plate_chips_isospi_line(&hv_plate->ic, ADBMS2950_ISOSPI_LINE_A);
+
+	// One-time init for isoSPI line
+	static bool is_first_init = true;
+
+	/*
+	 * These fields are later controlled by isoSPI recovery to
+	 * manage communication on each line after an isoSPI break,
+	 * so re-inits from hv_plate_restart() must not overwrite them.
+	 */
+	if (is_first_init) {
+		set_hv_plate_chips_isospi_line(&hv_plate->ic,
+					       ADBMS2950_ISOSPI_LINE_A);
+
+		is_first_init = false;
+	}
 
 	write_config(&hv_plate->ic, conversion_count);
 	write_clear_flags_2950(&hv_plate->ic);
@@ -109,8 +124,7 @@ void get_shunt_temp(hv_plate_t *hv_plate)
 {
 	read_v7_register(&hv_plate->ic);
 
-	float volts =
-		get_voltage_conversion(hv_plate->ic.vr.v_codes[6]); // V7A
+	float volts = get_voltage_conversion(hv_plate->ic.vr.v_codes[6]); // V7A
 
 	// Equation derived from voltage divider on V1P25:
 	// R1: 10 kOhms, R2: Therm Resistance
@@ -161,6 +175,12 @@ void get_aux_adc_data(hv_plate_t *hv_plate)
 	hv_plate->osccnt = ic->auxc.osccnt;
 }
 
+void hv_plate_restart(hv_plate_t *hv_plate)
+{
+	soft_reset_chip_2950(&hv_plate->ic);
+	init_hv_plate(hv_plate, ACCI_8);
+}
+
 // HV PLATE DATA THREAD
 void vHvPlateData(ULONG thread_input)
 {
@@ -182,6 +202,8 @@ void vHvPlateData(ULONG thread_input)
 
 	// initialize HV Plate struct and start conversions
 	init_hv_plate(hv_plate, ACCI_8);
+
+	hv_plate_isospi_break_detection_init(&hv_plate->ic);
 
 	tx_thread_sleep(MS_TO_TICKS(500));
 
@@ -220,13 +242,17 @@ void vHvPlateData(ULONG thread_input)
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
 
-		if (is_timer_expired(&diagnostic_read_timer) && !is_timer_active(&diagnostic_read_timer)) {
+		hv_plate_isospi_handle_state(hv_plate, state_machine);
 
+		if (is_timer_expired(&diagnostic_read_timer) &&
+		    !is_timer_active(&diagnostic_read_timer)) {
 			get_aux_adc_data(hv_plate);
 
 			// send hv plate data for telemetry
 			PRINTLN_INFO("Sending HV Plate Data...");
-			send_hv_plate_data(hv_plate->batt_volts, hv_plate->ts_volts, hv_plate->shunt_temp,
+			send_hv_plate_data(hv_plate->batt_volts,
+					   hv_plate->ts_volts,
+					   hv_plate->shunt_temp,
 					   hv_plate->pack_current);
 
 			// read flags
