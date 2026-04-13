@@ -5,6 +5,7 @@
 #include "can_messages_tx.h"
 #include "timer.h"
 #include "state_machine.h"
+#include "soc.h"
 
 /**
  * @brief Break detect threshold.
@@ -215,6 +216,8 @@ void hv_plate_isospi_handle_state(hv_plate_t *hv_plate,
 			// Clear all faults return to normal operation state
 			printf("[HV PLATE isoSPI] Recovery Complete, Fault Cleared\n\r");
 			clear_hv_plate_comms_fault(state_mach);
+			// Obtain a new initial SoC from the minimum OCV after isoSPI recovery succeeds
+			soc_request_reinit_from_ocv();
 			hv_plate_isospi_status.state = ISOSPI_STATE_NORMAL;
 			break;
 

@@ -371,8 +371,6 @@ void vGetSegmentData(ULONG thread_input)
 {
 	PRINTLN_INFO("Starting GetSegmentData thread...");
 
-	const uint16_t balancing_delay = 75;
-
 	acc_data_args_t *acc_data_args = (acc_data_args_t *)thread_input;
 
 	acc_data_t *acc_data = acc_data_args->acc_data;
