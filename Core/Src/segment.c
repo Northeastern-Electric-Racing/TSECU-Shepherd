@@ -129,88 +129,11 @@ void segment_unsnap(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 	unsnap_chips(chips, hspi);
 }
 
-void segment_adc_comparison(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
-{
-	// TODO: S-ADC measurements are all over the place.
-
-	// Take single shot measurement
-	// adBms6830_Adcv(RD_ON, SINGLE, DCP_OFF, RSTF_OFF, OW_OFF_ALL_CH);
-	// adBmsPollAdc_indicator(PLCADC);
-	// read_adbms_data(bmsdata->chips, RDCVALL, Rdcvall, ALL_GRP);
-
-	// Result of C-ADC and S-ADC comparison is stored in status register group C
-	read_status_registers(chips, hspi);
-
-	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			if (NER_GET_BIT(chips[chip].statc.cs_flt, cell)) {
-				printf("ADC VOLTAGE DISCREPANCY ERROR\nChip %d, Cell %d\nC-ADC: %f, "
-				       "S-ADC: %f\n",
-				       chip + 1, cell + 1,
-				       getVoltage(
-					       chips[chip].fcell.fc_codes[cell]),
-				       getVoltage(
-					       chips[chip]
-						       .scell.sc_codes[cell]));
-			}
-		}
-	}
-}
-
 void segment_monitor_flts(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	for (int chip = 0; chip < NUM_CHIPS; chip++) {
-		// printf("CHIP %d :", chip);
-		//printf("MUTE: %d, %d\n", chip, chips[chip].rx_cfga.mute_st);
-		if (chips[chip].statc.cs_flt > 0) {
-			printf("C VS S MISMATCH on cells ");
-			for (int i = 0; i < NUM_CELLS_PER_CHIP; i++) {
-				if (NER_GET_BIT(chips[chip].statc.cs_flt, i)) {
-					printf("%d, ", i);
-				}
-			}
-			printf(" of c%d\n", chip);
-		}
-		if (chips[chip].statc.va_ov) {
-			printf("A OV FLT c%d\n", chip);
-		}
-		if (chips[chip].statc.va_uv) {
-			printf("A UV FLT c%d\n", chip);
-		}
-		if (chips[chip].statc.vd_ov) {
-			printf("D OV FLT c%d\n", chip);
-		}
-		if (chips[chip].statc.vd_uv) {
-			printf("D UV FLT c%d\n", chip);
-		}
-		if (chips[chip].statc.vde) {
-			printf("VDE FLT c%d\n", chip);
-		}
-		if (chips[chip].statc.vdel) {
-			printf("VDEL FLT c%d\n", chip);
-		}
-		if (chips[chip].statc.spiflt) {
-			printf("SPI SLV FLT c%d\n", chip);
-		}
-		if (chips[chip].statc.sleep) {
-			printf("SLEEP OCCURED c%d\n", chip);
-		}
-		if (chips[chip].statc.thsd) {
-			printf("THERMAL FLT c%d\n", chip);
-		}
-		if (chips[chip].statc.tmodchk) {
-			printf("TMODE FLT c%d\n", chip);
-		}
-
-		if (chips[chip].statc.otp1_med) {
-			printf("CMED? FLT c%d\n", chip);
-		}
-		if (chips[chip].statc.otp2_med) {
-			printf("SMED? FLT c%d\n", chip);
-		}
-	}
-	// clear them.  they will still be in memory for usage until this function or
-	// read_status_registers is called
+	// clear them.  they will still be in memory for usage
+	// read statc to retrieve any new faults
+	// this must be called, otherwise bootup transients will pollute the faults
 	write_clear_flags(chips, hspi);
 }
 
