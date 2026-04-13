@@ -422,6 +422,20 @@ void clear_segment_comms_fault(state_machine_t *state_mach)
 	mutex_put(&state_mutex);
 }
 
+void set_hv_plate_comms_fault(state_machine_t *state_mach)
+{
+	mutex_get(&state_mutex);
+	state_mach->hv_plate_comms_fault_flag = true;
+	mutex_put(&state_mutex);
+}
+
+void clear_hv_plate_comms_fault(state_machine_t *state_mach)
+{
+	mutex_get(&state_mutex);
+	state_mach->hv_plate_comms_fault_flag = false;
+	mutex_put(&state_mutex);
+}
+
 bool get_fault(fault_code_t fault)
 {
 	return (fault_flags & (1 << fault)) != 0;

@@ -6,7 +6,7 @@
 #include "c_utils.h"
 #include "charging.h"
 #include "datastructs.h"
-#include "isospi_recovery.h"
+#include "segment_isospi_recovery.h"
 #include "serialPrintResult.h"
 #include "u_tx_flags.h"
 #include "state_machine.h"
@@ -93,7 +93,8 @@ void segment_init(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 	if (is_first_init) {
 		for (int chip = 0; chip < NUM_CHIPS; chip++) {
 			// Set chip to primary isoSPI line A
-			set_iso_spi_line(&chips[chip], ISOSPI_LINE_A);
+			set_segment_chips_isospi_line(&chips[chip],
+						      ADBMS6830_ISOSPI_LINE_A);
 
 			// Not an endpoint in the daisy chain
 			set_comm_break(&chips[chip], COMM_BK_OFF);
@@ -379,16 +380,13 @@ void vGetSegmentData(ULONG thread_input)
 
 	segment_init(acc_data->chips, &hspi2);
 
-	isospi_break_detection_init(acc_data->chips);
+	segment_isospi_break_detection_init(acc_data->chips);
 
 	// must delay after init for ADC to start up
 	tx_thread_sleep(MS_TO_TICKS(500));
 
 	state_t prev_state = BOOT;
 	state_t current_state = BOOT;
-
-	segment_unmute(acc_data->chips, &hspi2);
-	segment_manual_balancing(acc_data->chips, &hspi2);
 
 	nertimer_t pwm_timer;
 	// assumes a DCTO of 1 minute for PWM balancing in extended balancing mode
@@ -409,8 +407,8 @@ void vGetSegmentData(ULONG thread_input)
 			// in charging, debug data is required to get things like die temp
 			segment_retrieve_charging_data(acc_data->chips, &hspi2);
 			send_segment_pec_errors_message();
-			isospi_handle_state(acc_data->chips, state_machine,
-					    &hspi2);
+			segment_isospi_handle_state(acc_data->chips,
+						    state_machine, &hspi2);
 		} else {
 			// snap before getting data
 			segment_snap(acc_data->chips, &hspi2);
@@ -418,8 +416,8 @@ void vGetSegmentData(ULONG thread_input)
 			// unsnap after getting data
 			segment_unsnap(acc_data->chips, &hspi2);
 			send_segment_pec_errors_message();
-			isospi_handle_state(acc_data->chips, state_machine,
-					    &hspi2);
+			segment_isospi_handle_state(acc_data->chips,
+						    state_machine, &hspi2);
 
 			if (DEBUG_MODE_ENABLED) {
 				segment_retrieve_debug_data(acc_data->chips,

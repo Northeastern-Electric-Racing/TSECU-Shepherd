@@ -34,6 +34,14 @@ void receive_drive_enable_command(const can_msg_t *message, drive_enable_command
     drive_enable_command->drive_enable = (uint8_t)drive_enable_raw;
 }
 
+void receive_shepherd_bms_fan_percent(const can_msg_t *message, shepherd_bms_fan_percent_t *shepherd_bms_fan_percent) {
+    
+    uint8_t data = message->data[0];
+    uint64_t pwm_duty_mask = (1ULL << 8) - 1ULL;
+    uint64_t pwm_duty_raw = (data >> 0) & pwm_duty_mask;
+    shepherd_bms_fan_percent->pwm_duty = (uint8_t)pwm_duty_raw;
+}
+
 void receive_dashboard_efuse_state(const can_msg_t *message, dashboard_efuse_state_t *dashboard_efuse_state) {
     
     uint8_t data = message->data[0];

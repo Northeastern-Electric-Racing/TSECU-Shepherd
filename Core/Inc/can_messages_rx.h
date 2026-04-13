@@ -33,6 +33,12 @@ typedef struct {
 void receive_drive_enable_command(const can_msg_t *message, drive_enable_command_t *drive_enable_command);
 
 typedef struct {
+ uint8_t pwm_duty;
+} shepherd_bms_fan_percent_t;
+
+void receive_shepherd_bms_fan_percent(const can_msg_t *message, shepherd_bms_fan_percent_t *shepherd_bms_fan_percent);
+
+typedef struct {
  uint8_t state;
 } dashboard_efuse_state_t;
 

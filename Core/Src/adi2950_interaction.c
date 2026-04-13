@@ -2,15 +2,33 @@
 #include "adi_bms_2950cmdlist.h"
 #include "adi_bms_2950data.h"
 #include "adi_bms_utility.h"
-#include "pal.h"
+#include "adbmsCommonPal.h"
+#include "hv_plate_isospi_recovery.h"
+#include "isospi_recovery_common_config.h"
 #include "u_tx_debug.h"
 #include "can_messages_tx.h"
 #include "c_utils.h"
 
-#define TOTAL_IC_2950 1
-
 static uint16_t hv_plate_pec_errors = { 0U };
 static uint16_t prev_hv_plate_pec_errors = { 0U };
+
+/**
+ * @brief Increment PEC accumulator with saturation.
+ *
+ * @param ic Pointer to the adbms2950 data structure.
+ * @param pec_mask_timer_expired True if accumulation is enabled.
+ */
+static void accumulate_hv_plate_pec_errors(cell_asic_2950 *ic,
+					   const bool pec_mask_timer_expired)
+{
+	// Accumulate PEC errors only after startup mask timer ends
+	if (pec_mask_timer_expired) {
+		// Saturate at MAX_PEC_ERROR_ACCUM
+		if (ic->pec_error_sum < ISOSPI_RECOVERY_MAX_PEC_ERROR_ACCUM) {
+			ic->pec_error_sum += 1U;
+		}
+	}
+}
 
 /**
  * @brief Update the PEC errors and accumulation counter for the given register read.
@@ -20,68 +38,116 @@ static uint16_t prev_hv_plate_pec_errors = { 0U };
  */
 static void update_hv_plate_pec_errors(cell_asic_2950 *ic, TYPE2950 type)
 {
+	const bool pec_mask_timer_expired =
+		is_hv_plate_startup_pec_mask_timer_expired();
+
 	// clang-format off
 	switch (type)
 	{
 		case GPV1:
-			NER_SET_BIT(hv_plate_pec_errors, 0U);
-			PRINTLN_WARNING("[HV_PLATE] VR PEC %u", ic->cccrc.vr_pec);
+			if (ic->cccrc.vr_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 0U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] VR PEC %u", ic->cccrc.vr_pec);
+			}
 			break;
 		case GPV2:
-			NER_SET_BIT(hv_plate_pec_errors, 1U);
-			PRINTLN_WARNING("[HV_PLATE] RVR PEC %u", ic->cccrc.rvr_pec);
+			if (ic->cccrc.rvr_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 1U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] RVR PEC %u", ic->cccrc.rvr_pec);
+			}
 			break;
 		case Config2950:
-			NER_SET_BIT(hv_plate_pec_errors, 2U);
-			PRINTLN_WARNING("[HV_PLATE] CFGR PEC %u", ic->cccrc.cfgr_pec);
+			if (ic->cccrc.cfgr_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 2U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] CFGR PEC %u", ic->cccrc.cfgr_pec);
+			}
 			break;
 		case Cr:
-			NER_SET_BIT(hv_plate_pec_errors, 3U);
-			PRINTLN_WARNING("[HV_PLATE] CR PEC %u", ic->cccrc.cr_pec);
+			if (ic->cccrc.cr_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 3U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] CR PEC %u", ic->cccrc.cr_pec);
+			}
 			break;
 		case Vbat:
-			NER_SET_BIT(hv_plate_pec_errors, 4U);
-			PRINTLN_WARNING("[HV_PLATE] VBAT PEC %u", ic->cccrc.vbat_pec);
+			if (ic->cccrc.vbat_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 4U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] VBAT PEC %u", ic->cccrc.vbat_pec);
+			}
 			break;
 		case Ivbat:
-			NER_SET_BIT(hv_plate_pec_errors, 5U);
-			PRINTLN_WARNING("[HV_PLATE] IVBAT PEC %u", ic->cccrc.ivbat_pec);
+			if (ic->cccrc.ivbat_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 5U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] IVBAT PEC %u", ic->cccrc.ivbat_pec);
+			}
 			break;
 		case Oc:
-			NER_SET_BIT(hv_plate_pec_errors, 6U);
-			PRINTLN_WARNING("[HV_PLATE] OC PEC %u", ic->cccrc.oc_pec);
+			if (ic->cccrc.oc_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 6U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] OC PEC %u", ic->cccrc.oc_pec);
+			}
 			break;
 		case AccCr:
-			NER_SET_BIT(hv_plate_pec_errors, 7U);
-			PRINTLN_WARNING("[HV_PLATE] AVGCR PEC %u", ic->cccrc.avgcr_pec);
+			if (ic->cccrc.avgcr_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 7U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] AVGCR PEC %u", ic->cccrc.avgcr_pec);
+			}
 			break;
 		case AccVbat:
-			NER_SET_BIT(hv_plate_pec_errors, 8U);
-			PRINTLN_WARNING("[HV_PLATE] AVGVBAT PEC %u", ic->cccrc.avgvbat_pec);
+			if (ic->cccrc.avgvbat_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 8U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] AVGVBAT PEC %u", ic->cccrc.avgvbat_pec);
+			}
 			break;
 		case AccIvbat:
-			NER_SET_BIT(hv_plate_pec_errors, 9U);
-			PRINTLN_WARNING("[HV_PLATE] AVGIVBAT PEC %u", ic->cccrc.avgivbat_pec);
+			if (ic->cccrc.avgivbat_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 9U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] AVGIVBAT PEC %u", ic->cccrc.avgivbat_pec);
+			}
 			break;
 		case Aux2950:
-			NER_SET_BIT(hv_plate_pec_errors, 10U);
-			PRINTLN_WARNING("[HV_PLATE] AUX PEC %u", ic->cccrc.aux_pec);
+			if (ic->cccrc.aux_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 10U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] AUX PEC %u", ic->cccrc.aux_pec);
+			}
 			break;
 		case Flag:
-			NER_SET_BIT(hv_plate_pec_errors, 11U);
-			PRINTLN_WARNING("[HV_PLATE] FLAG PEC %u", ic->cccrc.flag_pec);
+			if (ic->cccrc.flag_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 11U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] FLAG PEC %u", ic->cccrc.flag_pec);
+			}
 			break;
 		case Status2950:
-			NER_SET_BIT(hv_plate_pec_errors, 12U);
-			PRINTLN_WARNING("[HV_PLATE] STAT PEC %u", ic->cccrc.stat_pec);
+			if (ic->cccrc.stat_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 12U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] STAT PEC %u", ic->cccrc.stat_pec);
+			}
 			break;
 		case Comm2950:
-			NER_SET_BIT(hv_plate_pec_errors, 13U);
-			printf("[HV_PLATE] COMM PEC %u", ic->cccrc.comm_pec);
+			if (ic->cccrc.comm_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 13U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				printf("[HV_PLATE] COMM PEC %u", ic->cccrc.comm_pec);
+			}
 			break;
 		case SID:
-			NER_SET_BIT(hv_plate_pec_errors, 14U);
-			PRINTLN_WARNING("[HV_PLATE] SID2950 PED %u", ic->cccrc.sid2950_pec);
+			if (ic->cccrc.sid2950_pec) {
+				NER_SET_BIT(hv_plate_pec_errors, 14U);
+				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
+				PRINTLN_WARNING("[HV_PLATE] SID2950 PED %u", ic->cccrc.sid2950_pec);
+			}
 			break;
 		default:
 			break;
@@ -101,6 +167,47 @@ void send_hv_plate_pec_errors_message(void)
 
 	// Clear PEC errors for next cycle
 	current_pec_errors = 0U;
+}
+
+void set_hv_plate_chips_isospi_line(cell_asic_2950 *ic, isospi_line_2950_ line)
+{
+	ic->isospi_line = line;
+}
+
+/**
+ * @brief Wake the core of ADBMS2950 IC on the specified isoSPI line.
+ *
+ * @param line   isoSPI line to wake (LINE_A or LINE_B).
+ * @param num_ic Number of ICs present on the specified isoSPI line.
+ */
+void adbms_wake_core_2950(isospi_line_2950_ line, uint8_t num_ic)
+{
+	switch (line) {
+		case ADBMS2950_ISOSPI_LINE_A:
+		case ADBMS2950_ISOSPI_LINE_B:
+			adBmsLineCsLow2950(line);
+			adBmsLineCsHigh2950(line);
+			delay_us_2950(500);
+			break;
+		default:
+			printf(" Invalid isoSPI line selected \n");
+			break;
+	}
+}
+
+void soft_reset_chip_2950(cell_asic_2950 *ic)
+{
+	uint8_t ic_count_a = 0U, ic_count_b = 0U;
+
+	getIsoSPILineChipCount2950(TOTAL_IC_2950, ic, &ic_count_a, &ic_count_b);
+	spiSendCmd2950(TOTAL_IC_2950, ic, SRST2950);
+	if (ic_count_a > 0U) {
+		adbms_wake_core_2950(ADBMS2950_ISOSPI_LINE_A, TOTAL_IC_2950);
+	}
+
+	if (ic_count_b > 0U) {
+		adbms_wake_core_2950(ADBMS2950_ISOSPI_LINE_B, TOTAL_IC_2950);
+	}
 }
 
 /**
@@ -133,7 +240,7 @@ void start_adc_conversions(cell_asic_2950 *ic)
 {
 	cmd_description command;
 	adBms2950_Adi1(TOTAL_IC_2950, ic, RD_ON2950, OPT8_C, &command);
-	Delay_ms2950(ADI1_delay_ms);
+	delay_ms(ADI1_delay_ms);
 }
 
 void write_config(cell_asic_2950 *ic, ACCI count)
@@ -142,7 +249,6 @@ void write_config(cell_asic_2950 *ic, ACCI count)
 	ic->tx_cfga.vs1 = (VSB)VSMV_VREF1P25;
 	ic->tx_cfga.vs2 = (VSB)VSMV_VREF1P25;
 	ic->tx_cfga.vs7 = (VSB)VSMV_SGND;
-	adBmsWakeupIc2950(1);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
 }
 
@@ -186,7 +292,6 @@ void write_clear_flags_2950(cell_asic_2950 *ic)
 
 uint16_t read_conversion_count_registers(cell_asic_2950 *ic)
 {
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDFLAG, Flag, NONE2950);
 	return ic->flag.i1cnt;
 	if (ic->cccrc.flag_pec != 0) {
@@ -196,7 +301,6 @@ uint16_t read_conversion_count_registers(cell_asic_2950 *ic)
 
 void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 {
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDIVB1ACC, AccIvbat,
 			    NONE2950); /* Accumulated Battery Voltage Group*/
 	if (ic->cccrc.avgivbat_pec != 0) {
@@ -207,11 +311,9 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 
 void read_v7_register(cell_asic_2950 *ic)
 {
-	adBmsWakeupIc2950(1);
 	adBms2950_Adv(1, ic, OW_OFF, SM_V7_V9);
-	Delay_ms2950(Polling_Delay_ms2950);
+	delay_ms(Polling_Delay_ms2950);
 
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDV1C, GPV1, C_2950);
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
@@ -220,11 +322,9 @@ void read_v7_register(cell_asic_2950 *ic)
 
 void read_v2_register(cell_asic_2950 *ic)
 {
-	adBmsWakeupIc2950(1);
 	adBms2950_Adv(1, ic, OW_OFF, SM_V2);
-	Delay_ms2950(Polling_Delay_ms2950);
+	delay_ms(Polling_Delay_ms2950);
 
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDV1A, GPV1, A_2950);
 	if (ic->cccrc.vr_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading V2 register");
@@ -233,7 +333,6 @@ void read_v2_register(cell_asic_2950 *ic)
 
 void read_flag_register(cell_asic_2950 *ic)
 {
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDFLAG, Flag, FLAG_NOERR);
 	if (ic->cccrc.flag_pec != 0) {
 		PRINTLN_ERROR("PEC Error in reading flag register");
@@ -247,13 +346,10 @@ void poll_and_read_aux_registers(cell_asic_2950 *ic)
 	ic[0].pladc_count = adBmsPollAdc2950(TOTAL_IC_2950, ic, PLX);
 
 	// Read all relevant register groups
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDXA, Aux2950, A_2950);
 
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDXB, Aux2950, B_2950);
 
-	adBmsWakeupIc2950(1);
 	read_adbms2950_data(ic, RDXC, Aux2950, C_2950);
 
 	if (ic->cccrc.aux_pec != 0) {
@@ -290,7 +386,6 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 			break;
 	}
 
-	adBmsWakeupIc2950(TOTAL_IC_2950);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
 	read_adbms2950_data(ic, RDCFGA2950, Config2950, A_2950);
 	if (ic->cccrc.cfgr_pec != 0) {
@@ -326,7 +421,6 @@ void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 			break;
 	}
 
-	adBmsWakeupIc2950(TOTAL_IC_2950);
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
 	read_adbms2950_data(ic, RDCFGA2950, Config2950, A_2950);
 

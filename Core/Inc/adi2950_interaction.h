@@ -4,10 +4,27 @@
 #include <stdint.h>
 #include "adi_bms_2950data.h"
 
+#define TOTAL_IC_2950 1
+
 /**
  * @brief Sends PEC errors for hv plate over CAN and clears them for the next cycle.
  */
 void send_hv_plate_pec_errors_message(void);
+
+/**
+ * @brief Set the isoSPI line of the chip.
+ *
+ * @param ic Pointer to the chip to modify.
+ * @param line isoSPI line of chip.
+ */
+void set_hv_plate_chips_isospi_line(cell_asic_2950 *ic, isospi_line_2950_ line);
+
+/**
+ * @brief Soft reset hv plate 2950 chip, then re-wake the chip
+ *
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void soft_reset_chip_2950(cell_asic_2950 *ic);
 
 /**
  * Snaps registers of ADBMS2950

@@ -51,6 +51,7 @@ target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
     -Wformat # check the types going to printf
     -Wshadow # prevent redefinition of unsassigned global vars
     -fanalyzer # GCC static analysis
+    -Wenum-conversion
 )
 
 # Add STM32CubeMX generated sources
@@ -66,7 +67,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     "Drivers/Embedded-Base/middleware/src/bitstream.c"
     "Drivers/Embedded-Base/general/src/lsm6dsv_reg.c"
-    "Drivers/adbms/adbms6830/program/src/mcuWrapper.c"
+    "Drivers/adbms/adbmsCommon/src/adbmsCommonPal.c"
     "Drivers/adbms/adbms6830/program/src/serialPrintResult.c"
     "Drivers/adbms/adbms6830/lib/src/adBms6830ParseCreate.c"
     "Drivers/adbms/adbms6830/lib/src/adBms6830GenericType.c"
@@ -75,7 +76,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/adbms/adbms2950/lib/src/adi_bms_2950data.c"
     "Drivers/adbms/adbms2950/lib/src/adi_bms_utility.c"
     "Drivers/adbms/adbms2950/program/src/adbms_2950.c"
-    "Drivers/adbms/adbms2950/program/src/pal.c"
     "Drivers/adbms/adbms2950/program/src/print_result.c"
     "Drivers/Embedded-Base/threadX/src/u_tx_debug.c"
     "Drivers/Embedded-Base/threadX/src/u_tx_queues.c"
@@ -107,7 +107,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/state_machine.c"
     "Core/Src/cell_temp_sanitizer.c"
     "Core/Src/soc.c"
-    "Core/Src/isospi_recovery.c"
+    "Core/Src/segment_isospi_recovery.c"
+    "Core/Src/hv_plate_isospi_recovery.c"
     "Core/Src/bms_algos.c"
     "Core/Src/dcl.c"
     "Core/Src/ccl.c"
@@ -128,6 +129,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     "Drivers/Embedded-Base/platforms/stm32h563/include"
     "Drivers/adbms/adbms2950/lib/inc"
     "Drivers/adbms/adbms2950/program/inc"
+    "Drivers/adbms/adbmsCommon/inc"
     "Core/Inc"
     "Drivers/Embedded-Base/threadX/inc"
     "Drivers/Embedded-Base/NetX/inc"

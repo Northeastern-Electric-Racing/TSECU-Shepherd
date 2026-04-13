@@ -1421,6 +1421,36 @@ uint8_t send_shutdown_as_read_by_bms
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
 
+uint8_t send_hv_plate_isospi_communication_status
+(uint8_t state,uint8_t verification_attempts,uint8_t recovery_successful)
+{
+    can_msg_t msg;
+    msg.id = 0x82;
+    msg.id_is_extended = false;
+    
+            uint32_t data = 0;
+            msg.len = 4;
+                        uint32_t state_i = (uint32_t)(state);
+                        if(state_i > 255ULL) {state_i = 255;
+                        }
+                        data |= ((state_i) & 0xFFULL) << 24;
+            
+                        uint32_t verification_attempts_i = (uint32_t)(verification_attempts);
+                        if(verification_attempts_i > 255ULL) {verification_attempts_i = 255;
+                        }
+                        data |= ((verification_attempts_i) & 0xFFULL) << 16;
+            
+                        uint32_t recovery_successful_i = (uint32_t)(recovery_successful);
+                        if(recovery_successful_i > 1ULL) {recovery_successful_i = 1;
+                        }
+                        data |= ((recovery_successful_i) & 0x1ULL) << 15;
+            
+            uint32_t data_bigendian = __builtin_bswap32(data);
+            memcpy(msg.data, &data_bigendian, 4);
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
 uint8_t send_bms_charge_message_send
 (float charge_volts,float charge_current,uint8_t enable_charging)
 {

@@ -14,7 +14,7 @@ static void set_precharge_relay(cell_asic_2950 *ic, bool state)
 static void close_relay(void *args)
 {
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
-	set_precharge_relay(precharge_config->hv_plate->ic, true);
+	set_precharge_relay(&precharge_config->hv_plate->ic, true);
 	precharge_config->air_switch_closed = true;
 	send_precharge_status(precharge_config->air_switch_closed);
 }
@@ -22,7 +22,7 @@ static void close_relay(void *args)
 static void open_relay(void *args)
 {
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
-	set_precharge_relay(precharge_config->hv_plate->ic, false);
+	set_precharge_relay(&precharge_config->hv_plate->ic, false);
 	precharge_config->air_switch_closed = false;
 	send_precharge_status(precharge_config->air_switch_closed);
 }

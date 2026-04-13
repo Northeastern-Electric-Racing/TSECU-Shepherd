@@ -12,13 +12,15 @@
 #include "sht30.h"
 
 // clang-format off
-#define ANALYZER_FLAG		            (1U)
-#define SANITIZER_FLAG		            (1U << 1)
-#define DEBUG_FLAG		                (1U << 2)
-#define SPI_LINE_A_DMA_RX_CPLT_FLAG     (1U << 3)
-#define SPI_LINE_B_DMA_RX_CPLT_FLAG     (1U << 4)
-#define SPI_LINE_A_POLL_CONV_CPLT_FLAG  (1U << 5)
-#define SPI_LINE_B_POLL_CONV_CPLT_FLAG  (1U << 6)
+#define ANALYZER_FLAG		            		 (1U)
+#define SANITIZER_FLAG		            		 (1U << 1)
+#define DEBUG_FLAG		                		 (1U << 2)
+#define ADBMS6830_SPI_LINE_A_DMA_RX_CPLT_FLAG    (1U << 3)
+#define ADBMS6830_SPI_LINE_B_DMA_RX_CPLT_FLAG    (1U << 4)
+#define ADBMS2950_SPI_LINE_A_DMA_RX_CPLT_FLAG    (1U << 5)
+#define ADBMS2950_SPI_LINE_B_DMA_RX_CPLT_FLAG    (1U << 6)
+#define ADBMS6830_SPI_LINE_A_ADC_CONV_CPLT_FLAG  (1U << 7)
+#define ADBMS6830_SPI_LINE_B_ADC_CONV_CPLT_FLAG  (1U << 8)
 // clang-format on
 
 /**
@@ -139,7 +141,7 @@ typedef union {
  * @brief data read from the ADBMS2950 on our HV Plate
  */
 typedef struct {
-	cell_asic_2950 *ic; // ADBMS2950 struct
+	cell_asic_2950 ic; // ADBMS2950 struct
 	float ts_volts; // TS Voltage (V)
 	float batt_volts; // BATT Voltage (V)
 	float shunt_temp; // Temperature of shunt resistor (C)
@@ -182,7 +184,7 @@ typedef enum {
 } isospi_comm_state_t;
 
 /**
- * @brief ISO SPI break detection and recovery status structure.
+ * @brief Segment isoSPI break detection and recovery status structure.
  */
 typedef struct {
 	isospi_comm_state_t state;
@@ -190,7 +192,21 @@ typedef struct {
 	uint8_t verification_attempts;
 	uint8_t recovery_successful;
 	uint8_t fault_latched;
-} isospi_status_t;
+	nertimer_t startup_pec_mask_timer;
+	nertimer_t pec_accum_timer;
+} segment_isospi_status_t;
+
+/**
+ * @brief HV plate isoSPI break detection and recovery status structure.
+ */
+typedef struct {
+	isospi_comm_state_t state;
+	uint8_t verification_attempts;
+	uint8_t recovery_successful;
+	uint8_t fault_latched;
+	nertimer_t startup_pec_mask_timer;
+	nertimer_t pec_accum_timer;
+} hv_plate_isospi_status_t;
 
 /**
  * @brief SoC estimator state machine states.

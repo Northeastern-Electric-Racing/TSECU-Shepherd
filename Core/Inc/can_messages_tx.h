@@ -380,6 +380,16 @@ uint8_t send_shutdown_as_read_by_bms
 
 /**
 * Contents of this message:
+* BMS/HV_Plate_Comms/State - Current IsoSPI state
+* BMS/HV_Plate_Comms/Verification_Attempts - Number of required recovery verification attempts
+* BMS/HV_Plate_Comms/Extra - Reserved
+* BMS/HV_Plate_Comms/Recovery_Successful - IsoSPI recovery completed successfully
+*/
+uint8_t send_hv_plate_isospi_communication_status
+(uint8_t state,uint8_t verification_attempts,uint8_t recovery_successful);
+
+/**
+* Contents of this message:
 * BMS/Charging/Voltage - Voltage to charge to
 * BMS/Charging/Current - Current to charge at
 * BMS/Charging/Control - Whether to charge

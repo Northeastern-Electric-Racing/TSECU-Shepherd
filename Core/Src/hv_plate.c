@@ -9,6 +9,7 @@
 #include "shep_mutexes.h"
 #include "application.h"
 #include "can_messages_tx.h"
+#include "hv_plate_isospi_recovery.h"
 #include <math.h>
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
@@ -31,26 +32,41 @@ static float get_voltage_conversion(int16_t data)
 void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 {
 	switch (conversion_count) {
-	case ACCI_8:
-		hv_plate->conversion_count = 8;
-		break;
-	case ACCI_16:
-		hv_plate->conversion_count = 16;
-		break;
-	case ACCI_32:
-		hv_plate->conversion_count = 32;
-		break;
-	default:
-		PRINTLN_WARNING(
-			"Unsupported accumulation count, defaulting to 8");
-		hv_plate->conversion_count = 8;
-		break;
+		case ACCI_8:
+			hv_plate->conversion_count = 8;
+			break;
+		case ACCI_16:
+			hv_plate->conversion_count = 16;
+			break;
+		case ACCI_32:
+			hv_plate->conversion_count = 32;
+			break;
+		default:
+			PRINTLN_WARNING(
+				"Unsupported accumulation count, defaulting to 8");
+			hv_plate->conversion_count = 8;
+			break;
 	}
 	hv_plate->last_total_converion_count = 0;
 
-	write_config(hv_plate->ic, conversion_count);
-	write_clear_flags_2950(hv_plate->ic);
-	start_adc_conversions(hv_plate->ic);
+	// One-time init for isoSPI line
+	static bool is_first_init = true;
+
+	/*
+	 * These fields are later controlled by isoSPI recovery to
+	 * manage communication on each line after an isoSPI break,
+	 * so re-inits from hv_plate_restart() must not overwrite them.
+	 */
+	if (is_first_init) {
+		set_hv_plate_chips_isospi_line(&hv_plate->ic,
+					       ADBMS2950_ISOSPI_LINE_A);
+
+		is_first_init = false;
+	}
+
+	write_config(&hv_plate->ic, conversion_count);
+	write_clear_flags_2950(&hv_plate->ic);
+	start_adc_conversions(&hv_plate->ic);
 
 	hv_plate->adbms_flags.raw = 0; // reset flags
 }
@@ -58,13 +74,13 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 				       uint16_t request_rate)
 {
-	snap_2950(hv_plate->ic);
+	snap_2950(&hv_plate->ic);
 	const uint16_t expected_conversions =
 		request_rate / hv_plate->conversion_count;
 
-	read_accumulated_current_vbat_registers(hv_plate->ic);
+	read_accumulated_current_vbat_registers(&hv_plate->ic);
 	uint16_t num_conversitions =
-		read_conversion_count_registers(hv_plate->ic);
+		read_conversion_count_registers(&hv_plate->ic);
 
 	// indicates that the I1CNT register wrapped around
 	if (num_conversitions < hv_plate->last_total_converion_count) {
@@ -80,24 +96,24 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 		// R1: 3.6 MOhms, R2: 9.1 kOhms
 		hv_plate->batt_volts =
 			((3600000 + 9100) *
-			 get_voltage_conversion(hv_plate->ic->i_vbacc.vb1acc) /
+			 get_voltage_conversion(hv_plate->ic.i_vbacc.vb1acc) /
 			 9100) /
 			hv_plate->conversion_count;
 
 		hv_plate->pack_current =
-			get_current_conversion(hv_plate->ic->i_vbacc.i1acc) /
+			get_current_conversion(hv_plate->ic.i_vbacc.i1acc) /
 			hv_plate->conversion_count;
 
 		hv_plate->last_total_converion_count = num_conversitions;
 	}
-	unsnap_2950(hv_plate->ic);
+	unsnap_2950(&hv_plate->ic);
 }
 
 void get_ts_voltage(hv_plate_t *hv_plate)
 {
-	read_v2_register(hv_plate->ic);
+	read_v2_register(&hv_plate->ic);
 
-	float volts = get_voltage_conversion(hv_plate->ic->vr.v_codes[1]); // V2
+	float volts = get_voltage_conversion(hv_plate->ic.vr.v_codes[1]); // V2
 
 	// Equation is based on resistances of voltage divider:
 	// R1: 3.6 MOhms, R2: 4.53 kOhms (+ V1P25 reference)
@@ -106,10 +122,9 @@ void get_ts_voltage(hv_plate_t *hv_plate)
 
 void get_shunt_temp(hv_plate_t *hv_plate)
 {
-	read_v7_register(hv_plate->ic);
+	read_v7_register(&hv_plate->ic);
 
-	float volts =
-		get_voltage_conversion(hv_plate->ic->vr.v_codes[6]); // V7A
+	float volts = get_voltage_conversion(hv_plate->ic.vr.v_codes[6]); // V7A
 
 	// Equation derived from voltage divider on V1P25:
 	// R1: 10 kOhms, R2: Therm Resistance
@@ -124,8 +139,8 @@ void get_shunt_temp(hv_plate_t *hv_plate)
 
 void get_flags(hv_plate_t *hv_plate)
 {
-	read_flag_register(hv_plate->ic);
-	cell_asic_2950 *ic = hv_plate->ic;
+	read_flag_register(&hv_plate->ic);
+	cell_asic_2950 *ic = &hv_plate->ic;
 	hv_plate->adbms_flags.flags.vreguv = ic->flag.vreguv;
 	hv_plate->adbms_flags.flags.vregov = ic->flag.vregov;
 	hv_plate->adbms_flags.flags.vdduv = ic->flag.vdduv;
@@ -142,9 +157,9 @@ void get_flags(hv_plate_t *hv_plate)
 
 void get_aux_adc_data(hv_plate_t *hv_plate)
 {
-	poll_and_read_aux_registers(hv_plate->ic);
+	poll_and_read_aux_registers(&hv_plate->ic);
 
-	cell_asic_2950 *ic = hv_plate->ic;
+	cell_asic_2950 *ic = &hv_plate->ic;
 	// Read voltage results into struct
 	hv_plate->vreg = ic->auxa.vreg * microV(240);
 	hv_plate->vref1p25 = get_voltage_conversion(ic->auxa.vref1p25);
@@ -158,6 +173,12 @@ void get_aux_adc_data(hv_plate_t *hv_plate)
 	hv_plate->tmp2 = (ic->auxc.tmp2 / 20.5f) - 267;
 
 	hv_plate->osccnt = ic->auxc.osccnt;
+}
+
+void hv_plate_restart(hv_plate_t *hv_plate)
+{
+	soft_reset_chip_2950(&hv_plate->ic);
+	init_hv_plate(hv_plate, ACCI_8);
 }
 
 // HV PLATE DATA THREAD
@@ -182,11 +203,13 @@ void vHvPlateData(ULONG thread_input)
 	// initialize HV Plate struct and start conversions
 	init_hv_plate(hv_plate, ACCI_8);
 
+	hv_plate_isospi_break_detection_init(&hv_plate->ic);
+
 	tx_thread_sleep(MS_TO_TICKS(500));
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
-	set_gpo(hv_plate->ic,
+	set_gpo(&hv_plate->ic,
 		GPO2_2950); // enable HV1 readings on ADBMS2950 devkit
 
 	soc_init();
@@ -219,13 +242,15 @@ void vHvPlateData(ULONG thread_input)
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
 
-		if (is_timer_expired(&diagnostic_read_timer) && !is_timer_active(&diagnostic_read_timer)) {
-
+		if (is_timer_expired(&diagnostic_read_timer) &&
+		    !is_timer_active(&diagnostic_read_timer)) {
 			get_aux_adc_data(hv_plate);
 
 			// send hv plate data for telemetry
 			PRINTLN_INFO("Sending HV Plate Data...");
-			send_hv_plate_data(hv_plate->batt_volts, hv_plate->ts_volts, hv_plate->shunt_temp,
+			send_hv_plate_data(hv_plate->batt_volts,
+					   hv_plate->ts_volts,
+					   hv_plate->shunt_temp,
 					   hv_plate->pack_current);
 
 			// read flags
@@ -245,6 +270,7 @@ void vHvPlateData(ULONG thread_input)
 		}
 
 		send_hv_plate_pec_errors_message();
+		hv_plate_isospi_handle_state(hv_plate, state_machine);
 		send_max_dc_current_command(bms_algos->cont_DCL);
 		send_max_dc_brake_current_command(bms_algos->cont_CCL);
 
