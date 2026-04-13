@@ -11,6 +11,7 @@
 #include "u_tx_flags.h"
 #include "state_machine.h"
 #include "app_threadx.h"
+#include "main.h"
 
 /**
  * @brief Initialize a chip with our default values.
@@ -396,6 +397,8 @@ void vGetSegmentData(ULONG thread_input)
 		prev_state = current_state;
 		current_state = state_machine->bms_state;
 
+		HAL_NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
+
 		// mute when entering any state other than balancing or charging
 		if (prev_state != current_state && current_state != CHARGING) {
 			segment_mute(acc_data->chips, &hspi2);
@@ -440,6 +443,8 @@ void vGetSegmentData(ULONG thread_input)
 						    &hspi2);
 			start_timer(&pwm_timer, pwm_update_frequency);
 		}
+
+		HAL_NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
 
 		set_flag(ANALYZER_FLAG);
 		tx_thread_sleep(300);
