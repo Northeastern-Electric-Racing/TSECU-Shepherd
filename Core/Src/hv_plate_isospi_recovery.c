@@ -11,7 +11,7 @@
  *
  * PEC errors > this value in the accumulation window indicate a break.
  */
-#define HV_PLATE_ISOSPI_PEC_ERROR_THRESHOLD (25U)
+#define HV_PLATE_ISOSPI_PEC_ERROR_THRESHOLD (16U)
 
 /**
  * @brief Threshold for accumulation timer.
@@ -19,17 +19,12 @@
  * Set just above the PEC error sum noise level per cycle,
  * so random noise doesn’t start the accumulation window.
  */
-#define HV_PLATE_ISOSPI_PEC_ACCUM_START_THRESH (5U)
+#define HV_PLATE_ISOSPI_PEC_ACCUM_START_THRESH (3U)
 
 /**
  * @brief Accumulation window (ms).
- *
- * For accumulation, the PEC sum updates at the ADBMS system-wide sample rate
- * defined in bmsConfig.h.
- * Observed PECs/run for chips with break: ~9 (discharge_state), ~20 (charge_state)
- * Current: 2 Hz -> 500 ms * 8 runs = 4000 ms
  */
-#define HV_PLATE_ISOSPI_ACCUM_PERIOD_MS (4000U)
+#define HV_PLATE_ISOSPI_ACCUM_PERIOD_MS (1500U)
 
 /**
  * @brief HV plate isoSPI break detection status structure.

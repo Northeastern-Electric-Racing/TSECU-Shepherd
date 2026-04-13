@@ -242,8 +242,6 @@ void vHvPlateData(ULONG thread_input)
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
 
-		hv_plate_isospi_handle_state(hv_plate, state_machine);
-
 		if (is_timer_expired(&diagnostic_read_timer) &&
 		    !is_timer_active(&diagnostic_read_timer)) {
 			get_aux_adc_data(hv_plate);
@@ -272,6 +270,7 @@ void vHvPlateData(ULONG thread_input)
 		}
 
 		send_hv_plate_pec_errors_message();
+		hv_plate_isospi_handle_state(hv_plate, state_machine);
 		send_max_dc_current_command(bms_algos->cont_DCL);
 		send_max_dc_brake_current_command(bms_algos->cont_CCL);
 
