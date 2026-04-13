@@ -383,14 +383,14 @@ void vGetSegmentData(ULONG thread_input)
 	segment_isospi_break_detection_init(acc_data->chips);
 
 	// must delay after init for ADC to start up
-	tx_thread_sleep(MS_TO_TICKS(500));
+	tx_thread_sleep(500);
 
 	state_t prev_state = BOOT;
 	state_t current_state = BOOT;
 
 	nertimer_t pwm_timer;
 	// assumes a DCTO of 1 minute for PWM balancing in extended balancing mode
-	const uint32_t pwm_update_frequency = MS_TO_TICKS(55000);
+	const uint32_t pwm_update_frequency = 55000;
 
 	start_timer(&pwm_timer, 0); // start timer immeditately on first run
 
@@ -436,7 +436,7 @@ void vGetSegmentData(ULONG thread_input)
 
 			segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR,
 					 &hspi2);
-			tx_thread_sleep(MS_TO_TICKS(16));
+			tx_thread_sleep(16);
 			segment_configure_balancing(acc_data->chips,
 						    acc_data->discharge_config,
 						    &hspi2);
@@ -444,6 +444,6 @@ void vGetSegmentData(ULONG thread_input)
 		}
 
 		set_flag(ANALYZER_FLAG);
-		tx_thread_sleep(MS_TO_TICKS(300));
+		tx_thread_sleep(300);
 	}
 }

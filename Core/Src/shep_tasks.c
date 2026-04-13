@@ -183,7 +183,7 @@ void vDefaultTask(ULONG thread_input)
 		alt = !alt;
 
 		HAL_IWDG_Refresh(&hiwdg);
-		tx_thread_sleep(MS_TO_TICKS(100));
+		tx_thread_sleep(100);
 	}
 }
 

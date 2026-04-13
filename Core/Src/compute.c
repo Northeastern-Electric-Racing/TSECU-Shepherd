@@ -412,7 +412,7 @@ void read_shutdown(peripherals_t *peripherals)
 // PERIPHERALS THREAD
 void vPeripherals(ULONG thread_input)
 {
-	const uint32_t TELEM_TIMEOUT = MS_TO_TICKS(500); // ms
+	const uint32_t TELEM_TIMEOUT = 500; // ms
 
 	PRINTLN_INFO("Starting Peripherals thread...");
 
