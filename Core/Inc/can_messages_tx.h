@@ -86,8 +86,8 @@ uint8_t send_segment_temperatures
 * BMS/Segment_Comms/State - Current IsoSPI state
 * BMS/Segment_Comms/Break_Location - Detected break location
 * BMS/Segment_Comms/Verification_Attempts - Number of required recovery verification attempts
-* BMS/Segment_Comms/Extra - Reserved
 * BMS/Segment_Comms/Recovery_Successful - IsoSPI recovery completed successfully
+* BMS/Segment_Comms/Extra - Reserved
 */
 uint8_t send_segment_isospi_communication_status
 (uint8_t state,uint8_t break_location,uint8_t verification_attempts,uint8_t recovery_successful);
@@ -280,9 +280,9 @@ uint8_t send_fan_duty_cycle_percentage
 
 /**
 * Contents of this message:
-* BMS/Segment_Temps/{1}/OnboardTemp1 - Temp of onboard therm 1
-* BMS/Segment_Temps/{1}/OnboardTemp2 - Temp of onboard therm 2
-* BMS/Segment_Temps/{1}/OnboardTemp3 - Temp of onboard therm 3
+* BMS/Segment_Onboard_Temps/{1}/OnboardTemp1 - Temp of onboard therm 1
+* BMS/Segment_Onboard_Temps/{1}/OnboardTemp2 - Temp of onboard therm 2
+* BMS/Segment_Onboard_Temps/{1}/OnboardTemp3 - Temp of onboard therm 3
 */
 uint8_t send_onboard_therm_temperatures
 (uint8_t chip_id,float therm_temp_1,float therm_temp_2,float therm_temp_3);
@@ -373,7 +373,7 @@ uint8_t send_pack_soc_status
 
 /**
 * Contents of this message:
-* BMS/shutdown/state - 
+* BMS/shutdown/state - Current shutdown state
 */
 uint8_t send_shutdown_as_read_by_bms
 (bool shutdown);
@@ -382,11 +382,18 @@ uint8_t send_shutdown_as_read_by_bms
 * Contents of this message:
 * BMS/HV_Plate_Comms/State - Current IsoSPI state
 * BMS/HV_Plate_Comms/Verification_Attempts - Number of required recovery verification attempts
-* BMS/HV_Plate_Comms/Extra - Reserved
 * BMS/HV_Plate_Comms/Recovery_Successful - IsoSPI recovery completed successfully
+* BMS/HV_Plate_Comms/Extra - Reserved
 */
 uint8_t send_hv_plate_isospi_communication_status
 (uint8_t state,uint8_t verification_attempts,uint8_t recovery_successful);
+
+/**
+* Contents of this message:
+* BMS/Faults/Critically_Faulted - If the BMS has a Critical Fault
+*/
+uint8_t send_bms_critically_faulted
+(bool critically_faulted);
 
 /**
 * Contents of this message:

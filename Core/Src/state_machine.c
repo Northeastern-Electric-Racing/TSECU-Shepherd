@@ -152,6 +152,7 @@ void sm_handle_state(state_machine_args_t *state_machine_args)
 
 	if (are_critical_faults_active()) {
 		request_transition(state_machine_args, FAULTED);
+
 	}
 
 	handler_LUT[state_machine_args->state_machine->bms_state](
@@ -272,6 +273,9 @@ bool sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
 			// FAULT TIMER EXPIRED MESSAGE
 			send_bms_fault_timers(FAULT_TIMER_EXPIRED, fault_code,
 					      item->data_1);
+			if (item->is_critical) {
+                send_bms_critically_faulted(true);
+			}
 			return true;
 		}
 
@@ -617,6 +621,8 @@ void vStateMachine(ULONG thread_input)
 		if (is_timer_expired(&telem_timer)) {
 			send_bms_status(state_machine->bms_state,
 					analyzer->avg_temp);
+			
+			send_bms_critically_faulted(are_critical_faults_active());
 
 			send_fault_status(
 				get_fault(DISCHARGE_LIMIT_ENFORCEMENT_FAULT),
