@@ -205,7 +205,7 @@ void vHvPlateData(ULONG thread_input)
 
 	hv_plate_isospi_break_detection_init(&hv_plate->ic);
 
-	tx_thread_sleep(MS_TO_TICKS(500));
+	tx_thread_sleep(500);
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
