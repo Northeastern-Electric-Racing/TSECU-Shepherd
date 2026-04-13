@@ -1451,6 +1451,25 @@ uint8_t send_hv_plate_isospi_communication_status
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
 
+uint8_t send_bms_critically_faulted
+(bool critically_faulted)
+{
+    can_msg_t msg;
+    msg.id = 0x096;
+    msg.id_is_extended = false;
+    
+            uint8_t data = 0;
+            msg.len = 1;
+                        uint32_t critically_faulted_i = (uint32_t)(critically_faulted);
+                        if(critically_faulted_i > 1ULL) {critically_faulted_i = 1;
+                        }
+                        data |= ((critically_faulted_i) & 0x1ULL) << 7;
+            
+            msg.data[0] = data;
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
 uint8_t send_bms_charge_message_send
 (float charge_volts,float charge_current,uint8_t enable_charging)
 {

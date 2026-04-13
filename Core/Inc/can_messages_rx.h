@@ -250,9 +250,9 @@ void receive_shutdown_pins(const can_msg_t *message, shutdown_pins_t *shutdown_p
 typedef struct {
  bool home_mode;
  uint8_t nero_index;
- int32_t car_speed;
+ float car_speed;
  bool tsms;
- uint32_t torque_limit_percentage;
+ float torque_limit_percentage;
  bool reverse;
  uint16_t regen_limit;
  bool launch_control;
@@ -412,6 +412,12 @@ typedef struct {
 void receive_lv_box_fan_pwm(const can_msg_t *message, lv_box_fan_pwm_t *lv_box_fan_pwm);
 
 typedef struct {
+ bool bms_shutdown_as_reported_by_vcu;
+} bms_shutdown_status_as_reported_by_vcu_t;
+
+void receive_bms_shutdown_status_as_reported_by_vcu(const can_msg_t *message, bms_shutdown_status_as_reported_by_vcu_t *bms_shutdown_status_as_reported_by_vcu);
+
+typedef struct {
  uint8_t button_id;
 } wheel_buttons_t;
 
@@ -562,6 +568,28 @@ typedef struct {
 } back_msb_orientation_t;
 
 void receive_back_msb_orientation(const can_msg_t *message, back_msb_orientation_t *back_msb_orientation);
+
+typedef struct {
+ uint16_t R_iso_corrected;
+ uint8_t R_iso_status;
+ uint8_t Iso_measurement_counter;
+ bool device_error;
+ bool HV_pos_conn_fail;
+ bool HV_neg_conn_fail;
+ bool Earth_conn_fail;
+ bool Iso_alarm;
+ bool iso_warning;
+ bool iso_outdated;
+ bool Unbalance_alarm;
+ bool Undervoltage_alarm;
+ bool Unsafe_to_start;
+ bool Earthlift_Open;
+ uint8_t warnings_and_alarms_unused_bits;
+ uint8_t Device_Activity;
+ uint8_t Not_Applicable;
+} imd_general_information_t;
+
+void receive_imd_general_information(const can_msg_t *message, imd_general_information_t *imd_general_information);
 
 
 void receive_can(const can_msg_t *msg);

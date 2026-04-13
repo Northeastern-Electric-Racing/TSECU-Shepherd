@@ -469,13 +469,13 @@ void receive_car_state(const can_msg_t *message, car_state_t *car_state) {
     int64_t car_speed_raw = (car_speed_bits & (1ULL << (16 - 1)))
         ? (int64_t)(car_speed_bits | ~car_speed_mask)
         : (int64_t)car_speed_bits;
-    car_state->car_speed = (int32_t)(car_speed_raw / 10);
+    car_state->car_speed = (float)(car_speed_raw / 10);
     uint64_t tsms_mask = (1ULL << 1) - 1ULL;
     uint64_t tsms_raw = (data >> 39) & tsms_mask;
     car_state->tsms = (bool)tsms_raw;
     uint64_t torque_limit_percentage_mask = (1ULL << 7) - 1ULL;
     uint64_t torque_limit_percentage_raw = (data >> 32) & torque_limit_percentage_mask;
-    car_state->torque_limit_percentage = (uint32_t)(torque_limit_percentage_raw / 100);
+    car_state->torque_limit_percentage = (float)(torque_limit_percentage_raw / 100);
     uint64_t reverse_mask = (1ULL << 1) - 1ULL;
     uint64_t reverse_raw = (data >> 31) & reverse_mask;
     car_state->reverse = (bool)reverse_raw;
@@ -827,6 +827,14 @@ void receive_lv_box_fan_pwm(const can_msg_t *message, lv_box_fan_pwm_t *lv_box_f
     uint64_t fan_pwm_percentage_mask = (1ULL << 8) - 1ULL;
     uint64_t fan_pwm_percentage_raw = (data >> 0) & fan_pwm_percentage_mask;
     lv_box_fan_pwm->fan_pwm_percentage = (uint8_t)fan_pwm_percentage_raw;
+}
+
+void receive_bms_shutdown_status_as_reported_by_vcu(const can_msg_t *message, bms_shutdown_status_as_reported_by_vcu_t *bms_shutdown_status_as_reported_by_vcu) {
+    
+    uint8_t data = message->data[0];
+    uint64_t bms_shutdown_as_reported_by_vcu_mask = (1ULL << 8) - 1ULL;
+    uint64_t bms_shutdown_as_reported_by_vcu_raw = (data >> 0) & bms_shutdown_as_reported_by_vcu_mask;
+    bms_shutdown_status_as_reported_by_vcu->bms_shutdown_as_reported_by_vcu = (bool)bms_shutdown_as_reported_by_vcu_raw;
 }
 
 void receive_wheel_buttons(const can_msg_t *message, wheel_buttons_t *wheel_buttons) {
@@ -1216,5 +1224,101 @@ void receive_back_msb_orientation(const can_msg_t *message, back_msb_orientation
         ? (int64_t)(z_fdeg_bits | ~z_fdeg_mask)
         : (int64_t)z_fdeg_bits;
     back_msb_orientation->z_fdeg = (float)z_fdeg_raw;
+}
+
+void receive_imd_general_information(const can_msg_t *message, imd_general_information_t *imd_general_information) {
+    
+    struct __attribute__((__packed__)) {
+        uint16_t R_iso_corrected;
+        uint8_t R_iso_status;
+        uint8_t Iso_measurement_counter;
+        uint8_t device_error;
+        uint8_t HV_pos_conn_fail;
+        uint8_t HV_neg_conn_fail;
+        uint8_t Earth_conn_fail;
+        uint8_t Iso_alarm;
+        uint8_t iso_warning;
+        uint8_t iso_outdated;
+        uint8_t Unbalance_alarm;
+        uint8_t Undervoltage_alarm;
+        uint8_t Unsafe_to_start;
+        uint8_t Earthlift_Open;
+        uint8_t warnings_and_alarms_unused_bits;
+        uint8_t Device_Activity;
+        uint8_t Not_Applicable;
+        
+    } bitstream_data;
+
+    memcpy(&bitstream_data, message->data, sizeof(bitstream_data));
+
+    
+    
+    imd_general_information->R_iso_corrected = (uint16_t)bitstream_data.R_iso_corrected;
+    
+    
+    
+    imd_general_information->R_iso_status = (uint8_t)bitstream_data.R_iso_status;
+    
+    
+    
+    imd_general_information->Iso_measurement_counter = (uint8_t)bitstream_data.Iso_measurement_counter;
+    
+    
+    
+    imd_general_information->device_error = (bool)bitstream_data.device_error;
+    
+    
+    
+    imd_general_information->HV_pos_conn_fail = (bool)bitstream_data.HV_pos_conn_fail;
+    
+    
+    
+    imd_general_information->HV_neg_conn_fail = (bool)bitstream_data.HV_neg_conn_fail;
+    
+    
+    
+    imd_general_information->Earth_conn_fail = (bool)bitstream_data.Earth_conn_fail;
+    
+    
+    
+    imd_general_information->Iso_alarm = (bool)bitstream_data.Iso_alarm;
+    
+    
+    
+    imd_general_information->iso_warning = (bool)bitstream_data.iso_warning;
+    
+    
+    
+    imd_general_information->iso_outdated = (bool)bitstream_data.iso_outdated;
+    
+    
+    
+    imd_general_information->Unbalance_alarm = (bool)bitstream_data.Unbalance_alarm;
+    
+    
+    
+    imd_general_information->Undervoltage_alarm = (bool)bitstream_data.Undervoltage_alarm;
+    
+    
+    
+    imd_general_information->Unsafe_to_start = (bool)bitstream_data.Unsafe_to_start;
+    
+    
+    
+    imd_general_information->Earthlift_Open = (bool)bitstream_data.Earthlift_Open;
+    
+    
+    
+    imd_general_information->warnings_and_alarms_unused_bits = (uint8_t)bitstream_data.warnings_and_alarms_unused_bits;
+    
+    
+    
+    imd_general_information->Device_Activity = (uint8_t)bitstream_data.Device_Activity;
+    
+    
+    
+    imd_general_information->Not_Applicable = (uint8_t)bitstream_data.Not_Applicable;
+    
+    
 }
 

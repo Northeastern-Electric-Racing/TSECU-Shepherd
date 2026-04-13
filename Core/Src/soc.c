@@ -119,7 +119,7 @@ void soc_handle_state(analyzer_t *const analyzer,
 
 				analyzer->soc = soc_from_ocv;
 
-				soc_data.prev_time = TICKS_TO_MS(tx_time_get());
+				soc_data.prev_time = tx_time_get();
 
 				soc_data.soc_reinit_request = false;
 
@@ -135,8 +135,7 @@ void soc_handle_state(analyzer_t *const analyzer,
 				(pack_current < -CURRENT_HYST_A);
 
 			if (current_valid_for_cc) {
-				const float curr_time =
-					TICKS_TO_MS(tx_time_get());
+				const float curr_time = tx_time_get();
 
 				const float delta_time = MS_TO_HOURS(
 					curr_time - soc_data.prev_time);
@@ -160,7 +159,7 @@ void soc_handle_state(analyzer_t *const analyzer,
 				calculate_soc_drift(analyzer);
 			} else {
 				// Keep time reference aligned while inside hysteresis band
-				soc_data.prev_time = TICKS_TO_MS(tx_time_get());
+				soc_data.prev_time = tx_time_get();
 
 				// TODO: Implement SOC_STATE_DRIFT_CORRECTION state and transition.
 			}
