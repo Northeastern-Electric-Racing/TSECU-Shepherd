@@ -67,7 +67,7 @@ void test_soc_coulomb_discharge(void)
 	soc_handle_state(&analyzer, &hv_plate);
 
 	hv_plate.pack_current = 100.0f;
-	test_tx_ticks += 10U;
+	test_tx_ticks += 100U;
 
 	soc_handle_state(&analyzer, &hv_plate);
 
@@ -86,7 +86,7 @@ void test_soc_coulomb_charge(void)
 	soc_handle_state(&analyzer, &hv_plate);
 
 	hv_plate.pack_current = -10.0f;
-	test_tx_ticks += 10U;
+	test_tx_ticks += 100U;
 
 	soc_handle_state(&analyzer, &hv_plate);
 

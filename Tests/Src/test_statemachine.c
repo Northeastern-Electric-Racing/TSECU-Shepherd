@@ -52,6 +52,7 @@ void test_eval_table(void)
 	cancel_timer_Ignore();
 	start_timer_Ignore();
 	send_bms_fault_timers_IgnoreAndReturn(0);
+	send_bms_critically_faulted_IgnoreAndReturn(0);
 
 	// Update the evaluation table with the test data
 	sm_fault_return(&args);
