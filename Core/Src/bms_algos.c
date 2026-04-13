@@ -40,6 +40,6 @@ void vBMSAlgorithms(ULONG thread_input)
 		dcl_calc_inst_limit(algo_inputs, bms_algos);
 		ccl_calc_inst_limit(algo_inputs, bms_algos);
 
-		tx_thread_sleep(MS_TO_TICKS(500));
+		tx_thread_sleep(500);
 	}
 }
