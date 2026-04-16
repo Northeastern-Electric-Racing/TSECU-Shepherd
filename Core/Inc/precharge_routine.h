@@ -18,7 +18,6 @@ typedef struct {
 	nertimer_t open_debounce_timer;
 	nertimer_t close_debounce_timer;
 	nertimer_t floating_debounce_timer;
-	uint32_t debounce_time;
 	precharge_state_t precharge_state;
 } prechargeconfig_t;
 
@@ -28,10 +27,9 @@ typedef struct {
  * @param precharge_config is the empty configuration to configure.
  * @param ic pointer to ADBMS2950 data struct
  * @param threshold_ratio if batt volts > ts volts * threshold_ratio, close the AIR switch
- * @param debounce_time is the time to wait after the AIR switch opens before closing again (to prevent immediate closes) in milliseconds.
  */
 void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
-		    float transition_ratio, uint32_t debounce_time);
+		    float transition_ratio);
 /**
  * @brief Handles the precharge routine given the current BATT and TS voltages.
  * @param precharge_config the prechsarge configuration struct.

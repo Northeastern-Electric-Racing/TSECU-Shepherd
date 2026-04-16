@@ -8,6 +8,9 @@
 
 #define TS_VOLT_BUFFER 5.0f
 
+#define PRECHARGE_TOGGLE_TIME 200
+#define PRECHARGE_FLOATING_FAULT_TIME 10000
+
 typedef struct {
 	uint8_t size;
 	float sample[NUM_SAMPLES_FOR_AVG];
@@ -104,7 +107,7 @@ static precharge_state_t get_precharge_state(float ts_volts_avg, float batt_volt
 }
 
 void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
-		    float transition_ratio, uint32_t debounce_time)
+		    float transition_ratio)
 {
 	assert(precharge_config != NULL);
 	assert(hv_plate != NULL);
@@ -120,7 +123,6 @@ void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
 		(nertimer_t){ 0, 0, false, false };
 	precharge_config->floating_debounce_timer =
 		(nertimer_t){ 0, 0, false, false };
-	precharge_config->debounce_time = debounce_time;
 }
 
 void handle_precharge(prechargeconfig_t *precharge_config)
@@ -137,14 +139,14 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 					    precharge_config->transition_ratio);
 
 	debounce(precharge_state == PRECHARGE_CLOSED, &precharge_config->open_debounce_timer,
-		 precharge_config->debounce_time, close_relay,
+		 PRECHARGE_TOGGLE_TIME, close_relay,
 		 precharge_config);
 
 	debounce(precharge_state == PRECHARGE_OPEN, &precharge_config->close_debounce_timer,
-		 precharge_config->debounce_time, open_relay, precharge_config);
+		 PRECHARGE_TOGGLE_TIME, open_relay, precharge_config);
 
 	debounce(precharge_state == PRECHARGE_FLOATING, &precharge_config->floating_debounce_timer,
-		 precharge_config->debounce_time, send_floating_precharge_fault, precharge_config);
+		 PRECHARGE_FLOATING_FAULT_TIME, send_floating_precharge_fault, precharge_config);
 }
 
 // PRECHARGE THREAD
@@ -157,8 +159,7 @@ void vPrecharge(ULONG args)
 	static const uint16_t TELEMETRY_LOOP_TIMEOUT = 2000;
 
 	prechargeconfig_t precharge_config;
-	precharge_init(&precharge_config, hv_plate, PRRECHARGE_TRIGGER_THRESHOLD,
-		       200 /* ms debounce time */);
+	precharge_init(&precharge_config, hv_plate, PRRECHARGE_TRIGGER_THRESHOLD);
 
 	init_sample_buffer(&ts_volts_sample_buffer);
 	init_sample_buffer(&batt_volts_sample_buffer);
