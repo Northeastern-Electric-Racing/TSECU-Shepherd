@@ -6,6 +6,8 @@
 #define NUM_SAMPLES_FOR_AVG 20
 #define PRRECHARGE_TRIGGER_THRESHOLD 0.95f
 
+#define TS_VOLT_BUFFER 5.0f
+
 typedef struct {
 	uint8_t size;
 	float sample[NUM_SAMPLES_FOR_AVG];
@@ -94,7 +96,7 @@ static precharge_state_t get_precharge_state(float ts_volts_avg, float batt_volt
 	if (ts_volts_avg >= batt_volts_avg * transition_ratio) {
 		return PRECHARGE_CLOSED;
 	} else if (ts_volts_avg < batt_volts_avg * transition_ratio &&
-		   ts_volts_avg > 0) {
+		   ts_volts_avg > TS_VOLT_BUFFER) {
 		return PRECHARGE_FLOATING;
 	} else {
 		return PRECHARGE_OPEN;
