@@ -33,6 +33,9 @@ static void close_relay(void *args)
 {
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
 	set_precharge_relay(&precharge_config->hv_plate->ic, true);
+	if (precharge_config->precharge_state == PRECHARGE_CLOSED) {
+		return;
+	}
 	precharge_config->precharge_state = PRECHARGE_CLOSED;
 	send_precharge_status((uint8_t)PRECHARGE_CLOSED);
 }
@@ -41,6 +44,9 @@ static void open_relay(void *args)
 {
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
 	set_precharge_relay(&precharge_config->hv_plate->ic, false);
+	if (precharge_config->precharge_state == PRECHARGE_OPEN) {
+		return;
+	}
 	precharge_config->precharge_state = PRECHARGE_OPEN;
 	send_precharge_status((uint8_t)PRECHARGE_OPEN);
 }
@@ -49,6 +55,9 @@ static void send_floating_precharge_fault(void *args)
 {
 	prechargeconfig_t *precharge_config = (prechargeconfig_t *)args;
 	set_precharge_relay(&precharge_config->hv_plate->ic, false); // open relay if floating
+	if (precharge_config->precharge_state == PRECHARGE_FLOATING) {
+		return;
+	}
 	precharge_config->precharge_state = PRECHARGE_FLOATING;
 	send_precharge_status((uint8_t)PRECHARGE_FLOATING);	
 }
