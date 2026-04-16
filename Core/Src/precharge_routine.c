@@ -2,6 +2,19 @@
 #include <assert.h>
 #include "debounce.h"
 
+#define BATT_VOLTS_PRECHARGE_THRESHOLD 60.0f
+#define NUM_SAMPLES_FOR_AVG 20
+
+typedef struct {
+	uint8_t capacity;
+	uint8_t size;
+	float sample[capacity];
+	uint8_t index;
+} sample_buffer_t;
+
+static sample_buffer_t ts_volts_sample_buffer = { 0 };
+static sample_buffer_t batt_volts_sample_buffer = { 0 };
+
 static void set_precharge_relay(cell_asic_2950 *ic, bool state)
 {
 	if (state) {
@@ -27,6 +40,44 @@ static void open_relay(void *args)
 	send_precharge_status(precharge_config->air_switch_closed);
 }
 
+static void init_sample_buffer(sample_buffer_t *buffer, uint8_t capacity)
+{
+	buffer->capacity = capacity;
+	buffer->size = 0;
+	buffer->index = 0;
+	memset(buffer->sample, 0, sizeof(buffer->sample));
+}
+
+static void update_sample_buffer(sample_buffer_t *buffer, float new_sample)
+{
+	if (buffer->size < buffer->capacity) {
+		buffer->sample[buffer->index] = new_sample;
+		buffer->index = (buffer->index + 1) % buffer->capacity;
+		buffer->size++;
+	} else {
+		buffer->sample[buffer->index] = new_sample;
+		buffer->index = (buffer->index + 1) % buffer->capacity;
+	}
+}
+
+static float get_average_sample(sample_buffer_t *buffer)
+{
+	float average = 0.0f;
+
+	if (buffer->size == 0) {
+		average = 0.0f;
+		return;
+	}
+
+	float sum = 0.0f;
+	for (uint8_t i = 0; i < buffer->size; i++) {
+		sum += buffer->sample[i];
+	}
+	average = sum / buffer->size;
+
+	return average;
+}
+
 void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
 		    float transition_ratio, uint32_t debounce_time)
 {
@@ -46,12 +97,20 @@ void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
 
 void handle_precharge(prechargeconfig_t *precharge_config)
 {
-	hv_plate_t *hv_plate = precharge_config->hv_plate;
-	bool should_precharge = // TODO: mutex hv plate data
-		hv_plate->ts_volts >=
-		hv_plate->batt_volts * precharge_config->transition_ratio;
+	update_sample_buffer(&ts_volts_sample_buffer,
+			     precharge_config->hv_plate->ts_volts);
+	update_sample_buffer(&batt_volts_sample_buffer,
+			     precharge_config->hv_plate->batt_volts);
 
-	if (hv_plate->batt_volts < 60.0f) {
+	float ts_volts_avg = get_average_sample(&ts_volts_sample_buffer);
+	float batt_volts_avg = get_average_sample(&batt_volts_sample_buffer);
+
+	hv_plate_t *hv_plate = precharge_config->hv_plate;
+	bool should_precharge = 
+		ts_volts_avg >=
+		batt_volts_avg * precharge_config->transition_ratio;
+
+	if (hv_plate->batt_volts < BATT_VOLTS_PRECHARGE_THRESHOLD) {
 		should_precharge = false; 
 	}
 
@@ -73,8 +132,11 @@ void vPrecharge(ULONG args)
 	static const uint16_t TELEMETRY_LOOP_TIMEOUT = 2000;
 
 	prechargeconfig_t precharge_config;
-	precharge_init(&precharge_config, hv_plate, 0.9f,
+	precharge_init(&precharge_config, hv_plate, 0.95f,
 		       200 /* ms debounce time */);
+
+	init_sample_buffer(&ts_volts_sample_buffer, NUM_SAMPLES_FOR_AVG);
+	init_sample_buffer(&batt_volts_sample_buffer, NUM_SAMPLES_FOR_AVG);
 
 	start_timer(&update_loop_timer, TELEMETRY_LOOP_TIMEOUT);
 
