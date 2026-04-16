@@ -495,15 +495,18 @@ void receive_car_state(const can_msg_t *message, car_state_t *car_state) {
 
 void receive_pedal_percent_pressed_values(const can_msg_t *message, pedal_percent_pressed_values_t *pedal_percent_pressed_values) {
     
-    uint32_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 4);
-    uint32_t data = __builtin_bswap32(data_bigendian);
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
     uint64_t accel_norm_mask = (1ULL << 16) - 1ULL;
-    uint64_t accel_norm_raw = (data >> 16) & accel_norm_mask;
+    uint64_t accel_norm_raw = (data >> 48) & accel_norm_mask;
     pedal_percent_pressed_values->accel_norm = (float)(accel_norm_raw / 100);
     uint64_t brake_norm_mask = (1ULL << 16) - 1ULL;
-    uint64_t brake_norm_raw = (data >> 0) & brake_norm_mask;
+    uint64_t brake_norm_raw = (data >> 32) & brake_norm_mask;
     pedal_percent_pressed_values->brake_norm = (float)(brake_norm_raw / 100);
+    uint64_t brake_psi_mask = (1ULL << 16) - 1ULL;
+    uint64_t brake_psi_raw = (data >> 16) & brake_psi_mask;
+    pedal_percent_pressed_values->brake_psi = (float)(brake_psi_raw / 10);
 }
 
 void receive_pedal_sensor_voltages(const can_msg_t *message, pedal_sensor_voltages_t *pedal_sensor_voltages) {

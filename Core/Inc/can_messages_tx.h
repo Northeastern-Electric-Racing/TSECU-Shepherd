@@ -290,10 +290,9 @@ uint8_t send_onboard_therm_temperatures
 /**
 * Contents of this message:
 * BMS/Precharge/Status - Indicates whether Precharge is active or not
-* BMS/Precharge/Status/Extra - Reserved
 */
 uint8_t send_precharge_status
-(bool precharge_status);
+(uint8_t precharge_status);
 
 /**
 * Contents of this message:

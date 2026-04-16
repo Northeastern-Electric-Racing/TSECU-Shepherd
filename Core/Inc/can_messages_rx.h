@@ -265,6 +265,7 @@ void receive_car_state(const can_msg_t *message, car_state_t *car_state);
 typedef struct {
  float accel_norm;
  float brake_norm;
+ float brake_psi;
 } pedal_percent_pressed_values_t;
 
 void receive_pedal_percent_pressed_values(const can_msg_t *message, pedal_percent_pressed_values_t *pedal_percent_pressed_values);

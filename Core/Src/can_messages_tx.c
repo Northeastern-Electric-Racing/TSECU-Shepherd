@@ -1108,7 +1108,7 @@ uint8_t send_onboard_therm_temperatures
 }
 
 uint8_t send_precharge_status
-(bool precharge_status)
+(uint8_t precharge_status)
 {
     can_msg_t msg;
     msg.id = 0x601;
@@ -1117,9 +1117,9 @@ uint8_t send_precharge_status
             uint8_t data = 0;
             msg.len = 1;
                         uint32_t precharge_status_i = (uint32_t)(precharge_status);
-                        if(precharge_status_i > 1ULL) {precharge_status_i = 1;
+                        if(precharge_status_i > 255ULL) {precharge_status_i = 255;
                         }
-                        data |= ((precharge_status_i) & 0x1ULL) << 7;
+                        data |= ((precharge_status_i) & 0xFFULL) << 0;
             
             msg.data[0] = data;
 
@@ -1455,9 +1455,8 @@ uint8_t send_bms_critically_faulted
 (bool critically_faulted)
 {
     can_msg_t msg;
-    msg.id = 0x096;
-    msg.id_is_extended = false;
-    
+    msg.id = 0x01E;
+    msg.id_is_extended = true;
             uint8_t data = 0;
             msg.len = 1;
                         uint32_t critically_faulted_i = (uint32_t)(critically_faulted);

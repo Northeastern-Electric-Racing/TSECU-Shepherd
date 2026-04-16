@@ -6,14 +6,20 @@
 #include "hv_plate.h"
 #include "can_messages_tx.h"
 
+typedef enum {
+	PRECHARGE_OPEN,
+	PRECHARGE_FLOATING,
+	PRECHARGE_CLOSED,
+} precharge_state_t;
+
 typedef struct {
 	hv_plate_t *hv_plate;
-	GPO_2950 gpo;
 	float transition_ratio;
 	nertimer_t open_debounce_timer;
 	nertimer_t close_debounce_timer;
+	nertimer_t floating_debounce_timer;
 	uint32_t debounce_time;
-	bool air_switch_closed;
+	precharge_state_t precharge_state;
 } prechargeconfig_t;
 
 /**
