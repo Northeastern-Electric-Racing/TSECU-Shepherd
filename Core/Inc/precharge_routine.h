@@ -7,9 +7,9 @@
 #include "can_messages_tx.h"
 
 typedef enum {
-	PRECHARGE_OPEN,
-	PRECHARGE_FLOATING,
-	PRECHARGE_CLOSED,
+	PRECHARGE_OPEN = 0,
+	PRECHARGE_FLOATING = 1,
+	PRECHARGE_CLOSED = 2,
 } precharge_state_t;
 
 typedef struct {
