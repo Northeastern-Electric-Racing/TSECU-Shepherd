@@ -102,7 +102,7 @@ static precharge_state_t get_precharge_state(float ts_volts_avg, float batt_volt
 					    float transition_ratio)
 {
 	if (batt_volts_avg < BATT_VOLTS_PRECHARGE_THRESHOLD) {
-		return PRECHARGE_CLOSED; 
+		return PRECHARGE_OPEN; 
 	}
 
 	if (ts_volts_avg >= batt_volts_avg * transition_ratio) {
@@ -143,6 +143,9 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 
 	float ts_volts_avg = get_average_sample(&ts_volts_sample_buffer);
 	float batt_volts_avg = get_average_sample(&batt_volts_sample_buffer);
+
+	ts_volts_avg = 0.0f; // TODO: remove after testing
+	batt_volts_avg = 80.0f; // TODO: remove after testing
 
 	precharge_state_t precharge_state = get_precharge_state(ts_volts_avg, batt_volts_avg,
 					    precharge_config->transition_ratio);
