@@ -1,39 +1,5 @@
 #include "can_messages_rx.h"
 
-void receive_ac_current_command(const can_msg_t *message, ac_current_command_t *ac_current_command) {
-    
-    uint16_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 2);
-    uint16_t data = __builtin_bswap16(data_bigendian);
-    uint64_t current_target_ac_mask = (1ULL << 16) - 1ULL;
-    uint64_t current_target_ac_bits = (data >> 0) & current_target_ac_mask;
-    int64_t current_target_ac_raw = (current_target_ac_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(current_target_ac_bits | ~current_target_ac_mask)
-        : (int64_t)current_target_ac_bits;
-    ac_current_command->current_target_ac = (float)(current_target_ac_raw / 10);
-}
-
-void receive_brake_current_command(const can_msg_t *message, brake_current_command_t *brake_current_command) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t brake_ac_current_mask = (1ULL << 16) - 1ULL;
-    uint64_t brake_ac_current_bits = (data >> 48) & brake_ac_current_mask;
-    int64_t brake_ac_current_raw = (brake_ac_current_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(brake_ac_current_bits | ~brake_ac_current_mask)
-        : (int64_t)brake_ac_current_bits;
-    brake_current_command->brake_ac_current = (float)(brake_ac_current_raw / 10);
-}
-
-void receive_drive_enable_command(const can_msg_t *message, drive_enable_command_t *drive_enable_command) {
-    
-    uint8_t data = message->data[0];
-    uint64_t drive_enable_mask = (1ULL << 8) - 1ULL;
-    uint64_t drive_enable_raw = (data >> 0) & drive_enable_mask;
-    drive_enable_command->drive_enable = (uint8_t)drive_enable_raw;
-}
-
 void receive_shepherd_bms_fan_percent(const can_msg_t *message, shepherd_bms_fan_percent_t *shepherd_bms_fan_percent) {
     
     uint8_t data = message->data[0];
@@ -136,6 +102,491 @@ void receive_rtds_command_message(const can_msg_t *message, rtds_command_message
     uint64_t command_mask = (1ULL << 8) - 1ULL;
     uint64_t command_raw = (data >> 0) & command_mask;
     rtds_command_message->command = (uint8_t)command_raw;
+}
+
+void receive_wheel_buttons(const can_msg_t *message, wheel_buttons_t *wheel_buttons) {
+    
+    uint8_t data = message->data[0];
+    uint64_t button_id_mask = (1ULL << 8) - 1ULL;
+    uint64_t button_id_raw = (data >> 0) & button_id_mask;
+    wheel_buttons->button_id = (uint8_t)button_id_raw;
+}
+
+void receive_imd_general_information(const can_msg_t *message, imd_general_information_t *imd_general_information) {
+    
+    struct __attribute__((__packed__)) {
+        uint16_t R_iso_corrected;
+        uint8_t R_iso_status;
+        uint8_t Iso_measurement_counter;
+        uint8_t device_error;
+        uint8_t HV_pos_conn_fail;
+        uint8_t HV_neg_conn_fail;
+        uint8_t Earth_conn_fail;
+        uint8_t Iso_alarm;
+        uint8_t iso_warning;
+        uint8_t iso_outdated;
+        uint8_t Unbalance_alarm;
+        uint8_t Undervoltage_alarm;
+        uint8_t Unsafe_to_start;
+        uint8_t Earthlift_Open;
+        uint8_t warnings_and_alarms_unused_bits;
+        uint8_t Device_Activity;
+        uint8_t Not_Applicable;
+        
+    } bitstream_data;
+
+    memcpy(&bitstream_data, message->data, sizeof(bitstream_data));
+
+    
+    
+    imd_general_information->R_iso_corrected = (uint16_t)bitstream_data.R_iso_corrected;
+    
+    
+    
+    imd_general_information->R_iso_status = (uint8_t)bitstream_data.R_iso_status;
+    
+    
+    
+    imd_general_information->Iso_measurement_counter = (uint8_t)bitstream_data.Iso_measurement_counter;
+    
+    
+    
+    imd_general_information->device_error = (bool)bitstream_data.device_error;
+    
+    
+    
+    imd_general_information->HV_pos_conn_fail = (bool)bitstream_data.HV_pos_conn_fail;
+    
+    
+    
+    imd_general_information->HV_neg_conn_fail = (bool)bitstream_data.HV_neg_conn_fail;
+    
+    
+    
+    imd_general_information->Earth_conn_fail = (bool)bitstream_data.Earth_conn_fail;
+    
+    
+    
+    imd_general_information->Iso_alarm = (bool)bitstream_data.Iso_alarm;
+    
+    
+    
+    imd_general_information->iso_warning = (bool)bitstream_data.iso_warning;
+    
+    
+    
+    imd_general_information->iso_outdated = (bool)bitstream_data.iso_outdated;
+    
+    
+    
+    imd_general_information->Unbalance_alarm = (bool)bitstream_data.Unbalance_alarm;
+    
+    
+    
+    imd_general_information->Undervoltage_alarm = (bool)bitstream_data.Undervoltage_alarm;
+    
+    
+    
+    imd_general_information->Unsafe_to_start = (bool)bitstream_data.Unsafe_to_start;
+    
+    
+    
+    imd_general_information->Earthlift_Open = (bool)bitstream_data.Earthlift_Open;
+    
+    
+    
+    imd_general_information->warnings_and_alarms_unused_bits = (uint8_t)bitstream_data.warnings_and_alarms_unused_bits;
+    
+    
+    
+    imd_general_information->Device_Activity = (uint8_t)bitstream_data.Device_Activity;
+    
+    
+    
+    imd_general_information->Not_Applicable = (uint8_t)bitstream_data.Not_Applicable;
+    
+    
+}
+
+void receive_front_msb_env(const can_msg_t *message, front_msb_env_t *front_msb_env) {
+    
+    uint32_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 4);
+    uint32_t data = __builtin_bswap32(data_bigendian);
+    uint64_t temp_mask = (1ULL << 16) - 1ULL;
+    uint64_t temp_raw = (data >> 16) & temp_mask;
+    front_msb_env->temp = (float)(temp_raw / 10);
+    uint64_t humidity_mask = (1ULL << 16) - 1ULL;
+    uint64_t humidity_raw = (data >> 0) & humidity_mask;
+    front_msb_env->humidity = (float)(humidity_raw / 10);
+}
+
+void receive_front_msb_accel(const can_msg_t *message, front_msb_accel_t *front_msb_accel) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t x_force_mask = (1ULL << 16) - 1ULL;
+    uint64_t x_force_bits = (data >> 48) & x_force_mask;
+    int64_t x_force_raw = (x_force_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(x_force_bits | ~x_force_mask)
+        : (int64_t)x_force_bits;
+    front_msb_accel->x_force = (float)x_force_raw;
+    uint64_t y_force_mask = (1ULL << 16) - 1ULL;
+    uint64_t y_force_bits = (data >> 32) & y_force_mask;
+    int64_t y_force_raw = (y_force_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(y_force_bits | ~y_force_mask)
+        : (int64_t)y_force_bits;
+    front_msb_accel->y_force = (float)y_force_raw;
+    uint64_t z_force_mask = (1ULL << 16) - 1ULL;
+    uint64_t z_force_bits = (data >> 16) & z_force_mask;
+    int64_t z_force_raw = (z_force_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(z_force_bits | ~z_force_mask)
+        : (int64_t)z_force_bits;
+    front_msb_accel->z_force = (float)z_force_raw;
+}
+
+void receive_front_msb_gyro(const can_msg_t *message, front_msb_gyro_t *front_msb_gyro) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t x_deg_mask = (1ULL << 16) - 1ULL;
+    uint64_t x_deg_bits = (data >> 48) & x_deg_mask;
+    int64_t x_deg_raw = (x_deg_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(x_deg_bits | ~x_deg_mask)
+        : (int64_t)x_deg_bits;
+    front_msb_gyro->x_deg = (float)x_deg_raw;
+    uint64_t y_deg_mask = (1ULL << 16) - 1ULL;
+    uint64_t y_deg_bits = (data >> 32) & y_deg_mask;
+    int64_t y_deg_raw = (y_deg_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(y_deg_bits | ~y_deg_mask)
+        : (int64_t)y_deg_bits;
+    front_msb_gyro->y_deg = (float)y_deg_raw;
+    uint64_t z_deg_mask = (1ULL << 16) - 1ULL;
+    uint64_t z_deg_bits = (data >> 16) & z_deg_mask;
+    int64_t z_deg_raw = (z_deg_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(z_deg_bits | ~z_deg_mask)
+        : (int64_t)z_deg_bits;
+    front_msb_gyro->z_deg = (float)z_deg_raw;
+}
+
+void receive_front_msb_strain(const can_msg_t *message, front_msb_strain_t *front_msb_strain) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t strain1_mask = (1ULL << 32) - 1ULL;
+    uint64_t strain1_raw = (data >> 32) & strain1_mask;
+    front_msb_strain->strain1 = (uint32_t)strain1_raw;
+    uint64_t strain2_mask = (1ULL << 32) - 1ULL;
+    uint64_t strain2_raw = (data >> 0) & strain2_mask;
+    front_msb_strain->strain2 = (uint32_t)strain2_raw;
+}
+
+void receive_front_shockpot(const can_msg_t *message, front_shockpot_t *front_shockpot) {
+    
+    struct __attribute__((__packed__)) {
+        uint32_t shock1;
+        uint16_t shock1_raw;
+        
+    } bitstream_data;
+
+    memcpy(&bitstream_data, message->data, sizeof(bitstream_data));
+
+    
+    
+    front_shockpot->shock1 = (float)bitstream_data.shock1;
+    
+    
+    
+    front_shockpot->shock1_raw = (uint16_t)bitstream_data.shock1_raw;
+    
+    
+}
+
+void receive_front_ride_height(const can_msg_t *message, front_ride_height_t *front_ride_height) {
+    
+    uint16_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 2);
+    uint16_t data = __builtin_bswap16(data_bigendian);
+    uint64_t rh_mask = (1ULL << 16) - 1ULL;
+    uint64_t rh_bits = (data >> 0) & rh_mask;
+    int64_t rh_raw = (rh_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(rh_bits | ~rh_mask)
+        : (int64_t)rh_bits;
+    front_ride_height->rh = (float)rh_raw;
+}
+
+void receive_front_wheel_temp(const can_msg_t *message, front_wheel_temp_t *front_wheel_temp) {
+    
+    uint16_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 2);
+    uint16_t data = __builtin_bswap16(data_bigendian);
+    uint64_t wheel_temp_mask = (1ULL << 16) - 1ULL;
+    uint64_t wheel_temp_raw = (data >> 0) & wheel_temp_mask;
+    front_wheel_temp->wheel_temp = (float)wheel_temp_raw;
+}
+
+void receive_front_msb_orientation(const can_msg_t *message, front_msb_orientation_t *front_msb_orientation) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t x_fdeg_mask = (1ULL << 16) - 1ULL;
+    uint64_t x_fdeg_bits = (data >> 48) & x_fdeg_mask;
+    int64_t x_fdeg_raw = (x_fdeg_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(x_fdeg_bits | ~x_fdeg_mask)
+        : (int64_t)x_fdeg_bits;
+    front_msb_orientation->x_fdeg = (float)x_fdeg_raw;
+    uint64_t y_fdeg_mask = (1ULL << 16) - 1ULL;
+    uint64_t y_fdeg_bits = (data >> 32) & y_fdeg_mask;
+    int64_t y_fdeg_raw = (y_fdeg_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(y_fdeg_bits | ~y_fdeg_mask)
+        : (int64_t)y_fdeg_bits;
+    front_msb_orientation->y_fdeg = (float)y_fdeg_raw;
+    uint64_t z_fdeg_mask = (1ULL << 16) - 1ULL;
+    uint64_t z_fdeg_bits = (data >> 16) & z_fdeg_mask;
+    int64_t z_fdeg_raw = (z_fdeg_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(z_fdeg_bits | ~z_fdeg_mask)
+        : (int64_t)z_fdeg_bits;
+    front_msb_orientation->z_fdeg = (float)z_fdeg_raw;
+}
+
+void receive_back_msb_env(const can_msg_t *message, back_msb_env_t *back_msb_env) {
+    
+    uint32_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 4);
+    uint32_t data = __builtin_bswap32(data_bigendian);
+    uint64_t temp_mask = (1ULL << 16) - 1ULL;
+    uint64_t temp_raw = (data >> 16) & temp_mask;
+    back_msb_env->temp = (float)(temp_raw / 10);
+    uint64_t humidity_mask = (1ULL << 16) - 1ULL;
+    uint64_t humidity_raw = (data >> 0) & humidity_mask;
+    back_msb_env->humidity = (float)(humidity_raw / 10);
+}
+
+void receive_back_msb_accel(const can_msg_t *message, back_msb_accel_t *back_msb_accel) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t x_force_mask = (1ULL << 16) - 1ULL;
+    uint64_t x_force_bits = (data >> 48) & x_force_mask;
+    int64_t x_force_raw = (x_force_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(x_force_bits | ~x_force_mask)
+        : (int64_t)x_force_bits;
+    back_msb_accel->x_force = (float)x_force_raw;
+    uint64_t y_force_mask = (1ULL << 16) - 1ULL;
+    uint64_t y_force_bits = (data >> 32) & y_force_mask;
+    int64_t y_force_raw = (y_force_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(y_force_bits | ~y_force_mask)
+        : (int64_t)y_force_bits;
+    back_msb_accel->y_force = (float)y_force_raw;
+    uint64_t z_force_mask = (1ULL << 16) - 1ULL;
+    uint64_t z_force_bits = (data >> 16) & z_force_mask;
+    int64_t z_force_raw = (z_force_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(z_force_bits | ~z_force_mask)
+        : (int64_t)z_force_bits;
+    back_msb_accel->z_force = (float)z_force_raw;
+}
+
+void receive_back_msb_gyro(const can_msg_t *message, back_msb_gyro_t *back_msb_gyro) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t x_deg_mask = (1ULL << 16) - 1ULL;
+    uint64_t x_deg_bits = (data >> 48) & x_deg_mask;
+    int64_t x_deg_raw = (x_deg_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(x_deg_bits | ~x_deg_mask)
+        : (int64_t)x_deg_bits;
+    back_msb_gyro->x_deg = (float)x_deg_raw;
+    uint64_t y_deg_mask = (1ULL << 16) - 1ULL;
+    uint64_t y_deg_bits = (data >> 32) & y_deg_mask;
+    int64_t y_deg_raw = (y_deg_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(y_deg_bits | ~y_deg_mask)
+        : (int64_t)y_deg_bits;
+    back_msb_gyro->y_deg = (float)y_deg_raw;
+    uint64_t z_deg_mask = (1ULL << 16) - 1ULL;
+    uint64_t z_deg_bits = (data >> 16) & z_deg_mask;
+    int64_t z_deg_raw = (z_deg_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(z_deg_bits | ~z_deg_mask)
+        : (int64_t)z_deg_bits;
+    back_msb_gyro->z_deg = (float)z_deg_raw;
+}
+
+void receive_back_msb_strain(const can_msg_t *message, back_msb_strain_t *back_msb_strain) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t strain1_mask = (1ULL << 32) - 1ULL;
+    uint64_t strain1_raw = (data >> 32) & strain1_mask;
+    back_msb_strain->strain1 = (uint32_t)strain1_raw;
+    uint64_t strain2_mask = (1ULL << 32) - 1ULL;
+    uint64_t strain2_raw = (data >> 0) & strain2_mask;
+    back_msb_strain->strain2 = (uint32_t)strain2_raw;
+}
+
+void receive_back_shockpot(const can_msg_t *message, back_shockpot_t *back_shockpot) {
+    
+    struct __attribute__((__packed__)) {
+        uint32_t shock1;
+        uint16_t shock1_raw;
+        
+    } bitstream_data;
+
+    memcpy(&bitstream_data, message->data, sizeof(bitstream_data));
+
+    
+    
+    back_shockpot->shock1 = (float)bitstream_data.shock1;
+    
+    
+    
+    back_shockpot->shock1_raw = (uint16_t)bitstream_data.shock1_raw;
+    
+    
+}
+
+void receive_back_ride_height(const can_msg_t *message, back_ride_height_t *back_ride_height) {
+    
+    uint16_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 2);
+    uint16_t data = __builtin_bswap16(data_bigendian);
+    uint64_t rh_mask = (1ULL << 16) - 1ULL;
+    uint64_t rh_bits = (data >> 0) & rh_mask;
+    int64_t rh_raw = (rh_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(rh_bits | ~rh_mask)
+        : (int64_t)rh_bits;
+    back_ride_height->rh = (float)rh_raw;
+}
+
+void receive_back_wheel_temp(const can_msg_t *message, back_wheel_temp_t *back_wheel_temp) {
+    
+    uint16_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 2);
+    uint16_t data = __builtin_bswap16(data_bigendian);
+    uint64_t wheel_temp_mask = (1ULL << 16) - 1ULL;
+    uint64_t wheel_temp_raw = (data >> 0) & wheel_temp_mask;
+    back_wheel_temp->wheel_temp = (float)wheel_temp_raw;
+}
+
+void receive_back_msb_orientation(const can_msg_t *message, back_msb_orientation_t *back_msb_orientation) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t x_fdeg_mask = (1ULL << 16) - 1ULL;
+    uint64_t x_fdeg_bits = (data >> 48) & x_fdeg_mask;
+    int64_t x_fdeg_raw = (x_fdeg_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(x_fdeg_bits | ~x_fdeg_mask)
+        : (int64_t)x_fdeg_bits;
+    back_msb_orientation->x_fdeg = (float)x_fdeg_raw;
+    uint64_t y_fdeg_mask = (1ULL << 16) - 1ULL;
+    uint64_t y_fdeg_bits = (data >> 32) & y_fdeg_mask;
+    int64_t y_fdeg_raw = (y_fdeg_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(y_fdeg_bits | ~y_fdeg_mask)
+        : (int64_t)y_fdeg_bits;
+    back_msb_orientation->y_fdeg = (float)y_fdeg_raw;
+    uint64_t z_fdeg_mask = (1ULL << 16) - 1ULL;
+    uint64_t z_fdeg_bits = (data >> 16) & z_fdeg_mask;
+    int64_t z_fdeg_raw = (z_fdeg_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(z_fdeg_bits | ~z_fdeg_mask)
+        : (int64_t)z_fdeg_bits;
+    back_msb_orientation->z_fdeg = (float)z_fdeg_raw;
+}
+
+void receive_lightning_board_imu_acceleration_data(const can_msg_t *message, lightning_board_imu_acceleration_data_t *lightning_board_imu_acceleration_data) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t accel_x_mask = (1ULL << 16) - 1ULL;
+    uint64_t accel_x_bits = (data >> 48) & accel_x_mask;
+    int64_t accel_x_raw = (accel_x_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(accel_x_bits | ~accel_x_mask)
+        : (int64_t)accel_x_bits;
+    lightning_board_imu_acceleration_data->accel_x = (float)(accel_x_raw / 1000);
+    uint64_t accel_y_mask = (1ULL << 16) - 1ULL;
+    uint64_t accel_y_bits = (data >> 32) & accel_y_mask;
+    int64_t accel_y_raw = (accel_y_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(accel_y_bits | ~accel_y_mask)
+        : (int64_t)accel_y_bits;
+    lightning_board_imu_acceleration_data->accel_y = (float)(accel_y_raw / 1000);
+    uint64_t accel_z_mask = (1ULL << 16) - 1ULL;
+    uint64_t accel_z_bits = (data >> 16) & accel_z_mask;
+    int64_t accel_z_raw = (accel_z_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(accel_z_bits | ~accel_z_mask)
+        : (int64_t)accel_z_bits;
+    lightning_board_imu_acceleration_data->accel_z = (float)(accel_z_raw / 1000);
+}
+
+void receive_lightning_board_imu_gyro_data(const can_msg_t *message, lightning_board_imu_gyro_data_t *lightning_board_imu_gyro_data) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t gyro_x_mask = (1ULL << 16) - 1ULL;
+    uint64_t gyro_x_bits = (data >> 48) & gyro_x_mask;
+    int64_t gyro_x_raw = (gyro_x_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(gyro_x_bits | ~gyro_x_mask)
+        : (int64_t)gyro_x_bits;
+    lightning_board_imu_gyro_data->gyro_x = (float)(gyro_x_raw / 1000);
+    uint64_t gyro_y_mask = (1ULL << 16) - 1ULL;
+    uint64_t gyro_y_bits = (data >> 32) & gyro_y_mask;
+    int64_t gyro_y_raw = (gyro_y_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(gyro_y_bits | ~gyro_y_mask)
+        : (int64_t)gyro_y_bits;
+    lightning_board_imu_gyro_data->gyro_y = (float)(gyro_y_raw / 1000);
+    uint64_t gyro_z_mask = (1ULL << 16) - 1ULL;
+    uint64_t gyro_z_bits = (data >> 16) & gyro_z_mask;
+    int64_t gyro_z_raw = (gyro_z_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(gyro_z_bits | ~gyro_z_mask)
+        : (int64_t)gyro_z_bits;
+    lightning_board_imu_gyro_data->gyro_z = (float)(gyro_z_raw / 1000);
+}
+
+void receive_lightning_board_lightning_sensor_information(const can_msg_t *message, lightning_board_lightning_sensor_information_t *lightning_board_lightning_sensor_information) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t interrupt_mask = (1ULL << 8) - 1ULL;
+    uint64_t interrupt_raw = (data >> 56) & interrupt_mask;
+    lightning_board_lightning_sensor_information->interrupt = (uint8_t)interrupt_raw;
+    uint64_t distance_mask = (1ULL << 8) - 1ULL;
+    uint64_t distance_raw = (data >> 48) & distance_mask;
+    lightning_board_lightning_sensor_information->distance = (uint8_t)distance_raw;
+    uint64_t energy_mask = (1ULL << 32) - 1ULL;
+    uint64_t energy_raw = (data >> 16) & energy_mask;
+    lightning_board_lightning_sensor_information->energy = (uint32_t)energy_raw;
+}
+
+void receive_lightning_board_magnometer_sensor_information(const can_msg_t *message, lightning_board_magnometer_sensor_information_t *lightning_board_magnometer_sensor_information) {
+    
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
+    uint64_t mag_x_mask = (1ULL << 16) - 1ULL;
+    uint64_t mag_x_bits = (data >> 48) & mag_x_mask;
+    int64_t mag_x_raw = (mag_x_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(mag_x_bits | ~mag_x_mask)
+        : (int64_t)mag_x_bits;
+    lightning_board_magnometer_sensor_information->mag_x = (float)(mag_x_raw / 1000);
+    uint64_t mag_y_mask = (1ULL << 16) - 1ULL;
+    uint64_t mag_y_bits = (data >> 32) & mag_y_mask;
+    int64_t mag_y_raw = (mag_y_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(mag_y_bits | ~mag_y_mask)
+        : (int64_t)mag_y_bits;
+    lightning_board_magnometer_sensor_information->mag_y = (float)(mag_y_raw / 1000);
+    uint64_t mag_z_mask = (1ULL << 16) - 1ULL;
+    uint64_t mag_z_bits = (data >> 16) & mag_z_mask;
+    int64_t mag_z_raw = (mag_z_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(mag_z_bits | ~mag_z_mask)
+        : (int64_t)mag_z_bits;
+    lightning_board_magnometer_sensor_information->mag_z = (float)(mag_z_raw / 1000);
 }
 
 void receive_dashboard_efuse(const can_msg_t *message, dashboard_efuse_t *dashboard_efuse) {
@@ -495,15 +946,21 @@ void receive_car_state(const can_msg_t *message, car_state_t *car_state) {
 
 void receive_pedal_percent_pressed_values(const can_msg_t *message, pedal_percent_pressed_values_t *pedal_percent_pressed_values) {
     
-    uint32_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 4);
-    uint32_t data = __builtin_bswap32(data_bigendian);
+    uint64_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 8);
+    uint64_t data = __builtin_bswap64(data_bigendian);
     uint64_t accel_norm_mask = (1ULL << 16) - 1ULL;
-    uint64_t accel_norm_raw = (data >> 16) & accel_norm_mask;
+    uint64_t accel_norm_raw = (data >> 48) & accel_norm_mask;
     pedal_percent_pressed_values->accel_norm = (float)(accel_norm_raw / 100);
     uint64_t brake_norm_mask = (1ULL << 16) - 1ULL;
-    uint64_t brake_norm_raw = (data >> 0) & brake_norm_mask;
+    uint64_t brake_norm_raw = (data >> 32) & brake_norm_mask;
     pedal_percent_pressed_values->brake_norm = (float)(brake_norm_raw / 100);
+    uint64_t brake_psi_mask = (1ULL << 16) - 1ULL;
+    uint64_t brake_psi_bits = (data >> 16) & brake_psi_mask;
+    int64_t brake_psi_raw = (brake_psi_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(brake_psi_bits | ~brake_psi_mask)
+        : (int64_t)brake_psi_bits;
+    pedal_percent_pressed_values->brake_psi = (float)(brake_psi_raw / 10);
 }
 
 void receive_pedal_sensor_voltages(const can_msg_t *message, pedal_sensor_voltages_t *pedal_sensor_voltages) {
@@ -837,488 +1294,63 @@ void receive_bms_shutdown_status_as_reported_by_vcu(const can_msg_t *message, bm
     bms_shutdown_status_as_reported_by_vcu->bms_shutdown_as_reported_by_vcu = (bool)bms_shutdown_as_reported_by_vcu_raw;
 }
 
-void receive_wheel_buttons(const can_msg_t *message, wheel_buttons_t *wheel_buttons) {
+void receive_drive_lock_states(const can_msg_t *message, drive_lock_states_t *drive_lock_states) {
     
     uint8_t data = message->data[0];
-    uint64_t button_id_mask = (1ULL << 8) - 1ULL;
-    uint64_t button_id_raw = (data >> 0) & button_id_mask;
-    wheel_buttons->button_id = (uint8_t)button_id_raw;
+    uint64_t BRAKE_OC_mask = (1ULL << 1) - 1ULL;
+    uint64_t BRAKE_OC_raw = (data >> 7) & BRAKE_OC_mask;
+    drive_lock_states->BRAKE_OC = (bool)BRAKE_OC_raw;
+    uint64_t BRAKE_SC_mask = (1ULL << 1) - 1ULL;
+    uint64_t BRAKE_SC_raw = (data >> 6) & BRAKE_SC_mask;
+    drive_lock_states->BRAKE_SC = (bool)BRAKE_SC_raw;
+    uint64_t ACCEL_OC_mask = (1ULL << 1) - 1ULL;
+    uint64_t ACCEL_OC_raw = (data >> 5) & ACCEL_OC_mask;
+    drive_lock_states->ACCEL_OC = (bool)ACCEL_OC_raw;
+    uint64_t ACCEL_SC_mask = (1ULL << 1) - 1ULL;
+    uint64_t ACCEL_SC_raw = (data >> 4) & ACCEL_SC_mask;
+    drive_lock_states->ACCEL_SC = (bool)ACCEL_SC_raw;
+    uint64_t ACCEL_DIFF_mask = (1ULL << 1) - 1ULL;
+    uint64_t ACCEL_DIFF_raw = (data >> 3) & ACCEL_DIFF_mask;
+    drive_lock_states->ACCEL_DIFF = (bool)ACCEL_DIFF_raw;
+    uint64_t BSPD_PREF_mask = (1ULL << 1) - 1ULL;
+    uint64_t BSPD_PREF_raw = (data >> 2) & BSPD_PREF_mask;
+    drive_lock_states->BSPD_PREF = (bool)BSPD_PREF_raw;
+    uint64_t empty_mask = (1ULL << 2) - 1ULL;
+    uint64_t empty_raw = (data >> 0) & empty_mask;
+    drive_lock_states->empty = ()empty_raw;
 }
 
-void receive_lightning_board_imu_acceleration_data(const can_msg_t *message, lightning_board_imu_acceleration_data_t *lightning_board_imu_acceleration_data) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t accel_x_mask = (1ULL << 16) - 1ULL;
-    uint64_t accel_x_bits = (data >> 48) & accel_x_mask;
-    int64_t accel_x_raw = (accel_x_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(accel_x_bits | ~accel_x_mask)
-        : (int64_t)accel_x_bits;
-    lightning_board_imu_acceleration_data->accel_x = (float)(accel_x_raw / 1000);
-    uint64_t accel_y_mask = (1ULL << 16) - 1ULL;
-    uint64_t accel_y_bits = (data >> 32) & accel_y_mask;
-    int64_t accel_y_raw = (accel_y_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(accel_y_bits | ~accel_y_mask)
-        : (int64_t)accel_y_bits;
-    lightning_board_imu_acceleration_data->accel_y = (float)(accel_y_raw / 1000);
-    uint64_t accel_z_mask = (1ULL << 16) - 1ULL;
-    uint64_t accel_z_bits = (data >> 16) & accel_z_mask;
-    int64_t accel_z_raw = (accel_z_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(accel_z_bits | ~accel_z_mask)
-        : (int64_t)accel_z_bits;
-    lightning_board_imu_acceleration_data->accel_z = (float)(accel_z_raw / 1000);
-}
-
-void receive_lightning_board_imu_gyro_data(const can_msg_t *message, lightning_board_imu_gyro_data_t *lightning_board_imu_gyro_data) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t gyro_x_mask = (1ULL << 16) - 1ULL;
-    uint64_t gyro_x_bits = (data >> 48) & gyro_x_mask;
-    int64_t gyro_x_raw = (gyro_x_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(gyro_x_bits | ~gyro_x_mask)
-        : (int64_t)gyro_x_bits;
-    lightning_board_imu_gyro_data->gyro_x = (float)(gyro_x_raw / 1000);
-    uint64_t gyro_y_mask = (1ULL << 16) - 1ULL;
-    uint64_t gyro_y_bits = (data >> 32) & gyro_y_mask;
-    int64_t gyro_y_raw = (gyro_y_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(gyro_y_bits | ~gyro_y_mask)
-        : (int64_t)gyro_y_bits;
-    lightning_board_imu_gyro_data->gyro_y = (float)(gyro_y_raw / 1000);
-    uint64_t gyro_z_mask = (1ULL << 16) - 1ULL;
-    uint64_t gyro_z_bits = (data >> 16) & gyro_z_mask;
-    int64_t gyro_z_raw = (gyro_z_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(gyro_z_bits | ~gyro_z_mask)
-        : (int64_t)gyro_z_bits;
-    lightning_board_imu_gyro_data->gyro_z = (float)(gyro_z_raw / 1000);
-}
-
-void receive_lightning_board_lightning_sensor_information(const can_msg_t *message, lightning_board_lightning_sensor_information_t *lightning_board_lightning_sensor_information) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t interrupt_mask = (1ULL << 8) - 1ULL;
-    uint64_t interrupt_raw = (data >> 56) & interrupt_mask;
-    lightning_board_lightning_sensor_information->interrupt = (uint8_t)interrupt_raw;
-    uint64_t distance_mask = (1ULL << 8) - 1ULL;
-    uint64_t distance_raw = (data >> 48) & distance_mask;
-    lightning_board_lightning_sensor_information->distance = (uint8_t)distance_raw;
-    uint64_t energy_mask = (1ULL << 32) - 1ULL;
-    uint64_t energy_raw = (data >> 16) & energy_mask;
-    lightning_board_lightning_sensor_information->energy = (uint32_t)energy_raw;
-}
-
-void receive_lightning_board_magnometer_sensor_information(const can_msg_t *message, lightning_board_magnometer_sensor_information_t *lightning_board_magnometer_sensor_information) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t mag_x_mask = (1ULL << 16) - 1ULL;
-    uint64_t mag_x_bits = (data >> 48) & mag_x_mask;
-    int64_t mag_x_raw = (mag_x_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(mag_x_bits | ~mag_x_mask)
-        : (int64_t)mag_x_bits;
-    lightning_board_magnometer_sensor_information->mag_x = (float)(mag_x_raw / 1000);
-    uint64_t mag_y_mask = (1ULL << 16) - 1ULL;
-    uint64_t mag_y_bits = (data >> 32) & mag_y_mask;
-    int64_t mag_y_raw = (mag_y_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(mag_y_bits | ~mag_y_mask)
-        : (int64_t)mag_y_bits;
-    lightning_board_magnometer_sensor_information->mag_y = (float)(mag_y_raw / 1000);
-    uint64_t mag_z_mask = (1ULL << 16) - 1ULL;
-    uint64_t mag_z_bits = (data >> 16) & mag_z_mask;
-    int64_t mag_z_raw = (mag_z_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(mag_z_bits | ~mag_z_mask)
-        : (int64_t)mag_z_bits;
-    lightning_board_magnometer_sensor_information->mag_z = (float)(mag_z_raw / 1000);
-}
-
-void receive_front_msb_env(const can_msg_t *message, front_msb_env_t *front_msb_env) {
-    
-    uint32_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 4);
-    uint32_t data = __builtin_bswap32(data_bigendian);
-    uint64_t temp_mask = (1ULL << 16) - 1ULL;
-    uint64_t temp_raw = (data >> 16) & temp_mask;
-    front_msb_env->temp = (float)(temp_raw / 10);
-    uint64_t humidity_mask = (1ULL << 16) - 1ULL;
-    uint64_t humidity_raw = (data >> 0) & humidity_mask;
-    front_msb_env->humidity = (float)(humidity_raw / 10);
-}
-
-void receive_front_msb_accel(const can_msg_t *message, front_msb_accel_t *front_msb_accel) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t x_force_mask = (1ULL << 16) - 1ULL;
-    uint64_t x_force_bits = (data >> 48) & x_force_mask;
-    int64_t x_force_raw = (x_force_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(x_force_bits | ~x_force_mask)
-        : (int64_t)x_force_bits;
-    front_msb_accel->x_force = (float)x_force_raw;
-    uint64_t y_force_mask = (1ULL << 16) - 1ULL;
-    uint64_t y_force_bits = (data >> 32) & y_force_mask;
-    int64_t y_force_raw = (y_force_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(y_force_bits | ~y_force_mask)
-        : (int64_t)y_force_bits;
-    front_msb_accel->y_force = (float)y_force_raw;
-    uint64_t z_force_mask = (1ULL << 16) - 1ULL;
-    uint64_t z_force_bits = (data >> 16) & z_force_mask;
-    int64_t z_force_raw = (z_force_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(z_force_bits | ~z_force_mask)
-        : (int64_t)z_force_bits;
-    front_msb_accel->z_force = (float)z_force_raw;
-}
-
-void receive_front_msb_gyro(const can_msg_t *message, front_msb_gyro_t *front_msb_gyro) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t x_deg_mask = (1ULL << 16) - 1ULL;
-    uint64_t x_deg_bits = (data >> 48) & x_deg_mask;
-    int64_t x_deg_raw = (x_deg_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(x_deg_bits | ~x_deg_mask)
-        : (int64_t)x_deg_bits;
-    front_msb_gyro->x_deg = (float)x_deg_raw;
-    uint64_t y_deg_mask = (1ULL << 16) - 1ULL;
-    uint64_t y_deg_bits = (data >> 32) & y_deg_mask;
-    int64_t y_deg_raw = (y_deg_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(y_deg_bits | ~y_deg_mask)
-        : (int64_t)y_deg_bits;
-    front_msb_gyro->y_deg = (float)y_deg_raw;
-    uint64_t z_deg_mask = (1ULL << 16) - 1ULL;
-    uint64_t z_deg_bits = (data >> 16) & z_deg_mask;
-    int64_t z_deg_raw = (z_deg_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(z_deg_bits | ~z_deg_mask)
-        : (int64_t)z_deg_bits;
-    front_msb_gyro->z_deg = (float)z_deg_raw;
-}
-
-void receive_front_msb_strain(const can_msg_t *message, front_msb_strain_t *front_msb_strain) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t strain1_mask = (1ULL << 32) - 1ULL;
-    uint64_t strain1_raw = (data >> 32) & strain1_mask;
-    front_msb_strain->strain1 = (uint32_t)strain1_raw;
-    uint64_t strain2_mask = (1ULL << 32) - 1ULL;
-    uint64_t strain2_raw = (data >> 0) & strain2_mask;
-    front_msb_strain->strain2 = (uint32_t)strain2_raw;
-}
-
-void receive_front_shockpot(const can_msg_t *message, front_shockpot_t *front_shockpot) {
-    
-    struct __attribute__((__packed__)) {
-        uint32_t shock1;
-        uint16_t shock1_raw;
-        
-    } bitstream_data;
-
-    memcpy(&bitstream_data, message->data, sizeof(bitstream_data));
-
-    
-    
-    front_shockpot->shock1 = (float)bitstream_data.shock1;
-    
-    
-    
-    front_shockpot->shock1_raw = (uint16_t)bitstream_data.shock1_raw;
-    
-    
-}
-
-void receive_front_ride_height(const can_msg_t *message, front_ride_height_t *front_ride_height) {
+void receive_ac_current_command(const can_msg_t *message, ac_current_command_t *ac_current_command) {
     
     uint16_t data_bigendian;
     memcpy(&data_bigendian, message->data, 2);
     uint16_t data = __builtin_bswap16(data_bigendian);
-    uint64_t rh_mask = (1ULL << 16) - 1ULL;
-    uint64_t rh_bits = (data >> 0) & rh_mask;
-    int64_t rh_raw = (rh_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(rh_bits | ~rh_mask)
-        : (int64_t)rh_bits;
-    front_ride_height->rh = (float)rh_raw;
+    uint64_t current_target_ac_mask = (1ULL << 16) - 1ULL;
+    uint64_t current_target_ac_bits = (data >> 0) & current_target_ac_mask;
+    int64_t current_target_ac_raw = (current_target_ac_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(current_target_ac_bits | ~current_target_ac_mask)
+        : (int64_t)current_target_ac_bits;
+    ac_current_command->current_target_ac = (float)(current_target_ac_raw / 10);
 }
 
-void receive_front_wheel_temp(const can_msg_t *message, front_wheel_temp_t *front_wheel_temp) {
-    
-    uint16_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 2);
-    uint16_t data = __builtin_bswap16(data_bigendian);
-    uint64_t wheel_temp_mask = (1ULL << 16) - 1ULL;
-    uint64_t wheel_temp_raw = (data >> 0) & wheel_temp_mask;
-    front_wheel_temp->wheel_temp = (float)wheel_temp_raw;
-}
-
-void receive_front_msb_orientation(const can_msg_t *message, front_msb_orientation_t *front_msb_orientation) {
+void receive_brake_current_command(const can_msg_t *message, brake_current_command_t *brake_current_command) {
     
     uint64_t data_bigendian;
     memcpy(&data_bigendian, message->data, 8);
     uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t x_fdeg_mask = (1ULL << 16) - 1ULL;
-    uint64_t x_fdeg_bits = (data >> 48) & x_fdeg_mask;
-    int64_t x_fdeg_raw = (x_fdeg_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(x_fdeg_bits | ~x_fdeg_mask)
-        : (int64_t)x_fdeg_bits;
-    front_msb_orientation->x_fdeg = (float)x_fdeg_raw;
-    uint64_t y_fdeg_mask = (1ULL << 16) - 1ULL;
-    uint64_t y_fdeg_bits = (data >> 32) & y_fdeg_mask;
-    int64_t y_fdeg_raw = (y_fdeg_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(y_fdeg_bits | ~y_fdeg_mask)
-        : (int64_t)y_fdeg_bits;
-    front_msb_orientation->y_fdeg = (float)y_fdeg_raw;
-    uint64_t z_fdeg_mask = (1ULL << 16) - 1ULL;
-    uint64_t z_fdeg_bits = (data >> 16) & z_fdeg_mask;
-    int64_t z_fdeg_raw = (z_fdeg_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(z_fdeg_bits | ~z_fdeg_mask)
-        : (int64_t)z_fdeg_bits;
-    front_msb_orientation->z_fdeg = (float)z_fdeg_raw;
+    uint64_t brake_ac_current_mask = (1ULL << 16) - 1ULL;
+    uint64_t brake_ac_current_bits = (data >> 48) & brake_ac_current_mask;
+    int64_t brake_ac_current_raw = (brake_ac_current_bits & (1ULL << (16 - 1)))
+        ? (int64_t)(brake_ac_current_bits | ~brake_ac_current_mask)
+        : (int64_t)brake_ac_current_bits;
+    brake_current_command->brake_ac_current = (float)(brake_ac_current_raw / 10);
 }
 
-void receive_back_msb_env(const can_msg_t *message, back_msb_env_t *back_msb_env) {
-    
-    uint32_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 4);
-    uint32_t data = __builtin_bswap32(data_bigendian);
-    uint64_t temp_mask = (1ULL << 16) - 1ULL;
-    uint64_t temp_raw = (data >> 16) & temp_mask;
-    back_msb_env->temp = (float)(temp_raw / 10);
-    uint64_t humidity_mask = (1ULL << 16) - 1ULL;
-    uint64_t humidity_raw = (data >> 0) & humidity_mask;
-    back_msb_env->humidity = (float)(humidity_raw / 10);
-}
-
-void receive_back_msb_accel(const can_msg_t *message, back_msb_accel_t *back_msb_accel) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t x_force_mask = (1ULL << 16) - 1ULL;
-    uint64_t x_force_bits = (data >> 48) & x_force_mask;
-    int64_t x_force_raw = (x_force_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(x_force_bits | ~x_force_mask)
-        : (int64_t)x_force_bits;
-    back_msb_accel->x_force = (float)x_force_raw;
-    uint64_t y_force_mask = (1ULL << 16) - 1ULL;
-    uint64_t y_force_bits = (data >> 32) & y_force_mask;
-    int64_t y_force_raw = (y_force_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(y_force_bits | ~y_force_mask)
-        : (int64_t)y_force_bits;
-    back_msb_accel->y_force = (float)y_force_raw;
-    uint64_t z_force_mask = (1ULL << 16) - 1ULL;
-    uint64_t z_force_bits = (data >> 16) & z_force_mask;
-    int64_t z_force_raw = (z_force_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(z_force_bits | ~z_force_mask)
-        : (int64_t)z_force_bits;
-    back_msb_accel->z_force = (float)z_force_raw;
-}
-
-void receive_back_msb_gyro(const can_msg_t *message, back_msb_gyro_t *back_msb_gyro) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t x_deg_mask = (1ULL << 16) - 1ULL;
-    uint64_t x_deg_bits = (data >> 48) & x_deg_mask;
-    int64_t x_deg_raw = (x_deg_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(x_deg_bits | ~x_deg_mask)
-        : (int64_t)x_deg_bits;
-    back_msb_gyro->x_deg = (float)x_deg_raw;
-    uint64_t y_deg_mask = (1ULL << 16) - 1ULL;
-    uint64_t y_deg_bits = (data >> 32) & y_deg_mask;
-    int64_t y_deg_raw = (y_deg_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(y_deg_bits | ~y_deg_mask)
-        : (int64_t)y_deg_bits;
-    back_msb_gyro->y_deg = (float)y_deg_raw;
-    uint64_t z_deg_mask = (1ULL << 16) - 1ULL;
-    uint64_t z_deg_bits = (data >> 16) & z_deg_mask;
-    int64_t z_deg_raw = (z_deg_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(z_deg_bits | ~z_deg_mask)
-        : (int64_t)z_deg_bits;
-    back_msb_gyro->z_deg = (float)z_deg_raw;
-}
-
-void receive_back_msb_strain(const can_msg_t *message, back_msb_strain_t *back_msb_strain) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t strain1_mask = (1ULL << 32) - 1ULL;
-    uint64_t strain1_raw = (data >> 32) & strain1_mask;
-    back_msb_strain->strain1 = (uint32_t)strain1_raw;
-    uint64_t strain2_mask = (1ULL << 32) - 1ULL;
-    uint64_t strain2_raw = (data >> 0) & strain2_mask;
-    back_msb_strain->strain2 = (uint32_t)strain2_raw;
-}
-
-void receive_back_shockpot(const can_msg_t *message, back_shockpot_t *back_shockpot) {
-    
-    struct __attribute__((__packed__)) {
-        uint32_t shock1;
-        uint16_t shock1_raw;
-        
-    } bitstream_data;
-
-    memcpy(&bitstream_data, message->data, sizeof(bitstream_data));
-
-    
-    
-    back_shockpot->shock1 = (float)bitstream_data.shock1;
-    
-    
-    
-    back_shockpot->shock1_raw = (uint16_t)bitstream_data.shock1_raw;
-    
-    
-}
-
-void receive_back_ride_height(const can_msg_t *message, back_ride_height_t *back_ride_height) {
-    
-    uint16_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 2);
-    uint16_t data = __builtin_bswap16(data_bigendian);
-    uint64_t rh_mask = (1ULL << 16) - 1ULL;
-    uint64_t rh_bits = (data >> 0) & rh_mask;
-    int64_t rh_raw = (rh_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(rh_bits | ~rh_mask)
-        : (int64_t)rh_bits;
-    back_ride_height->rh = (float)rh_raw;
-}
-
-void receive_back_wheel_temp(const can_msg_t *message, back_wheel_temp_t *back_wheel_temp) {
-    
-    uint16_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 2);
-    uint16_t data = __builtin_bswap16(data_bigendian);
-    uint64_t wheel_temp_mask = (1ULL << 16) - 1ULL;
-    uint64_t wheel_temp_raw = (data >> 0) & wheel_temp_mask;
-    back_wheel_temp->wheel_temp = (float)wheel_temp_raw;
-}
-
-void receive_back_msb_orientation(const can_msg_t *message, back_msb_orientation_t *back_msb_orientation) {
-    
-    uint64_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 8);
-    uint64_t data = __builtin_bswap64(data_bigendian);
-    uint64_t x_fdeg_mask = (1ULL << 16) - 1ULL;
-    uint64_t x_fdeg_bits = (data >> 48) & x_fdeg_mask;
-    int64_t x_fdeg_raw = (x_fdeg_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(x_fdeg_bits | ~x_fdeg_mask)
-        : (int64_t)x_fdeg_bits;
-    back_msb_orientation->x_fdeg = (float)x_fdeg_raw;
-    uint64_t y_fdeg_mask = (1ULL << 16) - 1ULL;
-    uint64_t y_fdeg_bits = (data >> 32) & y_fdeg_mask;
-    int64_t y_fdeg_raw = (y_fdeg_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(y_fdeg_bits | ~y_fdeg_mask)
-        : (int64_t)y_fdeg_bits;
-    back_msb_orientation->y_fdeg = (float)y_fdeg_raw;
-    uint64_t z_fdeg_mask = (1ULL << 16) - 1ULL;
-    uint64_t z_fdeg_bits = (data >> 16) & z_fdeg_mask;
-    int64_t z_fdeg_raw = (z_fdeg_bits & (1ULL << (16 - 1)))
-        ? (int64_t)(z_fdeg_bits | ~z_fdeg_mask)
-        : (int64_t)z_fdeg_bits;
-    back_msb_orientation->z_fdeg = (float)z_fdeg_raw;
-}
-
-void receive_imd_general_information(const can_msg_t *message, imd_general_information_t *imd_general_information) {
-    
-    struct __attribute__((__packed__)) {
-        uint16_t R_iso_corrected;
-        uint8_t R_iso_status;
-        uint8_t Iso_measurement_counter;
-        uint8_t device_error;
-        uint8_t HV_pos_conn_fail;
-        uint8_t HV_neg_conn_fail;
-        uint8_t Earth_conn_fail;
-        uint8_t Iso_alarm;
-        uint8_t iso_warning;
-        uint8_t iso_outdated;
-        uint8_t Unbalance_alarm;
-        uint8_t Undervoltage_alarm;
-        uint8_t Unsafe_to_start;
-        uint8_t Earthlift_Open;
-        uint8_t warnings_and_alarms_unused_bits;
-        uint8_t Device_Activity;
-        uint8_t Not_Applicable;
-        
-    } bitstream_data;
-
-    memcpy(&bitstream_data, message->data, sizeof(bitstream_data));
-
-    
-    
-    imd_general_information->R_iso_corrected = (uint16_t)bitstream_data.R_iso_corrected;
-    
-    
-    
-    imd_general_information->R_iso_status = (uint8_t)bitstream_data.R_iso_status;
-    
-    
-    
-    imd_general_information->Iso_measurement_counter = (uint8_t)bitstream_data.Iso_measurement_counter;
-    
-    
-    
-    imd_general_information->device_error = (bool)bitstream_data.device_error;
-    
-    
-    
-    imd_general_information->HV_pos_conn_fail = (bool)bitstream_data.HV_pos_conn_fail;
-    
-    
-    
-    imd_general_information->HV_neg_conn_fail = (bool)bitstream_data.HV_neg_conn_fail;
-    
-    
-    
-    imd_general_information->Earth_conn_fail = (bool)bitstream_data.Earth_conn_fail;
-    
-    
-    
-    imd_general_information->Iso_alarm = (bool)bitstream_data.Iso_alarm;
-    
-    
-    
-    imd_general_information->iso_warning = (bool)bitstream_data.iso_warning;
-    
-    
-    
-    imd_general_information->iso_outdated = (bool)bitstream_data.iso_outdated;
-    
-    
-    
-    imd_general_information->Unbalance_alarm = (bool)bitstream_data.Unbalance_alarm;
-    
-    
-    
-    imd_general_information->Undervoltage_alarm = (bool)bitstream_data.Undervoltage_alarm;
-    
-    
-    
-    imd_general_information->Unsafe_to_start = (bool)bitstream_data.Unsafe_to_start;
-    
-    
-    
-    imd_general_information->Earthlift_Open = (bool)bitstream_data.Earthlift_Open;
-    
-    
-    
-    imd_general_information->warnings_and_alarms_unused_bits = (uint8_t)bitstream_data.warnings_and_alarms_unused_bits;
-    
-    
-    
-    imd_general_information->Device_Activity = (uint8_t)bitstream_data.Device_Activity;
-    
-    
-    
-    imd_general_information->Not_Applicable = (uint8_t)bitstream_data.Not_Applicable;
-    
-    
+void receive_drive_enable_command(const can_msg_t *message, drive_enable_command_t *drive_enable_command) {
+    
+    uint8_t data = message->data[0];
+    uint64_t drive_enable_mask = (1ULL << 8) - 1ULL;
+    uint64_t drive_enable_raw = (data >> 0) & drive_enable_mask;
+    drive_enable_command->drive_enable = (uint8_t)drive_enable_raw;
 }
 

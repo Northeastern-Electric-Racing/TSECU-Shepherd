@@ -56,6 +56,10 @@ void compute_set_fault(bool fault_state);
 /**
  * @brief Checks if the shutdown circuit is open.
  */
+bool read_shutdown_ts_minus_sense(void);
+bool read_shutdown_ts_plus_sense(void);
+bool read_shutdown_acc_sense(void);
+bool read_shutdown_tsip_sense(void);
 void read_shutdown(peripherals_t *peripherals);
 
 /**

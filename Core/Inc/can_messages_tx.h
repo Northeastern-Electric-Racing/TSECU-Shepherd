@@ -10,34 +10,6 @@
 
 /**
 * Contents of this message:
-* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
-*/
-uint8_t send_max_ac_current_command
-(float max_current_ac_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
-*/
-uint8_t send_max_ac_brake_current_command
-(float max_ac_brake_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
-*/
-uint8_t send_max_dc_current_command
-(float max_dc_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
-*/
-uint8_t send_max_dc_brake_current_command
-(float max_dc_brake_current_target);
-
-/**
-* Contents of this message:
 * BMS/Status/State - The system state
 * BMS/Status/Temp_Average - Average of all thermistor readings
 */
@@ -374,9 +346,13 @@ uint8_t send_pack_soc_status
 /**
 * Contents of this message:
 * BMS/shutdown/state - Current shutdown state
+* BMS/shutdown/ts_minus_sense - TS minus sense gpio state
+* BMS/shutdown/ts_plus_sense - TS plus sense gpio state
+* BMS/shutdown/acc_sense - Accelerometer sense gpio state
+* BMS/shutdown/tsip_sense - TSIP sense gpio state
 */
 uint8_t send_shutdown_as_read_by_bms
-(bool shutdown);
+(bool shutdown,bool ts_minus_sense,bool ts_plus_sense,bool acc_sense,bool tsip_sense);
 
 /**
 * Contents of this message:
@@ -404,4 +380,32 @@ uint8_t send_bms_critically_faulted
 */
 uint8_t send_bms_charge_message_send
 (float charge_volts,float charge_current,uint8_t enable_charging);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
+*/
+uint8_t send_max_ac_current_command
+(float max_current_ac_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
+*/
+uint8_t send_max_ac_brake_current_command
+(float max_ac_brake_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
+*/
+uint8_t send_max_dc_current_command
+(float max_dc_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
+*/
+uint8_t send_max_dc_brake_current_command
+(float max_dc_brake_current_target);
 #endif

@@ -371,7 +371,8 @@ static void set_shutdown_active(void *arg)
 	mutex_get(&shutdown_mutex);
 	peripherals->shutdown_active = true;
 	mutex_put(&shutdown_mutex);
-	send_shutdown_as_read_by_bms(true);
+	send_shutdown_as_read_by_bms(true, read_shutdown_ts_minus_sense(), read_shutdown_ts_plus_sense(),
+				   read_shutdown_acc_sense(), read_shutdown_tsip_sense());
 }
 
 static void set_shutdown_inactive(void *arg)
@@ -386,7 +387,25 @@ static void set_shutdown_inactive(void *arg)
 	mutex_get(&shutdown_mutex);
 	peripherals->shutdown_active = false;
 	mutex_put(&shutdown_mutex);
-	send_shutdown_as_read_by_bms(false);
+	send_shutdown_as_read_by_bms(false, read_shutdown_ts_minus_sense(), read_shutdown_ts_plus_sense(),
+				   read_shutdown_acc_sense(), read_shutdown_tsip_sense());
+}
+
+bool read_shutdown_ts_minus_sense(void)
+{
+	return HAL_GPIO_ReadPin(TS_MINUS_SENSE_GPIO_Port, TS_MINUS_SENSE_Pin);
+}
+bool read_shutdown_ts_plus_sense(void)
+{
+	return HAL_GPIO_ReadPin(TS_PLUS_SENSE_GPIO_Port, TS_PLUS_SENSE_Pin);
+}
+bool read_shutdown_acc_sense(void)
+{
+	return HAL_GPIO_ReadPin(ACC_SENSE_GPIO_Port, ACC_SENSE_Pin);
+}
+bool read_shutdown_tsip_sense(void)
+{
+	return HAL_GPIO_ReadPin(TSIP_SENSE_GPIO_Port, TSIP_SENSE_Pin);
 }
 
 void read_shutdown(peripherals_t *peripherals)
@@ -397,11 +416,10 @@ void read_shutdown(peripherals_t *peripherals)
 
 	// Read shutdown sense using TS_MINUS_SENSE pin
 	bool shutdown_inactive =
-		HAL_GPIO_ReadPin(TS_MINUS_SENSE_GPIO_Port,
-				 TS_MINUS_SENSE_Pin) &&
-		HAL_GPIO_ReadPin(TS_PLUS_SENSE_GPIO_Port, TS_PLUS_SENSE_Pin) &&
-		HAL_GPIO_ReadPin(ACC_SENSE_GPIO_Port, ACC_SENSE_Pin) &&
-		HAL_GPIO_ReadPin(TSIP_SENSE_GPIO_Port, TSIP_SENSE_Pin);
+		read_shutdown_ts_minus_sense() &&
+		read_shutdown_ts_plus_sense() &&
+		read_shutdown_acc_sense() &&
+		read_shutdown_tsip_sense();
 
 	debounce(!shutdown_inactive, &shutdown_active_timer, debounce_time,
 		 set_shutdown_active, peripherals);
@@ -482,7 +500,8 @@ void vPeripherals(ULONG thread_input)
 			// send shutdown state periodically
 
 			send_shutdown_as_read_by_bms(
-				peripherals->shutdown_active);
+				peripherals->shutdown_active, read_shutdown_ts_minus_sense(), read_shutdown_ts_plus_sense(),
+				read_shutdown_acc_sense(), read_shutdown_tsip_sense());
 
 			mutex_get(&peripherals_mutex);
 			send_bms_onboard_temperature(peripherals->onboard_temp);
