@@ -2,11 +2,13 @@
 #include <assert.h>
 #include "debounce.h"
 
-#define BATT_VOLTS_PRECHARGE_THRESHOLD 60.0f
+#define MINIMUM_PACK_VOLTAGE 325.0f
+
 #define NUM_SAMPLES_FOR_AVG 20
 #define PRRECHARGE_TRIGGER_THRESHOLD 0.95f
-
+s
 #define TS_VOLT_BUFFER 5.0f
+#define BATT_VOLT_BUFFER 10.0f
 
 #define PRECHARGE_TOGGLE_TIME 200
 #define PRECHARGE_FLOATING_FAULT_TIME 10000
@@ -101,7 +103,7 @@ static float get_average_sample(sample_buffer_t *buffer)
 static precharge_state_t get_precharge_state(float ts_volts_avg, float batt_volts_avg,
 					    float transition_ratio)
 {
-	if (batt_volts_avg < BATT_VOLTS_PRECHARGE_THRESHOLD) {
+	if (batt_volts_avg < (MINIMUM_PACK_VOLTAGE - BATT_VOLT_BUFFER)) {
 		return PRECHARGE_OPEN; 
 	}
 
