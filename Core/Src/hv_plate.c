@@ -212,6 +212,9 @@ void vHvPlateData(ULONG thread_input)
 	set_gpo(&hv_plate->ic,
 		GPO2_2950); // enable HV1 readings on ADBMS2950 devkit
 
+	reset_gpo(&hv_plate->ic,
+		GPO4_2950); 
+
 	soc_init();
 
 	for (;;) {
