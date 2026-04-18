@@ -186,6 +186,6 @@ void vPrecharge(ULONG args)
 			start_timer(&update_loop_timer, TELEMETRY_LOOP_TIMEOUT);
 		}
 
-		tx_thread_sleep(50);
+		tx_thread_sleep(20);
 	}
 }
