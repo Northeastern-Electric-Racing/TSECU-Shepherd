@@ -155,9 +155,7 @@ void vCanDispatch(ULONG thread_input) {
         PRINTLN_WARNING("Failed to send message (on can1) after removing from "
                         "outgoing queue (Message ID: %ld) - Status %d",
                         message.id, status);
-      } else {
-        PRINTLN_INFO("Sent CAN message with ID: %ld", message.id);
-      }
+      } 
     }
   }
 }

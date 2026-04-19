@@ -2,7 +2,6 @@
 #include <assert.h>
 
 #include "shep_tasks.h"
-#include "bms_config.h"
 #include "can_handler.h"
 #include "can_messages_tx.h"
 #include "ccl.h"
@@ -61,35 +60,38 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	PRINTLN_INFO("Raw Cell Voltages:");
     for(uint8_t c = 0; c < NUM_CHIPS; c++) {
         for(uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-        printf("%.3f\t", analyzer->chip_data[c].cell_voltages[cell]);
+            printf("%.3f\t", analyzer->chip_data[c].cell_voltages[cell]);
+        }
+        printf("\n");
     }
-    printf("\n");
 
 	PRINTLN_INFO("S ADC Voltages:");
-	for(c = 0; c < NUM_CHIPS; c++) {
+	for(uint8_t c = 0; c < NUM_CHIPS; c++) {
         for(uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-        printf("%.3f\t", getVoltage(acc_data->chips[c].scell.sc_codes[cell]));
+            printf("%.3f\t", getVoltage(acc_data->chips[c].scell.sc_codes[cell]));
+        }
+        printf("\n");
     }
-    printf("\n");
 
 #endif
 
 #ifdef DEBUG_OCV_VOLTAGES
     PRINTLN_INFO("Raw Cell OCV:");
-	for(uint8_t c2 = 0; c < NUM_CHIPS; c++) {
+	for(uint8_t c2 = 0; c2 < NUM_CHIPS; c2++) {
         for(uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
             printf("%.3f\t", analyzer->chip_data[c2].open_cell_voltage[cell]);
+        }
+        printf("\n");
     }
-    printf("\n");
 #endif
 
 #ifdef DEBUG_TEMPS
 	PRINTLN_INFO("Therm Temps:");
-	for(uint8_t c3 = 0; c < NUM_CHIPS; c++) {
+	for(uint8_t c3 = 0; c3 < NUM_CHIPS; c3++) {
         for(uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
             printf("%.1f\t", acc_data->chip_data[c3].cell_temp[cell]);
-    }
-    printf("\n");
+        }
+        printf("\n");
     }
 
 	PRINTLN_INFO("CHIP TEMPS:");
@@ -229,6 +231,10 @@ void vDefaultTask(ULONG thread_input)
 
 	/* Infinite loop */
 	for (;;) {
+#ifdef DEBUG_STATS
+		print_bms_stats(analyzer, hv_plate, acc_data, bms_algos);
+#endif
+
 		if (alt) {
 			printf(".\n");
 		} else {
