@@ -622,9 +622,7 @@ void vStateMachine(ULONG thread_input)
 			send_bms_status(state_machine->bms_state,
 					analyzer->avg_temp);
 			
-			if (!are_critical_faults_active()) {
-                send_bms_critically_faulted(false);
-			}
+			send_bms_critically_faulted(are_critical_faults_active());
 
 			send_fault_status(
 				get_fault(DISCHARGE_LIMIT_ENFORCEMENT_FAULT),

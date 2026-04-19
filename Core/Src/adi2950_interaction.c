@@ -249,6 +249,8 @@ void write_config(cell_asic_2950 *ic, ACCI count)
 	ic->tx_cfga.vs1 = (VSB)VSMV_VREF1P25;
 	ic->tx_cfga.vs2 = (VSB)VSMV_VREF1P25;
 	ic->tx_cfga.vs7 = (VSB)VSMV_SGND;
+	ic->tx_cfga.gpo4c = PULLED_UP_TRISTATED;
+	ic->tx_cfga.gpo4od = OPEN_DRAIN;
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
 }
 
