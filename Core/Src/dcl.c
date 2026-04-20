@@ -144,7 +144,7 @@ void dcl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 				// Apply pulse current while monitoring entry condition
 				applied_dcl = DCL_MAX_PULSE_CURRENT_A;
 				
-				if (pack_current > (DCL_MAX_CURRENT_A + CURRENT_TRIGGER_HYST_A)) {
+				if (pack_current > DCL_MAX_CURRENT_A) {
 					
 					// Start debounce for pulse entry
 					if (is_timer_active(&dcl_ctrl.t_above) == false) {

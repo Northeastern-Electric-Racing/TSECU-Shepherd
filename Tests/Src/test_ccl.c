@@ -149,13 +149,7 @@ void test_cont_ccl_pulse_state_transitions(void)
     ccl_calc_cont_limit(test_pack_current, &test_algos);
     TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
 
-    /* REST -> over max continous current but below hysteresis */
-    test_pack_current = -1.0f * (CCL_MAX_CURRENT_A + 0.3f);
-
-    ccl_calc_cont_limit(test_pack_current, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_PULSE_CURRENT_A, test_algos.cont_CCL);
-
-    /* REST -> over hysteresis, debounce not active */
+    /* REST -> over max continuous ccl current, debounce not active */
     is_timer_active_ExpectAnyArgsAndReturn(false);
     test_pack_current = -1.0f * (CCL_MAX_CURRENT_A + 2.0f);
 

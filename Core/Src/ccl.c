@@ -150,7 +150,7 @@ void ccl_calc_cont_limit(float pack_current, bms_algos_t *const bms_algos)
 					float pack_current_abs_val = fabsf(pack_current);
 
 					// Use absolute value of current for CCL threshold comparisons 
-					if (pack_current_abs_val > (CCL_MAX_CURRENT_A + CURRENT_TRIGGER_HYST_A)) {
+					if (pack_current_abs_val > CCL_MAX_CURRENT_A) {
 					
 						// Start debounce for pulse entry
 						if (is_timer_active(&ccl_ctrl.t_above) == false) {
