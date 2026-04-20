@@ -17,7 +17,8 @@ typedef struct {
 	float transition_ratio;
 	nertimer_t open_debounce_timer;
 	nertimer_t close_debounce_timer;
-	nertimer_t floating_debounce_timer;
+	nertimer_t closed_to_floating_debounce_timer;
+	nertimer_t open_to_floating_debounce_timer;
 	precharge_state_t precharge_state;
 } prechargeconfig_t;
 

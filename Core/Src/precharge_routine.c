@@ -132,14 +132,17 @@ void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
 		(nertimer_t){ 0, 0, false, false };
 	precharge_config->close_debounce_timer =
 		(nertimer_t){ 0, 0, false, false };
-	precharge_config->floating_debounce_timer =
+	precharge_config->closed_to_floating_debounce_timer =
+		(nertimer_t){ 0, 0, false, false };
+	precharge_config->open_to_floating_debounce_timer =
 		(nertimer_t){ 0, 0, false, false };
 }
 
 void handle_precharge(prechargeconfig_t *precharge_config)
 {
-	hv_plate_t *hv_plate = precharge_config->hv_plate;
+	static count = 0;
 
+	hv_plate_t *hv_plate = precharge_config->hv_plate;
 	update_sample_buffer(&ts_volts_sample_buffer, hv_plate->ts_volts);
 	update_sample_buffer(&batt_volts_sample_buffer, hv_plate->batt_volts);
 
@@ -156,8 +159,11 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 	debounce(precharge_state == PRECHARGE_OPEN, &precharge_config->close_debounce_timer,
 		 PRECHARGE_TOGGLE_TIME, open_relay, precharge_config);
 
-	debounce(precharge_state == PRECHARGE_FLOATING, &precharge_config->floating_debounce_timer,
-		 PRECHARGE_FLOATING_FAULT_TIME, send_floating_precharge_fault, precharge_config);
+	debounce((precharge_config->precharge_state == PRECHARGE_OPEN || precharge_config->precharge_state == PRECHARGE_FLOATING) 
+		&& precharge_state == PRECHARGE_FLOATING, &precharge_config->open_to_floating_debounce_timer, PRECHARGE_FLOATING_FAULT_TIME, send_floating_precharge_fault, precharge_config);
+		
+	debounce(precharge_config->precharge_state == PRECHARGE_CLOSED && precharge_state == PRECHARGE_FLOATING, &precharge_config->closed_to_floating_debounce_timer,
+		 PRECHARGE_TOGGLE_TIME, send_floating_precharge_fault, precharge_config);
 }
 
 // PRECHARGE THREAD
