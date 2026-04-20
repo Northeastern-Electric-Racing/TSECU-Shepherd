@@ -8,7 +8,6 @@
 #define TRIGGER_DEBOUNCE_MS           (100UL)
 #define QUIET_DEBOUNCE_MS             (100UL)
 #define PULSE_ENABLE_MARGIN_A         (0.01f)
-#define CURRENT_TRIGGER_HYST_A        (1.0f)
 
 /******************************* DCL **********************************/
 
