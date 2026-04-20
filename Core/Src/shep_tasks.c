@@ -277,7 +277,7 @@ void vDebug(ULONG thread_input)
 							0 :
 							chip_data->cell_voltages
 								[cell + 1],
-						chip, cell, cell + 1,
+						chip / 2, cell, cell + 1,
 						chip_data->is_balancing[cell],
 
 						cell + 1 == NUM_CELLS_PER_CHIP ?
@@ -298,7 +298,7 @@ void vDebug(ULONG thread_input)
 							0 :
 							chip_data->cell_voltages
 								[cell + 1],
-						chip - 1, cell, cell + 1,
+						chip / 2, cell, cell + 1,
 						chip_data->is_balancing[cell],
 
 						cell + 1 == NUM_CELLS_PER_CHIP ?
