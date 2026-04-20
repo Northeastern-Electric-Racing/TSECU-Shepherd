@@ -351,7 +351,7 @@ int init_compute(peripherals_t *peripherals)
 
 void compute_set_fault(bool fault_state)
 {
-	if (fault_state) {
+	if (!fault_state) {
 		HAL_GPIO_WritePin(FAULT_MCU_GPIO_Port, FAULT_MCU_Pin,
 				  GPIO_PIN_SET);
 	} else {
