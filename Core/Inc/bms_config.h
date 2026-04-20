@@ -19,22 +19,22 @@
 #define MAX_DELTA_V 0.005f
 #define BAL_MIN_V   3.00f
 
-/* Molicel P45B Cell Specifications */
-#define TYP_CAPICITY_AH	    4.5f /* Amp-hours */
-#define TYP_CAPACITY_WH	    16.2f /* Watt-hours */
-#define MIN_CAPICITY_AH	    4.3f /* Amp-hours */
-#define MIN_CAPACITY_WH	    15.5f /* Watt-hours */
+/* Molicel P50B Cell Specifications */
+#define TYP_CAPICITY_AH	    5.0f /* Amp-hours */
+#define TYP_CAPACITY_WH	    18.0f /* Watt-hours */
+#define MIN_CAPICITY_AH	    4.85f /* Amp-hours */
+#define MIN_CAPACITY_WH	    17.5f /* Watt-hours */
 #define MIN_VOLT	    2.5f
 #define NOM_VOLT	    3.6f
 #define MAX_VOLT	    4.2f
 #define MAX_CHARGE_VOLT	    4.19f
 #define MAX_CHARGE_VOLT_FLT 4.25f // LOADED FAULT
-#define MAX_CHG_CURR	    13.5f /* Amps */
-#define MAX_DISCHG_CURR	    45 /* Amps */
-#define MIN_CHG_TEMP	    0 /* Celsius */
+#define MAX_CHG_CURR	    25.0f /* Amps */
+#define MAX_DISCHG_CURR	    60.0f /* Amps */
+#define MIN_CHG_TEMP	    -20 /* Celsius */
 #define MIN_DISCHG_TEMP	    -40 /* Celsius */
 #define MAX_CELL_TEMP	    60 /* Celsius (rules) */
-#define TYP_IMPDNCE	    0.015f /* Ohms, DC, 50% SoC */
+#define TYP_IMPDNCE	    0.0128f /* Ohms, DC, 50% SoC */
 
 // Pack Limits
 #define MAX_PACK_CHG_CURR \
