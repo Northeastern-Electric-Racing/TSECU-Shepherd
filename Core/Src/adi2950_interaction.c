@@ -249,6 +249,8 @@ void write_config(cell_asic_2950 *ic, ACCI count)
 	ic->tx_cfga.vs1 = (VSB)VSMV_VREF1P25;
 	ic->tx_cfga.vs2 = (VSB)VSMV_VREF1P25;
 	ic->tx_cfga.vs7 = (VSB)VSMV_SGND;
+	ic->tx_cfga.gpo4c = PULLED_UP_TRISTATED;
+	ic->tx_cfga.gpo4od = OPEN_DRAIN;
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
 }
 
@@ -303,10 +305,6 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 {
 	read_adbms2950_data(ic, RDIVB1ACC, AccIvbat,
 			    NONE2950); /* Accumulated Battery Voltage Group*/
-	if (ic->cccrc.avgivbat_pec != 0) {
-		PRINTLN_ERROR(
-			"PEC Error in reading accumulated current and battery register");
-	}
 }
 
 void read_v7_register(cell_asic_2950 *ic)
@@ -315,9 +313,6 @@ void read_v7_register(cell_asic_2950 *ic)
 	delay_ms(Polling_Delay_ms2950);
 
 	read_adbms2950_data(ic, RDV1C, GPV1, C_2950);
-	if (ic->cccrc.vr_pec != 0) {
-		PRINTLN_ERROR("PEC Error in reading V7 and V9 registers");
-	}
 }
 
 void read_v2_register(cell_asic_2950 *ic)
@@ -326,17 +321,11 @@ void read_v2_register(cell_asic_2950 *ic)
 	delay_ms(Polling_Delay_ms2950);
 
 	read_adbms2950_data(ic, RDV1A, GPV1, A_2950);
-	if (ic->cccrc.vr_pec != 0) {
-		PRINTLN_ERROR("PEC Error in reading V2 register");
-	}
 }
 
 void read_flag_register(cell_asic_2950 *ic)
 {
 	read_adbms2950_data(ic, RDFLAG, Flag, FLAG_NOERR);
-	if (ic->cccrc.flag_pec != 0) {
-		PRINTLN_ERROR("PEC Error in reading flag register");
-	}
 }
 
 void poll_and_read_aux_registers(cell_asic_2950 *ic)
@@ -352,9 +341,6 @@ void poll_and_read_aux_registers(cell_asic_2950 *ic)
 
 	read_adbms2950_data(ic, RDXC, Aux2950, C_2950);
 
-	if (ic->cccrc.aux_pec != 0) {
-		PRINTLN_ERROR("PEC Error in reading auxiliary registers");
-	}
 	spiSendCmd2950(TOTAL_IC_2950, ic, CLRVX);
 }
 
@@ -388,9 +374,6 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
 	read_adbms2950_data(ic, RDCFGA2950, Config2950, A_2950);
-	if (ic->cccrc.cfgr_pec != 0) {
-		PRINTLN_ERROR("PEC Error in writing GPO configuration");
-	}
 }
 
 void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
@@ -423,8 +406,4 @@ void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 
 	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
 	read_adbms2950_data(ic, RDCFGA2950, Config2950, A_2950);
-
-	if (ic->cccrc.cfgr_pec != 0) {
-		PRINTLN_ERROR("PEC Error in writing GPO configuration");
-	}
 }

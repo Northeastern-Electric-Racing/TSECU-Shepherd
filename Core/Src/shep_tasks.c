@@ -32,6 +32,10 @@
 const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 			   acc_data_t *acc_data, bms_algos_t *bms_algos)
 {
+    _Pragma("GCC diagnostic push")
+    _Pragma("GCC diagnostic ignored \"-Wdouble-promotion\"")
+
+#if defined(LOG_INFO) && !defined(NO_LOG) // group all of the the println infos together to ignore
 #ifdef DEBUG_HV_PLATE
 	PRINTLN_INFO("HV Plate Data:");
 	PRINTLN_INFO("TS Voltage: %.3f V", hv_plate->ts_volts);
@@ -46,8 +50,71 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	PRINTLN_INFO("VDIV: %.3f V", hv_plate->vdiv);
 	PRINTLN_INFO("Primary Internal Temperature: %.3f C", hv_plate->tmp1);
 	PRINTLN_INFO("Secondary Internal Temperature: %.3f C", hv_plate->tmp2);
+#endif
 
-	if (hv_plate->adbms_flags.raw > 0) {
+#ifdef DEBUG_RAW_VOLTAGES
+	PRINTLN_INFO("Min, Max, Avg, Delta Voltages: %f, %f, %f, %f\n",
+		     analyzer->min_voltage.val, analyzer->max_voltage.val,
+		     analyzer->avg_voltage, analyzer->delt_voltage);
+
+	PRINTLN_INFO("Raw Cell Voltages:");
+    for(uint8_t c = 0; c < NUM_CHIPS; c++) {
+        for(uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+            printf("%.3f\t", analyzer->chip_data[c].cell_voltages[cell]);
+        }
+        printf("\n");
+    }
+
+	PRINTLN_INFO("S ADC Voltages:");
+	for(uint8_t c = 0; c < NUM_CHIPS; c++) {
+        for(uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+            printf("%.3f\t", getVoltage(acc_data->chips[c].scell.sc_codes[cell]));
+        }
+        printf("\n");
+    }
+
+#endif
+
+#ifdef DEBUG_OCV_VOLTAGES
+    PRINTLN_INFO("Raw Cell OCV:");
+	for(uint8_t c2 = 0; c2 < NUM_CHIPS; c2++) {
+        for(uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+            printf("%.3f\t", analyzer->chip_data[c2].open_cell_voltage[cell]);
+        }
+        printf("\n");
+    }
+#endif
+
+#ifdef DEBUG_TEMPS
+	PRINTLN_INFO("Therm Temps:");
+	for(uint8_t c3 = 0; c3 < NUM_CHIPS; c3++) {
+        for(uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+            printf("%.1f\t", acc_data->chip_data[c3].cell_temp[cell]);
+        }
+        printf("\n");
+    }
+
+	PRINTLN_INFO("CHIP TEMPS:");
+	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
+		PRINTLN_INFO("Chip: %d, %.1f\t C", c,
+			     analyzer->chip_data[c].die_temp);
+	}
+	printf("\n");
+#endif
+
+#ifdef DEBUG_ALGOS
+	PRINTLN_INFO("Cont CCL: %.2f A, Const DCL: %.2f A\n",
+		     bms_algos->cont_CCL, bms_algos->cont_DCL);
+
+	PRINTLN_INFO("Inst CCL: %.2f A, Inst DCL: %.2f A\n",
+		     bms_algos->inst_CCL, bms_algos->inst_DCL);
+#endif
+
+#endif // end println info
+
+#if defined(LOG_WARNING) && !defined(NO_LOG) // group all of the warnings together for print
+#ifdef DEBUG_HV_PLATE_FAULTS
+    if (hv_plate->adbms_flags.raw > 0) {
 		if (hv_plate->adbms_flags.flags.noclk) {
 			PRINTLN_WARNING("HVP FLT: NOCLK - OSC1 STUCK");
 		}
@@ -93,66 +160,60 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	}
 #endif
 
-#ifdef DEBUG_VOLTAGES
-	PRINTLN_INFO("Min, Max, Avg, Delta Voltages: %f, %f, %f, %f\n",
-		     analyzer->min_voltage.val, analyzer->max_voltage.val,
-		     analyzer->avg_voltage, analyzer->delt_voltage);
-
-	PRINTLN_INFO("Raw Cell Voltages:");
-	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			PRINTLN_INFO(
-				"%.3f\t",
-				analyzer->chip_data[c].cell_voltages[cell]);
+#ifdef DEBUG_SEGMENT_FAULTS
+    for (int chip = 0; chip < NUM_CHIPS; chip++) {
+		if (analyzer->chip_data[chip].flt_reg.cs_flt > 0) {
+			printf("WARNING: C VS S MISMATCH on cells ");
+			for (int i = 0; i < NUM_CELLS_PER_CHIP; i++) {
+				if (NER_GET_BIT(chips[chip].statc.cs_flt, i)) {
+					printf("%d, ", i);
+				}
+			}
+			printf(" of c%d\n", chip);
 		}
-		printf("\n");
-	}
-
-	PRINTLN_INFO("S ADC Voltages:");
-	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			PRINTLN_INFO("%.3f\t",
-				     getVoltage(acc_data->chips[c]
-							.scell.sc_codes[cell]));
+		if (analyzer->chip_data[chip].flt_reg.va_ov) {
+			PRINTLN_WARNING("A OV FLT c%d\n", chip);
 		}
-		printf("\n");
-	}
-
-	PRINTLN_INFO("Raw Cell OCV:");
-	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			PRINTLN_INFO(
-				"%.3f\t",
-				analyzer->chip_data[c].open_cell_voltage[cell]);
+		if (analyzer->chip_data[chip].flt_reg.va_uv) {
+			PRINTLN_WARNING("A UV FLT c%d\n", chip);
 		}
-		printf("\n");
+		if (analyzer->chip_data[chip].flt_reg.vd_ov) {
+			PRINTLN_WARNING("D OV FLT c%d\n", chip);
+		}
+		if (analyzer->chip_data[chip].flt_reg.vd_uv) {
+			PRINTLN_WARNING("D UV FLT c%d\n", chip);
+		}
+		if (analyzer->chip_data[chip].flt_reg.vde) {
+			PRINTLN_WARNING("VDE FLT c%d\n", chip);
+		}
+		if (analyzer->chip_data[chip].flt_reg.vdel) {
+			PRINTLN_WARNING("VDEL FLT c%d\n", chip);
+		}
+		if (analyzer->chip_data[chip].flt_reg.spiflt) {
+			PRINTLN_WARNING("SPI SLV FLT c%d\n", chip);
+		}
+		if (analyzer->chip_data[chip].flt_reg.sleep) {
+			PRINTLN_WARNING("SLEEP OCCURED c%d\n", chip);
+		}
+		if (analyzer->chip_data[chip].flt_reg.thsd) {
+			PRINTLN_WARNING("THERMAL FLT c%d\n", chip);
+		}
+		if (analyzer->chip_data[chip].flt_reg.tmodchk) {
+			PRINTLN_WARNING("TMODE FLT c%d\n", chip);
+		}
+
+		if (analyzer->chip_data[chip].flt_reg.otp1_med) {
+			PRINTLN_WARNING("CMED? FLT c%d\n", chip);
+		}
+		if (analyzer->chip_data[chip].flt_reg.otp2_med) {
+			PRINTLN_WARNING("SMED? FLT c%d\n", chip);
+		}
 	}
 #endif
 
-#ifdef DEBUG_TEMPS
-	PRINTLN_INFO("Therm Temps:");
-	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			PRINTLN_INFO("Chip %d, Cell: %d, %.1f C\t", c, cell,
-				     analyzer->chip_data[c].cell_temp[cell]);
-		}
-		printf("\n");
-	}
-	PRINTLN_INFO("CHIP TEMPS: \n");
-	for (uint8_t c = 0; c < NUM_CHIPS; c++) {
-		PRINTLN_INFO("Chip: %d, %.1f\t C", c,
-			     analyzer->chip_data[c].die_temp);
-	}
-	printf("\n");
-#endif
+#endif // end log warnings
 
-#ifdef DEBUG_ALGOS
-	PRINTLN_INFO("Cont CCL: %.2f A, Const DCL: %.2f A\n",
-		     bms_algos->cont_CCL, bms_algos->cont_DCL);
-
-	PRINTLN_INFO("Inst CCL: %.2f A, Inst DCL: %.2f A\n",
-		     bms_algos->inst_CCL, bms_algos->inst_DCL);
-#endif
+    _Pragma("GCC diagnostic pop")
 }
 
 void vDefaultTask(ULONG thread_input)
@@ -517,7 +578,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	static thread_t _precharge_thread = {
 		.name = "Precharge Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 4, /* Priority */
+		.priority = 1, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)&hv_plate, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
