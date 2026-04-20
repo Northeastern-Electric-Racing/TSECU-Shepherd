@@ -197,8 +197,8 @@ void vHvPlateData(ULONG thread_input)
 	bms_algos_t *bms_algos = hv_plate_args->bms_algos;
 	state_machine_t *state_machine = hv_plate_args->state_machine;
 
-	dcl_init(COOLDOWN_ON_FULL_PULSE);
-	ccl_init(COOLDOWN_ON_FULL_PULSE);
+	dcl_init(COOLDOWN_ALWAYS);
+	ccl_init(COOLDOWN_ALWAYS);
 
 	// initialize HV Plate struct and start conversions
 	init_hv_plate(hv_plate, ACCI_8);
