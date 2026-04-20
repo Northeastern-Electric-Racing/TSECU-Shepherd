@@ -1403,7 +1403,7 @@ uint8_t send_pack_soc_status
 }
 
 uint8_t send_shutdown_as_read_by_bms
-(bool shutdown)
+(bool shutdown_state,bool shutdown_ts_minus_sense,bool shutdown_ts_plus_sense,bool shutdown_acc_sense,bool shutdown_tsip_sense)
 {
     can_msg_t msg;
     msg.id = 0x95;
@@ -1411,10 +1411,30 @@ uint8_t send_shutdown_as_read_by_bms
     
             uint8_t data = 0;
             msg.len = 1;
-                        uint32_t shutdown_i = (uint32_t)(shutdown);
-                        if(shutdown_i > 255ULL) {shutdown_i = 255;
+                        uint32_t shutdown_state_i = (uint32_t)(shutdown_state);
+                        if(shutdown_state_i > 1ULL) {shutdown_state_i = 1;
                         }
-                        data |= ((shutdown_i) & 0xFFULL) << 0;
+                        data |= ((shutdown_state_i) & 0x1ULL) << 7;
+            
+                        uint32_t shutdown_ts_minus_sense_i = (uint32_t)(shutdown_ts_minus_sense);
+                        if(shutdown_ts_minus_sense_i > 1ULL) {shutdown_ts_minus_sense_i = 1;
+                        }
+                        data |= ((shutdown_ts_minus_sense_i) & 0x1ULL) << 6;
+            
+                        uint32_t shutdown_ts_plus_sense_i = (uint32_t)(shutdown_ts_plus_sense);
+                        if(shutdown_ts_plus_sense_i > 1ULL) {shutdown_ts_plus_sense_i = 1;
+                        }
+                        data |= ((shutdown_ts_plus_sense_i) & 0x1ULL) << 5;
+            
+                        uint32_t shutdown_acc_sense_i = (uint32_t)(shutdown_acc_sense);
+                        if(shutdown_acc_sense_i > 1ULL) {shutdown_acc_sense_i = 1;
+                        }
+                        data |= ((shutdown_acc_sense_i) & 0x1ULL) << 4;
+            
+                        uint32_t shutdown_tsip_sense_i = (uint32_t)(shutdown_tsip_sense);
+                        if(shutdown_tsip_sense_i > 1ULL) {shutdown_tsip_sense_i = 1;
+                        }
+                        data |= ((shutdown_tsip_sense_i) & 0x1ULL) << 3;
             
             msg.data[0] = data;
 

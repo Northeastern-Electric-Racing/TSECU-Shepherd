@@ -372,10 +372,14 @@ uint8_t send_pack_soc_status
 
 /**
 * Contents of this message:
-* BMS/shutdown/state - Current shutdown state
+* BMS/Shutdown/State - Current shutdown state
+* BMS/Shutdown/TS_Minus_Sense - 
+* BMS/Shutdown/TS_Plus_Sense - 
+* BMS/Shutdown/Acc_Sense - 
+* BMS/Shutdown/TSIP_Sense - 
 */
 uint8_t send_shutdown_as_read_by_bms
-(bool shutdown);
+(bool shutdown_state,bool shutdown_ts_minus_sense,bool shutdown_ts_plus_sense,bool shutdown_acc_sense,bool shutdown_tsip_sense);
 
 /**
 * Contents of this message:
