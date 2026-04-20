@@ -134,6 +134,7 @@ void init_faulted(state_machine_args_t *state_machine_args)
 	send_max_dc_brake_current_command(0);
 	send_bms_charge_message_send(0, 0, 0xFF);
 	state_machine_args->state_machine->balancing_active = false;
+	compute_set_fault(true);
 }
 
 void handle_faulted(state_machine_args_t *state_machine_args)
