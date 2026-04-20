@@ -2,6 +2,7 @@
 #include "analyzer.h"
 #include <math.h>
 #include <float.h>
+#include "bms_config.h"
 #include "datastructs.h"
 #include "serialPrintResult.h"
 #include "timer.h"
@@ -30,8 +31,8 @@ const int THERM_MAP[NUM_CELLS_PER_CHIP] = { 0, 0, 1, 1, 5, 5, 6,
 static float calc_temp(float res)
 {
 	// achieved via math --  See BMS 25 Mapping and Calcs
-	return ((298.15 * 3462.28) / (298.15 * logf(res / 10100) + 3462.28)) -
-	       273.15;
+	return ((298.15f * 3462.28f) / (298.15f * logf(res / 10100) + 3462.28f)) -
+	       273.15f;
 }
 
 /**
@@ -74,7 +75,7 @@ void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 		// conversion rate from datasheet, Table 105.  also in driver src
 		analyzer->chip_data[chip].die_temp =
 			(getVoltage(acc_data->chips[chip].stata.itmp) /
-			 0.0075) -
+			 0.0075f) -
 			273;
 	}
 }
@@ -123,7 +124,7 @@ void calc_pack_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 		/* only for NERO */
 		if (chip % 2 == 1) {
 			analyzer->segment_average_temps[chip / 2] =
-				total_seg_temp / ((float)(NUM_CELLS));
+				total_seg_temp / ((float)(NUM_CELLS_PER_CHIP * NUM_CHIPS_PER_SEGMENT));
 			total_seg_temp = 0;
 		}
 
@@ -262,7 +263,7 @@ void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data)
 		if (c % 2 == 1) {
 			// calc averge volatage across a segment
 			analyzer->segment_average_volts[c / 2] =
-				total_seg_volt / ((float)(NUM_CELLS));
+				total_seg_volt / ((float)(NUM_CELLS_PER_CHIP * NUM_CHIPS_PER_SEGMENT));
 			analyzer->segment_total_volts[c / 2] = total_seg_volt;
 			analyzer->segment_delt_volts[c / 2] =
 				analyzer->max_voltage.val -
