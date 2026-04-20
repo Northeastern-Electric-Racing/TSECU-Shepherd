@@ -140,8 +140,6 @@ void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
 
 void handle_precharge(prechargeconfig_t *precharge_config)
 {
-	static count = 0;
-
 	hv_plate_t *hv_plate = precharge_config->hv_plate;
 	update_sample_buffer(&ts_volts_sample_buffer, hv_plate->ts_volts);
 	update_sample_buffer(&batt_volts_sample_buffer, hv_plate->batt_volts);
