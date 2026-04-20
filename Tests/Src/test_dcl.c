@@ -149,7 +149,7 @@ void test_cont_dcl_pulse_state_transitions(void)
     dcl_calc_cont_limit(test_pack_current, &test_algos);
     TEST_ASSERT_EQUAL_FLOAT(DCL_MAX_PULSE_CURRENT_A, test_algos.cont_DCL);
 
-    /* REST -> over max continuous ccl current, debounce not active */
+    /* REST -> over max continuous dcl current, debounce not active */
     is_timer_active_ExpectAnyArgsAndReturn(false);
     test_pack_current = DCL_MAX_CURRENT_A + 2.0f;
 
