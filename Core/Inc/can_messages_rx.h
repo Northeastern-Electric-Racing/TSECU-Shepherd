@@ -325,6 +325,7 @@ typedef struct {
  bool ONBOARD_PEDAL_DIFFERENCE_FAULT;
  bool RTDS_FAULT;
  bool LV_LOW_VOLTAGE_FAULT;
+ bool PRECHARGE_FLOATING_FAULT;
 } faults_t;
 
 void receive_faults(const can_msg_t *message, faults_t *faults);

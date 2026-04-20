@@ -6,14 +6,20 @@
 #include "hv_plate.h"
 #include "can_messages_tx.h"
 
+typedef enum {
+	PRECHARGE_OPEN = 0,
+	PRECHARGE_FLOATING = 1,
+	PRECHARGE_CLOSED = 2,
+} precharge_state_t;
+
 typedef struct {
 	hv_plate_t *hv_plate;
-	GPO_2950 gpo;
 	float transition_ratio;
 	nertimer_t open_debounce_timer;
 	nertimer_t close_debounce_timer;
-	uint32_t debounce_time;
-	bool air_switch_closed;
+	nertimer_t closed_to_floating_debounce_timer;
+	nertimer_t open_to_floating_debounce_timer;
+	precharge_state_t precharge_state;
 } prechargeconfig_t;
 
 /**
@@ -22,10 +28,9 @@ typedef struct {
  * @param precharge_config is the empty configuration to configure.
  * @param ic pointer to ADBMS2950 data struct
  * @param threshold_ratio if batt volts > ts volts * threshold_ratio, close the AIR switch
- * @param debounce_time is the time to wait after the AIR switch opens before closing again (to prevent immediate closes) in milliseconds.
  */
 void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
-		    float transition_ratio, uint32_t debounce_time);
+		    float transition_ratio);
 /**
  * @brief Handles the precharge routine given the current BATT and TS voltages.
  * @param precharge_config the prechsarge configuration struct.
