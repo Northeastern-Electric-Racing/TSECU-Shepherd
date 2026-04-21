@@ -119,8 +119,8 @@ float parse_dti_input_voltage(can_msg_t msg) {
 // CAN RECIEVE THREAD
 void vCanReceive(ULONG thread_input) {
   can_receive_args_t *can_receive_args = (can_receive_args_t *)thread_input;
-  state_machine_t *state_machine_args = can_receive_args->state_machine;
-  hv_plate_t *hv_plate_args = can_receive_args->hv_plate;
+  state_machine_args_t *state_machine_args = can_receive_args->state_machine_args;
+  hv_plate_t *hv_plate = can_receive_args->hv_plate;
 
   can_msg_t message;
   for (;;) {
@@ -141,7 +141,7 @@ void vCanReceive(ULONG thread_input) {
         pwm_duty_cycle_set(message.data[0]);
         break;
       case DTI_INPUT_VOLTAGE_CANID:
-        hv_plate_args->ts_volts = parse_dti_input_voltage(message);
+        hv_plate->ts_volts = parse_dti_input_voltage(message);
         break;
       default:
         break;
