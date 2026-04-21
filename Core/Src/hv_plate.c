@@ -116,7 +116,8 @@ void get_ts_voltage(hv_plate_t *hv_plate)
 
 	// Equation is based on resistances of voltage divider:
 	// R1: 3.6 MOhms, R2: 4.53 kOhms (+ V1P25 reference)
-	hv_plate->ts_volts = ((3600000 + 4530) * volts) / 4530 + 1.25;
+	float ts_volts = ((3600000 + 4530) * volts) / 4530 + 1.25;
+	PRINTLN_INFO("TS Voltage READ FROM ADBMS2950: %.3f V", ts_volts);
 }
 
 void get_shunt_temp(hv_plate_t *hv_plate)
@@ -241,7 +242,7 @@ void vHvPlateData(ULONG thread_input)
 		}
 
 		// read ts voltage
-		// get_ts_voltage(hv_plate);
+		get_ts_voltage(hv_plate);
 
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
@@ -252,10 +253,12 @@ void vHvPlateData(ULONG thread_input)
 
 			// send hv plate data for telemetry
 			PRINTLN_INFO("Sending HV Plate Data...");
-			send_hv_plate_data(hv_plate->batt_volts,
-					   hv_plate->ts_volts,
-					   hv_plate->shunt_temp,
-					   hv_plate->pack_current);
+			
+			send_hv_plate_voltages(hv_plate->batt_volts,
+					   hv_plate->ts_volts);
+
+			send_pack_current_and_shunt_temp(hv_plate->pack_current,
+						 hv_plate->shunt_temp);
 
 			// read flags
 			get_flags(hv_plate);

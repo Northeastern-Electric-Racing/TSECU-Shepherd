@@ -1126,8 +1126,8 @@ uint8_t send_precharge_status
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
 
-uint8_t send_hv_plate_data
-(float batt_voltage,float ts_voltage,float shunt_temp,float pack_current)
+uint8_t send_hv_plate_voltages
+(float batt_voltage,float ts_voltage)
 {
     can_msg_t msg;
     msg.id = 0x701;
@@ -1136,28 +1136,16 @@ uint8_t send_hv_plate_data
             uint64_t data = 0;
             msg.len = 8;
                         int32_t batt_voltage_i = (int32_t)(batt_voltage*100);
-                        if(batt_voltage_i > 32767) {batt_voltage_i = 32767;
-                        } else if(batt_voltage_i < -32768) {batt_voltage_i = -32768;
+                        if(batt_voltage_i > 2147483647) {batt_voltage_i = 2147483647;
+                        } else if(batt_voltage_i < -2147483648) {batt_voltage_i = -2147483648;
                         }
-                        data |= ((uint32_t)(batt_voltage_i) & 0xFFFFULL) << 48;
+                        data |= ((uint32_t)(batt_voltage_i) & 0xFFFFFFFFULL) << 32;
             
                         int32_t ts_voltage_i = (int32_t)(ts_voltage*100);
-                        if(ts_voltage_i > 32767) {ts_voltage_i = 32767;
-                        } else if(ts_voltage_i < -32768) {ts_voltage_i = -32768;
+                        if(ts_voltage_i > 2147483647) {ts_voltage_i = 2147483647;
+                        } else if(ts_voltage_i < -2147483648) {ts_voltage_i = -2147483648;
                         }
-                        data |= ((uint32_t)(ts_voltage_i) & 0xFFFFULL) << 32;
-            
-                        int32_t shunt_temp_i = (int32_t)(shunt_temp*100);
-                        if(shunt_temp_i > 32767) {shunt_temp_i = 32767;
-                        } else if(shunt_temp_i < -32768) {shunt_temp_i = -32768;
-                        }
-                        data |= ((uint32_t)(shunt_temp_i) & 0xFFFFULL) << 16;
-            
-                        int32_t pack_current_i = (int32_t)(pack_current*100);
-                        if(pack_current_i > 32767) {pack_current_i = 32767;
-                        } else if(pack_current_i < -32768) {pack_current_i = -32768;
-                        }
-                        data |= ((uint32_t)(pack_current_i) & 0xFFFFULL) << 0;
+                        data |= ((uint32_t)(ts_voltage_i) & 0xFFFFFFFFULL) << 0;
             
             uint64_t data_bigendian = __builtin_bswap64(data);
             memcpy(msg.data, &data_bigendian, 8);
@@ -1485,6 +1473,32 @@ uint8_t send_bms_critically_faulted
                         data |= ((critically_faulted_i) & 0x1ULL) << 7;
             
             msg.data[0] = data;
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_pack_current_and_shunt_temp
+(float pack_current,float shunt_temp)
+{
+    can_msg_t msg;
+    msg.id = 0x703;
+    msg.id_is_extended = false;
+    
+            uint64_t data = 0;
+            msg.len = 8;
+                        int32_t pack_current_i = (int32_t)(pack_current*100);
+                        if(pack_current_i > 2147483647) {pack_current_i = 2147483647;
+                        } else if(pack_current_i < -2147483648) {pack_current_i = -2147483648;
+                        }
+                        data |= ((uint32_t)(pack_current_i) & 0xFFFFFFFFULL) << 32;
+            
+                        uint32_t shunt_temp_i = (uint32_t)(shunt_temp*100);
+                        if(shunt_temp_i > 4294967295ULL) {shunt_temp_i = 4294967295;
+                        }
+                        data |= ((shunt_temp_i) & 0xFFFFFFFFULL) << 0;
+            
+            uint64_t data_bigendian = __builtin_bswap64(data);
+            memcpy(msg.data, &data_bigendian, 8);
 
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
