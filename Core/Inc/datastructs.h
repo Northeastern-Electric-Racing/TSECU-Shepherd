@@ -410,6 +410,11 @@ typedef struct {
 	acc_data_t *acc_data;
 } default_task_args_t;
 
+typedef struct {
+	state_machine_t *state_machine;
+	hv_plate_t *hv_plate;
+} can_receive_args_t;
+
 /**
  * @brief args for vStateMachine
  */

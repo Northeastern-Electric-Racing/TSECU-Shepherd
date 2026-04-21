@@ -78,7 +78,7 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 	const uint16_t expected_conversions =
 		request_rate / hv_plate->conversion_count;
 
-	read_accumulated_current_vbat_registers(&hv_plate->ic);
+	read_current_vbat_registers(&hv_plate->ic);
 	uint16_t num_conversitions =
 		read_conversion_count_registers(&hv_plate->ic);
 
@@ -94,15 +94,14 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 	    expected_conversions) {
 		// Equation is based on resistances of voltage divider:
 		// R1: 3.6 MOhms, R2: 9.1 kOhms
+
 		hv_plate->batt_volts =
 			((3600000 + 9100) *
-			 get_voltage_conversion(hv_plate->ic.i_vbacc.vb1acc) /
-			 9100) /
-			hv_plate->conversion_count;
+			 get_voltage_conversion(hv_plate->ic.ivbat.vbat1) /
+			 9100);
 
 		hv_plate->pack_current =
-			get_current_conversion(hv_plate->ic.i_vbacc.i1acc) /
-			hv_plate->conversion_count;
+			get_current_conversion(hv_plate->ic.ivbat.i1);
 
 		hv_plate->last_total_converion_count = num_conversitions;
 	}
@@ -219,8 +218,10 @@ void vHvPlateData(ULONG thread_input)
 
 	for (;;) {
 		// get the current reading from the pack
-		get_pack_current_and_batt_voltage(hv_plate,
-						  hv_plate_task_delay);
+		// get_pack_current_and_batt_voltage(hv_plate,
+						//   hv_plate_task_delay);
+
+		hv_plate->batt_volts = analyzer->pack_voltage;
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
@@ -240,7 +241,7 @@ void vHvPlateData(ULONG thread_input)
 		}
 
 		// read ts voltage
-		get_ts_voltage(hv_plate);
+		// get_ts_voltage(hv_plate);
 
 		// read shunt temperature
 		get_shunt_temp(hv_plate);

@@ -36,7 +36,7 @@ uint8_t init_can1(FDCAN_HandleTypeDef *hcan) {
     return U_ERROR;
   }
 
-  uint16_t standard2[] = {CALYPSO_PWM_BAL_CANID, 0x01};
+  uint16_t standard2[] = {CALYPSO_PWM_BAL_CANID, DTI_INPUT_VOLTAGE_CANID};
   status = can_add_filter_standard(&can1, standard2);
   if (status != HAL_OK) {
     PRINTLN_ERROR("Failed to add standard filter to can1 (Status: %d/%s, ID1: "
@@ -47,7 +47,7 @@ uint8_t init_can1(FDCAN_HandleTypeDef *hcan) {
   }
 
   /* Add fitlers for extended IDs */
-  uint32_t extended1[] = {CHARGERBOX_CANID, 0x00};
+  uint32_t extended1[] = {CHARGERBOX_CANID, 0x0};
   status = can_add_filter_extended(&can1, extended1);
   if (status != HAL_OK) {
     PRINTLN_ERROR("Failed to add extended filter to can1 (Status: %d/%s, ID1: "
@@ -105,14 +105,23 @@ float parse_dti_current(can_msg_t msg) {
   int16_t curr = msg.data[2] << 8 | msg.data[3];
   return ((float)curr) / 10;
 }
+
 float parse_charger_current(can_msg_t msg) {
   int16_t curr = msg.data[2] << 8 | msg.data[3];
   return ((float)curr) / 10;
 }
 
+float parse_dti_input_voltage(can_msg_t msg) {
+  int16_t voltage = msg.data[6] << 8 | msg.data[7];
+  return ((float)voltage);
+}
+
 // CAN RECIEVE THREAD
 void vCanReceive(ULONG thread_input) {
-  state_machine_args_t *state_machine_args = (state_machine_args_t *)thread_input;
+  can_receive_args_t *can_receive_args = (can_receive_args_t *)thread_input;
+  state_machine_t *state_machine_args = can_receive_args->state_machine;
+  hv_plate_t *hv_plate_args = can_receive_args->hv_plate;
+
   can_msg_t message;
   for (;;) {
     /* Process incoming messages */
@@ -130,6 +139,9 @@ void vCanReceive(ULONG thread_input) {
         break;
       case CALYPSO_PWM_BAL_CANID:
         pwm_duty_cycle_set(message.data[0]);
+        break;
+      case DTI_INPUT_VOLTAGE_CANID:
+        hv_plate_args->ts_volts = parse_dti_input_voltage(message);
         break;
       default:
         break;

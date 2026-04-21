@@ -44,11 +44,12 @@ static int32_t _p3t1755_read(uint16_t dev_addr, uint16_t reg, uint8_t *data,
 static int32_t _p3t1755_write(uint16_t dev_addr, uint16_t reg, uint8_t *data,
 			      uint8_t length)
 {
-	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(
-		&hi2c1, dev_addr, data, length, HAL_MAX_DELAY);
+	HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hi2c1, dev_addr, reg,
+						    sizeof(reg), data, length,
+						    HAL_MAX_DELAY);
 	if (status != HAL_OK) {
 		PRINTLN_ERROR(
-			"Failed to call HAL_I2C_Master_Transmit() to write to "
+			"Failed to call HAL_I2C_Mem_Write() to write to "
 			"P3T1755 (Status: %d/%s).",
 			status, hal_status_toString(status));
 		return status;
