@@ -15,6 +15,8 @@
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 #define THERM_B_VAL	 3380
 
+#define HV_ENABLE_GPO GPO2_2950
+
 #define microV(x) ((x * 1e-6))
 
 static float get_current_conversion(uint32_t data)
@@ -71,42 +73,26 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 	hv_plate->adbms_flags.raw = 0; // reset flags
 }
 
-void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
-				       uint16_t request_rate)
+void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate)
 {
-	snap_2950(&hv_plate->ic);
-	const uint16_t expected_conversions =
-		request_rate / hv_plate->conversion_count;
+	set_gpo(&hv_plate->ic, HV_ENABLE_GPO);
 
-	read_accumulated_current_vbat_registers(&hv_plate->ic);
-	uint16_t num_conversitions =
-		read_conversion_count_registers(&hv_plate->ic);
+	snap_2950(&hv_plate->ic);;
 
-	// indicates that the I1CNT register wrapped around
-	if (num_conversitions < hv_plate->last_total_converion_count) {
-		hv_plate->last_total_converion_count = 0;
-	}
+	read_current_vbat_registers(&hv_plate->ic);
 
-	// check if the adequate number of conversions have been
-	// made before determining if acculmulated current is valid current reading is valid
-	if ((num_conversitions - hv_plate->last_total_converion_count) /
-		    hv_plate->conversion_count >=
-	    expected_conversions) {
-		// Equation is based on resistances of voltage divider:
-		// R1: 3.6 MOhms, R2: 9.1 kOhms
-		hv_plate->batt_volts =
-			((3600000 + 9100) *
-			 get_voltage_conversion(hv_plate->ic.i_vbacc.vb1acc) /
-			 9100) /
-			hv_plate->conversion_count;
+	// Equation is based on resistances of voltage divider:
+	// R1: 3.6 MOhms, R2: 9.1 kOhms
+	hv_plate->batt_volts =
+		(3600000 + 9100) *
+			get_voltage_conversion(hv_plate->ic.ivbat.vbat1) /
+			9100;
 
-		hv_plate->pack_current =
-			get_current_conversion(hv_plate->ic.i_vbacc.i1acc) /
-			hv_plate->conversion_count;
+	hv_plate->pack_current = get_current_conversion(hv_plate->ic.ivbat.i1);
 
-		hv_plate->last_total_converion_count = num_conversitions;
-	}
 	unsnap_2950(&hv_plate->ic);
+
+	reset_gpo(&hv_plate->ic, HV_ENABLE_GPO);
 }
 
 void get_ts_voltage(hv_plate_t *hv_plate)
@@ -209,9 +195,7 @@ void vHvPlateData(ULONG thread_input)
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
-	set_gpo(&hv_plate->ic,
-		GPO2_2950); // enable HV1 readings on ADBMS2950 devkit
-
+	// initialize precharge relay open
 	reset_gpo(&hv_plate->ic,
 		GPO4_2950); 
 

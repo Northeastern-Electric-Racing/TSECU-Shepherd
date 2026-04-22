@@ -307,6 +307,12 @@ void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
 			    NONE2950); /* Accumulated Battery Voltage Group*/
 }
 
+void read_current_vbat_registers(cell_asic_2950 *ic)
+{
+	read_adbms2950_data(ic, RDIVB1, Ivbat,
+			    NONE2950); /* Battery Voltage and Current Group*/
+}
+
 void read_v7_register(cell_asic_2950 *ic)
 {
 	adBms2950_Adv(1, ic, OW_OFF, SM_V7_V9);
