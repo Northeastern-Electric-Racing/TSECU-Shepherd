@@ -231,10 +231,11 @@ void vHvPlateData(ULONG thread_input)
 
 			// send hv plate data for telemetry
 			PRINTLN_INFO("Sending HV Plate Data...");
-			send_hv_plate_data(hv_plate->batt_volts,
-					   hv_plate->ts_volts,
-					   hv_plate->shunt_temp,
-					   hv_plate->pack_current);
+			send_hv_plate_voltages(hv_plate->batt_volts,
+					   hv_plate->ts_volts);
+
+			send_pack_current_and_shunt_temp(hv_plate->pack_current, 
+				hv_plate->shunt_temp);
 
 			// read flags
 			get_flags(hv_plate);

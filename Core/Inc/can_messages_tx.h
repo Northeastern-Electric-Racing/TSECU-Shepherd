@@ -289,20 +289,18 @@ uint8_t send_onboard_therm_temperatures
 
 /**
 * Contents of this message:
-* BMS/Precharge/Status - Indicates whether Precharge is active or not
+* BMS/HV_Plate/Precharge - Indicates whether Precharge is active or not
 */
 uint8_t send_precharge_status
 (uint8_t precharge_status);
 
 /**
 * Contents of this message:
-* BMS/Precharge/Batt_Voltage - Battery Voltage
+* BMS/HV_Plate/Batt_Voltage - Batt Voltage
 * BMS/Precharge/TS_Voltage - TS Voltage
-* BMS/Precharge/Shunt_Temp - Shunt Temperature
-* BMS/Precharge/Pack_Current - Pack Current
 */
-uint8_t send_hv_plate_data
-(float batt_voltage,float ts_voltage,float shunt_temp,float pack_current);
+uint8_t send_hv_plate_voltages
+(float batt_voltage,float ts_voltage);
 
 /**
 * Contents of this message:
@@ -320,11 +318,11 @@ uint8_t send_hv_plate_pec_errors
 
 /**
 * Contents of this message:
-* BMS/Plate/Diagnostics/Flags - ADBMS2950 Flags
-* BMS/Plate/Diagnostics/VREG - VREG power supply pin
-* BMS/Plate/Diagnostics/TMP1 - Primary internal temperature
-* BMS/Plate/Diagnostics/VREF1P25 - VREF1P25 reference pin
-* BMS/Plate/Diagnostics/OSCCNT - Oscillator count
+* BMS/HV_Plate/Diagnostics/Flags - ADBMS2950 Flags
+* BMS/HV_Plate/Diagnostics/VREG - VREG power supply pin
+* BMS/HV_Plate/Diagnostics/TMP1 - Primary internal temperature
+* BMS/HV_Plate/Diagnostics/VREF1P25 - VREF1P25 reference pin
+* BMS/HV_Plate/Diagnostics/OSCCNT - Oscillator count
 */
 uint8_t send_hv_plate_diagnostics
 (uint16_t flags,float vreg,float tmp1,float vref1p25,uint16_t osccnt);
@@ -397,6 +395,14 @@ uint8_t send_hv_plate_isospi_communication_status
 */
 uint8_t send_bms_critically_faulted
 (bool critically_faulted);
+
+/**
+* Contents of this message:
+* BMS/HV_Plate/Pack_Current - 
+* BMS/HV_Plate/Shunt_Temp - 
+*/
+uint8_t send_pack_current_and_shunt_temp
+(float pack_current,float shunt_temp);
 
 /**
 * Contents of this message:
