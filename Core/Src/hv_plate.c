@@ -75,8 +75,6 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 
 void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate)
 {
-	set_gpo(&hv_plate->ic, HV_ENABLE_GPO);
-
 	snap_2950(&hv_plate->ic);;
 
 	read_current_vbat_registers(&hv_plate->ic);
@@ -91,8 +89,6 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate)
 	hv_plate->pack_current = get_current_conversion(hv_plate->ic.ivbat.i1);
 
 	unsnap_2950(&hv_plate->ic);
-
-	reset_gpo(&hv_plate->ic, HV_ENABLE_GPO);
 }
 
 void get_ts_voltage(hv_plate_t *hv_plate)
@@ -172,7 +168,6 @@ void vHvPlateData(ULONG thread_input)
 {
 	PRINTLN_INFO("Starting HV Plate thread...");
 
-	const int hv_plate_task_delay = 50; // in ms
 	const uint16_t diagnostic_read_frequency = 1000; // 2s
 	nertimer_t diagnostic_read_timer;
 
@@ -196,8 +191,10 @@ void vHvPlateData(ULONG thread_input)
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
 	// initialize precharge relay open
-	reset_gpo(&hv_plate->ic,
-		GPO4_2950); 
+	reset_gpo(&hv_plate->ic, HV_CTRL_GPO); 
+
+	// enable reading HV
+	set_gpo(&hv_plate->ic, HV_ENABLE_GPO);
 
 	soc_init();
 
