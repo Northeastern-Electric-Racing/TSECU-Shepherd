@@ -357,6 +357,7 @@ PC7.GPIO_Label=FAN_PWM0
 PC7.Locked=true
 PC7.Signal=S_TIM3_CH2
 PCC.Checker=false
+PCC.Display=Plot\: All Steps
 PCC.Line=STM32H563/H573
 PCC.MCU=STM32H563ZITx
 PCC.PartNumber=STM32H563ZITx

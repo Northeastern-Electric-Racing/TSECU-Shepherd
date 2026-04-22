@@ -61,7 +61,7 @@ static void send_floating_precharge_fault(void *args)
 		return;
 	}
 	precharge_config->precharge_state = PRECHARGE_FLOATING;
-	send_precharge_status((uint8_t)PRECHARGE_FLOATING);	
+	send_precharge_status((uint8_t)PRECHARGE_FLOATING);
 }
 
 static void init_sample_buffer(sample_buffer_t *buffer)
@@ -104,7 +104,7 @@ static precharge_state_t get_precharge_state(float ts_volts_avg, float batt_volt
 					    float transition_ratio, float pack_current)
 {
 	if (batt_volts_avg < (MINIMUM_PACK_VOLTAGE - BATT_VOLT_BUFFER)) {
-		return PRECHARGE_OPEN; 
+		return PRECHARGE_OPEN;
 	}
 
 	if (ts_volts_avg >= batt_volts_avg * transition_ratio) {
@@ -159,9 +159,9 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 	debounce(precharge_state == PRECHARGE_OPEN, &precharge_config->close_debounce_timer,
 		 PRECHARGE_TOGGLE_TIME, open_relay, precharge_config);
 
-	debounce((precharge_config->precharge_state == PRECHARGE_OPEN || precharge_config->precharge_state == PRECHARGE_FLOATING) 
+	debounce((precharge_config->precharge_state == PRECHARGE_OPEN || precharge_config->precharge_state == PRECHARGE_FLOATING)
 		&& precharge_state == PRECHARGE_FLOATING, &precharge_config->open_to_floating_debounce_timer, PRECHARGE_FLOATING_FAULT_TIME, send_floating_precharge_fault, precharge_config);
-		
+
 	debounce(precharge_config->precharge_state == PRECHARGE_CLOSED && precharge_state == PRECHARGE_FLOATING, &precharge_config->closed_to_floating_debounce_timer,
 		 PRECHARGE_TOGGLE_TIME, send_floating_precharge_fault, precharge_config);
 }
