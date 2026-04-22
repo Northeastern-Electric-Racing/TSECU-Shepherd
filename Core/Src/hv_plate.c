@@ -74,6 +74,9 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 				       uint16_t request_rate)
 {
+	set_gpo(&hv_plate->ic,
+		GPO2_2950);
+
 	snap_2950(&hv_plate->ic);
 	const uint16_t expected_conversions =
 		request_rate / hv_plate->conversion_count;
@@ -106,6 +109,9 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
 		hv_plate->last_total_converion_count = num_conversitions;
 	}
 	unsnap_2950(&hv_plate->ic);
+
+	reset_gpo(&hv_plate->ic,
+		GPO2_2950);
 }
 
 void get_ts_voltage(hv_plate_t *hv_plate)
@@ -209,9 +215,6 @@ void vHvPlateData(ULONG thread_input)
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
-	set_gpo(&hv_plate->ic,
-		GPO2_2950); // enable HV1 readings on ADBMS2950 devkit
-
 	reset_gpo(&hv_plate->ic,
 		GPO4_2950); 
 
@@ -253,7 +256,7 @@ void vHvPlateData(ULONG thread_input)
 
 			// send hv plate data for telemetry
 			PRINTLN_INFO("Sending HV Plate Data...");
-			
+
 			send_hv_plate_voltages(hv_plate->batt_volts,
 					   hv_plate->ts_volts);
 
