@@ -75,24 +75,23 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count)
 
 void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate)
 {
-	set_gpo(&hv_plate->ic, HV_ENABLE_GPO);
-
 	snap_2950(&hv_plate->ic);;
 
 	read_current_vbat_registers(&hv_plate->ic);
 
 	// Equation is based on resistances of voltage divider:
 	// R1: 3.6 MOhms, R2: 9.1 kOhms
-	hv_plate->batt_volts =
+	float batt_volts =
 		(3600000 + 9100) *
 			get_voltage_conversion(hv_plate->ic.ivbat.vbat1) /
 			9100;
+
+	PRINTLN_INFO("Battery Voltage READ FROM ADBMS2950: %.3f V", batt_volts);
 
 	hv_plate->pack_current = get_current_conversion(hv_plate->ic.ivbat.i1);
 
 	unsnap_2950(&hv_plate->ic);
 
-	reset_gpo(&hv_plate->ic, HV_ENABLE_GPO);
 }
 
 void get_ts_voltage(hv_plate_t *hv_plate)
@@ -200,6 +199,8 @@ void vHvPlateData(ULONG thread_input)
 		GPO4_2950); 
 
 	soc_init();
+
+	set_gpo(&hv_plate->ic, HV_ENABLE_GPO);
 
 	for (;;) {
 		// get the current reading from the pack
