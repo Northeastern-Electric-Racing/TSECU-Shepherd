@@ -416,15 +416,15 @@ void read_shutdown(peripherals_t *peripherals)
 	static const uint16_t debounce_time = 200; // ms
 
 	// Read shutdown sense using TS_MINUS_SENSE pin
-	bool shutdown_inactive =
+	bool shutdown =
 		read_shutdown_ts_minus_sense() &&
 		read_shutdown_ts_plus_sense() &&
 		read_shutdown_acc_sense() &&
 		read_shutdown_tsip_sense();
 
-	debounce(!shutdown_inactive, &shutdown_active_timer, debounce_time,
+	debounce(shutdown, &shutdown_active_timer, debounce_time,
 		 set_shutdown_active, peripherals);
-	debounce(shutdown_inactive, &shutdown_inactive_timer, debounce_time,
+	debounce(!shutdown, &shutdown_inactive_timer, debounce_time,
 		 set_shutdown_inactive, peripherals);
 }
 
