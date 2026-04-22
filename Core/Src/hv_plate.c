@@ -266,10 +266,6 @@ void vHvPlateData(ULONG thread_input)
 		send_max_dc_current_command(bms_algos->cont_DCL);
 		send_max_dc_brake_current_command(bms_algos->cont_CCL);
 
-<<<<<<< HEAD
-		tx_thread_sleep(hv_plate_task_delay);
-=======
 		tx_thread_sleep(50);
->>>>>>> 1e0bf30 (fixups)
 	}
 }
