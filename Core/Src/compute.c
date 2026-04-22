@@ -44,11 +44,12 @@ static int32_t _p3t1755_read(uint16_t dev_addr, uint16_t reg, uint8_t *data,
 static int32_t _p3t1755_write(uint16_t dev_addr, uint16_t reg, uint8_t *data,
 			      uint8_t length)
 {
-	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(
-		&hi2c1, dev_addr, data, length, HAL_MAX_DELAY);
+	HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hi2c1, dev_addr, reg,
+						    sizeof(reg), data, length,
+						    HAL_MAX_DELAY);
 	if (status != HAL_OK) {
 		PRINTLN_ERROR(
-			"Failed to call HAL_I2C_Master_Transmit() to write to "
+			"Failed to call HAL_I2C_Mem_Write() to write to "
 			"P3T1755 (Status: %d/%s).",
 			status, hal_status_toString(status));
 		return status;
@@ -415,15 +416,15 @@ void read_shutdown(peripherals_t *peripherals)
 	static const uint16_t debounce_time = 200; // ms
 
 	// Read shutdown sense using TS_MINUS_SENSE pin
-	bool shutdown_inactive =
+	bool shutdown =
 		read_shutdown_ts_minus_sense() &&
 		read_shutdown_ts_plus_sense() &&
 		read_shutdown_acc_sense() &&
 		read_shutdown_tsip_sense();
 
-	debounce(!shutdown_inactive, &shutdown_active_timer, debounce_time,
+	debounce(shutdown, &shutdown_active_timer, debounce_time,
 		 set_shutdown_active, peripherals);
-	debounce(shutdown_inactive, &shutdown_inactive_timer, debounce_time,
+	debounce(!shutdown, &shutdown_inactive_timer, debounce_time,
 		 set_shutdown_inactive, peripherals);
 }
 
