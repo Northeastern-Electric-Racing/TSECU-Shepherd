@@ -203,8 +203,7 @@ void vHvPlateData(ULONG thread_input)
 
 	for (;;) {
 		// get the current reading from the pack
-		get_pack_current_and_batt_voltage(hv_plate,
-						  hv_plate_task_delay);
+		get_pack_current_and_batt_voltage(hv_plate);
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
@@ -261,6 +260,6 @@ void vHvPlateData(ULONG thread_input)
 		send_max_dc_current_command(bms_algos->cont_DCL);
 		send_max_dc_brake_current_command(bms_algos->cont_CCL);
 
-		tx_thread_sleep(MS_TO_TICKS(hv_plate_task_delay));
+		tx_thread_sleep(50);
 	}
 }

@@ -22,10 +22,8 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count);
  * @brief Gets the pack current reading from the adbms2950
  *
  * @param hv_plate pointer to hv plate data struct
- * @param reques_rate the rate at which this function is called in milliseconds
  */
-void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
-				       uint16_t request_rate);
+void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate);
 
 /**
  * @brief Gets the TS voltage from the adbms2950
