@@ -173,7 +173,6 @@ void vHvPlateData(ULONG thread_input)
 {
 	PRINTLN_INFO("Starting HV Plate thread...");
 
-	const int hv_plate_task_delay = 50; // in ms
 	const uint16_t diagnostic_read_frequency = 1000; // 2s
 	nertimer_t diagnostic_read_timer;
 
@@ -204,8 +203,7 @@ void vHvPlateData(ULONG thread_input)
 
 	for (;;) {
 		// get the current reading from the pack
-		get_pack_current_and_batt_voltage(hv_plate,
-					hv_plate_task_delay);
+		get_pack_current_and_batt_voltage(hv_plate);
 
 		hv_plate->batt_volts = analyzer->pack_voltage;
 
