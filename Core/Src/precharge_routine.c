@@ -4,8 +4,8 @@
 
 #define MINIMUM_PACK_VOLTAGE 325.0f
 
-#define NUM_SAMPLES_FOR_AVG 20
-#define PRRECHARGE_TRIGGER_THRESHOLD 0.95f
+#define NUM_SAMPLES_FOR_AVG 5
+#define PRRECHARGE_TRIGGER_THRESHOLD 0.90f
 
 #define TS_VOLT_BUFFER 5.0f
 #define BATT_VOLT_BUFFER 10.0f
@@ -61,7 +61,7 @@ static void send_floating_precharge_fault(void *args)
 		return;
 	}
 	precharge_config->precharge_state = PRECHARGE_FLOATING;
-	send_precharge_status((uint8_t)PRECHARGE_FLOATING);	
+	send_precharge_status((uint8_t)PRECHARGE_FLOATING);
 }
 
 static void init_sample_buffer(sample_buffer_t *buffer)
@@ -101,16 +101,18 @@ static float get_average_sample(sample_buffer_t *buffer)
 }
 
 static precharge_state_t get_precharge_state(float ts_volts_avg, float batt_volts_avg,
-					    float transition_ratio)
+					    float transition_ratio, float pack_current)
 {
 	if (batt_volts_avg < (MINIMUM_PACK_VOLTAGE - BATT_VOLT_BUFFER)) {
-		return PRECHARGE_OPEN; 
+		return PRECHARGE_OPEN;
 	}
 
 	if (ts_volts_avg >= batt_volts_avg * transition_ratio) {
 		return PRECHARGE_CLOSED;
-	} else if (ts_volts_avg < batt_volts_avg * transition_ratio &&
+	} else if (fabs(pack_current) <= 1 && ts_volts_avg < batt_volts_avg * transition_ratio &&
 		   ts_volts_avg > TS_VOLT_BUFFER) {
+		// if the voltage remains under the threshold when not discharging
+		// precharge will be in floating state
 		return PRECHARGE_FLOATING;
 	} else {
 		return PRECHARGE_OPEN;
@@ -148,7 +150,7 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 	float batt_volts_avg = get_average_sample(&batt_volts_sample_buffer);
 
 	precharge_state_t precharge_state = get_precharge_state(ts_volts_avg, batt_volts_avg,
-					    precharge_config->transition_ratio);
+					    precharge_config->transition_ratio, hv_plate->pack_current);
 
 	debounce(precharge_state == PRECHARGE_CLOSED, &precharge_config->open_debounce_timer,
 		 PRECHARGE_TOGGLE_TIME, close_relay,
@@ -157,9 +159,9 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 	debounce(precharge_state == PRECHARGE_OPEN, &precharge_config->close_debounce_timer,
 		 PRECHARGE_TOGGLE_TIME, open_relay, precharge_config);
 
-	debounce((precharge_config->precharge_state == PRECHARGE_OPEN || precharge_config->precharge_state == PRECHARGE_FLOATING) 
+	debounce((precharge_config->precharge_state == PRECHARGE_OPEN || precharge_config->precharge_state == PRECHARGE_FLOATING)
 		&& precharge_state == PRECHARGE_FLOATING, &precharge_config->open_to_floating_debounce_timer, PRECHARGE_FLOATING_FAULT_TIME, send_floating_precharge_fault, precharge_config);
-		
+
 	debounce(precharge_config->precharge_state == PRECHARGE_CLOSED && precharge_state == PRECHARGE_FLOATING, &precharge_config->closed_to_floating_debounce_timer,
 		 PRECHARGE_TOGGLE_TIME, send_floating_precharge_fault, precharge_config);
 }
