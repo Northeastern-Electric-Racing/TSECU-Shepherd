@@ -4,8 +4,8 @@
 
 #define MINIMUM_PACK_VOLTAGE 325.0f
 
-#define NUM_SAMPLES_FOR_AVG 20
-#define PRRECHARGE_TRIGGER_THRESHOLD 0.95f
+#define NUM_SAMPLES_FOR_AVG 5
+#define PRRECHARGE_TRIGGER_THRESHOLD_PERCENT 0.90f
 
 #define TS_VOLT_BUFFER 5.0f
 #define BATT_VOLT_BUFFER 10.0f
@@ -174,7 +174,7 @@ void vPrecharge(ULONG args)
 	static const uint16_t TELEMETRY_LOOP_TIMEOUT = 2000;
 
 	prechargeconfig_t precharge_config;
-	precharge_init(&precharge_config, hv_plate, PRRECHARGE_TRIGGER_THRESHOLD);
+	precharge_init(&precharge_config, hv_plate, PRRECHARGE_TRIGGER_THRESHOLD_PERCENT);
 
 	init_sample_buffer(&ts_volts_sample_buffer);
 	init_sample_buffer(&batt_volts_sample_buffer);
