@@ -176,7 +176,7 @@ void vPrecharge(ULONG args)
 	static const uint16_t TELEMETRY_LOOP_TIMEOUT = 2000;
 
 	prechargeconfig_t precharge_config;
-	precharge_init(&precharge_config, hv_plate, PRRECHARGE_TRIGGER_THRESHOLD_PERCENT);
+	precharge_init(&precharge_config, hv_plate, PRRECHARGE_TRIGGER_THRESHOLD);
 
 	init_sample_buffer(&ts_volts_sample_buffer);
 	init_sample_buffer(&batt_volts_sample_buffer);
