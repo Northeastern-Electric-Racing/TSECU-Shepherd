@@ -254,11 +254,11 @@ bool sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
 	bool fault_present = (condition1 && condition2) ||
 			     (condition1 && item->optype_2 == NOP);
 
-	if (!is_timer_active(&item->timer) && !fault_present) {
+	if (is_timer_expired(&item->timer) && !is_timer_active(&item->timer) && !fault_present) {
 		return false;
 	}
 
-	if (is_timer_active(&item->timer)) {
+	if (is_timer_expired(&item->timer) || is_timer_active(&item->timer)) {
 		if (!fault_present) {
 			PRINTLN_INFO("\tFault cleared: %s\n", item->id);
 			cancel_timer(&item->timer);
