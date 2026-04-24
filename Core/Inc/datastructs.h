@@ -106,6 +106,12 @@ typedef enum {
 	FAULT_TIMER_EXPIRED,
 } fault_timer_status_t;
 
+typedef enum {
+	FAULT_NONE,
+	FAULT_ONGOING,
+	FAULT_TRIGGERED,
+} fault_state_t;
+
 /**
  * @brief Data needed for the therm temp sanitizer
  */

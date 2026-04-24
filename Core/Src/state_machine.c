@@ -185,18 +185,23 @@ void sm_fault_return(state_machine_args_t *state_machine_args)
 	/* FAULT CHECK (Check for fuckies) */
 	update_eval_table(state_machine_args);
 
-	bool faulted = false;
+	fault_state_t fault_state = false;
 	for (int i = 0; i < NUM_FAULTS; i++) {
-		faulted = sm_fault_eval(&fault_eval_table[i], i);
-		if (faulted) {
-			fault_flags |= (1 << i);
+		fault_state = sm_fault_eval(&fault_eval_table[i], i);
+		if (fault_state == FAULT_NONE) {
+			atomic_fetch_and(&fault_flags, ~((uint32_t)(1 << i)));
+		} else if (FAULT_TRIGGERED == fault_state) {
+			if (fault_eval_table[i].is_critical) {
+                send_bms_critically_faulted(true);
+			}
+			atomic_fetch_or(&fault_flags, (uint32_t)(1 << i));
 		} else {
-			fault_flags &= ~(1 << i);
+			// ongoing fault, do nothing
 		}
 	}
 }
 
-bool sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
+fault_state_t sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
 {
 	bool condition1;
 	bool condition2;
@@ -255,7 +260,7 @@ bool sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
 			     (condition1 && item->optype_2 == NOP);
 
 	if (!is_timer_active(&item->timer) && !fault_present) {
-		return false;
+		return FAULT_NONE;
 	}
 
 	if (is_timer_active(&item->timer)) {
@@ -265,7 +270,7 @@ bool sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
 			// STOPPING TIMER MESSSAGE
 			send_bms_fault_timers(FAULT_TIMER_STOPPED, fault_code,
 					      item->data_1);
-			return false;
+			return FAULT_NONE;
 		}
 
 		if (is_timer_expired(&item->timer) && fault_present) {
@@ -274,14 +279,11 @@ bool sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
 			// FAULT TIMER EXPIRED MESSAGE
 			send_bms_fault_timers(FAULT_TIMER_EXPIRED, fault_code,
 					      item->data_1);
-			if (item->is_critical) {
-                send_bms_critically_faulted(true);
-			}
 			cancel_timer(&item->timer);
-			return true;
+			return FAULT_TRIGGERED;
 		}
 
-		return false;
+		return FAULT_ONGOING;
 
 	} else if (!is_timer_active(&item->timer) && fault_present) {
 		PRINTLN_INFO("\tStarting Fault Timer: %s\n", item->id);
@@ -290,11 +292,11 @@ bool sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
 		send_bms_fault_timers(FAULT_TIMER_STARTED, fault_code,
 				      item->data_1);
 
-		return false;
+		return FAULT_ONGOING;
 	}
 
 	PRINTLN_ERROR("Should not have reached here.");
-	return true;
+	return FAULT_NONE;
 }
 
 /* This charging algorithm has 3 stages
@@ -483,14 +485,14 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 			bms_algos->cont_CCL;
 		fault_eval_table[CELL_VOLTAGE_TOO_LOW].data_1 =
 			analyzer->min_ocv.val;
-		fault_eval_table[CELL_VOLTAGE_TOO_HIGH].data_1 =
+		fault_eval_table[CELL_VOLTAGE_TOO_HIGH].data_1 = 
 			analyzer->max_ocv.val;
 		fault_eval_table[CELL_CHARGE_VOLTAGE_TOO_HIGH].data_1 =
 			analyzer->max_ocv.val;
 		fault_eval_table[CELL_CHARGE_VOLTAGE_TOO_HIGH].data_2 =
 			(state_machine->bms_state == CHARGING);
 		fault_eval_table[PACK_TOO_HOT].data_1 =
-			sanitizer->max_sanitized_temp.val;
+			analyzer->max_temp.val;
 		fault_eval_table[DIE_TEMP_MAXIMUM_FAULT].data_1 =
 			analyzer->max_chiptemp.val;
 		fault_eval_table[SEGMENT_COMMS_FAULT].data_1 =
@@ -554,7 +556,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		fault_eval_table[PACK_TOO_HOT] = (fault_eval_t){
 			.id = "High Cell Temp",
 			.timer = high_temp_timer,
-			.data_1 = sanitizer->max_sanitized_temp.val,
+			.data_1 = analyzer->max_temp.val,
 			.optype_1 = GT,
 			.lim_1 = MAX_CELL_TEMP,
 			.timeout = HIGH_TEMP_TIME,
@@ -609,6 +611,7 @@ void vStateMachine(ULONG thread_input)
 	analyzer_t *analyzer = state_machine_args->analyzer;
 
 	state_machine->bms_state = BOOT;
+	init_boot(state_machine_args);
 	state_machine->balancing_active = false;
 	state_machine->is_charger_connected = false;
 
