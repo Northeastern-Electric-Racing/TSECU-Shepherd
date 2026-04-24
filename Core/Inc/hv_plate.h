@@ -8,7 +8,7 @@
 #include "app_threadx.h"
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
-#define HV_CTRL_GPO	 GPIO4_2950
+#define HV_CTRL_GPO	 GPO4_2950
 
 /**
  * @brief Initializes an hv plate struct
