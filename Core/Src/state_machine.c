@@ -492,7 +492,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		fault_eval_table[CELL_CHARGE_VOLTAGE_TOO_HIGH].data_2 =
 			(state_machine->bms_state == CHARGING);
 		fault_eval_table[PACK_TOO_HOT].data_1 =
-			analyzer->max_temp.val;
+			sanitizer->max_sanitized_temp.val;
 		fault_eval_table[DIE_TEMP_MAXIMUM_FAULT].data_1 =
 			analyzer->max_chiptemp.val;
 		fault_eval_table[SEGMENT_COMMS_FAULT].data_1 =
@@ -556,7 +556,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		fault_eval_table[PACK_TOO_HOT] = (fault_eval_t){
 			.id = "High Cell Temp",
 			.timer = high_temp_timer,
-			.data_1 = analyzer->max_temp.val,
+			.data_1 = sanitizer->max_sanitized_temp.val,
 			.optype_1 = GT,
 			.lim_1 = MAX_CELL_TEMP,
 			.timeout = HIGH_TEMP_TIME,
@@ -580,7 +580,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 			.data_1 = state_machine->segment_comms_fault_flag,
 			.optype_1 = GE,
 			.lim_1 = true,
-			.timeout = 0,
+			.timeout = 20000,
 			.optype_2 = NOP, // UNUSED
 			.is_critical = false
 		};
@@ -591,7 +591,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 			.data_1 = state_machine->hv_plate_comms_fault_flag,
 			.optype_1 = GE,
 			.lim_1 = true,
-			.timeout = 0,
+			.timeout = 20000,
 			.optype_2 = NOP, // UNUSED
 			.is_critical = true
 		};
