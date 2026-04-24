@@ -162,8 +162,8 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 	debounce((precharge_config->precharge_state == PRECHARGE_OPEN || precharge_config->precharge_state == PRECHARGE_FLOATING)
 		&& precharge_state == PRECHARGE_FLOATING, &precharge_config->open_to_floating_debounce_timer, PRECHARGE_FLOATING_FAULT_TIME, send_floating_precharge_fault, precharge_config);
 
-	debounce(precharge_config->precharge_state == PRECHARGE_CLOSED && precharge_state == PRECHARGE_FLOATING, &precharge_config->closed_to_floating_debounce_timer,
-		 PRECHARGE_TOGGLE_TIME, send_floating_precharge_fault, precharge_config);
+	debounce(precharge_config->precharge_state == PRECHARGE_CLOSED && (precharge_state == PRECHARGE_FLOATING || precharge_state == PRECHARGE_OPEN), 
+		&precharge_config->closed_to_floating_debounce_timer, PRECHARGE_TOGGLE_TIME, open_relay, precharge_config);
 }
 
 // PRECHARGE THREAD
