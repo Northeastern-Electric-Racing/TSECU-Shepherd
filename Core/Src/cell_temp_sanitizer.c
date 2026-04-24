@@ -114,7 +114,7 @@ void vSanitizer(ULONG thread_input)
 
 	for (;;) {
 		temp_sanitizer_run(sanitizer, analyzer);
-		tx_thread_sleep(MS_TO_TICKS(500));
+		tx_thread_sleep(500);
 	}
 }
 

@@ -33,8 +33,8 @@ void vBMSAlgorithms(ULONG thread_input)
 		current_limit_algo_inputs_t algo_inputs = {
 			.max_ocv = analyzer->max_ocv.val,
 			.min_ocv = analyzer->min_ocv.val,
-			.max_temp = sanitizer->max_sanitized_temp.val,
-			.min_temp = sanitizer->min_sanitized_temp.val
+			.max_temp = analyzer->max_temp.val,
+			.min_temp = analyzer->min_temp.val
 		};
 
 		dcl_calc_inst_limit(algo_inputs, bms_algos);

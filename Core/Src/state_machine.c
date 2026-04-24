@@ -277,6 +277,7 @@ bool sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
 			if (item->is_critical) {
                 send_bms_critically_faulted(true);
 			}
+			cancel_timer(&item->timer);
 			return true;
 		}
 
