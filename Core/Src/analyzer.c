@@ -43,6 +43,9 @@ static float calc_temp(float res)
  */
 static float calc_cell_temp(float voltage)
 {
+	if (voltage <= 0.0f || voltage >= 3.0f){
+		return NAN;
+	}
 	float res = (10000 * (3 - voltage)) / voltage;
 	return calc_temp(res);
 }
@@ -82,7 +85,7 @@ void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 
 void calc_pack_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 {
-	analyzer->max_temp.val = FLT_MIN;
+	analyzer->max_temp.val = -FLT_MAX;
 	analyzer->max_temp.cellNum = 0;
 	analyzer->max_temp.chipIndex = 0;
 
@@ -97,28 +100,27 @@ void calc_pack_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			if (analyzer->chip_data[chip].cell_temp[cell] >
-			    analyzer->max_temp.val) {
-				analyzer->max_temp.val =
-					analyzer->chip_data[chip]
-						.cell_temp[cell];
+			float t = analyzer->chip_data[chip].cell_temp[cell];
+			// added isnan() condition to ensure NaN cells don't block min/max from updating
+			if (isnan(t)) {
+				continue;
+			}
+
+			if (t > analyzer->max_temp.val) {
+				analyzer->max_temp.val = t;
 				analyzer->max_temp.cellNum = cell;
 				analyzer->max_temp.chipIndex = chip;
 			}
 
 			/* finds out the minimum cell temp and location */
-			if (analyzer->chip_data[chip].cell_temp[cell] <
-			    analyzer->min_temp.val) {
-				analyzer->min_temp.val =
-					analyzer->chip_data[chip]
-						.cell_temp[cell];
+			if (t < analyzer->min_temp.val) {
+				analyzer->min_temp.val = t;
 				analyzer->min_temp.cellNum = cell;
 				analyzer->min_temp.chipIndex = chip;
 			}
 
-			total_temp += analyzer->chip_data[chip].cell_temp[cell];
-			total_seg_temp +=
-				analyzer->chip_data[chip].cell_temp[cell];
+			total_temp += t;
+			total_seg_temp += t;
 		}
 
 		/* only for NERO */

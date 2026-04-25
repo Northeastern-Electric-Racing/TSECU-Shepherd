@@ -6,7 +6,7 @@
 
 void temp_sanitizer_init(sanitizer_t *sanitizer)
 {
-	sanitizer->max_sanitized_temp.val = FLT_MIN;
+	sanitizer->max_sanitized_temp.val = -FLT_MAX;
 	sanitizer->max_sanitized_temp.cellNum = 0;
 	sanitizer->max_sanitized_temp.chipIndex = 0;
 
@@ -64,7 +64,7 @@ static void sanitized_min_temp(sanitizer_t *sanitizer, analyzer_t *analyzer, int
 			cell &&
 		sanitizer->min_sanitized_temp.chipIndex ==
 			chip) {
-		sanitizer->max_sanitized_temp.val = analyzer->avg_temp;
+		sanitizer->min_sanitized_temp.val = analyzer->avg_temp;
 	}
 }
 		
