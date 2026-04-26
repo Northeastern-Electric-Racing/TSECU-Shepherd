@@ -139,6 +139,7 @@ void init_faulted(state_machine_args_t *state_machine_args)
 
 void handle_faulted(state_machine_args_t *state_machine_args)
 {
+	compute_set_fault(true);
 	// leave faulted if all is well
 	if (!are_critical_faults_active()) {
 		request_transition(state_machine_args, BOOT);
