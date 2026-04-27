@@ -46,6 +46,16 @@ uint8_t init_can1(FDCAN_HandleTypeDef *hcan) {
     return U_ERROR;
   }
 
+  uint16_t standard3[] = {DTI_DC_CURRENT_CANID, 0x0};
+  status = can_add_filter_standard(&can1, standard3);
+  if (status != HAL_OK) {
+    PRINTLN_ERROR("Failed to add standard filter to can1 (Status: %d/%s, ID1: "
+                  "%d, ID2: %d).",
+                  status, hal_status_toString(status), standard3[0],
+                  standard3[1]);
+    return U_ERROR;
+  }
+
   /* Add fitlers for extended IDs */
   uint32_t extended1[] = {CHARGERBOX_CANID, 0x0};
   status = can_add_filter_extended(&can1, extended1);
@@ -142,6 +152,9 @@ void vCanReceive(ULONG thread_input) {
         break;
       case DTI_INPUT_VOLTAGE_CANID:
         hv_plate->ts_volts = parse_dti_input_voltage(message);
+        break;
+      case DTI_DC_CURRENT_CANID:
+        hv_plate->pack_current = parse_dti_current(message);
         break;
       default:
         break;

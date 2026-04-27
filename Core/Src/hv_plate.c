@@ -88,7 +88,8 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate)
 
 	PRINTLN_INFO("Battery Voltage READ FROM ADBMS2950: %.3f V", batt_volts);
 
-	hv_plate->pack_current = get_current_conversion(hv_plate->ic.ivbat.i1);
+	float pack_current = get_current_conversion(hv_plate->ic.ivbat.i1);
+	PRINTLN_INFO("Pack Current READ FROM ADBMS2950: %.3f A", pack_current);
 
 	unsnap_2950(&hv_plate->ic);
 
