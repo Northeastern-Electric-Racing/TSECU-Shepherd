@@ -12,6 +12,10 @@
 #include "hv_plate_isospi_recovery.h"
 #include <math.h>
 
+static float adbms_batt_volts = 0;
+static float adbms_ts_volts = 0;
+static float adbms_pack_current = 0;
+
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 #define THERM_B_VAL	 3380
 
@@ -81,15 +85,15 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate)
 
 	// Equation is based on resistances of voltage divider:
 	// R1: 3.6 MOhms, R2: 9.1 kOhms
-	float batt_volts =
+	adbms_batt_volts =
 		(3600000 + 9100) *
 			get_voltage_conversion(hv_plate->ic.ivbat.vbat1) /
 			9100;
 
-	PRINTLN_INFO("Battery Voltage READ FROM ADBMS2950: %.3f V", batt_volts);
+	PRINTLN_INFO("Battery Voltage READ FROM ADBMS2950: %.3f V", adbms_batt_volts);
 
-	float pack_current = get_current_conversion(hv_plate->ic.ivbat.i1);
-	PRINTLN_INFO("Pack Current READ FROM ADBMS2950: %.3f A", pack_current);
+	adbms_pack_current = get_current_conversion(hv_plate->ic.ivbat.i1);
+	PRINTLN_INFO("Pack Current READ FROM ADBMS2950: %.3f A", adbms_pack_current);
 
 	unsnap_2950(&hv_plate->ic);
 
@@ -103,8 +107,8 @@ void get_ts_voltage(hv_plate_t *hv_plate)
 
 	// Equation is based on resistances of voltage divider:
 	// R1: 3.6 MOhms, R2: 4.53 kOhms (+ V1P25 reference)
-	float ts_volts = ((3600000 + 4530) * volts) / 4530 + 1.25;
-	PRINTLN_INFO("TS Voltage READ FROM ADBMS2950: %.3f V", ts_volts);
+	adbms_ts_volts = ((3600000 + 4530) * volts) / 4530 + 1.25;
+	PRINTLN_INFO("TS Voltage READ FROM ADBMS2950: %.3f V", adbms_ts_volts);
 }
 
 void get_shunt_temp(hv_plate_t *hv_plate)
@@ -241,6 +245,10 @@ void vHvPlateData(ULONG thread_input)
 
 			send_hv_plate_voltages(hv_plate->batt_volts,
 					   hv_plate->ts_volts);
+			
+			send_hv_plate_voltages_adbms(adbms_batt_volts, adbms_ts_volts);
+
+			send_pack_current_and_shunt_temp_adbms(adbms_pack_current, hv_plate->shunt_temp);
 
 			send_pack_current_and_shunt_temp(hv_plate->pack_current,
 						 hv_plate->shunt_temp);

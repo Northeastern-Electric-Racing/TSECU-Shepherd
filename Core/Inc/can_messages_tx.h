@@ -406,6 +406,22 @@ uint8_t send_pack_current_and_shunt_temp
 
 /**
 * Contents of this message:
+* BMS/HV_Plate/ADBMS2950/Batt_Volts - Batt volts reported from the ADBMS2950
+* BMS/HV_Plate/ADBMS2950/TS_Volts - TS volts reported from the ADBMS2950
+*/
+uint8_t send_hv_plate_voltages_adbms
+(float batt_volts,float ts_volts);
+
+/**
+* Contents of this message:
+* BMS/HV_Plate/ADBMS2950/Pack_Current - Pack Current Reported from ADBMS2950
+* BMS/HV_Plate/ADBMS2950/Shunt_Temp - Shunt Temp Reported from ADBMS2950
+*/
+uint8_t send_pack_current_and_shunt_temp_adbms
+(float pack_current,float shunt_temp);
+
+/**
+* Contents of this message:
 * BMS/Charging/Voltage - Voltage to charge to
 * BMS/Charging/Current - Current to charge at
 * BMS/Charging/Control - Whether to charge
