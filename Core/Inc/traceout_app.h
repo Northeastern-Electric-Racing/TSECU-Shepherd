@@ -7,7 +7,7 @@
 #define TRACEOUT_APP_H
 
 #ifndef ENABLE_TRACEX
-#define ENABLE_TRACEX 1
+#define ENABLE_TRACEX 0
 #endif /* ENABLE_TRACEX */
 
 #if (ENABLE_TRACEX)
