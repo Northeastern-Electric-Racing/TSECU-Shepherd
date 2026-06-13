@@ -89,7 +89,7 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 	PRINTLN_INFO("Therm Temps:");
 	for(uint8_t c3 = 0; c3 < NUM_CHIPS; c3++) {
         for(uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-            printf("%.1f\t", acc_data->chip_data[c3].cell_temp[cell]);
+            printf("%.1f\t", analyzer->chip_data[c3].cell_temp[cell]);
         }
         printf("\n");
     }
