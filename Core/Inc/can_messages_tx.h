@@ -10,31 +10,13 @@
 
 /**
 * Contents of this message:
-* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
+* BMS/Charging/Voltage - Voltage to charge to
+* BMS/Charging/Current - Current to charge at
+* BMS/Charging/Control - Whether to charge
+* BMS/Charging/UnimplementedData - Reserved
 */
-uint8_t send_max_ac_current_command
-(float max_current_ac_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
-*/
-uint8_t send_max_ac_brake_current_command
-(float max_ac_brake_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
-*/
-uint8_t send_max_dc_current_command
-(float max_dc_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
-*/
-uint8_t send_max_dc_brake_current_command
-(float max_dc_brake_current_target);
+uint8_t send_bms_charge_message_send
+(float charge_volts,float charge_current,uint8_t enable_charging);
 
 /**
 * Contents of this message:
@@ -406,11 +388,45 @@ uint8_t send_pack_current_and_shunt_temp
 
 /**
 * Contents of this message:
-* BMS/Charging/Voltage - Voltage to charge to
-* BMS/Charging/Current - Current to charge at
-* BMS/Charging/Control - Whether to charge
-* BMS/Charging/UnimplementedData - Reserved
+* BMS/HV_Plate/ADBMS2950/Batt_Volts - Batt volts reported from the ADBMS2950
+* BMS/HV_Plate/ADBMS2950/TS_Volts - TS volts reported from the ADBMS2950
 */
-uint8_t send_bms_charge_message_send
-(float charge_volts,float charge_current,uint8_t enable_charging);
+uint8_t send_hv_plate_voltages_adbms
+(float batt_volts,float ts_volts);
+
+/**
+* Contents of this message:
+* BMS/HV_Plate/ADBMS2950/Pack_Current - Pack Current Reported from ADBMS2950
+* BMS/HV_Plate/ADBMS2950/Shunt_Temp - Shunt Temp Reported from ADBMS2950
+*/
+uint8_t send_pack_current_and_shunt_temp_adbms
+(float pack_current,float shunt_temp);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
+*/
+uint8_t send_max_ac_current_command
+(float max_current_ac_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
+*/
+uint8_t send_max_ac_brake_current_command
+(float max_ac_brake_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
+*/
+uint8_t send_max_dc_current_command
+(float max_dc_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
+*/
+uint8_t send_max_dc_brake_current_command
+(float max_dc_brake_current_target);
 #endif
