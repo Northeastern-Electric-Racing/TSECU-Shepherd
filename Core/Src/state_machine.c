@@ -410,7 +410,9 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 	shutdown_active = state_machine_args->peripherals->shutdown_active;
 	mutex_put(&shutdown_mutex);
 
-	return !shutdown_active;
+	//return !shutdown_active;
+	// FSAE balancing disabled safety
+	return false;
 }
 
 void set_segment_comms_fault(state_machine_t *state_mach)
