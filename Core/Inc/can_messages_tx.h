@@ -10,31 +10,13 @@
 
 /**
 * Contents of this message:
-* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
+* BMS/Charging/Voltage - Voltage to charge to
+* BMS/Charging/Current - Current to charge at
+* BMS/Charging/Control - Whether to charge
+* BMS/Charging/UnimplementedData - Reserved
 */
-uint8_t send_max_ac_current_command
-(float max_current_ac_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
-*/
-uint8_t send_max_ac_brake_current_command
-(float max_ac_brake_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
-*/
-uint8_t send_max_dc_current_command
-(float max_dc_current_target);
-
-/**
-* Contents of this message:
-* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
-*/
-uint8_t send_max_dc_brake_current_command
-(float max_dc_brake_current_target);
+uint8_t send_bms_charge_message_send
+(float charge_volts,float charge_current,uint8_t enable_charging);
 
 /**
 * Contents of this message:
@@ -289,20 +271,18 @@ uint8_t send_onboard_therm_temperatures
 
 /**
 * Contents of this message:
-* BMS/Precharge/Status - Indicates whether Precharge is active or not
+* BMS/HV_Plate/Precharge - Indicates whether Precharge is active or not
 */
 uint8_t send_precharge_status
 (uint8_t precharge_status);
 
 /**
 * Contents of this message:
-* BMS/Precharge/Batt_Voltage - Battery Voltage
+* BMS/HV_Plate/Batt_Voltage - Batt Voltage
 * BMS/Precharge/TS_Voltage - TS Voltage
-* BMS/Precharge/Shunt_Temp - Shunt Temperature
-* BMS/Precharge/Pack_Current - Pack Current
 */
-uint8_t send_hv_plate_data
-(float batt_voltage,float ts_voltage,float shunt_temp,float pack_current);
+uint8_t send_hv_plate_voltages
+(float batt_voltage,float ts_voltage);
 
 /**
 * Contents of this message:
@@ -320,11 +300,11 @@ uint8_t send_hv_plate_pec_errors
 
 /**
 * Contents of this message:
-* BMS/Plate/Diagnostics/Flags - ADBMS2950 Flags
-* BMS/Plate/Diagnostics/VREG - VREG power supply pin
-* BMS/Plate/Diagnostics/TMP1 - Primary internal temperature
-* BMS/Plate/Diagnostics/VREF1P25 - VREF1P25 reference pin
-* BMS/Plate/Diagnostics/OSCCNT - Oscillator count
+* BMS/HV_Plate/Diagnostics/Flags - ADBMS2950 Flags
+* BMS/HV_Plate/Diagnostics/VREG - VREG power supply pin
+* BMS/HV_Plate/Diagnostics/TMP1 - Primary internal temperature
+* BMS/HV_Plate/Diagnostics/VREF1P25 - VREF1P25 reference pin
+* BMS/HV_Plate/Diagnostics/OSCCNT - Oscillator count
 */
 uint8_t send_hv_plate_diagnostics
 (uint16_t flags,float vreg,float tmp1,float vref1p25,uint16_t osccnt);
@@ -400,11 +380,53 @@ uint8_t send_bms_critically_faulted
 
 /**
 * Contents of this message:
-* BMS/Charging/Voltage - Voltage to charge to
-* BMS/Charging/Current - Current to charge at
-* BMS/Charging/Control - Whether to charge
-* BMS/Charging/UnimplementedData - Reserved
+* BMS/HV_Plate/Pack_Current - 
+* BMS/HV_Plate/Shunt_Temp - 
 */
-uint8_t send_bms_charge_message_send
-(float charge_volts,float charge_current,uint8_t enable_charging);
+uint8_t send_pack_current_and_shunt_temp
+(float pack_current,float shunt_temp);
+
+/**
+* Contents of this message:
+* BMS/HV_Plate/ADBMS2950/Batt_Volts - Batt volts reported from the ADBMS2950
+* BMS/HV_Plate/ADBMS2950/TS_Volts - TS volts reported from the ADBMS2950
+*/
+uint8_t send_hv_plate_voltages_adbms
+(float batt_volts,float ts_volts);
+
+/**
+* Contents of this message:
+* BMS/HV_Plate/ADBMS2950/Pack_Current - Pack Current Reported from ADBMS2950
+* BMS/HV_Plate/ADBMS2950/Shunt_Temp - Shunt Temp Reported from ADBMS2950
+*/
+uint8_t send_pack_current_and_shunt_temp_adbms
+(float pack_current,float shunt_temp);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_AC_Current_Target - This value determines the maximum allowable drive current on the AC side
+*/
+uint8_t send_max_ac_current_command
+(float max_current_ac_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_AC_Brake_Current_Target - This value sets the maximum allowable brake current on the AC side
+*/
+uint8_t send_max_ac_brake_current_command
+(float max_ac_brake_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Current_Target - This value determines the maximum allowable drive current on the DC side
+*/
+uint8_t send_max_dc_current_command
+(float max_dc_current_target);
+
+/**
+* Contents of this message:
+* BMS/Commands/Max_DC_Brake_Current_Target - This value determines the maximum allowable brake current on the DC side
+*/
+uint8_t send_max_dc_brake_current_command
+(float max_dc_brake_current_target);
 #endif
