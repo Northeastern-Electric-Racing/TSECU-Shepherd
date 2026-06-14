@@ -1,6 +1,8 @@
 
 #include <assert.h>
 
+#include "c_utils.h"
+
 #include "shep_tasks.h"
 #include "can_handler.h"
 #include "can_messages_tx.h"
@@ -165,7 +167,7 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 		if (analyzer->chip_data[chip].flt_reg.cs_flt > 0) {
 			printf("WARNING: C VS S MISMATCH on cells ");
 			for (int i = 0; i < NUM_CELLS_PER_CHIP; i++) {
-				if (NER_GET_BIT(chips[chip].statc.cs_flt, i)) {
+				if (NER_GET_BIT(acc_data->chips[chip].statc.cs_flt, i)) {
 					printf("%d, ", i);
 				}
 			}
