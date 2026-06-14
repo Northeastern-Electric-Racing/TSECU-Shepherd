@@ -8,7 +8,7 @@
 #include "app_threadx.h"
 
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
-#define HV_CTRL_GPO	 GPIO4_2950
+#define HV_CTRL_GPO	 GPO4_2950
 
 /**
  * @brief Initializes an hv plate struct
@@ -22,10 +22,8 @@ void init_hv_plate(hv_plate_t *hv_plate, ACCI conversion_count);
  * @brief Gets the pack current reading from the adbms2950
  *
  * @param hv_plate pointer to hv plate data struct
- * @param reques_rate the rate at which this function is called in milliseconds
  */
-void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate,
-				       uint16_t request_rate);
+void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate);
 
 /**
  * @brief Gets the TS voltage from the adbms2950

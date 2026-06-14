@@ -69,6 +69,12 @@ void write_clear_flags_2950(cell_asic_2950 *ic);
 void read_accumulated_current_vbat_registers(cell_asic_2950 *ic);
 
 /**
+ * @brief Reads the current and battery voltage registers from the adbms2950.
+ * @param ic Pointer to the adbms2950 data structure.
+ */
+void read_current_vbat_registers(cell_asic_2950 *ic);
+
+/**
  * @brief Reads V7 redundant pair voltage registers.
  * @param ic Pointer to the adbms2950 data structure.
  */
