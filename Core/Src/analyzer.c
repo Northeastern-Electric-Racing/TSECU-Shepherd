@@ -151,10 +151,16 @@ void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
 					getVoltage(acc_data->chips[chip]
 							   .cell.c_codes[cell]);
 			} else {
-				analyzer->chip_data[chip].cell_voltages[cell] =
-					getVoltage(
+				if (chip == 7 && cell == 8) { 
+					analyzer->chip_data[chip].cell_voltages[cell] =
+						getVoltage(acc_data->chips[chip]
+								   .scell.sc_codes[cell]);
+				} else {
+					analyzer->chip_data[chip].cell_voltages[cell] =
+						getVoltage(
 						acc_data->chips[chip]
 							.fcell.fc_codes[cell]);
+				}
 			}
 		}
 		// 25A patch only: alpha lowest and beta highest need to be offset correctly
