@@ -315,7 +315,6 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 
 	charge_stage_t next_stage = state_machine->charging_stage;
 
-	// TODO: MUTEX GET
 	if (analyzer->max_ocv.val > MAX_CHARGE_VOLT_FLT ||
 	    analyzer->max_voltage.val > MAX_CHARGE_VOLT_FLT) {
 		state_machine->charging_stage = FAULT;
@@ -355,7 +354,6 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 		case FAULT:
 			return false; // stuck faulting until restart
 	}
-	// TODO: MUTEX RELEASE
 
 	// Transitioning stages, start the corresponding timer lengths
 	if (next_stage != state_machine->charging_stage) {

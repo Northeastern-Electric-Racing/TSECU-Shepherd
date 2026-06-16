@@ -146,6 +146,8 @@ void vCanReceive(ULONG thread_input) {
       case CHARGERBOX_CANID:
         charger_message_recieved(state_machine_args);
         hv_plate->ts_volts = parse_charger_voltage(message);
+        hv_plate->pack_current = parse_charger_current(message);
+        PRINTLN_INFO("Charging Current: %.2f A", hv_plate->pack_current);
         break;
       case CALYPSO_CONTROL_CANID:
         control_message_fans(message);
