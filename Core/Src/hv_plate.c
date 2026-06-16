@@ -90,10 +90,8 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate)
 			get_voltage_conversion(hv_plate->ic.ivbat.vbat1) /
 			9100;
 
-	PRINTLN_INFO("Battery Voltage READ FROM ADBMS2950: %.3f V", adbms_batt_volts);
 
 	adbms_pack_current = get_current_conversion(hv_plate->ic.ivbat.i1);
-	PRINTLN_INFO("Pack Current READ FROM ADBMS2950: %.3f A", adbms_pack_current);
 
 	unsnap_2950(&hv_plate->ic);
 
@@ -108,7 +106,6 @@ void get_ts_voltage(hv_plate_t *hv_plate)
 	// Equation is based on resistances of voltage divider:
 	// R1: 3.6 MOhms, R2: 4.53 kOhms (+ V1P25 reference)
 	adbms_ts_volts = ((3600000 + 4530) * volts) / 4530 + 1.25;
-	PRINTLN_INFO("TS Voltage READ FROM ADBMS2950: %.3f V", adbms_ts_volts);
 }
 
 void get_shunt_temp(hv_plate_t *hv_plate)
