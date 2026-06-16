@@ -121,6 +121,11 @@ float parse_charger_current(can_msg_t msg) {
   return ((float)curr) / 10;
 }
 
+float parse_charger_voltage(can_msg_t msg) {
+  int16_t voltage = msg.data[0] << 8 | msg.data[1];
+  return ((float)voltage) / 10;
+}
+
 float parse_dti_input_voltage(can_msg_t msg) {
   int16_t voltage = msg.data[6] << 8 | msg.data[7];
   return ((float)voltage);
@@ -140,6 +145,7 @@ void vCanReceive(ULONG thread_input) {
       switch (message.id) {
       case CHARGERBOX_CANID:
         charger_message_recieved(state_machine_args);
+        hv_plate->ts_volts = parse_charger_voltage(message);
         break;
       case CALYPSO_CONTROL_CANID:
         control_message_fans(message);
