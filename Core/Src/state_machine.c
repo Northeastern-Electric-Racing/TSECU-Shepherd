@@ -99,9 +99,9 @@ void handle_charging(state_machine_args_t *state_machine_args)
 						      (NUM_CELLS_PER_CHIP * 2) *
 						      NUM_SEGMENTS),
 						     CHARGING_CURRENT, 0x0);
+		} else {
 			start_timer(&state_machine_args->state_machine
-					     ->charger_message_timer,
-				    1000);
+					     ->charger_message_timer, 1000);
 		}
 	} else {
 		send_bms_charge_message_send(0, 0, 0xFF);
