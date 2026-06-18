@@ -44,6 +44,8 @@ const HandlerFunction_t handler_LUT[NUM_STATES] = { &handle_boot, &handle_ready,
 
 void init_boot(state_machine_args_t *state_machine_args)
 {
+	state_machine_args->state_machine->charger_message_timer.active = false;
+
 	update_eval_table(
 		state_machine_args); // initialize eval table with crit and non crit faults
 
