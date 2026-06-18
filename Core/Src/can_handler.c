@@ -136,6 +136,7 @@ void vCanReceive(ULONG thread_input) {
   can_receive_args_t *can_receive_args = (can_receive_args_t *)thread_input;
   state_machine_args_t *state_machine_args = can_receive_args->state_machine_args;
   hv_plate_t *hv_plate = can_receive_args->hv_plate;
+  state_machine_t *state_machine = state_machine_args->state_machine;
 
   can_msg_t message;
   for (;;) {
@@ -159,7 +160,9 @@ void vCanReceive(ULONG thread_input) {
         pwm_duty_cycle_set(message.data[0]);
         break;
       case DTI_INPUT_VOLTAGE_CANID:
-        hv_plate->ts_volts = parse_dti_input_voltage(message);
+        if (!state_machine->is_charger_connected) {
+            hv_plate->ts_volts = parse_dti_input_voltage(message);
+        }
         break;
       case DTI_DC_CURRENT_CANID:
         hv_plate->pack_current = parse_dti_current(message);
