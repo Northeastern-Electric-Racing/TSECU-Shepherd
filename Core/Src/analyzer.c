@@ -61,6 +61,9 @@ void calc_cell_temps(analyzer_t *analyzer, acc_data_t *acc_data)
 					    .raux.ra_codes[THERM_MAP[cell]];
 			analyzer->chip_data[chip].cell_temp[cell] =
 				calc_cell_temp(getVoltage(x));
+			if (isnan(analyzer->chip_data[chip].cell_temp[cell]) || analyzer->chip_data[chip].cell_temp[cell] > 100 || analyzer->chip_data[chip].cell_temp[cell] < 0) {
+				analyzer->chip_data[chip].cell_temp[cell] = analyzer->avg_temp;
+			}
 		}
 
 		// Calculate onboard therm temps and chip temps
@@ -151,7 +154,7 @@ void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
 					getVoltage(acc_data->chips[chip]
 							   .cell.c_codes[cell]);
 			} else {
-				if (chip == 7 && cell == 8) { 
+				if ((chip == 7 && cell == 8) || (chip == 5 && cell == 8)) { 
 					analyzer->chip_data[chip].cell_voltages[cell] =
 						getVoltage(acc_data->chips[chip]
 								   .scell.sc_codes[cell]);

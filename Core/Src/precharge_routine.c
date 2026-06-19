@@ -2,7 +2,7 @@
 #include <assert.h>
 #include "debounce.h"
 
-#define MINIMUM_PACK_VOLTAGE 325.0f
+#define MINIMUM_PACK_VOLTAGE 200.0f
 
 #define NUM_SAMPLES_FOR_AVG 5
 #define PRRECHARGE_TRIGGER_THRESHOLD 0.90f
