@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <assert.h>
 #include "can_handler.h"
-#include "ethernet.h"
 #include "fdcan.h"
 /* USER CODE END Includes */
 

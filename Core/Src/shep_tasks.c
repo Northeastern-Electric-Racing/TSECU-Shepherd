@@ -12,7 +12,6 @@
 #include "control.h"
 #include "bms_algos.h"
 #include "dcl.h"
-#include "ethernet.h"
 #include "hv_plate.h"
 #include "segment_isospi_recovery.h"
 #include "main.h"
@@ -23,7 +22,6 @@
 #include "soc.h"
 #include "state_machine.h"
 #include "timer.h"
-#include "u_nx_ethernet.h"
 #include "u_tx_can.h"
 #include "u_tx_debug.h"
 #include "u_tx_flags.h"
@@ -480,26 +478,6 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.function = vCanDispatch /* Thread Function */
 	};
 
-	static thread_t _ethernet_incoming_thread = {
-		.name = "Ethernet Incoming Thread", /* Name */
-		.size = 1024, /* Stack Size (in bytes) */
-		.priority = 1, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vEthernetIncoming /* Thread Function */
-	};
-
-	static thread_t _ethernet_outgoing_thread = {
-		.name = "Ethernet Outgoing Thread", /* Name */
-		.size = 1024, /* Stack Size (in bytes) */
-		.priority = 1, /* Priority */
-		.threshold = 0, /* Preemption Threshold */
-		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
-		.auto_start = TX_AUTO_START, /* Auto Start */
-		.function = vEthernetOutgoing /* Thread Function */
-	};
-
 	static thread_t _analyzer_thread = {
 		.name = "Analyzer Thread", /* Name */
 		.size = 1024, /* Stack Size (in bytes) */
@@ -608,10 +586,6 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_ethernet_incoming_thread),
-		    U_SUCCESS);
-	CATCH_ERROR(create_thread(byte_pool, &_ethernet_outgoing_thread),
-		    U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
 		    U_SUCCESS);
