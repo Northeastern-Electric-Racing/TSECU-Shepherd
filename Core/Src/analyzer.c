@@ -465,6 +465,12 @@ void vAnalyzer(ULONG thread_input)
 	memset(analyzer->chip_data, 0, sizeof(analyzer->chip_data));
 
 	for (;;) {
+
+		// Test mode behavior
+		// The Segment task is disabled in test mode. Emulated cell voltage and
+		// temperature measurements are received over CAN, so Analyzer runs
+		// periodically instead of waiting for the Segment task's ANALYZER_FLAG.
+
 #if (TEST_MODE_ENABLED == false)
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
 #endif // TEST_MODE_ENABLED
@@ -472,8 +478,8 @@ void vAnalyzer(ULONG thread_input)
 		// NOTE: All functions that modify chip data are externally mutexed
 		mutex_get(&analyzer_mutex);
 
-		// calculate base values for later safety calcs
 #if (TEST_MODE_ENABLED == false)
+		// calculate base values for later safety calcs
 		calc_cell_temps(analyzer, acc_data);
 		calc_cell_voltages(analyzer, acc_data, state_machine);
 #endif // TEST_MODE_ENABLED

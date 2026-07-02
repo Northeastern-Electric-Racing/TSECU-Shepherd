@@ -586,7 +586,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_analyzer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
-#if (TEST_MODE_ENABLED == false)
+#if (TEST_MODE_ENABLED == false) // In test mode, emulated segment data is received over CAN.
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
 #endif // TEST_MODE_ENABLED
 	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
