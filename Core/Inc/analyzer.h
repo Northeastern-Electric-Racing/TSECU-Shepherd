@@ -55,7 +55,7 @@ void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
  */
 void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data);
 
-#if (TEST_MODE_ENABLED)
+#if TEST_MODE_ENABLED
 /**
  * @brief Updates Alpha cell data from a test CAN frame.
  */

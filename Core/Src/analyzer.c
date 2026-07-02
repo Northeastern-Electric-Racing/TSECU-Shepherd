@@ -394,7 +394,7 @@ void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 	}
 }
 
-#if (TEST_MODE_ENABLED)
+#if TEST_MODE_ENABLED
 void update_emulated_alpha_cell_data(
 	analyzer_t *analyzer,
 	const shepherd_bms_emulated_alpha_cell_data_t *cell_data)
@@ -506,7 +506,7 @@ void vAnalyzer(ULONG thread_input)
 		analyzer->segment_average_temps[0], analyzer->segment_average_temps[1], analyzer->segment_average_temps[2], analyzer->segment_average_temps[3], analyzer->segment_average_temps[4]);
 		send_pack_soc_status(analyzer->soc, get_soc_drift());
 
-#if (TEST_MODE_ENABLED)
+#if TEST_MODE_ENABLED
 		tx_thread_sleep(500);
 #endif // TEST_MODE_ENABLED
 	}
