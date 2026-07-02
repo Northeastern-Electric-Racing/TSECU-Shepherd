@@ -15,6 +15,180 @@
 #include "bitstream.h"
 
 typedef struct {
+ uint8_t pwm_duty;
+} shepherd_bms_fan_percent_t;
+
+void receive_shepherd_bms_fan_percent(const can_msg_t *message, shepherd_bms_fan_percent_t *shepherd_bms_fan_percent);
+
+typedef struct {
+ uint8_t state;
+} dashboard_efuse_state_t;
+
+void receive_dashboard_efuse_state(const can_msg_t *message, dashboard_efuse_state_t *dashboard_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} brake_efuse_state_t;
+
+void receive_brake_efuse_state(const can_msg_t *message, brake_efuse_state_t *brake_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} shutdown_efuse_state_t;
+
+void receive_shutdown_efuse_state(const can_msg_t *message, shutdown_efuse_state_t *shutdown_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} lv_efuse_state_t;
+
+void receive_lv_efuse_state(const can_msg_t *message, lv_efuse_state_t *lv_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} radfan_efuse_state_t;
+
+void receive_radfan_efuse_state(const can_msg_t *message, radfan_efuse_state_t *radfan_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} fanbatt_efuse_state_t;
+
+void receive_fanbatt_efuse_state(const can_msg_t *message, fanbatt_efuse_state_t *fanbatt_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} pumpone_efuse_state_t;
+
+void receive_pumpone_efuse_state(const can_msg_t *message, pumpone_efuse_state_t *pumpone_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} pumptwo_efuse_state_t;
+
+void receive_pumptwo_efuse_state(const can_msg_t *message, pumptwo_efuse_state_t *pumptwo_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} battbox_efuse_state_t;
+
+void receive_battbox_efuse_state(const can_msg_t *message, battbox_efuse_state_t *battbox_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} mc_efuse_state_t;
+
+void receive_mc_efuse_state(const can_msg_t *message, mc_efuse_state_t *mc_efuse_state);
+
+typedef struct {
+ uint8_t state;
+} spare_efuse_state_t;
+
+void receive_spare_efuse_state(const can_msg_t *message, spare_efuse_state_t *spare_efuse_state);
+
+typedef struct {
+ uint8_t command;
+} rtds_command_message_t;
+
+void receive_rtds_command_message(const can_msg_t *message, rtds_command_message_t *rtds_command_message);
+
+typedef struct {
+ float therm;
+ float voltage_a;
+ float voltage_b;
+ uint8_t chip_id;
+ uint8_t cell_a;
+ uint8_t cell_b;
+} shepherd_bms_emulated_alpha_cell_data_t;
+
+void receive_shepherd_bms_emulated_alpha_cell_data(const can_msg_t *message, shepherd_bms_emulated_alpha_cell_data_t *shepherd_bms_emulated_alpha_cell_data);
+
+typedef struct {
+ float therm;
+ float voltage_a;
+ float voltage_b;
+ uint8_t chip_id;
+ uint8_t cell_a;
+ uint8_t cell_b;
+} shepherd_bms_emulated_beta_cell_data_t;
+
+void receive_shepherd_bms_emulated_beta_cell_data(const can_msg_t *message, shepherd_bms_emulated_beta_cell_data_t *shepherd_bms_emulated_beta_cell_data);
+
+typedef struct {
+ float current_target_ac;
+} ac_current_command_t;
+
+void receive_ac_current_command(const can_msg_t *message, ac_current_command_t *ac_current_command);
+
+typedef struct {
+ float brake_ac_current;
+} brake_current_command_t;
+
+void receive_brake_current_command(const can_msg_t *message, brake_current_command_t *brake_current_command);
+
+typedef struct {
+ uint8_t drive_enable;
+} drive_enable_command_t;
+
+void receive_drive_enable_command(const can_msg_t *message, drive_enable_command_t *drive_enable_command);
+
+typedef struct {
+ float accel_x;
+ float accel_y;
+ float accel_z;
+} lightning_board_imu_acceleration_data_t;
+
+void receive_lightning_board_imu_acceleration_data(const can_msg_t *message, lightning_board_imu_acceleration_data_t *lightning_board_imu_acceleration_data);
+
+typedef struct {
+ float gyro_x;
+ float gyro_y;
+ float gyro_z;
+} lightning_board_imu_gyro_data_t;
+
+void receive_lightning_board_imu_gyro_data(const can_msg_t *message, lightning_board_imu_gyro_data_t *lightning_board_imu_gyro_data);
+
+typedef struct {
+ uint8_t interrupt;
+ uint8_t distance;
+ uint32_t energy;
+} lightning_board_lightning_sensor_information_t;
+
+void receive_lightning_board_lightning_sensor_information(const can_msg_t *message, lightning_board_lightning_sensor_information_t *lightning_board_lightning_sensor_information);
+
+typedef struct {
+ float mag_x;
+ float mag_y;
+ float mag_z;
+} lightning_board_magnometer_sensor_information_t;
+
+void receive_lightning_board_magnometer_sensor_information(const can_msg_t *message, lightning_board_magnometer_sensor_information_t *lightning_board_magnometer_sensor_information);
+
+typedef struct {
+ uint32_t count;
+} lightning_pulse_message_t;
+
+void receive_lightning_pulse_message(const can_msg_t *message, lightning_pulse_message_t *lightning_pulse_message);
+
+typedef struct {
+ uint16_t R_iso_corrected;
+ uint8_t R_iso_status;
+ uint8_t Iso_measurement_counter;
+ bool device_error;
+ bool HV_pos_conn_fail;
+ bool HV_neg_conn_fail;
+ bool Earth_conn_fail;
+ bool Iso_alarm;
+ bool iso_warning;
+ bool iso_outdated;
+ bool Unbalance_alarm;
+ bool Undervoltage_alarm;
+ bool Unsafe_to_start;
+} imd_general_information_t;
+
+void receive_imd_general_information(const can_msg_t *message, imd_general_information_t *imd_general_information);
+
+typedef struct {
  uint8_t button_id;
 } wheel_buttons_t;
 
@@ -133,84 +307,6 @@ typedef struct {
 } back_msb_orientation_t;
 
 void receive_back_msb_orientation(const can_msg_t *message, back_msb_orientation_t *back_msb_orientation);
-
-typedef struct {
- uint8_t pwm_duty;
-} shepherd_bms_fan_percent_t;
-
-void receive_shepherd_bms_fan_percent(const can_msg_t *message, shepherd_bms_fan_percent_t *shepherd_bms_fan_percent);
-
-typedef struct {
- uint8_t state;
-} dashboard_efuse_state_t;
-
-void receive_dashboard_efuse_state(const can_msg_t *message, dashboard_efuse_state_t *dashboard_efuse_state);
-
-typedef struct {
- uint8_t state;
-} brake_efuse_state_t;
-
-void receive_brake_efuse_state(const can_msg_t *message, brake_efuse_state_t *brake_efuse_state);
-
-typedef struct {
- uint8_t state;
-} shutdown_efuse_state_t;
-
-void receive_shutdown_efuse_state(const can_msg_t *message, shutdown_efuse_state_t *shutdown_efuse_state);
-
-typedef struct {
- uint8_t state;
-} lv_efuse_state_t;
-
-void receive_lv_efuse_state(const can_msg_t *message, lv_efuse_state_t *lv_efuse_state);
-
-typedef struct {
- uint8_t state;
-} radfan_efuse_state_t;
-
-void receive_radfan_efuse_state(const can_msg_t *message, radfan_efuse_state_t *radfan_efuse_state);
-
-typedef struct {
- uint8_t state;
-} fanbatt_efuse_state_t;
-
-void receive_fanbatt_efuse_state(const can_msg_t *message, fanbatt_efuse_state_t *fanbatt_efuse_state);
-
-typedef struct {
- uint8_t state;
-} pumpone_efuse_state_t;
-
-void receive_pumpone_efuse_state(const can_msg_t *message, pumpone_efuse_state_t *pumpone_efuse_state);
-
-typedef struct {
- uint8_t state;
-} pumptwo_efuse_state_t;
-
-void receive_pumptwo_efuse_state(const can_msg_t *message, pumptwo_efuse_state_t *pumptwo_efuse_state);
-
-typedef struct {
- uint8_t state;
-} battbox_efuse_state_t;
-
-void receive_battbox_efuse_state(const can_msg_t *message, battbox_efuse_state_t *battbox_efuse_state);
-
-typedef struct {
- uint8_t state;
-} mc_efuse_state_t;
-
-void receive_mc_efuse_state(const can_msg_t *message, mc_efuse_state_t *mc_efuse_state);
-
-typedef struct {
- uint8_t state;
-} spare_efuse_state_t;
-
-void receive_spare_efuse_state(const can_msg_t *message, spare_efuse_state_t *spare_efuse_state);
-
-typedef struct {
- uint8_t command;
-} rtds_command_message_t;
-
-void receive_rtds_command_message(const can_msg_t *message, rtds_command_message_t *rtds_command_message);
 
 typedef struct {
  uint16_t ADC;
@@ -536,80 +632,6 @@ typedef struct {
 } reset_latching_fault_t;
 
 void receive_reset_latching_fault(const can_msg_t *message, reset_latching_fault_t *reset_latching_fault);
-
-typedef struct {
- float accel_x;
- float accel_y;
- float accel_z;
-} lightning_board_imu_acceleration_data_t;
-
-void receive_lightning_board_imu_acceleration_data(const can_msg_t *message, lightning_board_imu_acceleration_data_t *lightning_board_imu_acceleration_data);
-
-typedef struct {
- float gyro_x;
- float gyro_y;
- float gyro_z;
-} lightning_board_imu_gyro_data_t;
-
-void receive_lightning_board_imu_gyro_data(const can_msg_t *message, lightning_board_imu_gyro_data_t *lightning_board_imu_gyro_data);
-
-typedef struct {
- uint8_t interrupt;
- uint8_t distance;
- uint32_t energy;
-} lightning_board_lightning_sensor_information_t;
-
-void receive_lightning_board_lightning_sensor_information(const can_msg_t *message, lightning_board_lightning_sensor_information_t *lightning_board_lightning_sensor_information);
-
-typedef struct {
- float mag_x;
- float mag_y;
- float mag_z;
-} lightning_board_magnometer_sensor_information_t;
-
-void receive_lightning_board_magnometer_sensor_information(const can_msg_t *message, lightning_board_magnometer_sensor_information_t *lightning_board_magnometer_sensor_information);
-
-typedef struct {
- uint32_t count;
-} lightning_pulse_message_t;
-
-void receive_lightning_pulse_message(const can_msg_t *message, lightning_pulse_message_t *lightning_pulse_message);
-
-typedef struct {
- uint16_t R_iso_corrected;
- uint8_t R_iso_status;
- uint8_t Iso_measurement_counter;
- bool device_error;
- bool HV_pos_conn_fail;
- bool HV_neg_conn_fail;
- bool Earth_conn_fail;
- bool Iso_alarm;
- bool iso_warning;
- bool iso_outdated;
- bool Unbalance_alarm;
- bool Undervoltage_alarm;
- bool Unsafe_to_start;
-} imd_general_information_t;
-
-void receive_imd_general_information(const can_msg_t *message, imd_general_information_t *imd_general_information);
-
-typedef struct {
- float current_target_ac;
-} ac_current_command_t;
-
-void receive_ac_current_command(const can_msg_t *message, ac_current_command_t *ac_current_command);
-
-typedef struct {
- float brake_ac_current;
-} brake_current_command_t;
-
-void receive_brake_current_command(const can_msg_t *message, brake_current_command_t *brake_current_command);
-
-typedef struct {
- uint8_t drive_enable;
-} drive_enable_command_t;
-
-void receive_drive_enable_command(const can_msg_t *message, drive_enable_command_t *drive_enable_command);
 
 
 void receive_can(const can_msg_t *msg);

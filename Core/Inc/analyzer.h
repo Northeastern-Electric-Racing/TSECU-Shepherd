@@ -3,6 +3,7 @@
 
 #include "app_threadx.h"
 #include "datastructs.h"
+#include "can_messages_rx.h"
 
 /**
  * @brief Get the chip data for the given chip
@@ -53,6 +54,22 @@ void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
  * data
  */
 void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data);
+
+#if (TEST_MODE_ENABLED)
+/**
+ * @brief Updates Alpha cell data from a test CAN frame.
+ */
+void update_emulated_alpha_cell_data(
+	analyzer_t *analyzer,
+	const shepherd_bms_emulated_alpha_cell_data_t *cell_data);
+
+/**
+ * @brief Updates Beta cell data from a test CAN frame.
+ */
+void update_emulated_beta_cell_data(
+	analyzer_t *analyzer,
+	const shepherd_bms_emulated_beta_cell_data_t *cell_data);
+#endif // TEST_MODE_ENABLED
 
 void vAnalyzer(ULONG thread_input);
 

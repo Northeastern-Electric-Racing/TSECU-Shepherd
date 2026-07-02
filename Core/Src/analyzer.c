@@ -394,6 +394,62 @@ void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 	}
 }
 
+#if (TEST_MODE_ENABLED)
+void update_emulated_alpha_cell_data(
+	analyzer_t *analyzer,
+	const shepherd_bms_emulated_alpha_cell_data_t *cell_data)
+{
+	// Map logical Alpha chip IDs to chip indices.
+	const uint8_t alpha_chip_id = (uint8_t)(cell_data->chip_id * 2U);
+
+	// Update valid Alpha cells.
+	if (alpha_chip_id < NUM_CHIPS) {
+		if (cell_data->cell_a < NUM_CELLS_PER_CHIP) {
+			analyzer->chip_data[alpha_chip_id].cell_temp[cell_data->cell_a] =
+				cell_data->therm;
+
+			analyzer->chip_data[alpha_chip_id].cell_voltages[cell_data->cell_a] =
+				cell_data->voltage_a;
+		}
+
+		if (cell_data->cell_b < NUM_CELLS_PER_CHIP) {
+			analyzer->chip_data[alpha_chip_id].cell_temp[cell_data->cell_b] =
+				cell_data->therm;
+
+			analyzer->chip_data[alpha_chip_id].cell_voltages[cell_data->cell_b] =
+				cell_data->voltage_b;
+		}
+	}
+}
+
+void update_emulated_beta_cell_data(
+	analyzer_t *analyzer,
+	const shepherd_bms_emulated_beta_cell_data_t *cell_data)
+{
+	// Map logical Beta chip IDs to chip indices.
+	const uint8_t beta_chip_id = (uint8_t)((cell_data->chip_id * 2U) + 1U);
+
+	// Update valid Beta cells.
+	if (beta_chip_id < NUM_CHIPS) {
+		if (cell_data->cell_a < NUM_CELLS_PER_CHIP) {
+			analyzer->chip_data[beta_chip_id].cell_temp[cell_data->cell_a] =
+				cell_data->therm;
+
+			analyzer->chip_data[beta_chip_id].cell_voltages[cell_data->cell_a] =
+				cell_data->voltage_a;
+		}
+
+		if (cell_data->cell_b < NUM_CELLS_PER_CHIP) {
+			analyzer->chip_data[beta_chip_id].cell_temp[cell_data->cell_b] =
+				cell_data->therm;
+
+			analyzer->chip_data[beta_chip_id].cell_voltages[cell_data->cell_b] =
+				cell_data->voltage_b;
+		}
+	}
+}
+#endif // TEST_MODE_ENABLED
+
 // ANALYZER THREAD
 void vAnalyzer(ULONG thread_input)
 {
@@ -415,9 +471,11 @@ void vAnalyzer(ULONG thread_input)
 		mutex_get(&analyzer_mutex);
 
 		// calculate base values for later safety calcs
+#if (TEST_MODE_ENABLED == false)
 		calc_cell_temps(analyzer, acc_data);
-		calc_pack_temps(analyzer, acc_data);
 		calc_cell_voltages(analyzer, acc_data, state_machine);
+#endif // TEST_MODE_ENABLED
+		calc_pack_temps(analyzer, acc_data);
 		calc_open_cell_voltage(analyzer, acc_data, hv_plate);
 		calc_pack_voltage_stats(analyzer, acc_data);
 		calc_cell_resistances(analyzer, acc_data, hv_plate);

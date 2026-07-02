@@ -3,6 +3,7 @@
 
 #include "u_tx_can.h"
 #include "app_threadx.h"
+#include "bms_config.h"
 
 /**
  * @brief Callback to be called when a message is received on CAN line 1.
@@ -78,6 +79,11 @@
 #define DEBUG_SIZE	  8
 #define FAULT_TIMER_CANID 0x6F9
 #define FAULT_TIMER_SIZE  4
+
+#if (TEST_MODE_ENABLED)
+#define CALYPSO_ALPHA_CELL_DATA_CANID 0x451
+#define CALYPSO_BETA_CELL_DATA_CANID  0x452
+#endif // TEST_MODE_ENABLED
 
 void can_receive_callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs);
 

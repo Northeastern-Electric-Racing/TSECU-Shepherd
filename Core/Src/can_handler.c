@@ -5,12 +5,24 @@
 #include "u_queues.h"
 #include "u_tx_debug.h"
 #include "u_tx_general.h"
+#include "u_tx_flags.h"
 #include "charging.h"
+#include "analyzer.h"
+#include "can_messages_rx.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #define CAN_MSG_QUEUE_SIZE 50 /* messages */
+
+#if (TEST_MODE_ENABLED)
+
+/**
+ * @brief Test-mode Analyzer period in milliseconds.
+ */
+#define TEST_MODE_ANALYZER_PERIOD_MS (500U)
+
+#endif // TEST_MODE_ENABLED
 
 extern FDCAN_HandleTypeDef hfdcan2;
 can_t can1;
@@ -114,6 +126,12 @@ float parse_charger_current(can_msg_t msg) {
 void vCanReceive(ULONG thread_input) {
   state_machine_args_t *state_machine_args = (state_machine_args_t *)thread_input;
   can_msg_t message;
+
+#if (TEST_MODE_ENABLED)
+	nertimer_t analyzer_timer = { 0 };
+	start_timer(&analyzer_timer, TEST_MODE_ANALYZER_PERIOD_MS);
+#endif // TEST_MODE_ENABLED
+
   for (;;) {
     /* Process incoming messages */
     while (queue_receive(&can_incoming, &message, TX_WAIT_FOREVER) ==
@@ -131,10 +149,32 @@ void vCanReceive(ULONG thread_input) {
       case CALYPSO_PWM_BAL_CANID:
         pwm_duty_cycle_set(message.data[0]);
         break;
+#if (TEST_MODE_ENABLED)
+      case CALYPSO_ALPHA_CELL_DATA_CANID: {
+        shepherd_bms_emulated_alpha_cell_data_t alpha_cell_data = { 0 };
+        receive_shepherd_bms_emulated_alpha_cell_data(&message, &alpha_cell_data);
+        update_emulated_alpha_cell_data(state_machine_args->analyzer, &alpha_cell_data);
+        break;
+      }
+      case CALYPSO_BETA_CELL_DATA_CANID: {
+        shepherd_bms_emulated_beta_cell_data_t beta_cell_data = { 0 };
+        receive_shepherd_bms_emulated_beta_cell_data(&message, &beta_cell_data);
+        update_emulated_beta_cell_data(state_machine_args->analyzer, &beta_cell_data);
+        break;
+      }
+#endif // TEST_MODE_ENABLED
       default:
         break;
       }
     }
+
+#if (TEST_MODE_ENABLED)
+    if (is_timer_expired(&analyzer_timer))
+    {
+      set_flag(ANALYZER_FLAG);
+      start_timer(&analyzer_timer, TEST_MODE_ANALYZER_PERIOD_MS);
+    }
+#endif // TEST_MODE_ENABLED
   }
 }
 

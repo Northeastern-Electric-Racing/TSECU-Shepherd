@@ -1,7 +1,18 @@
 #ifndef BMS_CONFIG_H
 #define BMS_CONFIG_H
 
-#define DEBUG_MODE_ENABLED true
+/* Test mode feature flag. */
+#ifndef TEST_MODE_ENABLED
+#define TEST_MODE_ENABLED false
+#endif // TEST_MODE_ENABLED
+
+/* Debug mode feature flag. */
+#ifndef DEBUG_MODE
+#define DEBUG_MODE true
+#endif // DEBUG_MODE
+
+#define DEBUG_MODE_ENABLED \
+	((DEBUG_MODE) && (TEST_MODE_ENABLED == false))
 #define DEBUG_STATS
 
 // Hardware definition
