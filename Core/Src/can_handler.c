@@ -5,7 +5,11 @@
 #include "u_queues.h"
 #include "u_tx_debug.h"
 #include "u_tx_general.h"
+#include "u_tx_mutex.h"
 #include "charging.h"
+#include "analyzer.h"
+#include "shep_mutexes.h"
+#include "can_messages_rx.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,6 +49,18 @@ uint8_t init_can1(FDCAN_HandleTypeDef *hcan) {
                   standard1[1]);
     return U_ERROR;
   }
+
+#if TEST_MODE_ENABLED
+  uint16_t standard3[] = { CALYPSO_ALPHA_CELL_DATA_CANID, CALYPSO_BETA_CELL_DATA_CANID };
+  status = can_add_filter_standard(&can1, standard3);
+  if (status != HAL_OK) {
+    PRINTLN_ERROR("Failed to add standard filter to can1 (Status: %d/%s, ID1: "
+                  "%d, ID2: %d).",
+                  status, hal_status_toString(status), standard3[0],
+                  standard3[1]);
+    return U_ERROR;
+  }
+#endif // TEST_MODE_ENABLED
 
   /* Add fitlers for extended IDs */
   uint32_t extended1[] = {CHARGERBOX_CANID, 0x00};
@@ -131,6 +147,24 @@ void vCanReceive(ULONG thread_input) {
       case CALYPSO_PWM_BAL_CANID:
         pwm_duty_cycle_set(message.data[0]);
         break;
+#if TEST_MODE_ENABLED
+      case CALYPSO_ALPHA_CELL_DATA_CANID: {
+        shepherd_bms_emulated_alpha_cell_data_t alpha_cell_data = { 0 };
+        receive_shepherd_bms_emulated_alpha_cell_data(&message, &alpha_cell_data);
+        mutex_get(&analyzer_mutex);
+        update_emulated_alpha_cell_data(state_machine_args->analyzer, &alpha_cell_data);
+        mutex_put(&analyzer_mutex);
+        break;
+      }
+      case CALYPSO_BETA_CELL_DATA_CANID: {
+        shepherd_bms_emulated_beta_cell_data_t beta_cell_data = { 0 };
+        receive_shepherd_bms_emulated_beta_cell_data(&message, &beta_cell_data);
+        mutex_get(&analyzer_mutex);
+        update_emulated_beta_cell_data(state_machine_args->analyzer, &beta_cell_data);
+        mutex_put(&analyzer_mutex);
+        break;
+      }
+#endif // TEST_MODE_ENABLED
       default:
         break;
       }

@@ -394,6 +394,62 @@ void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 	}
 }
 
+#if TEST_MODE_ENABLED
+void update_emulated_alpha_cell_data(
+	analyzer_t *analyzer,
+	const shepherd_bms_emulated_alpha_cell_data_t *cell_data)
+{
+	// Map logical Alpha chip IDs to chip indices.
+	const uint8_t alpha_chip_id = (uint8_t)(cell_data->chip_id * 2U);
+
+	// Update valid Alpha cells.
+	if (alpha_chip_id < NUM_CHIPS) {
+		if (cell_data->cell_a < NUM_CELLS_PER_CHIP) {
+			analyzer->chip_data[alpha_chip_id].cell_temp[cell_data->cell_a] =
+				cell_data->therm;
+
+			analyzer->chip_data[alpha_chip_id].cell_voltages[cell_data->cell_a] =
+				cell_data->voltage_a;
+		}
+
+		if (cell_data->cell_b < NUM_CELLS_PER_CHIP) {
+			analyzer->chip_data[alpha_chip_id].cell_temp[cell_data->cell_b] =
+				cell_data->therm;
+
+			analyzer->chip_data[alpha_chip_id].cell_voltages[cell_data->cell_b] =
+				cell_data->voltage_b;
+		}
+	}
+}
+
+void update_emulated_beta_cell_data(
+	analyzer_t *analyzer,
+	const shepherd_bms_emulated_beta_cell_data_t *cell_data)
+{
+	// Map logical Beta chip IDs to chip indices.
+	const uint8_t beta_chip_id = (uint8_t)((cell_data->chip_id * 2U) + 1U);
+
+	// Update valid Beta cells.
+	if (beta_chip_id < NUM_CHIPS) {
+		if (cell_data->cell_a < NUM_CELLS_PER_CHIP) {
+			analyzer->chip_data[beta_chip_id].cell_temp[cell_data->cell_a] =
+				cell_data->therm;
+
+			analyzer->chip_data[beta_chip_id].cell_voltages[cell_data->cell_a] =
+				cell_data->voltage_a;
+		}
+
+		if (cell_data->cell_b < NUM_CELLS_PER_CHIP) {
+			analyzer->chip_data[beta_chip_id].cell_temp[cell_data->cell_b] =
+				cell_data->therm;
+
+			analyzer->chip_data[beta_chip_id].cell_voltages[cell_data->cell_b] =
+				cell_data->voltage_b;
+		}
+	}
+}
+#endif // TEST_MODE_ENABLED
+
 // ANALYZER THREAD
 void vAnalyzer(ULONG thread_input)
 {
@@ -409,15 +465,25 @@ void vAnalyzer(ULONG thread_input)
 	memset(analyzer->chip_data, 0, sizeof(analyzer->chip_data));
 
 	for (;;) {
+
+		// Test mode behavior
+		// The Segment task is disabled in test mode. Emulated cell voltage and
+		// temperature measurements are received over CAN, so Analyzer runs
+		// periodically instead of waiting for the Segment task's ANALYZER_FLAG.
+
+#if (TEST_MODE_ENABLED == false)
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
+#endif // TEST_MODE_ENABLED
 
 		// NOTE: All functions that modify chip data are externally mutexed
 		mutex_get(&analyzer_mutex);
 
+#if (TEST_MODE_ENABLED == false)
 		// calculate base values for later safety calcs
 		calc_cell_temps(analyzer, acc_data);
-		calc_pack_temps(analyzer, acc_data);
 		calc_cell_voltages(analyzer, acc_data, state_machine);
+#endif // TEST_MODE_ENABLED
+		calc_pack_temps(analyzer, acc_data);
 		calc_open_cell_voltage(analyzer, acc_data, hv_plate);
 		calc_pack_voltage_stats(analyzer, acc_data);
 		calc_cell_resistances(analyzer, acc_data, hv_plate);
@@ -445,5 +511,9 @@ void vAnalyzer(ULONG thread_input)
 		send_segment_temperatures(
 		analyzer->segment_average_temps[0], analyzer->segment_average_temps[1], analyzer->segment_average_temps[2], analyzer->segment_average_temps[3], analyzer->segment_average_temps[4]);
 		send_pack_soc_status(analyzer->soc, get_soc_drift());
+
+#if TEST_MODE_ENABLED
+		tx_thread_sleep(500);
+#endif // TEST_MODE_ENABLED
 	}
 }

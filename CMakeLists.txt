@@ -95,6 +95,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/analyzer.c"
     "Core/Src/can_handler.c"
     "Core/Src/can_messages_tx.c"
+    "Core/Src/can_messages_rx.c"
     "Core/Src/charging.c"
     "Core/Src/compute.c"
     "Core/Src/hv_plate.c"
