@@ -465,7 +465,9 @@ void vAnalyzer(ULONG thread_input)
 	memset(analyzer->chip_data, 0, sizeof(analyzer->chip_data));
 
 	for (;;) {
+#if (TEST_MODE_ENABLED == false)
 		get_flag(ANALYZER_FLAG, TX_WAIT_FOREVER);
+#endif // TEST_MODE_ENABLED
 
 		// NOTE: All functions that modify chip data are externally mutexed
 		mutex_get(&analyzer_mutex);
@@ -503,5 +505,9 @@ void vAnalyzer(ULONG thread_input)
 		send_segment_temperatures(
 		analyzer->segment_average_temps[0], analyzer->segment_average_temps[1], analyzer->segment_average_temps[2], analyzer->segment_average_temps[3], analyzer->segment_average_temps[4]);
 		send_pack_soc_status(analyzer->soc, get_soc_drift());
+
+#if (TEST_MODE_ENABLED)
+		tx_thread_sleep(500);
+#endif // TEST_MODE_ENABLED
 	}
 }
