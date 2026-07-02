@@ -58,6 +58,18 @@ uint8_t init_can1(FDCAN_HandleTypeDef *hcan) {
     return U_ERROR;
   }
 
+#if TEST_MODE_ENABLED
+  uint16_t standard3[] = { CALYPSO_ALPHA_CELL_DATA_CANID, CALYPSO_BETA_CELL_DATA_CANID };
+  status = can_add_filter_standard(&can1, standard3);
+  if (status != HAL_OK) {
+    PRINTLN_ERROR("Failed to add standard filter to can1 (Status: %d/%s, ID1: "
+                  "%d, ID2: %d).",
+                  status, hal_status_toString(status), standard3[0],
+                  standard3[1]);
+    return U_ERROR;
+  }
+#endif // TEST_MODE_ENABLED
+
   /* Add fitlers for extended IDs */
   uint32_t extended1[] = {CHARGERBOX_CANID, 0x00};
   status = can_add_filter_extended(&can1, extended1);
