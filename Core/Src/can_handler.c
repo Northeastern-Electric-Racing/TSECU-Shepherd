@@ -5,7 +5,6 @@
 #include "u_queues.h"
 #include "u_tx_debug.h"
 #include "u_tx_general.h"
-#include "u_tx_flags.h"
 #include "u_tx_mutex.h"
 #include "charging.h"
 #include "analyzer.h"
