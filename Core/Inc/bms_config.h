@@ -4,6 +4,10 @@
 #define DEBUG_MODE_ENABLED true
 #define DEBUG_STATS
 
+#ifndef HIL_TEST_MODE_ENABLED
+#define HIL_TEST_MODE_ENABLED true
+#endif // HIL_TEST_MODE_ENABLED
+
 // Hardware definition
 #define NUM_SEGMENTS	   5
 #define NUM_CHIPS_PER_SEGMENT 2

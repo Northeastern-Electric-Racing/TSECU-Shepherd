@@ -313,7 +313,10 @@ void read_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 uint32_t adBmsPollAdc_indicator(cell_asic chips[NUM_CHIPS],
 				uint8_t poll_type[2])
 {
-	uint32_t result = adBmsPollAdc6830(NUM_CHIPS, chips, poll_type);
+	uint32_t result = 0U;
+#if (HIL_TEST_MODE_ENABLED == false)
+	result = adBmsPollAdc6830(NUM_CHIPS, chips, poll_type);
+#endif // HIL_TEST_MODE_ENABLED
 	return result;
 }
 

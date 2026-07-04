@@ -163,7 +163,9 @@ void segment_retrieve_charging_data(cell_asic chips[NUM_CHIPS],
 	// read from ADC convs
 	get_c_adc_voltages(chips, hspi);
 
+#if (HIL_TEST_MODE_ENABLED == false)
 	read_status_registers(chips, hspi);
+#endif // HIL_TEST_MODE_ENABLED
 
 	// Read configuration registers to monitor burning status and the like
 	read_config_register_a(chips, hspi);
@@ -180,8 +182,10 @@ void segment_retrieve_debug_data(cell_asic chips[NUM_CHIPS],
 	// poll stuff like vref, etc.
 	adc_and_read_aux_registers(chips, hspi);
 
+#if (HIL_TEST_MODE_ENABLED == false)
 	// read the above into status registers
 	read_status_registers(chips, hspi);
+#endif // HIL_TEST_MODE_ENABLED
 
 	// Read configuration registers to monitor burning status and the like
 	read_config_register_a(chips, hspi);
