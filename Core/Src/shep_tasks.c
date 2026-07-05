@@ -587,10 +587,8 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	CATCH_ERROR(create_thread(byte_pool, &_can_receive_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_can_dispatch_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_segment_data_thread), U_SUCCESS);
-#if (HIL_TEST_MODE_ENABLED == false)
 	CATCH_ERROR(create_thread(byte_pool, &_hv_plate_data_thread),
 		    U_SUCCESS);
-#endif // HIL_TEST_MODE_ENABLED
 	CATCH_ERROR(create_thread(byte_pool, &_sanitizer_thread), U_SUCCESS);
 	CATCH_ERROR(create_thread(byte_pool, &_bms_algorithms_thread),
 		    U_SUCCESS);

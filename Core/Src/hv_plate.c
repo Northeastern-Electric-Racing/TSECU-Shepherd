@@ -5,6 +5,7 @@
 #include "soc.h"
 #include "can_messages_tx.h"
 #include "bms_algos.h"
+#include "bms_config.h"
 #include "app_threadx.h"
 #include "shep_mutexes.h"
 #include "application.h"
@@ -190,11 +191,13 @@ void vHvPlateData(ULONG thread_input)
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
+#if (HIL_TEST_MODE_ENABLED == false)
 	// initialize precharge relay open
 	reset_gpo(&hv_plate->ic, HV_CTRL_GPO); 
 
 	// enable reading HV
 	set_gpo(&hv_plate->ic, HV_ENABLE_GPO);
+#endif // HIL_TEST_MODE_ENABLED
 
 	soc_init();
 
@@ -219,15 +222,19 @@ void vHvPlateData(ULONG thread_input)
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
 
+#if (HIL_TEST_MODE_ENABLED == false)
 		// read ts voltage
 		get_ts_voltage(hv_plate);
 
 		// read shunt temperature
 		get_shunt_temp(hv_plate);
+#endif // HIL_TEST_MODE_ENABLED
 
 		if (is_timer_expired(&diagnostic_read_timer) &&
 		    !is_timer_active(&diagnostic_read_timer)) {
+#if (HIL_TEST_MODE_ENABLED == false)
 			get_aux_adc_data(hv_plate);
+#endif // HIL_TEST_MODE_ENABLED
 
 			// send hv plate data for telemetry
 			PRINTLN_INFO("Sending HV Plate Data...");
@@ -237,8 +244,10 @@ void vHvPlateData(ULONG thread_input)
 			send_pack_current_and_shunt_temp(hv_plate->pack_current, 
 				hv_plate->shunt_temp);
 
+#if (HIL_TEST_MODE_ENABLED == false)
 			// read flags
 			get_flags(hv_plate);
+#endif // HIL_TEST_MODE_ENABLED
 			start_timer(&diagnostic_read_timer,
 				    diagnostic_read_frequency);
 

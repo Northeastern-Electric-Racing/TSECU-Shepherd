@@ -512,10 +512,12 @@ void adc_and_read_aux2_registers(cell_asic chips[NUM_CHIPS],
 void read_status_registers(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	read_adbms_data(chips, RDSTATA, Status, A, hspi);
+#if (HIL_TEST_MODE_ENABLED == false)
 	read_adbms_data(chips, RDSTATB, Status, B, hspi);
 	read_adbms_data(chips, RDSTATC, Status, C, hspi);
 	read_adbms_data(chips, RDSTATD, Status, D, hspi);
 	read_adbms_data(chips, RDSTATE, Status, E, hspi);
+#endif // HIL_TEST_MODE_ENABLED
 }
 
 void read_status_register_c(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)

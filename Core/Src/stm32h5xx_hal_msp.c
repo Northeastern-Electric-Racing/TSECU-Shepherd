@@ -498,16 +498,16 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
     /* UART4 DMA Init */
-    /* GPDMA1_REQUEST_UART4_TX Init */
+    /* GPDMA1_REQUEST_UART4_RX Init */
     handle_GPDMA1_Channel4.Instance = GPDMA1_Channel4;
-    handle_GPDMA1_Channel4.Init.Request = GPDMA1_REQUEST_UART4_TX;
+    handle_GPDMA1_Channel4.Init.Request = GPDMA1_REQUEST_UART4_RX;
     handle_GPDMA1_Channel4.Init.BlkHWRequest = DMA_BREQ_SINGLE_BURST;
-    handle_GPDMA1_Channel4.Init.Direction = DMA_MEMORY_TO_PERIPH;
-    handle_GPDMA1_Channel4.Init.SrcInc = DMA_SINC_INCREMENTED;
-    handle_GPDMA1_Channel4.Init.DestInc = DMA_DINC_FIXED;
+    handle_GPDMA1_Channel4.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    handle_GPDMA1_Channel4.Init.SrcInc = DMA_SINC_FIXED;
+    handle_GPDMA1_Channel4.Init.DestInc = DMA_DINC_INCREMENTED;
     handle_GPDMA1_Channel4.Init.SrcDataWidth = DMA_SRC_DATAWIDTH_BYTE;
     handle_GPDMA1_Channel4.Init.DestDataWidth = DMA_DEST_DATAWIDTH_BYTE;
-    handle_GPDMA1_Channel4.Init.Priority = DMA_LOW_PRIORITY_MID_WEIGHT;
+    handle_GPDMA1_Channel4.Init.Priority = DMA_LOW_PRIORITY_HIGH_WEIGHT;
     handle_GPDMA1_Channel4.Init.SrcBurstLength = 1;
     handle_GPDMA1_Channel4.Init.DestBurstLength = 1;
     handle_GPDMA1_Channel4.Init.TransferAllocatedPort = DMA_SRC_ALLOCATED_PORT0|DMA_DEST_ALLOCATED_PORT0;
@@ -518,7 +518,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
       Error_Handler();
     }
 
-    __HAL_LINKDMA(huart, hdmatx, handle_GPDMA1_Channel4);
+    __HAL_LINKDMA(huart, hdmarx, handle_GPDMA1_Channel4);
 
     if (HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel4, DMA_CHANNEL_NPRIV) != HAL_OK)
     {
@@ -641,7 +641,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     HAL_GPIO_DeInit(GPIOD, GPIO_PIN_11|GPIO_PIN_12);
 
     /* UART4 DMA DeInit */
-    HAL_DMA_DeInit(huart->hdmatx);
+    HAL_DMA_DeInit(huart->hdmarx);
 
     /* UART4 interrupt DeInit */
     HAL_NVIC_DisableIRQ(UART4_IRQn);

@@ -166,7 +166,7 @@ void send_hv_plate_pec_errors_message(void)
 	}
 
 	// Clear PEC errors for next cycle
-	current_pec_errors = 0U;
+	hv_plate_pec_errors = 0U;
 }
 
 void set_hv_plate_chips_isospi_line(cell_asic_2950 *ic, isospi_line_2950_ line)
