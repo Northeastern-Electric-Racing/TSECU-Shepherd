@@ -62,6 +62,7 @@ UART_HandleTypeDef hlpuart1;
 UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart9;
 DMA_HandleTypeDef handle_GPDMA1_Channel4;
+DMA_HandleTypeDef handle_GPDMA1_Channel5;
 
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
@@ -418,6 +419,8 @@ static void MX_GPDMA1_Init(void)
     HAL_NVIC_EnableIRQ(GPDMA1_Channel3_IRQn);
     HAL_NVIC_SetPriority(GPDMA1_Channel4_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(GPDMA1_Channel4_IRQn);
+    HAL_NVIC_SetPriority(GPDMA1_Channel5_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(GPDMA1_Channel5_IRQn);
 
   /* USER CODE BEGIN GPDMA1_Init 1 */
 

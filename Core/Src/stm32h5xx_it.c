@@ -58,7 +58,9 @@
 extern ETH_HandleTypeDef heth;
 extern FDCAN_HandleTypeDef hfdcan2;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel4;
+extern DMA_HandleTypeDef handle_GPDMA1_Channel5;
 extern UART_HandleTypeDef huart4;
+extern UART_HandleTypeDef huart9;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel0;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel1;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel2;
@@ -256,6 +258,20 @@ void GPDMA1_Channel4_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles GPDMA1 Channel 5 global interrupt.
+  */
+void GPDMA1_Channel5_IRQHandler(void)
+{
+  /* USER CODE BEGIN GPDMA1_Channel5_IRQn 0 */
+
+  /* USER CODE END GPDMA1_Channel5_IRQn 0 */
+  HAL_DMA_IRQHandler(&handle_GPDMA1_Channel5);
+  /* USER CODE BEGIN GPDMA1_Channel5_IRQn 1 */
+
+  /* USER CODE END GPDMA1_Channel5_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM1 Update interrupt.
   */
 void TIM1_UP_IRQHandler(void)
@@ -337,6 +353,20 @@ void SPI4_IRQHandler(void)
   /* USER CODE BEGIN SPI4_IRQn 1 */
 
   /* USER CODE END SPI4_IRQn 1 */
+}
+
+/**
+  * @brief This function handles UART9 global interrupt.
+  */
+void UART9_IRQHandler(void)
+{
+  /* USER CODE BEGIN UART9_IRQn 0 */
+
+  /* USER CODE END UART9_IRQn 0 */
+  HAL_UART_IRQHandler(&huart9);
+  /* USER CODE BEGIN UART9_IRQn 1 */
+
+  /* USER CODE END UART9_IRQn 1 */
 }
 
 /**
