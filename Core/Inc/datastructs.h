@@ -85,6 +85,8 @@ typedef struct {
 typedef struct {
 	float last_temp;
 	bool valid;
+	bool initialized;
+	uint8_t fault_count;
 } therm_state_t;
 
 /**

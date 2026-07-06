@@ -425,6 +425,7 @@ void vAnalyzer(ULONG thread_input)
 
 		mutex_put(&analyzer_mutex);
 
+		set_flag(SANITIZER_FLAG);
 		set_flag(DEBUG_FLAG);
 
 		// send out telemetry data sourced from the above functions
