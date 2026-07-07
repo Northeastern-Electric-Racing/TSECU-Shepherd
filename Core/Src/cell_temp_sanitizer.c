@@ -183,7 +183,7 @@ void vSanitizer(ULONG thread_input)
 	temp_sanitizer_init(sanitizer);
 
 	for (;;) {
-		set_flag(SANITIZER_FLAG);
+		get_flag(SANITIZER_FLAG, TX_WAIT_FOREVER);
 		mutex_get(&analyzer_mutex);
 		temp_sanitizer_run(sanitizer, analyzer);
 		mutex_put(&analyzer_mutex);
