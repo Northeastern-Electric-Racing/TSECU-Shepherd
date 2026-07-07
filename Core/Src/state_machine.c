@@ -8,6 +8,7 @@
 #include "c_utils.h"
 #include <assert.h>
 #include <stdbool.h>
+#include <math.h>
 #include <stdatomic.h>
 #include "app_threadx.h"
 #include "shep_mutexes.h"
@@ -512,7 +513,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		fault_eval_table[CHARGE_LIMIT_ENFORCEMENT_FAULT] =
 			(fault_eval_t){ .id = "Charge Current Limit",
 					.timer = ovr_chgcurr_timer,
-					.data_1 = hv_plate->pack_current,
+					.data_1 = fabsf(hv_plate->pack_current),
 					.optype_1 = GT,
 					.lim_1 = bms_algos->cont_CCL,
 					.timeout = OVER_CHG_CURR_TIME,
@@ -579,7 +580,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 			.data_1 = state_machine->segment_comms_fault_flag,
 			.optype_1 = GE,
 			.lim_1 = true,
-			.timeout = 0,
+			.timeout = COMMS_FAULT_TIME,
 			.optype_2 = NOP, // UNUSED
 			.is_critical = false
 		};
@@ -590,7 +591,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 			.data_1 = state_machine->hv_plate_comms_fault_flag,
 			.optype_1 = GE,
 			.lim_1 = true,
-			.timeout = 0,
+			.timeout = COMMS_FAULT_TIME,
 			.optype_2 = NOP, // UNUSED
 			.is_critical = true
 		};
@@ -610,6 +611,7 @@ void vStateMachine(ULONG thread_input)
 	analyzer_t *analyzer = state_machine_args->analyzer;
 
 	state_machine->bms_state = BOOT;
+	init_boot(state_machine_args);
 	state_machine->balancing_active = false;
 	state_machine->is_charger_connected = false;
 
