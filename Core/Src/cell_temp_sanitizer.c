@@ -2,7 +2,9 @@
 #include "analyzer.h"
 #include "u_tx_flags.h"
 #include <stdbool.h>
+#include <stdint.h>
 #include <float.h>
+#include <math.h>
 
 /**
  * @brief Number of consecutive invalid samples before a thermistor is marked invalid.
@@ -10,7 +12,7 @@
 #define THERM_FAULT_COUNT_THRESHOLD (2U)
 
 /**
- * @brief Maximum allowed temperature change between consecutive valid samples.
+ * @brief Maximum allowed temperature change from the last trusted thermistor sample.
  */
 #define TEMP_MAX_DELTA_C (5.0f)
 
@@ -21,8 +23,8 @@
  */
 static void reset_sanitized_min_max(sanitizer_t *const sanitizer)
 {
-	sanitizer->max_sanitized_temp.val = -FLT_MIN;
-	sanitizer->min_sanitized_temp.chipIndex = 0U;
+	sanitizer->max_sanitized_temp.val = -FLT_MAX;
+	sanitizer->max_sanitized_temp.chipIndex = 0U;
 	sanitizer->max_sanitized_temp.cellNum = 0U;
 
 	sanitizer->min_sanitized_temp.val = FLT_MAX;
@@ -31,7 +33,7 @@ static void reset_sanitized_min_max(sanitizer_t *const sanitizer)
 }
 
 /**
- * @brief Records a thermistor fault and invalidates the thermistor if the fault threshold is reached.
+ * @brief Records a thermistor fault and marks it invalid if the threshold is reached.
  *
  * @param therm_state Pointer to the thermistor state.
  */
@@ -39,6 +41,7 @@ static void record_therm_fault(therm_state_t *const therm_state)
 {
 	therm_state->fault_count++;
 
+	// Repeated faults mark thermistor invalid
 	if (therm_state->fault_count >= THERM_FAULT_COUNT_THRESHOLD)
 	{
 		therm_state->valid = false;
@@ -101,15 +104,17 @@ void temp_sanitizer_run(sanitizer_t *const sanitizer, const analyzer_t *const an
 
 	for (uint8_t chip = 0U; chip < NUM_CHIPS; chip++)
 	{
-		for (uint8_t cell = 0U; cell < NUM_CELLS; cell++)
+		for (uint8_t cell = 0U; cell < NUM_CELLS_PER_CHIP; cell++)
 		{
 			therm_state_t *const therm_state = &sanitizer->sanitized_therms[chip][cell];
 			const float cell_temp = analyzer->chip_data[chip].cell_temp[cell];
 			bool sample_valid = false;
-			const bool temp_in_range = ((cell_temp >= MIN_TEMP) && (cell_temp <= MAX_CELL_TEMP));
+			const bool temp_in_range = ((cell_temp >= (float)MIN_TEMP) && (cell_temp <= (float)MAX_CELL_TEMP));
 
-			if (therm_state->initialized == false)
+			// Only initialize thermistors that have not faulted out during startup
+			if ((therm_state->initialized == false) && (therm_state->fault_count < THERM_FAULT_COUNT_THRESHOLD))
 			{
+				// First trusted sample initializes thermistor
 				if (temp_in_range)
 				{
 					therm_state->last_temp = cell_temp;
@@ -120,12 +125,14 @@ void temp_sanitizer_run(sanitizer_t *const sanitizer, const analyzer_t *const an
 				}
 				else
 				{
+					// Startup sample outside physical range
 					record_therm_fault(therm_state);
 					sample_valid = false;
 				}
 			}
 			else if (therm_state->valid == false)
 			{
+				// Invalid thermistors do not recover automatically
 				sample_valid = false;
 			}
 			else
@@ -134,16 +141,19 @@ void temp_sanitizer_run(sanitizer_t *const sanitizer, const analyzer_t *const an
 
 				if (temp_in_range == false)
 				{
+					// Reject physically invalid sample
 					record_therm_fault(therm_state);
 					sample_valid = false;
 				}
 				else if (temp_delta > TEMP_MAX_DELTA_C)
 				{
+					// Reject sudden jump from last trusted value
 					record_therm_fault(therm_state);
 					sample_valid = false;
 				}
 				else
 				{
+					// Sample is trusted
 					therm_state->last_temp = cell_temp;
 					therm_state->fault_count = 0U;
 					sample_valid = true;
