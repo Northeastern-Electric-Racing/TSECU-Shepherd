@@ -1,6 +1,8 @@
 #include "cell_temp_sanitizer.h"
 #include "analyzer.h"
 #include "u_tx_flags.h"
+#include "u_tx_mutex.h"
+#include "shep_mutexes.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <float.h>
@@ -182,6 +184,8 @@ void vSanitizer(ULONG thread_input)
 
 	for (;;) {
 		set_flag(SANITIZER_FLAG);
+		mutex_get(&analyzer_mutex);
 		temp_sanitizer_run(sanitizer, analyzer);
+		mutex_put(&analyzer_mutex);
 	}
 }

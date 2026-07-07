@@ -1,6 +1,7 @@
 #include "unity.h"
 
 #include "cell_temp_sanitizer.h"
+#include "shep_mutexes.h"
 
 /* -------------------------------------------------
  * Setup / Teardown
