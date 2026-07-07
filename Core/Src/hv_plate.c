@@ -256,7 +256,9 @@ void vHvPlateData(ULONG thread_input)
 		send_hv_plate_pec_errors_message();
 		hv_plate_isospi_handle_state(hv_plate, state_machine);
 		send_max_dc_current_command(bms_algos->cont_DCL);
-		send_max_dc_brake_current_command(bms_algos->cont_CCL);
+		// DTI expects regen/brake current limit to be negative
+		const float max_dc_brake_current = (-1.0f * bms_algos->cont_CCL);
+		send_max_dc_brake_current_command(max_dc_brake_current);
 
 		tx_thread_sleep(50);
 	}
