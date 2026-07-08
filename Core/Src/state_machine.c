@@ -100,9 +100,9 @@ void handle_charging(state_machine_args_t *state_machine_args)
 						      (NUM_CELLS_PER_CHIP * 2) *
 						      NUM_SEGMENTS),
 						     CHARGING_CURRENT, 0x0);
-		} else {
 			start_timer(&state_machine_args->state_machine
-					     ->charger_message_timer, 1000);
+					     ->charger_message_timer,
+				    1000);
 		}
 	} else {
 		send_bms_charge_message_send(0, 0, 0xFF);
@@ -140,6 +140,7 @@ void init_faulted(state_machine_args_t *state_machine_args)
 
 void handle_faulted(state_machine_args_t *state_machine_args)
 {
+	compute_set_fault(true);
 	// leave faulted if all is well
 	if (!are_critical_faults_active()) {
 		request_transition(state_machine_args, BOOT);
@@ -154,7 +155,6 @@ void sm_handle_state(state_machine_args_t *state_machine_args)
 
 	if (are_critical_faults_active()) {
 		request_transition(state_machine_args, FAULTED);
-
 	}
 
 	handler_LUT[state_machine_args->state_machine->bms_state](
@@ -183,24 +183,40 @@ void request_transition(state_machine_args_t *state_machine_args,
 
 void sm_fault_return(state_machine_args_t *state_machine_args)
 {
-	/* FAULT CHECK (Check for fuckies) */
+	uint32_t fault_mask;
+	fault_state_t fault_state = FAULT_NONE;
+
+	/* FAULT CHECK */
 	update_eval_table(state_machine_args);
 
-	bool faulted = false;
-	for (int i = 0; i < NUM_FAULTS; i++) {
-		faulted = sm_fault_eval(&fault_eval_table[i], i);
-		if (faulted) {
-			fault_flags |= (1 << i);
+	for (uint32_t fault_id = 0U; fault_id < (uint32_t)NUM_FAULTS;
+	     fault_id++) {
+		fault_mask = ((uint32_t)1U << fault_id);
+
+		fault_state = sm_fault_eval(&fault_eval_table[fault_id],
+					    (fault_code_t)fault_id);
+
+		if (fault_state == FAULT_NONE) {
+			(void)atomic_fetch_and(&fault_flags, ~fault_mask);
+		} else if (fault_state == FAULT_TRIGGERED) {
+			if (fault_eval_table[fault_id].is_critical) {
+				send_bms_critically_faulted(true);
+			}
+
+			(void)atomic_fetch_or(&fault_flags, fault_mask);
 		} else {
-			fault_flags &= ~(1 << i);
+			/* FAULT_ONGOING: do nothing */
 		}
 	}
 }
 
-bool sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
+fault_state_t sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
 {
-	bool condition1;
-	bool condition2;
+	bool condition1 = false;
+	bool condition2 = false;
+	bool fault_present = false;
+	bool timer_active = false;
+	fault_state_t fault_state = FAULT_NONE;
 
 	switch (item->optype_1) {
 		case GT:
@@ -223,8 +239,10 @@ bool sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
 			break;
 		case NOP:
 			condition1 = false;
+			break;
 		default:
 			condition1 = false;
+			break;
 	}
 
 	switch (item->optype_2) {
@@ -248,53 +266,60 @@ bool sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
 			break;
 		case NOP:
 			condition2 = false;
+			break;
 		default:
 			condition2 = false;
+			break;
 	}
 
-	bool fault_present = (condition1 && condition2) ||
-			     (condition1 && item->optype_2 == NOP);
+	fault_present = (condition1 && condition2) ||
+			(condition1 && (item->optype_2 == NOP));
 
-	if (!is_timer_active(&item->timer) && !fault_present) {
-		return false;
-	}
+	timer_active = is_timer_active(&item->timer);
 
-	if (is_timer_active(&item->timer)) {
-		if (!fault_present) {
+	if (fault_present == false) {
+		if (timer_active) {
 			PRINTLN_INFO("\tFault cleared: %s\n", item->id);
+
 			cancel_timer(&item->timer);
-			// STOPPING TIMER MESSSAGE
+
+			/* STOPPING TIMER MESSSAGE */
 			send_bms_fault_timers(FAULT_TIMER_STOPPED, fault_code,
 					      item->data_1);
-			return false;
+		} else {
+			/* Timer is already inactive. */
 		}
 
-		if (is_timer_expired(&item->timer) && fault_present) {
-			PRINTLN_INFO("\tFaulted: %s\n", item->id);
+		fault_state = FAULT_NONE;
+	} else {
+		if (timer_active == false) {
+			PRINTLN_INFO("\tStarting Fault Timer: %s\n", item->id);
 
-			// FAULT TIMER EXPIRED MESSAGE
-			send_bms_fault_timers(FAULT_TIMER_EXPIRED, fault_code,
+			start_timer(&item->timer, item->timeout);
+
+			/* STARTING FAULTED TIMER MESSAGE */
+			send_bms_fault_timers(FAULT_TIMER_STARTED, fault_code,
 					      item->data_1);
-			if (item->is_critical) {
-                send_bms_critically_faulted(true);
+
+			fault_state = FAULT_ONGOING;
+		} else {
+			if (is_timer_expired(&item->timer)) {
+				PRINTLN_INFO("\tFaulted: %s\n", item->id);
+
+				/* FAULT TIMER EXPIRED MESSAGE */
+				send_bms_fault_timers(FAULT_TIMER_EXPIRED,
+						      fault_code, item->data_1);
+
+				cancel_timer(&item->timer);
+
+				fault_state = FAULT_TRIGGERED;
+			} else {
+				fault_state = FAULT_ONGOING;
 			}
-			return true;
 		}
-
-		return false;
-
-	} else if (!is_timer_active(&item->timer) && fault_present) {
-		PRINTLN_INFO("\tStarting Fault Timer: %s\n", item->id);
-		start_timer(&item->timer, item->timeout);
-		// STARTING FAULTED TIMER MESSAGE
-		send_bms_fault_timers(FAULT_TIMER_STARTED, fault_code,
-				      item->data_1);
-
-		return false;
 	}
 
-	PRINTLN_ERROR("Should not have reached here.");
-	return true;
+	return fault_state;
 }
 
 /* This charging algorithm has 3 stages
@@ -411,9 +436,7 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 	shutdown_active = state_machine_args->peripherals->shutdown_active;
 	mutex_put(&shutdown_mutex);
 
-	//return !shutdown_active;
-	// FSAE balancing disabled safety
-	return false;
+	return !shutdown_active;
 }
 
 void set_segment_comms_fault(state_machine_t *state_mach)
@@ -621,13 +644,14 @@ void vStateMachine(ULONG thread_input)
 
 	for (;;) {
 		sm_handle_state(state_machine_args);
-		
+
 		// send unimportant messages less frequently
 		if (is_timer_expired(&telem_timer)) {
 			send_bms_status(state_machine->bms_state,
 					analyzer->avg_temp);
-			
-			send_bms_critically_faulted(are_critical_faults_active());
+
+			send_bms_critically_faulted(
+				are_critical_faults_active());
 
 			send_fault_status(
 				get_fault(DISCHARGE_LIMIT_ENFORCEMENT_FAULT),
