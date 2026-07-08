@@ -505,7 +505,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		fault_eval_table[CHARGE_LIMIT_ENFORCEMENT_FAULT].data_1 =
 			hv_plate->pack_current;
 		fault_eval_table[CHARGE_LIMIT_ENFORCEMENT_FAULT].lim_1 =
-			bms_algos->cont_CCL;
+			(-1.0f * bms_algos->cont_CCL);
 		fault_eval_table[CELL_VOLTAGE_TOO_LOW].data_1 =
 			analyzer->min_ocv.val;
 		fault_eval_table[CELL_VOLTAGE_TOO_HIGH].data_1 =
