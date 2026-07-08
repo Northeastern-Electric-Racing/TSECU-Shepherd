@@ -537,7 +537,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 			(fault_eval_t){ .id = "Charge Current Limit",
 					.timer = ovr_chgcurr_timer,
 					.data_1 = hv_plate->pack_current,
-					.optype_1 = GT,
+					.optype_1 = LT,
 					.lim_1 = (-1.0f * bms_algos->cont_CCL),
 					.timeout = OVER_CHG_CURR_TIME,
 					.optype_2 = NOP, // UNUSED
