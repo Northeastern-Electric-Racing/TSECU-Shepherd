@@ -55,7 +55,7 @@ void test_inst_dcl_temperature_and_ocv_regions(void)
     test_inputs.min_ocv  = 4.0f;
 
     dcl_calc_inst_limit(test_inputs, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(82.5f, test_algos.inst_DCL);
+    TEST_ASSERT_EQUAL_FLOAT(105.0f, test_algos.inst_DCL);
 
     /* -------- Temperature ramp-down region -------- */
     test_inputs.min_temp = 25.0f;
@@ -63,7 +63,7 @@ void test_inst_dcl_temperature_and_ocv_regions(void)
     test_inputs.min_ocv  = 4.0f;
 
     dcl_calc_inst_limit(test_inputs, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(114.0f, test_algos.inst_DCL);
+    TEST_ASSERT_EQUAL_FLOAT(150.0f, test_algos.inst_DCL);
 
     /* -------- OCV below minimum dominates -------- */
     test_inputs.min_temp = 25.0f;
@@ -79,7 +79,7 @@ void test_inst_dcl_temperature_and_ocv_regions(void)
     test_inputs.min_ocv  = 3.3f;     /* between OCV_MIN and DERATE_THRESH */
 
     dcl_calc_inst_limit(test_inputs, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(75.0f, test_algos.inst_DCL);
+    TEST_ASSERT_EQUAL_FLOAT(94.2857f, test_algos.inst_DCL);
 
     /* -------- Fully nominal region -------- */
     test_inputs.min_temp = 25.0f;
@@ -112,7 +112,7 @@ void test_cont_dcl_follows_inst_limit_when_pulse_not_allowed(void)
     TEST_ASSERT_EQUAL_FLOAT(test_algos.inst_DCL, test_algos.cont_DCL);
 
     /* -------- Pulse eligibility lost resets behavior -------- */
-    test_pack_current = 140.0f;
+    test_pack_current = 185.0f;
     test_inputs.min_ocv = 4.0f;
 
     is_timer_active_ExpectAnyArgsAndReturn(false);

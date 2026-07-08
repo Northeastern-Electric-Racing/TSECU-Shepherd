@@ -3,7 +3,7 @@
 
 /******************************* DCL **********************************/
 
-#define DCL_MAX_CURRENT_A                (135.0f)
+#define DCL_MAX_CURRENT_A                (180.0f)
 #define DCL_MIN_CURRENT_A                (30.0f)
 #define DCL_PULSE_PERCENT                (1.1f)
 #define DCL_COOLDOWN_PERCENT             (0.9f)
