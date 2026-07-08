@@ -35,7 +35,7 @@
 #define CCL_TEMP_MAX_C                   (60.0f)
 #define CCL_OCV_MAX_V                    (4.2f)
 #define CCL_OCV_DERATE_THRESH            (4.0f)
-#define CCL_MAX_CURRENT_A                (30.0f)
+#define CCL_MAX_CURRENT_A                (60.0f)
 #define CCL_MIN_CURRENT_A                (0.0f)
 #define CCL_PULSE_PERCENT                (1.1f)
 #define CCL_COOLDOWN_PERCENT             (0.9f)
