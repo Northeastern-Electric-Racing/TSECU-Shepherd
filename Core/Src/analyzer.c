@@ -154,16 +154,10 @@ void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
 					getVoltage(acc_data->chips[chip]
 							   .cell.c_codes[cell]);
 			} else {
-				if ((chip == 7 && cell == 8) || (chip == 5 && cell == 8)) { 
-					analyzer->chip_data[chip].cell_voltages[cell] =
-						getVoltage(acc_data->chips[chip]
-								   .scell.sc_codes[cell]);
-				} else {
-					analyzer->chip_data[chip].cell_voltages[cell] =
-						getVoltage(
-						acc_data->chips[chip]
-							.fcell.fc_codes[cell]);
-				}
+				analyzer->chip_data[chip].cell_voltages[cell] =
+					getVoltage(
+					acc_data->chips[chip]
+						.fcell.fc_codes[cell]);
 			}
 		}
 		// 25A patch only: alpha lowest and beta highest need to be offset correctly
@@ -445,15 +439,15 @@ void vAnalyzer(ULONG thread_input)
 				  analyzer->min_ocv.chipIndex,
 				  analyzer->min_ocv.cellNum, analyzer->avg_ocv);
 		send_segment_average_voltages(
-			analyzer->segment_average_volts[0], analyzer->segment_average_volts[1], analyzer->segment_average_volts[2], analyzer->segment_average_volts[3], 0.0f);
+			analyzer->segment_average_volts[0], analyzer->segment_average_volts[1], analyzer->segment_average_volts[2], analyzer->segment_average_volts[3], analyzer->segment_average_volts[4]);
 		send_segment_total_voltages(
-		analyzer->segment_total_volts[0], analyzer->segment_total_volts[1], analyzer->segment_total_volts[2], analyzer->segment_total_volts[3], 0.0f);
+		analyzer->segment_total_volts[0], analyzer->segment_total_volts[1], analyzer->segment_total_volts[2], analyzer->segment_total_volts[3], analyzer->segment_total_volts[4]);
 		send_cell_temperatures(analyzer->max_temp.val, analyzer->max_temp.chipIndex, analyzer->max_temp.cellNum,
 		                  analyzer->min_temp.val, analyzer->min_temp.chipIndex, analyzer->min_temp.cellNum,
 					  analyzer->avg_temp
 		    );
 		send_segment_temperatures(
-		analyzer->segment_average_temps[0], analyzer->segment_average_temps[1], analyzer->segment_average_temps[2], analyzer->segment_average_temps[3], 0.0f);
+		analyzer->segment_average_temps[0], analyzer->segment_average_temps[1], analyzer->segment_average_temps[2], analyzer->segment_average_temps[3], analyzer->segment_average_temps[4]);
 		send_pack_soc_status(analyzer->soc, get_soc_drift());
 	}
 }
