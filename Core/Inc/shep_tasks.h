@@ -5,11 +5,11 @@
 #include "tx_api.h"
 #include "datastructs.h"
 
-#define NO_LOG
+// #define NO_LOG
 
 // #define DEBUG_HV_PLATE
-// #define DEBUG_RAW_VOLTAGES
-// #define DEBUG_OCV_VOLTAGES
+#define DEBUG_RAW_VOLTAGES
+#define DEBUG_OCV_VOLTAGES
 // #define DEBUG_TEMPS
 // #define DEBUG_AlGOS
 

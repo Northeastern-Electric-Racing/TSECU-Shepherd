@@ -267,7 +267,7 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 	segment_configure_balancing(chips, discharge_confg, hspi);
 }
 
-void segment_configure_balancing(
+	void segment_configure_balancing(
 	cell_asic chips[NUM_CHIPS],
 	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP],
 	SPI_HandleTypeDef *hspi)
@@ -316,6 +316,11 @@ void vGetSegmentData(ULONG thread_input)
 
 	start_timer(&pwm_timer, 0); // start timer immeditately on first run
 
+	const BALACNING_CYCLES_BEFORE_SETTLE = 4;
+	const BALANCING_SETTLE_CYCLES = 2;
+
+	uint8_t balancing_cycles = 0;
+
 	for (;;) {
 		prev_state = current_state;
 		current_state = state_machine->bms_state;
@@ -357,14 +362,25 @@ void vGetSegmentData(ULONG thread_input)
 
 			// single shot SADC conversion to halt an SADC continuous conversion inhibiting PWM Balancing
 			get_s_adc_voltages(acc_data->chips, &hspi2);
+			
+			// if we haven't gone through enough balancing cycle before settle, then reset extended balancing
+			if (balancing_cycles < BALACNING_CYCLES_BEFORE_SETTLE) {
+				segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR,
+						&hspi2);
+				tx_thread_sleep(16);
+				segment_configure_balancing(acc_data->chips,
+								acc_data->discharge_config,
+								&hspi2);
+				start_timer(&pwm_timer, pwm_update_frequency);
+			// if we have passed balancing and settle period, then reset balancing cycles
+			} else if (balancing_cycles > BALANCING_SETTLE_CYCLES + BALACNING_CYCLES_BEFORE_SETTLE) {
+				balancing_cycles = 0;
+			} 
+			// nothing is done during settle period
 
-			segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR,
-					 &hspi2);
-			tx_thread_sleep(16);
-			segment_configure_balancing(acc_data->chips,
-						    acc_data->discharge_config,
-						    &hspi2);
-			start_timer(&pwm_timer, pwm_update_frequency);
+			balancing_cycles++;
+		} else {
+			balancing_cycles = 0;
 		}
 
 		HAL_NVIC_EnableIRQ(FDCAN2_IT0_IRQn);

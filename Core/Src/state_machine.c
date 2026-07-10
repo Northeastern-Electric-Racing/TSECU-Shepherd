@@ -106,6 +106,7 @@ void handle_charging(state_machine_args_t *state_machine_args)
 					     ->charger_message_timer, 1000);
 		}
 	} else {
+		PRINTLN_INFO("NO CURRENT!!!!");
 		send_bms_charge_message_send(0, 0, 0xFF);
 	}
 
@@ -320,15 +321,17 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 	if (analyzer->max_ocv.val > MAX_CHARGE_VOLT_FLT ||
 	    analyzer->max_voltage.val > MAX_CHARGE_VOLT_FLT) {
 		state_machine->charging_stage = FAULT;
+		PRINTLN_INFO("max OCV: %f", analyzer->max_ocv.val);
+		PRINTLN_INFO("max Volts: %f", analyzer->max_voltage.val );
 		return false;
 	}
 
 	switch (state_machine->charging_stage) {
 		case LONG_CHARGE_UP:
-			if (analyzer->max_voltage.val > MAX_CHARGE_VOLT ||
-			    is_timer_expired(state_timer)) {
-				next_stage = LONG_SETTLE;
-			}
+				if (analyzer->max_voltage.val > MAX_CHARGE_VOLT ||
+					is_timer_expired(state_timer)) {
+					next_stage = LONG_SETTLE;
+				}
 			break;
 		case LONG_SETTLE:
 			if (is_timer_expired(state_timer)) {
@@ -385,8 +388,7 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 
 	/* if not charging stage, dont charge
 	 * (LONG_SETTLE, SHORT_SETTLE, DONE, FAULT) */
-	return state_machine->charging_stage == LONG_CHARGE_UP ||
-	       state_machine->charging_stage == SHORT_CHARGE_UP;
+	return true;
 }
 
 // check if balancing is allowed

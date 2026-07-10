@@ -102,6 +102,8 @@ chipsSelectionSort(analyzer_t *analyzer,
 /* Send cell balancing config to the segments */
 void handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
 {
+	balancing_state_t balancing_state = BALANCING;
+	
 	// the maximum number of cells to balance per chip, usually tuned for thermal
 	// reasons
 	static const int MAX_BAL_CHIP = 7;
