@@ -188,9 +188,9 @@ void vCanDispatch(ULONG thread_input) {
            U_SUCCESS) {
       status = can_send_msg(&can1, &message);
       if (status != U_SUCCESS) {
-        PRINTLN_WARNING("Failed to send message (on can1) after removing from "
-                        "outgoing queue (Message ID: %ld) - Status %d",
-                        message.id, status);
+        // PRINTLN_WARNING("Failed to send message (on can1) after removing from "
+                        // "outgoing queue (Message ID: %ld) - Status %d",
+                        // message.id, status);
       } 
     }
   }

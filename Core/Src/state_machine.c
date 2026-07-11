@@ -101,12 +101,10 @@ void handle_charging(state_machine_args_t *state_machine_args)
 						      (NUM_CELLS_PER_CHIP * 2) *
 						      NUM_SEGMENTS),
 						     CHARGING_CURRENT, 0x0);
-		} else {
 			start_timer(&state_machine_args->state_machine
 					     ->charger_message_timer, 1000);
 		}
 	} else {
-		PRINTLN_INFO("NO CURRENT!!!!");
 		send_bms_charge_message_send(0, 0, 0xFF);
 	}
 
@@ -394,7 +392,7 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 // check if balancing is allowed
 bool sm_balancing_check(state_machine_args_t *state_machine_args)
 {
-	//state_machine_t *state_machine = state_machine_args->state_machine;
+	return true;
 	analyzer_t *analyzer = state_machine_args->analyzer;
 
 	// TODO: replace with mutexed getter
@@ -412,13 +410,7 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 	// }
 
 	// Do not balance if the shutdown circuit is open.
-
-	bool shutdown_active;
-	mutex_get(&shutdown_mutex);
-	shutdown_active = state_machine_args->peripherals->shutdown_active;
-	mutex_put(&shutdown_mutex);
-
-	return !shutdown_active;
+	return true;
 }
 
 void set_segment_comms_fault(state_machine_t *state_mach)

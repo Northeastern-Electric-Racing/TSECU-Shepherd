@@ -349,17 +349,10 @@ void vGetSegmentData(ULONG thread_input)
 			}
 		}
 
-		if (current_state == CHARGING && state_machine->balancing_active) {
-			PRINTLN_INFO("READING PMW REGISTERS");
-			read_pwm_registers(acc_data->chips, &hspi2);
-		}
-
 		if (current_state == CHARGING &&
 		    state_machine->balancing_active &&
 		    is_timer_expired(&pwm_timer) &&
 		    !is_timer_active(&pwm_timer)) {
-
-			PRINTLN_INFO("BALANCING NOW");
 
 			segment_unmute(acc_data->chips, &hspi2);
 
