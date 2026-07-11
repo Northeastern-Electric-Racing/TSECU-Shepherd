@@ -7,6 +7,9 @@
 #include "can_messages_tx.h"
 #include "c_utils.h"
 
+/** 2.0 V open-wire limit converted using the 0.15 mV/bit S-register scale. */
+#define CELL_OPEN_WIRE_THRESHOLD_RAW 13333
+
 static uint16_t segment_pec_errors[NUM_CHIPS] = { 0U };
 static uint16_t prev_segment_pec_errors[NUM_CHIPS] = { 0U };
 
@@ -599,6 +602,73 @@ void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, CONTINUOUS, DCP_OFF, RSTF_ON,
 		       OW_OFF_ALL_CH);
+}
+
+/**
+ * @brief Run an even/odd cell open-wire test and print its raw results.
+ * @param chips ADBMS6830 daisy-chain devices.
+ * @param hspi SPI peripheral used by the daisy chain.
+ */
+void segment_run_cell_open_wire_test(cell_asic chips[NUM_CHIPS],
+				     SPI_HandleTypeDef *hspi)
+{
+	int16_t even_codes[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+
+	printf("[OW] Starting ADBMS6830 cell open-wire test\r\n");
+
+	// DCP_OFF pauses discharge while the S-ADC performs the even check
+	adBms6830_Adsv(NUM_CHIPS, chips, SINGLE, DCP_OFF, OW_ON_EVEN_CH);
+	uint32_t even_poll_count = adBmsPollAdc_indicator(chips, PLSADC);
+	read_s_voltage_registers(chips, hspi);
+
+	for (uint8_t ic = 0; ic < NUM_CHIPS; ic++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			even_codes[ic][cell] = chips[ic].scell.sc_codes[cell];
+			chips[ic].owcell.cell_ow_even[cell] =
+				chips[ic].scell.sc_codes[cell];
+		}
+	}
+
+	// Repeat with open-wire excitation on odd inputs
+	adBms6830_Adsv(NUM_CHIPS, chips, SINGLE, DCP_OFF, OW_ON_ODD_CH);
+	uint32_t odd_poll_count = adBmsPollAdc_indicator(chips, PLSADC);
+	read_s_voltage_registers(chips, hspi);
+
+	printf("[OW] S-ADC polls: even=%lu odd=%lu threshold=%d raw\r\n",
+	       (unsigned long)even_poll_count, (unsigned long)odd_poll_count,
+	       CELL_OPEN_WIRE_THRESHOLD_RAW);
+
+	for (uint8_t ic = 0; ic < NUM_CHIPS; ic++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			int32_t odd = chips[ic].scell.sc_codes[cell];
+			int32_t delta = (int32_t)even_codes[ic][cell] - odd;
+			int32_t excited = ((cell + 1U) % 2U == 0U) ?
+					  even_codes[ic][cell] : odd;
+
+			if (delta < 0) {
+				delta = -delta;
+			}
+
+			chips[ic].owcell.cell_ow_odd[cell] = odd;
+			chips[ic].diag_result.cell_ow[cell] =
+				(excited < CELL_OPEN_WIRE_THRESHOLD_RAW);
+
+			printf("[OW] IC%u C%02u even=%d odd=%ld test=%ld delta=%ld %s\r\n",
+			       (unsigned int)ic, (unsigned int)(cell + 1),
+			       even_codes[ic][cell], (long)odd, (long)excited,
+			       (long)delta,
+			       chips[ic].diag_result.cell_ow[cell] ? "OPEN" :
+									       "closed");
+		}
+	}
+
+	// Restore normal S-register data; the final single shot resumes discharge
+	adBms6830_Adsv(NUM_CHIPS, chips, SINGLE, DCP_OFF, OW_OFF_ALL_CH);
+	uint32_t restore_poll_count = adBmsPollAdc_indicator(chips, PLSADC);
+	read_s_voltage_registers(chips, hspi);
+
+	printf("[OW] Test complete; S-ADC restore polls=%lu\r\n",
+	       (unsigned long)restore_poll_count);
 }
 
 // --- END ADC POLL ---

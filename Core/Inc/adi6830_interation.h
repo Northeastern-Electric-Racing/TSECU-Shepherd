@@ -368,6 +368,16 @@ void get_c_and_s_adc_voltages(cell_asic chips[NUM_CHIPS],
  */
 void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
 
+/**
+ * @brief Run an even/odd cell open-wire test.
+ * @param chips ADBMS6830 daisy-chain devices.
+ * @param hspi SPI peripheral used by the daisy chain.
+ *
+ * Uses single-shot S-ADC conversions without interrupting the continuous C-ADC.
+ */
+void segment_run_cell_open_wire_test(cell_asic chips[NUM_CHIPS],
+				     SPI_HandleTypeDef *hspi);
+
 // --- END ADC POLL ---
 
 #endif

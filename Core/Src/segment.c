@@ -37,7 +37,7 @@ void init_chip(cell_asic *chip)
 	set_soak_on(chip, SOAKON_SET);
 	set_aux_soak_range(chip, SHORT_6830);
 
-	// No open wire detect soak
+	// Use the minimum AUX ADC soak time (approximately 32 us)
 	set_open_wire_soak_time(chip, OWA0);
 
 	// Set therm GPIOs
@@ -307,14 +307,21 @@ void vGetSegmentData(ULONG thread_input)
 	// must delay after init for ADC to start up
 	tx_thread_sleep(500);
 
+	// Run after the monitor ADC has initialized, before normal acquisition
+	segment_run_cell_open_wire_test(acc_data->chips, &hspi2);
+
 	state_t prev_state = BOOT;
 	state_t current_state = BOOT;
 
 	nertimer_t pwm_timer;
+	nertimer_t open_wire_timer;
 	// assumes a DCTO of 1 minute for PWM balancing in extended balancing mode
 	const uint32_t pwm_update_frequency = 55000;
+	// Bench-test period; set from the required fault-tolerant time interval
+	const uint32_t open_wire_test_frequency = 60000;
 
 	start_timer(&pwm_timer, 0); // start timer immeditately on first run
+	start_timer(&open_wire_timer, open_wire_test_frequency);
 
 	for (;;) {	
 		prev_state = current_state;
@@ -368,6 +375,11 @@ void vGetSegmentData(ULONG thread_input)
 		} 
 
 		HAL_NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
+
+		if (is_timer_expired(&open_wire_timer)) {
+			segment_run_cell_open_wire_test(acc_data->chips, &hspi2);
+			start_timer(&open_wire_timer, open_wire_test_frequency);
+		}
 
 		set_flag(ANALYZER_FLAG);
 		tx_thread_sleep(300);
