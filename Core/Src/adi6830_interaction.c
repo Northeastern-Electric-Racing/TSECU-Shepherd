@@ -6,9 +6,11 @@
 #include "isospi_recovery_common_config.h"
 #include "can_messages_tx.h"
 #include "c_utils.h"
+#include "serialPrintResult.h"
 
-/** 2.0 V open-wire limit converted using the 0.15 mV/bit S-register scale. */
-#define CELL_OPEN_WIRE_THRESHOLD_RAW 13333
+/** Healthy S-ADC gain is 85% to 95% while its open-wire switch is active. */
+#define CELL_OPEN_WIRE_MIN_DROP_PERCENT 5.0f
+#define CELL_OPEN_WIRE_MAX_DROP_PERCENT 15.0f
 
 static uint16_t segment_pec_errors[NUM_CHIPS] = { 0U };
 static uint16_t prev_segment_pec_errors[NUM_CHIPS] = { 0U };
@@ -616,7 +618,7 @@ void start_s_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 }
 
 /**
- * @brief Run an even/odd cell open-wire test and print its raw results.
+ * @brief Run an even/odd cell open-wire test and print its voltage results.
  * @param chips ADBMS6830 daisy-chain devices.
  * @param hspi SPI peripheral used by the daisy chain.
  */
@@ -645,31 +647,44 @@ void segment_run_cell_open_wire_test(cell_asic chips[NUM_CHIPS],
 	uint32_t odd_poll_count = adBmsPollAdc_indicator(chips, PLSADC);
 	read_s_voltage_registers(chips, hspi);
 
-	printf("[OW] S-ADC polls: even=%lu odd=%lu threshold=%d raw\r\n",
+	printf("[OW] S-ADC polls: even=%lu odd=%lu expected drop=%.1f-%.1f%%\r\n",
 	       (unsigned long)even_poll_count, (unsigned long)odd_poll_count,
-	       CELL_OPEN_WIRE_THRESHOLD_RAW);
+	       CELL_OPEN_WIRE_MIN_DROP_PERCENT,
+	       CELL_OPEN_WIRE_MAX_DROP_PERCENT);
 
 	for (uint8_t ic = 0; ic < NUM_CHIPS; ic++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			int32_t odd = chips[ic].scell.sc_codes[cell];
-			int32_t delta = (int32_t)even_codes[ic][cell] - odd;
-			int32_t excited = ((cell + 1U) % 2U == 0U) ?
-					  even_codes[ic][cell] : odd;
+			int16_t odd_code = chips[ic].scell.sc_codes[cell];
+			float even_voltage = getVoltage(even_codes[ic][cell]);
+			float odd_voltage = getVoltage(odd_code);
+			bool even_cell = ((cell + 1U) % 2U) == 0U;
+			float excited_voltage =
+				even_cell ? even_voltage : odd_voltage;
+			float baseline_voltage =
+				even_cell ? odd_voltage : even_voltage;
+			float drop_voltage = baseline_voltage - excited_voltage;
+			float drop_percent = 0.0f;
 
-			if (delta < 0) {
-				delta = -delta;
+			if (baseline_voltage > 0.0f) {
+				drop_percent =
+					(drop_voltage / baseline_voltage) * 100.0f;
 			}
 
-			chips[ic].owcell.cell_ow_odd[cell] = odd;
+			chips[ic].owcell.cell_ow_odd[cell] = odd_code;
 			chips[ic].diag_result.cell_ow[cell] =
-				(excited < CELL_OPEN_WIRE_THRESHOLD_RAW);
+				(drop_percent > CELL_OPEN_WIRE_MAX_DROP_PERCENT);
 
-			printf("[OW] IC%u C%02u even=%d odd=%ld test=%ld delta=%ld %s\r\n",
+			const char *result = "closed";
+			if (chips[ic].diag_result.cell_ow[cell]) {
+				result = "OPEN";
+			} else if (drop_percent < CELL_OPEN_WIRE_MIN_DROP_PERCENT) {
+				result = "LOW DROP";
+			}
+
+			printf("[OW] IC%u C%02u even=%.3f V odd=%.3f V baseline=%.3f V excited=%.3f V drop=%.3f V (%.1f%%) %s\r\n",
 			       (unsigned int)ic, (unsigned int)(cell + 1),
-			       even_codes[ic][cell], (long)odd, (long)excited,
-			       (long)delta,
-			       chips[ic].diag_result.cell_ow[cell] ? "OPEN" :
-									       "closed");
+			       even_voltage, odd_voltage, baseline_voltage,
+			       excited_voltage, drop_voltage, drop_percent, result);
 		}
 	}
 
