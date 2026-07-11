@@ -601,7 +601,18 @@ void get_c_and_s_adc_voltages(cell_asic chips[NUM_CHIPS],
 void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, CONTINUOUS, DCP_OFF, RSTF_ON,
-		       OW_OFF_ALL_CH);
+			       OW_OFF_ALL_CH);
+}
+
+/**
+ * @brief Start continuous S-ADC redundancy without restarting the C-ADC.
+ * @param chips ADBMS6830 daisy-chain devices.
+ * @param hspi SPI peripheral used by the daisy chain.
+ */
+void start_s_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
+{
+	adBms6830_Adsv(NUM_CHIPS, chips, CONTINUOUS, DCP_OFF,
+			 OW_OFF_ALL_CH);
 }
 
 /**

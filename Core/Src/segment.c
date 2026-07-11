@@ -309,9 +309,11 @@ void vGetSegmentData(ULONG thread_input)
 
 	// Run after the monitor ADC has initialized, before normal acquisition
 	segment_run_cell_open_wire_test(acc_data->chips, &hspi2);
+	start_s_adc_conv(acc_data->chips, &hspi2);
 
 	state_t prev_state = BOOT;
 	state_t current_state = BOOT;
+	bool prev_balancing_active = false;
 
 	nertimer_t pwm_timer;
 	nertimer_t open_wire_timer;
@@ -326,12 +328,20 @@ void vGetSegmentData(ULONG thread_input)
 	for (;;) {	
 		prev_state = current_state;
 		current_state = state_machine->bms_state;
+		bool balancing_active = state_machine->balancing_active;
 
 		HAL_NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
 
 		// mute when entering any state other than balancing or charging
 		if (prev_state != current_state && current_state != CHARGING) {
 			segment_mute(acc_data->chips, &hspi2);
+			start_s_adc_conv(acc_data->chips, &hspi2);
+		}
+
+		// Restore redundancy after PWM balancing ends while still charging
+		if (current_state == CHARGING && prev_balancing_active &&
+		    !balancing_active) {
+			start_s_adc_conv(acc_data->chips, &hspi2);
 		}
 
 		if (current_state == CHARGING) {
@@ -356,8 +366,7 @@ void vGetSegmentData(ULONG thread_input)
 			}
 		}
 
-		if (current_state == CHARGING &&
-		    state_machine->balancing_active &&
+		if (current_state == CHARGING && balancing_active &&
 		    is_timer_expired(&pwm_timer) &&
 		    !is_timer_active(&pwm_timer)) {
 
@@ -378,9 +387,16 @@ void vGetSegmentData(ULONG thread_input)
 
 		if (is_timer_expired(&open_wire_timer)) {
 			segment_run_cell_open_wire_test(acc_data->chips, &hspi2);
+
+			// Continuous S-ADC redundancy must remain off during PWM balancing
+			if (current_state != CHARGING || !balancing_active) {
+				start_s_adc_conv(acc_data->chips, &hspi2);
+			}
+
 			start_timer(&open_wire_timer, open_wire_test_frequency);
 		}
 
+		prev_balancing_active = balancing_active;
 		set_flag(ANALYZER_FLAG);
 		tx_thread_sleep(300);
 	}

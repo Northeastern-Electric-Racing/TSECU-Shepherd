@@ -369,6 +369,13 @@ void get_c_and_s_adc_voltages(cell_asic chips[NUM_CHIPS],
 void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
 
 /**
+ * @brief Start continuous S-ADC redundancy without restarting the C-ADC.
+ * @param chips ADBMS6830 daisy-chain devices.
+ * @param hspi SPI peripheral used by the daisy chain.
+ */
+void start_s_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
+
+/**
  * @brief Run an even/odd cell open-wire test.
  * @param chips ADBMS6830 daisy-chain devices.
  * @param hspi SPI peripheral used by the daisy chain.
