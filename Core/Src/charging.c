@@ -101,9 +101,7 @@ chipsSelectionSort(analyzer_t *analyzer,
 
 /* Send cell balancing config to the segments */
 void handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
-{
-	balancing_state_t balancing_state = BALANCING;
-	
+{	
 	// the maximum number of cells to balance per chip, usually tuned for thermal
 	// reasons
 	static const int MAX_BAL_CHIP = 7;
@@ -135,7 +133,7 @@ void handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
 			if (new_ocv_map[chip][cell].val > (low + min_thresh)) {
 				/* Balance cell */
 				acc_data->discharge_config // TODO: Mutex
-					[chip][new_ocv_map[chip][cell].idex] = duty_cycle;
+					[chip][new_ocv_map[chip][cell].idex] = PWM_52_8_PCT;
 			} else {
 				/* Do not balance cell */
 				acc_data->discharge_config

@@ -210,7 +210,7 @@ bool segment_is_balancing(cell_asic chips[NUM_CHIPS])
 			if (chips[chip].PwmA.pwma[i] > 0) {
 				return true;
 			}
-		}
+		}	
 		for (uint8_t i = 0; i < NUM_CELLS_PER_CHIP - PWMA; i++) {
 			if (chips[chip].PwmB.pwmb[i] > 0) {
 				return true;
@@ -248,7 +248,7 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -316,12 +316,7 @@ void vGetSegmentData(ULONG thread_input)
 
 	start_timer(&pwm_timer, 0); // start timer immeditately on first run
 
-	const BALACNING_CYCLES_BEFORE_SETTLE = 4;
-	const BALANCING_SETTLE_CYCLES = 2;
-
-	uint8_t balancing_cycles = 0;
-
-	for (;;) {
+	for (;;) {	
 		prev_state = current_state;
 		current_state = state_machine->bms_state;
 
@@ -354,34 +349,30 @@ void vGetSegmentData(ULONG thread_input)
 			}
 		}
 
+		if (current_state == CHARGING && state_machine->balancing_active) {
+			PRINTLN_INFO("READING PMW REGISTERS");
+			read_pwm_registers(acc_data->chips, &hspi2);
+		}
+
 		if (current_state == CHARGING &&
 		    state_machine->balancing_active &&
 		    is_timer_expired(&pwm_timer) &&
 		    !is_timer_active(&pwm_timer)) {
+
+			PRINTLN_INFO("BALANCING NOW");
+
 			segment_unmute(acc_data->chips, &hspi2);
 
 			// single shot SADC conversion to halt an SADC continuous conversion inhibiting PWM Balancing
 			get_s_adc_voltages(acc_data->chips, &hspi2);
 			
 			// if we haven't gone through enough balancing cycle before settle, then reset extended balancing
-			if (balancing_cycles < BALACNING_CYCLES_BEFORE_SETTLE) {
-				segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR,
-						&hspi2);
-				tx_thread_sleep(16);
-				segment_configure_balancing(acc_data->chips,
-								acc_data->discharge_config,
-								&hspi2);
-				start_timer(&pwm_timer, pwm_update_frequency);
-			// if we have passed balancing and settle period, then reset balancing cycles
-			} else if (balancing_cycles > BALANCING_SETTLE_CYCLES + BALACNING_CYCLES_BEFORE_SETTLE) {
-				balancing_cycles = 0;
-			} 
-			// nothing is done during settle period
-
-			balancing_cycles++;
-		} else {
-			balancing_cycles = 0;
-		}
+			segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR,
+					&hspi2);
+			tx_thread_sleep(16);
+			segment_manual_balancing(acc_data->chips, &hspi2);
+			start_timer(&pwm_timer, pwm_update_frequency);
+		} 
 
 		HAL_NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
 

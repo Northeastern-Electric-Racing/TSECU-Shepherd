@@ -394,14 +394,15 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 // check if balancing is allowed
 bool sm_balancing_check(state_machine_args_t *state_machine_args)
 {
-	return false;
 	//state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
 
 	// TODO: replace with mutexed getter
 	if (analyzer->max_voltage.val <= BAL_MIN_V)
+		PRINTLN_INFO("OVER MAX");
 		return false;
 	if (analyzer->delt_voltage <= MAX_DELTA_V)
+		PRINTLN_INFO("UNDER DELTA MAX");
 		return false;
 
 	// Do not balance during settling.
