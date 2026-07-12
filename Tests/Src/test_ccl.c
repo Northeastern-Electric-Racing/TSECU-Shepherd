@@ -55,7 +55,7 @@ void test_inst_ccl_temperature_and_ocv_regions(void)
     test_inputs.max_ocv  = 4.0f;
 
     ccl_calc_inst_limit(test_inputs, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(15.0f, test_algos.inst_CCL);
+    TEST_ASSERT_EQUAL_FLOAT(37.5f, test_algos.inst_CCL);
 
     /* -------- Temperature ramp-down region -------- */
     test_inputs.min_temp = 25.0f;
@@ -63,7 +63,7 @@ void test_inst_ccl_temperature_and_ocv_regions(void)
     test_inputs.max_ocv  = 4.0f;
 
     ccl_calc_inst_limit(test_inputs, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(24.0f, test_algos.inst_CCL);
+    TEST_ASSERT_EQUAL_FLOAT(60.0f, test_algos.inst_CCL);
 
     /* -------- OCV above maximum (hard clamp) -------- */
     test_inputs.min_temp = 25.0f;
@@ -79,7 +79,7 @@ void test_inst_ccl_temperature_and_ocv_regions(void)
     test_inputs.max_ocv  = 4.12f;     /* between OCV_MIN and DERATE_THRESH */
 
     ccl_calc_inst_limit(test_inputs, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(12.0f, test_algos.inst_CCL);
+    TEST_ASSERT_EQUAL_FLOAT(30.0f, test_algos.inst_CCL);
 
     /* -------- Fully nominal region -------- */
     test_inputs.min_temp = 25.0f;
@@ -112,7 +112,7 @@ void test_cont_ccl_follows_inst_limit_when_pulse_not_allowed(void)
     TEST_ASSERT_EQUAL_FLOAT(test_algos.inst_CCL, test_algos.cont_CCL);
 
     /* -------- Pulse eligibility lost resets behavior -------- */
-    test_pack_current = -35.0f;
+    test_pack_current = -80.0f;
     test_inputs.max_ocv = 3.8f;
 
     is_timer_active_ExpectAnyArgsAndReturn(false);
