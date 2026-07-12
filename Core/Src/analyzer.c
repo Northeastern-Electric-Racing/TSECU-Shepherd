@@ -193,21 +193,6 @@ void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
 
 }
 
-void calc_even_and_odd_cell_voltages(analyzer_t *analyzer,
-				     acc_data_t *acc_data)
-{
-	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			analyzer->chip_data[chip].cell_even_voltages[cell] =
-				getVoltage(acc_data->chips[chip]
-						   .owcell.cell_ow_even[cell]);
-			analyzer->chip_data[chip].cell_odd_voltages[cell] =
-				getVoltage(acc_data->chips[chip]
-						   .owcell.cell_ow_odd[cell]);
-		}
-	}
-}
-
 void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data)
 {
 	analyzer->max_voltage.val = FLT_MIN;
@@ -436,7 +421,6 @@ void vAnalyzer(ULONG thread_input)
 		calc_cell_temps(analyzer, acc_data);
 		calc_pack_temps(analyzer, acc_data);
 		calc_cell_voltages(analyzer, acc_data, state_machine);
-		calc_even_and_odd_cell_voltages(analyzer, acc_data);
 		calc_open_cell_voltage(analyzer, acc_data, hv_plate);
 		calc_pack_voltage_stats(analyzer, acc_data);
 		calc_cell_resistances(analyzer, acc_data, hv_plate);

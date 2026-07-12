@@ -27,10 +27,6 @@ void calc_pack_temps(analyzer_t *analyzer, acc_data_t *acc_data);
 void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
                         state_machine_t *state_machine);
 
-/** Convert the saved even/odd open-wire ADC samples to volts. */
-void calc_even_and_odd_cell_voltages(analyzer_t *analyzer,
-                                     acc_data_t *acc_data);
-
 /**
  * @brief Calculate statistics about pack voltage, such as min and max cell
  * volt, pack and avg voltage, pack and avg OCV, and deltas.

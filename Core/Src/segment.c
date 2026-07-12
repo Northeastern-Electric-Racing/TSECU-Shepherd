@@ -5,6 +5,7 @@
 #include "bms_config.h"
 #include "c_utils.h"
 #include "charging.h"
+#include "compute.h"
 #include "datastructs.h"
 #include "segment_isospi_recovery.h"
 #include "serialPrintResult.h"
@@ -12,6 +13,11 @@
 #include "state_machine.h"
 #include "app_threadx.h"
 #include "main.h"
+
+/**
+ * @brief Open-wire threshold while the S-ADC switch is active.
+ */
+#define CELL_OPEN_WIRE_MAX_DROP_PERCENT 15.0f
 
 /**
  * @brief Initialize a chip with our default values.
@@ -290,6 +296,58 @@ void segment_set_dcto(cell_asic chips[NUM_CHIPS], uint8_t dcto,
 	write_config_regs(chips, hspi);
 }
 
+void segment_run_cell_open_wire_test(cell_asic chips[NUM_CHIPS],
+				     SPI_HandleTypeDef *hspi)
+{
+	// DCP_OFF pauses discharge while the S-ADC performs the even check
+	get_s_adc_open_wire_voltages(chips, hspi, OW_ON_EVEN_CH);
+
+	for (uint8_t ic = 0; ic < NUM_CHIPS; ic++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			chips[ic].owcell.cell_ow_even[cell] =
+				chips[ic].scell.sc_codes[cell];
+		}
+	}
+
+	// Repeat with open-wire excitation on odd inputs
+	get_s_adc_open_wire_voltages(chips, hspi, OW_ON_ODD_CH);
+
+	for (uint8_t ic = 0; ic < NUM_CHIPS; ic++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			const int16_t odd_code = chips[ic].scell.sc_codes[cell];
+			const float even_voltage = getVoltage(
+				chips[ic].owcell.cell_ow_even[cell]);
+			const float odd_voltage = getVoltage(odd_code);
+			const bool even_cell = ((cell + 1U) % 2U) == 0U;
+			const float excited_voltage =
+				even_cell ? even_voltage : odd_voltage;
+			const float baseline_voltage =
+				even_cell ? odd_voltage : even_voltage;
+			const float drop_voltage = baseline_voltage - excited_voltage;
+			float drop_percent = 0.0f;
+
+			if (baseline_voltage > 0.0f) {
+				drop_percent =
+					(drop_voltage / baseline_voltage) * 100.0f;
+			}
+
+			chips[ic].owcell.cell_ow_odd[cell] = odd_code;
+			chips[ic].diag_result.cell_ow[cell] =
+				(drop_percent > CELL_OPEN_WIRE_MAX_DROP_PERCENT);
+
+			if (chips[ic].diag_result.cell_ow[cell]) {
+				PRINTLN_WARNING(
+					"[OW] Open wire IC%u C%02u: even=%.3f V, odd=%.3f V, drop=%.3f V (%.1f%%)",
+					ic + 1U, cell + 1U, even_voltage,
+					odd_voltage, drop_voltage, drop_percent);
+			}
+		}
+	}
+
+	// Restore normal S-register data; the final single shot resumes discharge
+	get_s_adc_open_wire_voltages(chips, hspi, OW_OFF_ALL_CH);
+}
+
 // GET SEGEMENT DATA THREAD
 void vGetSegmentData(ULONG thread_input)
 {
@@ -373,7 +431,8 @@ void vGetSegmentData(ULONG thread_input)
 			segment_unmute(acc_data->chips, &hspi2);
 
 			// single shot SADC conversion to halt an SADC continuous conversion inhibiting PWM Balancing
-			get_s_adc_voltages(acc_data->chips, &hspi2);
+			get_s_adc_open_wire_voltages(acc_data->chips, &hspi2,
+						     OW_OFF_ALL_CH);
 			
 			// if we haven't gone through enough balancing cycle before settle, then reset extended balancing
 			segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR,

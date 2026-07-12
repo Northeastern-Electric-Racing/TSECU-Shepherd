@@ -48,8 +48,6 @@ typedef struct {
 	float cell_resistance[NUM_CELLS_PER_CHIP];
 	float open_cell_voltage[NUM_CELLS_PER_CHIP];
 	float cell_voltages[NUM_CELLS_PER_CHIP];
-	float cell_even_voltages[NUM_CELLS_PER_CHIP];
-	float cell_odd_voltages[NUM_CELLS_PER_CHIP];
 
 	/* Maximum temperature of on-board therms.*/
 	float on_board_temp[NUM_ONBOARD_THERMS_PER_CHIP];

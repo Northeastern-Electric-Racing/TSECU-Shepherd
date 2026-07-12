@@ -101,6 +101,15 @@ void read_serial_id(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
  */
 void segment_set_dcto(cell_asic chips[NUM_CHIPS], uint8_t dcto, SPI_HandleTypeDef *hspi);
 
+/**
+ * @brief Run an even/odd cell open-wire test.
+ *
+ * @param chips Array of chips.
+ * @param hspi SPI handle.
+ */
+void segment_run_cell_open_wire_test(cell_asic chips[NUM_CHIPS],
+				     SPI_HandleTypeDef *hspi);
+
 void vGetSegmentData(ULONG thread_input);
 
 #endif
