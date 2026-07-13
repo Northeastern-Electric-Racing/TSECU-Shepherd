@@ -110,10 +110,6 @@ void handle_charging(state_machine_args_t *state_machine_args)
 		send_bms_charge_message_send(0, 0, 0xFF);
 	}
 
-	// disable discharge and charge from the MC
-	send_max_dc_current_command(0);
-	send_max_dc_brake_current_command(0);
-
 	/* Check if we should balance */
 	if (sm_balancing_check(state_machine_args)) {
 		handle_balance_cells(state_machine_args->analyzer,
@@ -167,20 +163,21 @@ void request_transition(state_machine_args_t *state_machine_args,
 			state_t next_state)
 {
 	state_machine_t *state_machine = state_machine_args->state_machine;
+	bool transition_requested = false;
 
 	mutex_get(&state_mutex);
 
-	if (state_machine->bms_state == next_state)
-		return;
-
-	if (!valid_transition_from_to[state_machine->bms_state][next_state])
-		return;
-
-	state_machine_args->state_machine->bms_state = next_state;
+	if ((state_machine->bms_state != next_state) &&
+	    valid_transition_from_to[state_machine->bms_state][next_state]) {
+		state_machine->bms_state = next_state;
+		transition_requested = true;
+	}
 
 	mutex_put(&state_mutex);
 
-	init_LUT[next_state](state_machine_args);
+	if (transition_requested) {
+		init_LUT[next_state](state_machine_args);
+	}
 }
 
 void sm_fault_return(state_machine_args_t *state_machine_args)
