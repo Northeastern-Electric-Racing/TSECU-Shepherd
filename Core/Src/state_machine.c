@@ -45,6 +45,8 @@ const HandlerFunction_t handler_LUT[NUM_STATES] = { &handle_boot, &handle_ready,
 
 void init_boot(state_machine_args_t *state_machine_args)
 {
+	cancel_timer(&state_machine_args->state_machine->charger_message_timer);
+
 	update_eval_table(
 		state_machine_args); // initialize eval table with crit and non crit faults
 
@@ -92,9 +94,9 @@ void handle_charging(state_machine_args_t *state_machine_args)
 	/* Check if we should charge */
 	if (sm_charging_check(state_machine_args)) {
 		/* Send CAN message, but not too often */
-		if (is_timer_expired(&state_machine_args->state_machine
+		if (!is_timer_active(&state_machine_args->state_machine
 					      ->charger_message_timer) ||
-		    !is_timer_active(&state_machine_args->state_machine
+		    is_timer_expired(&state_machine_args->state_machine
 					      ->charger_message_timer)) {
 			send_bms_charge_message_send((MAX_CHARGE_VOLT *
 						      (NUM_CELLS_PER_CHIP * 2) *
@@ -341,6 +343,8 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 	if (analyzer->max_ocv.val > MAX_CHARGE_VOLT_FLT ||
 	    analyzer->max_voltage.val > MAX_CHARGE_VOLT_FLT) {
 		state_machine->charging_stage = FAULT;
+		PRINTLN_INFO("Max OCV: %f", analyzer->max_ocv.val);
+		PRINTLN_INFO("Max Volts: %f", analyzer->max_voltage.val);
 		return false;
 	}
 
@@ -407,36 +411,40 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 
 	/* if not charging stage, dont charge
 	 * (LONG_SETTLE, SHORT_SETTLE, DONE, FAULT) */
-	return state_machine->charging_stage == LONG_CHARGE_UP ||
-	       state_machine->charging_stage == SHORT_CHARGE_UP;
+	// return state_machine->charging_stage == LONG_CHARGE_UP ||
+	//        state_machine->charging_stage == SHORT_CHARGE_UP;
+	return true;
 }
 
 // check if balancing is allowed
 bool sm_balancing_check(state_machine_args_t *state_machine_args)
 {
-	//state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
+	bool balancing_allowed = false;
+	bool shutdown_active = true;
+	float max_voltage = 0.0f;
+	float delta_voltage = 0.0f;
 
-	// TODO: replace with mutexed getter
-	if (analyzer->max_voltage.val <= BAL_MIN_V)
-		return false;
-	if (analyzer->delt_voltage <= MAX_DELTA_V)
-		return false;
+	mutex_get(&analyzer_mutex);
+	max_voltage = analyzer->max_voltage.val;
+	delta_voltage = analyzer->delt_voltage;
+	mutex_put(&analyzer_mutex);
 
-	// Do not balance during settling.
-	// if (state_machine->charging_stage != LONG_SETTLE &&
-	//     state_machine->charging_stage != SHORT_SETTLE) {
-	// 	return false;
-	// }
+	if ((max_voltage <= BAL_MIN_V) || (delta_voltage <= MAX_DELTA_V)) {
+		balancing_allowed = false;
+	} else {
+		// Do not balance if the shutdown circuit is open.
+		mutex_get(&shutdown_mutex);
+		shutdown_active =
+			state_machine_args->peripherals->shutdown_active;
+		mutex_put(&shutdown_mutex);
 
-	// Do not balance if the shutdown circuit is open.
+		balancing_allowed = !shutdown_active;
 
-	bool shutdown_active;
-	mutex_get(&shutdown_mutex);
-	shutdown_active = state_machine_args->peripherals->shutdown_active;
-	mutex_put(&shutdown_mutex);
+		/** @todo Prevent balancing during settling charging stages. */
+	}
 
-	return !shutdown_active;
+	return balancing_allowed;
 }
 
 void set_segment_comms_fault(state_machine_t *state_mach)
