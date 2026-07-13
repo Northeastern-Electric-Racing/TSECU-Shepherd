@@ -23,6 +23,7 @@ state_machine_args_t args = { .state_machine = &state_machine,
 void setUp(void)
 {
     analyzer.min_ocv.val = 2.6;
+    cancel_timer_Expect(&state_machine.charger_message_timer);
 	init_boot(&args);
 }
 
