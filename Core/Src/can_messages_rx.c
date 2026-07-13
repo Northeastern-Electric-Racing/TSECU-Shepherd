@@ -757,6 +757,9 @@ void receive_car_state(const can_msg_t *message, car_state_t *car_state) {
     uint64_t traction_control_mask = (1ULL << 1) - 1ULL;
     uint64_t traction_control_raw = (data >> 16) & traction_control_mask;
     car_state->traction_control = (bool)traction_control_raw;
+    uint64_t state_transition_error_mask = (1ULL << 8) - 1ULL;
+    uint64_t state_transition_error_raw = (data >> 8) & state_transition_error_mask;
+    car_state->state_transition_error = (uint8_t)state_transition_error_raw;
 }
 
 void receive_pedal_percent_pressed_values(const can_msg_t *message, pedal_percent_pressed_values_t *pedal_percent_pressed_values) {
@@ -879,57 +882,60 @@ void receive_imu_gyro(const can_msg_t *message, imu_gyro_t *imu_gyro) {
 
 void receive_faults(const can_msg_t *message, faults_t *faults) {
     
-    uint16_t data_bigendian;
-    memcpy(&data_bigendian, message->data, 2);
-    uint16_t data = __builtin_bswap16(data_bigendian);
+    uint32_t data_bigendian;
+    memcpy(&data_bigendian, message->data, 4);
+    uint32_t data = __builtin_bswap32(data_bigendian);
     uint64_t CAN_OUTGOING_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t CAN_OUTGOING_FAULT_raw = (data >> 15) & CAN_OUTGOING_FAULT_mask;
+    uint64_t CAN_OUTGOING_FAULT_raw = (data >> 31) & CAN_OUTGOING_FAULT_mask;
     faults->CAN_OUTGOING_FAULT = (bool)CAN_OUTGOING_FAULT_raw;
     uint64_t CAN_INCOMING_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t CAN_INCOMING_FAULT_raw = (data >> 14) & CAN_INCOMING_FAULT_mask;
+    uint64_t CAN_INCOMING_FAULT_raw = (data >> 30) & CAN_INCOMING_FAULT_mask;
     faults->CAN_INCOMING_FAULT = (bool)CAN_INCOMING_FAULT_raw;
     uint64_t BMS_CAN_MONITOR_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t BMS_CAN_MONITOR_FAULT_raw = (data >> 13) & BMS_CAN_MONITOR_FAULT_mask;
+    uint64_t BMS_CAN_MONITOR_FAULT_raw = (data >> 29) & BMS_CAN_MONITOR_FAULT_mask;
     faults->BMS_CAN_MONITOR_FAULT = (bool)BMS_CAN_MONITOR_FAULT_raw;
     uint64_t LIGHTNING_CAN_MONITOR_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t LIGHTNING_CAN_MONITOR_FAULT_raw = (data >> 12) & LIGHTNING_CAN_MONITOR_FAULT_mask;
+    uint64_t LIGHTNING_CAN_MONITOR_FAULT_raw = (data >> 28) & LIGHTNING_CAN_MONITOR_FAULT_mask;
     faults->LIGHTNING_CAN_MONITOR_FAULT = (bool)LIGHTNING_CAN_MONITOR_FAULT_raw;
     uint64_t ONBOARD_TEMP_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t ONBOARD_TEMP_FAULT_raw = (data >> 11) & ONBOARD_TEMP_FAULT_mask;
+    uint64_t ONBOARD_TEMP_FAULT_raw = (data >> 27) & ONBOARD_TEMP_FAULT_mask;
     faults->ONBOARD_TEMP_FAULT = (bool)ONBOARD_TEMP_FAULT_raw;
     uint64_t IMU_ACCEL_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t IMU_ACCEL_FAULT_raw = (data >> 10) & IMU_ACCEL_FAULT_mask;
+    uint64_t IMU_ACCEL_FAULT_raw = (data >> 26) & IMU_ACCEL_FAULT_mask;
     faults->IMU_ACCEL_FAULT = (bool)IMU_ACCEL_FAULT_raw;
     uint64_t IMU_GYRO_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t IMU_GYRO_FAULT_raw = (data >> 9) & IMU_GYRO_FAULT_mask;
+    uint64_t IMU_GYRO_FAULT_raw = (data >> 25) & IMU_GYRO_FAULT_mask;
     faults->IMU_GYRO_FAULT = (bool)IMU_GYRO_FAULT_raw;
     uint64_t BSPD_PREFAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t BSPD_PREFAULT_raw = (data >> 8) & BSPD_PREFAULT_mask;
+    uint64_t BSPD_PREFAULT_raw = (data >> 24) & BSPD_PREFAULT_mask;
     faults->BSPD_PREFAULT = (bool)BSPD_PREFAULT_raw;
     uint64_t ONBOARD_BRAKE_OPEN_CIRCUIT_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t ONBOARD_BRAKE_OPEN_CIRCUIT_FAULT_raw = (data >> 7) & ONBOARD_BRAKE_OPEN_CIRCUIT_FAULT_mask;
+    uint64_t ONBOARD_BRAKE_OPEN_CIRCUIT_FAULT_raw = (data >> 23) & ONBOARD_BRAKE_OPEN_CIRCUIT_FAULT_mask;
     faults->ONBOARD_BRAKE_OPEN_CIRCUIT_FAULT = (bool)ONBOARD_BRAKE_OPEN_CIRCUIT_FAULT_raw;
     uint64_t ONBOARD_ACCEL_OPEN_CIRCUIT_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t ONBOARD_ACCEL_OPEN_CIRCUIT_FAULT_raw = (data >> 6) & ONBOARD_ACCEL_OPEN_CIRCUIT_FAULT_mask;
+    uint64_t ONBOARD_ACCEL_OPEN_CIRCUIT_FAULT_raw = (data >> 22) & ONBOARD_ACCEL_OPEN_CIRCUIT_FAULT_mask;
     faults->ONBOARD_ACCEL_OPEN_CIRCUIT_FAULT = (bool)ONBOARD_ACCEL_OPEN_CIRCUIT_FAULT_raw;
     uint64_t ONBOARD_BRAKE_SHORT_CIRCUIT_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t ONBOARD_BRAKE_SHORT_CIRCUIT_FAULT_raw = (data >> 5) & ONBOARD_BRAKE_SHORT_CIRCUIT_FAULT_mask;
+    uint64_t ONBOARD_BRAKE_SHORT_CIRCUIT_FAULT_raw = (data >> 21) & ONBOARD_BRAKE_SHORT_CIRCUIT_FAULT_mask;
     faults->ONBOARD_BRAKE_SHORT_CIRCUIT_FAULT = (bool)ONBOARD_BRAKE_SHORT_CIRCUIT_FAULT_raw;
     uint64_t ONBOARD_ACCEL_SHORT_CIRCUIT_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t ONBOARD_ACCEL_SHORT_CIRCUIT_FAULT_raw = (data >> 4) & ONBOARD_ACCEL_SHORT_CIRCUIT_FAULT_mask;
+    uint64_t ONBOARD_ACCEL_SHORT_CIRCUIT_FAULT_raw = (data >> 20) & ONBOARD_ACCEL_SHORT_CIRCUIT_FAULT_mask;
     faults->ONBOARD_ACCEL_SHORT_CIRCUIT_FAULT = (bool)ONBOARD_ACCEL_SHORT_CIRCUIT_FAULT_raw;
     uint64_t ONBOARD_PEDAL_DIFFERENCE_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t ONBOARD_PEDAL_DIFFERENCE_FAULT_raw = (data >> 3) & ONBOARD_PEDAL_DIFFERENCE_FAULT_mask;
+    uint64_t ONBOARD_PEDAL_DIFFERENCE_FAULT_raw = (data >> 19) & ONBOARD_PEDAL_DIFFERENCE_FAULT_mask;
     faults->ONBOARD_PEDAL_DIFFERENCE_FAULT = (bool)ONBOARD_PEDAL_DIFFERENCE_FAULT_raw;
     uint64_t RTDS_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t RTDS_FAULT_raw = (data >> 2) & RTDS_FAULT_mask;
+    uint64_t RTDS_FAULT_raw = (data >> 18) & RTDS_FAULT_mask;
     faults->RTDS_FAULT = (bool)RTDS_FAULT_raw;
     uint64_t LV_LOW_VOLTAGE_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t LV_LOW_VOLTAGE_FAULT_raw = (data >> 1) & LV_LOW_VOLTAGE_FAULT_mask;
+    uint64_t LV_LOW_VOLTAGE_FAULT_raw = (data >> 17) & LV_LOW_VOLTAGE_FAULT_mask;
     faults->LV_LOW_VOLTAGE_FAULT = (bool)LV_LOW_VOLTAGE_FAULT_raw;
     uint64_t PRECHARGE_FLOATING_FAULT_mask = (1ULL << 1) - 1ULL;
-    uint64_t PRECHARGE_FLOATING_FAULT_raw = (data >> 0) & PRECHARGE_FLOATING_FAULT_mask;
+    uint64_t PRECHARGE_FLOATING_FAULT_raw = (data >> 16) & PRECHARGE_FLOATING_FAULT_mask;
     faults->PRECHARGE_FLOATING_FAULT = (bool)PRECHARGE_FLOATING_FAULT_raw;
+    uint64_t LATCHING_ACTIVE_FAULT_mask = (1ULL << 1) - 1ULL;
+    uint64_t LATCHING_ACTIVE_FAULT_raw = (data >> 15) & LATCHING_ACTIVE_FAULT_mask;
+    faults->LATCHING_ACTIVE_FAULT = (bool)LATCHING_ACTIVE_FAULT_raw;
 }
 
 void receive_lv_voltage(const can_msg_t *message, lv_voltage_t *lv_voltage) {

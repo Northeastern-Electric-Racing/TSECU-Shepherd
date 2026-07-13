@@ -311,12 +311,12 @@ uint8_t send_hv_plate_diagnostics
 
 /**
 * Contents of this message:
-* BMS/Plate/Diagnostics/EPAD - Exposed pad
-* BMS/Plate/Diagnostics/VDIG - Internal digital 3V supply
-* BMS/Plate/Diagnostics/VDD - VDD power supply pin
-* BMS/Plate/Diagnostics/TMP2 - Secondary internal temperature sensor
-* BMS/Plate/Diagnostics/VDIV - 
-* BMS/Plate/Diagnostics/Extra - Reserved
+* BMS/HV_Plate/Diagnostics/EPAD - Exposed pad
+* BMS/HV_Plate/Diagnostics/VDIG - Internal digital 3V supply
+* BMS/HV_Plate/Diagnostics/VDD - VDD power supply pin
+* BMS/HV_Plate/Diagnostics/TMP2 - Secondary internal temperature sensor
+* BMS/HV_Plate/Diagnostics/VDIV - 
+* BMS/HV_Plate/Diagnostics/Extra - Reserved
 */
 uint8_t send_hv_plate_diagnostics_second
 (float epad,float vdig,float vdd,float tmp2,float vdiv);
