@@ -167,7 +167,6 @@ int p3t_init(void)
 int p3t1755_getBoardTemp(float *temp_c)
 {
 	int status = p3t1755_read_temperature(&p3t, temp_c);
-	PRINTLN_INFO("Read board temp: %f", *temp_c);
 	return status;
 }
 
