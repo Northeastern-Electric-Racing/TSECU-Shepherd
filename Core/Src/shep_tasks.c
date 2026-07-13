@@ -103,10 +103,10 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 #endif
 
 #ifdef DEBUG_ALGOS
-	PRINTLN_INFO("Cont CCL: %.2f A, Const DCL: %.2f A\n",
+	PRINTLN_INFO("Cont CCL: %.2f A, Const DCL: %.2f A, ",
 		     bms_algos->cont_CCL, bms_algos->cont_DCL);
 
-	PRINTLN_INFO("Inst CCL: %.2f A, Inst DCL: %.2f A\n",
+	PRINTLN_INFO("Inst CCL: %.2f A, Inst DCL: %.2f A",
 		     bms_algos->inst_CCL, bms_algos->inst_DCL);
 #endif
 
@@ -411,6 +411,10 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	state_machine_args.sanitizer = &sanitizer;
 	state_machine_args.peripherals = &peripherals;
 
+	static can_receive_args_t can_receive_args = { 0 };
+	can_receive_args.state_machine_args = &state_machine_args;
+	can_receive_args.hv_plate = &hv_plate;
+
 	static hv_plate_args_t hv_plate_args = { 0 };
 	hv_plate_args.hv_plate = &hv_plate;
 	hv_plate_args.analyzer = &analyzer;
@@ -462,7 +466,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.size = 1024, /* Stack Size (in bytes) */
 		.priority = 2, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)&state_machine_args, /* Thread Args */
+		.thread_input = (ULONG)&can_receive_args, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 		.auto_start = TX_AUTO_START, /* Auto Start */
 		.function = vCanReceive /* Thread Function */
@@ -514,7 +518,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	static thread_t _sanitizer_thread = {
 		.name = "Sanitizer Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 3, /* Priority */
+		.priority = 2, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)&sanitizer_args, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
@@ -525,7 +529,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	static thread_t _bms_algorithms_thread = {
 		.name = "BMS Algorithms Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 4, /* Priority */
+		.priority = 2, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)&bms_algos_args, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
@@ -536,7 +540,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	static thread_t _control_thread = {
 		.name = "Control Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 4, /* Priority */
+		.priority = 3, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)&analyzer, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
@@ -569,7 +573,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	static thread_t _debug_thread = {
 		.name = "BMS Debug Mode Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 4, /* Priority */
+		.priority = 3, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)&analyzer, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */

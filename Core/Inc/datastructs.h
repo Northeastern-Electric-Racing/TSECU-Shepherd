@@ -431,6 +431,14 @@ typedef struct {
 } state_machine_args_t;
 
 /**
+ * @brief args for vCanReceive
+ */
+typedef struct {
+	state_machine_args_t *state_machine_args;
+	hv_plate_t *hv_plate;
+} can_receive_args_t;
+
+/**
  * @brief args for vAnalyzer
  */
 typedef struct {
