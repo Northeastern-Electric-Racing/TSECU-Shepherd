@@ -424,7 +424,7 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 
 	mutex_get(&analyzer_mutex);
 	max_voltage = analyzer->max_voltage.val;
-	delta_voltage = analyzer->delt_voltage;
+	delta_voltage = analyzer->delta_voltage;
 	mutex_put(&analyzer_mutex);
 
 	if ((max_voltage <= BAL_MIN_V) || (delta_voltage <= MAX_DELTA_V)) {

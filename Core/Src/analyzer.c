@@ -277,7 +277,7 @@ void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data)
 
 	analyzer->pack_voltage = total_volt;
 
-	analyzer->delt_voltage =
+	analyzer->delta_voltage =
 		analyzer->max_voltage.val - analyzer->min_voltage.val;
 
 	analyzer->avg_ocv = total_ocv / NUM_CELLS;

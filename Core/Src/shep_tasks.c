@@ -55,7 +55,7 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 #ifdef DEBUG_RAW_VOLTAGES
 	PRINTLN_INFO("Min, Max, Avg, Delta Voltages: %f, %f, %f, %f\n",
 		     analyzer->min_voltage.val, analyzer->max_voltage.val,
-		     analyzer->avg_voltage, analyzer->delt_voltage);
+		     analyzer->avg_voltage, analyzer->delta_voltage);
 
 	PRINTLN_INFO("Raw Cell Voltages:");
     for(uint8_t c = 0; c < NUM_CHIPS; c++) {

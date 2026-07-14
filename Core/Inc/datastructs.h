@@ -248,7 +248,7 @@ typedef struct {
 	crit_cellval_t max_voltage;
 	crit_cellval_t min_voltage;
 	float avg_voltage;
-	float delt_voltage;
+	float delta_voltage;
 
 	// OCV timer
 	nertimer_t ocvTimer;
