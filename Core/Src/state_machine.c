@@ -30,6 +30,8 @@ const bool valid_transition_from_to[NUM_STATES][NUM_STATES] = {
 /* private function prototypes */
 void update_eval_table(state_machine_args_t *state_machine_args);
 
+static bool is_open_wire_fault_active(const analyzer_t *analyzer);
+
 void request_transition(state_machine_args_t *state_machine_args,
 			state_t next_state);
 
@@ -482,6 +484,25 @@ bool are_critical_faults_active(void)
 	return (fault_flags & severity_mask) != 0;
 }
 
+static bool is_open_wire_fault_active(const analyzer_t *analyzer)
+{
+	bool open_wire_fault_active = false;
+
+	mutex_get(&analyzer_mutex);
+
+	for (uint8_t chip = 0U; chip < NUM_CHIPS; chip++) {
+		for (uint8_t cell = 0U; cell < NUM_CELLS_PER_CHIP; cell++) {
+			if (analyzer->chip_data[chip].ow_fault[cell]) {
+				open_wire_fault_active = true;
+			}
+		}
+	}
+
+	mutex_put(&analyzer_mutex);
+
+	return open_wire_fault_active;
+}
+
 void update_eval_table(state_machine_args_t *state_machine_args)
 {
 	static bool initialized = false;
@@ -501,6 +522,10 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 	static nertimer_t die_overtemp_timer = { 0 };
 	static nertimer_t segment_comms_timer = { 0 };
 	static nertimer_t hv_plate_comms_timer = { 0 };
+	static nertimer_t open_wire_timer = { 0 };
+
+	const bool open_wire_fault_active =
+		is_open_wire_fault_active(analyzer);
 
 	if (initialized) {
 		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT].data_1 =
@@ -527,6 +552,8 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 			state_machine->segment_comms_fault_flag;
 		fault_eval_table[HV_PLATE_COMMS_FAULT].data_1 =
 			state_machine->hv_plate_comms_fault_flag;
+		fault_eval_table[CELL_OPEN_WIRE_FAULT].data_1 =
+			open_wire_fault_active;
 	} else {
 		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT] =
 			(fault_eval_t){ .id = "Discharge Current Limit",
@@ -623,6 +650,17 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 			.optype_2 = NOP, // UNUSED
 			.is_critical = true
 		};
+
+		fault_eval_table[CELL_OPEN_WIRE_FAULT] = (fault_eval_t){
+			.id = "Cell Open Wire Fault",
+			.timer = open_wire_timer,
+			.data_1 = open_wire_fault_active,
+			.optype_1 = EQ,
+			.lim_1 = true,
+			.timeout = OW_FAULT_TIME,
+			.optype_2 = NOP, // UNUSED
+			.is_critical = false
+		};
 		initialized = true;
 	}
 }
@@ -667,7 +705,8 @@ void vStateMachine(ULONG thread_input)
 				get_fault(PACK_TOO_HOT),
 				get_fault(DIE_TEMP_MAXIMUM_FAULT),
 				get_fault(SEGMENT_COMMS_FAULT),
-				get_fault(HV_PLATE_COMMS_FAULT));
+				get_fault(HV_PLATE_COMMS_FAULT),
+				get_fault(CELL_OPEN_WIRE_FAULT));
 
 			start_timer(&telem_timer, 500);
 		}

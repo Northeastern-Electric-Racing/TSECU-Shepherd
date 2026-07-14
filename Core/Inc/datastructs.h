@@ -56,6 +56,7 @@ typedef struct {
 	/* Chip and Cell Diagnostic Data */
 	bool is_balancing[NUM_CELLS_PER_CHIP];
 	bool cs_fault[NUM_CELLS_PER_CHIP];
+	bool ow_fault[NUM_CELLS_PER_CHIP];	
 
 	float vpv;
 	float vmv;
@@ -508,6 +509,7 @@ typedef enum {
 
 	HV_PLATE_COMMS_FAULT,
 	SEGMENT_COMMS_FAULT,
+	CELL_OPEN_WIRE_FAULT,
 
 	NUM_FAULTS, /* NUM_REACTIONARY_FAULTS = NUM_FAULTS - NUM_CONDITIONAL_FAULTS - 1 */
 

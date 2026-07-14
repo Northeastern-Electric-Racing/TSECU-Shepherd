@@ -23,6 +23,8 @@ state_machine_args_t args = { .state_machine = &state_machine,
 void setUp(void)
 {
     analyzer.min_ocv.val = 2.6;
+    mutex_get_IgnoreAndReturn(0);
+    mutex_put_IgnoreAndReturn(0);
     cancel_timer_Expect(&state_machine.charger_message_timer);
 	init_boot(&args);
 }

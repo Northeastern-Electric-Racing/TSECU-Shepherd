@@ -373,6 +373,9 @@ void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 			chip_data->cs_fault[cell] =
 				(acc_data->chips[chip].statc.cs_flt >> cell) &
 				1;
+			// OW fault status
+			chip_data->ow_fault[cell] =
+				(acc_data->chips[chip].diag_result.cell_ow[cell] != 0U);
 		}
 
 		// Chip Diagnotics

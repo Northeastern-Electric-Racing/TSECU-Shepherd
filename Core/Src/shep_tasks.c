@@ -288,6 +288,11 @@ void vDebug(ULONG thread_input)
 						cell + 1 == NUM_CELLS_PER_CHIP ?
 							0 :
 							chip_data->cs_fault[cell +
+									    1],
+						chip_data->ow_fault[cell],
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->ow_fault[cell +
 									    1]);
 				} else {
 					send_beta_cell_data_debug(
@@ -309,6 +314,11 @@ void vDebug(ULONG thread_input)
 						cell + 1 == NUM_CELLS_PER_CHIP ?
 							0 :
 							chip_data->cs_fault[cell +
+									    1],
+						chip_data->ow_fault[cell],
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->ow_fault[cell +
 									    1]);
 				}
 

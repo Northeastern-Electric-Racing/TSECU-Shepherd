@@ -85,10 +85,11 @@ uint8_t send_segment_isospi_communication_status
 * BMS/Faults/Critical/High_die_temp - Die temp ts too high
 * BMS/Faults/Non-Critical/Segment_Comms_fault - Lost communications with segments
 * BMS/Faults/Non-Critical/HV_Plate_Comms_Fault - Lost communications with HV Plate
+* BMS/Faults/Non-Critical/Cell_open_wire - Open wire detected on one or more cells
 * BMS/Faults/Non-Critical/Extra - Reserved
 */
 uint8_t send_fault_status
-(bool dcl_enforce,bool ccl_enforce,bool low_cell_volt,bool high_cell_volt,bool high_charge_volt,bool pack_hot,bool die_temp_max,bool segment_comms,bool hv_plate_comms);
+(bool dcl_enforce,bool ccl_enforce,bool low_cell_volt,bool high_cell_volt,bool high_charge_volt,bool pack_hot,bool die_temp_max,bool segment_comms,bool hv_plate_comms,bool cell_open_wire);
 
 /**
 * Contents of this message:
@@ -172,9 +173,11 @@ uint8_t send_shepherd_version_hash
 * BMS/PerCell/Alpha/{4}/Burning/{6} - Whether cell is burning
 * BMS/PerCell/Alpha/{4}/CvS/{5} - Whether C and S ADCs read too different
 * BMS/PerCell/Alpha/{4}/CvS/{6} - Whether C and S ADCs read too different
+* BMS/PerCell/Alpha/{4}/OW/{5} - Whether an open wire is detected on the cell
+* BMS/PerCell/Alpha/{4}/OW/{6} - Whether an open wire is detected on the cell
 */
 uint8_t send_alpha_cell_data_debug
-(float therm,float voltage_a,float voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b,bool discharging_a,bool discharging_b,bool cvs_a,bool cvs_b);
+(float therm,float voltage_a,float voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b,bool discharging_a,bool discharging_b,bool cvs_a,bool cvs_b,bool ow_a,bool ow_b);
 
 /**
 * Contents of this message:
@@ -185,9 +188,11 @@ uint8_t send_alpha_cell_data_debug
 * BMS/PerCell/Beta/{4}/Burning/{6} - Whether cell is burning
 * BMS/PerCell/Beta/{4}/CvS/{5} - Whether C and S ADCs read too different
 * BMS/PerCell/Beta/{4}/CvS/{6} - Whether C and S ADCs read too different
+* BMS/PerCell/Beta/{4}/OW/{5} - Whether an open wire is detected on the cell
+* BMS/PerCell/Beta/{4}/OW/{6} - Whether an open wire is detected on the cell
 */
 uint8_t send_beta_cell_data_debug
-(float therm,float voltage_a,float voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b,bool discharging_a,bool discharging_b,bool cvs_a,bool cvs_b);
+(float therm,float voltage_a,float voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b,bool discharging_a,bool discharging_b,bool cvs_a,bool cvs_b,bool ow_a,bool ow_b);
 
 /**
 * Contents of this message:

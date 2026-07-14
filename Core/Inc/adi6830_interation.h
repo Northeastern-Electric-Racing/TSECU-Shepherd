@@ -244,6 +244,15 @@ void write_clear_flags(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
 // --- BEGIN READ COMMANDS ---
 
 /**
+ * @brief Read all C-ADC voltage registers.
+ *
+ * @param chips Array of chips.
+ * @param hspi SPI handle.
+ */
+void read_c_voltage_registers(cell_asic chips[NUM_CHIPS],
+			      SPI_HandleTypeDef *hspi);
+
+/**
  * @brief Read all filtered voltage results A-E.  IIR must be on and ADC must be continous
  *
  * @param chips The chips to read voltages into
@@ -348,11 +357,15 @@ void get_avgd_cell_voltages(cell_asic chips[NUM_CHIPS],
 			    SPI_HandleTypeDef *hspi);
 
 /**
- * @brief Trigger, poll, and fetch voltages from the S-ADCs.
+ * @brief Trigger, poll, and fetch S-ADC voltages using an open-wire mode.
  *
- * @param chip Array of chips to get voltage readings from.
+ * @param chips Array of chips.
+ * @param hspi SPI handle.
+ * @param open_wire_mode Cell inputs on which to enable open-wire excitation.
  */
-void get_s_adc_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
+void get_s_adc_open_wire_voltages(cell_asic chips[NUM_CHIPS],
+				  SPI_HandleTypeDef *hspi,
+				  OW_C_S open_wire_mode);
 
 /**
  * @brief Trigger, poll, and fetch the c and s adc voltages, using instaneous redundancy.
@@ -363,10 +376,17 @@ void get_c_and_s_adc_voltages(cell_asic chips[NUM_CHIPS],
 			      SPI_HandleTypeDef *hspi);
 
 /**
- * @brief Starts a continous c ADC conversion with S redundancy
+ * @brief Start continuous C-ADC conversions.
  *
  */
 void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
+
+/**
+ * @brief Start continuous S-ADC conversion.
+ * @param chips Array of chips.
+ * @param hspi SPI handle.
+ */
+void start_s_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
 
 // --- END ADC POLL ---
 

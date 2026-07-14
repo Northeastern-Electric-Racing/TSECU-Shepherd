@@ -251,7 +251,7 @@ uint8_t send_segment_isospi_communication_status
 }
 
 uint8_t send_fault_status
-(bool dcl_enforce,bool ccl_enforce,bool low_cell_volt,bool high_cell_volt,bool high_charge_volt,bool pack_hot,bool die_temp_max,bool segment_comms,bool hv_plate_comms)
+(bool dcl_enforce,bool ccl_enforce,bool low_cell_volt,bool high_cell_volt,bool high_charge_volt,bool pack_hot,bool die_temp_max,bool segment_comms,bool hv_plate_comms,bool cell_open_wire)
 {
     can_msg_t msg;
     msg.id = 0x89;
@@ -303,6 +303,11 @@ uint8_t send_fault_status
                         if(hv_plate_comms_i > 1ULL) {hv_plate_comms_i = 1;
                         }
                         data |= ((hv_plate_comms_i) & 0x1ULL) << 7;
+            
+                        uint32_t cell_open_wire_i = (uint32_t)(cell_open_wire);
+                        if(cell_open_wire_i > 1ULL) {cell_open_wire_i = 1;
+                        }
+                        data |= ((cell_open_wire_i) & 0x1ULL) << 6;
             
             uint16_t data_bigendian = __builtin_bswap16(data);
             memcpy(msg.data, &data_bigendian, 2);
@@ -586,7 +591,7 @@ uint8_t send_overflow_notification_for_percell
 }
 
 uint8_t send_alpha_cell_data_debug
-(float therm,float voltage_a,float voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b,bool discharging_a,bool discharging_b,bool cvs_a,bool cvs_b)
+(float therm,float voltage_a,float voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b,bool discharging_a,bool discharging_b,bool cvs_a,bool cvs_b,bool ow_a,bool ow_b)
 {
     can_msg_t msg;
     msg.id = 0x6FA;
@@ -644,6 +649,16 @@ uint8_t send_alpha_cell_data_debug
                         }
                         data |= ((cvs_b_i) & 0x1ULL) << 12;
             
+                        uint32_t ow_a_i = (uint32_t)(ow_a);
+                        if(ow_a_i > 1ULL) {ow_a_i = 1;
+                        }
+                        data |= ((ow_a_i) & 0x1ULL) << 11;
+            
+                        uint32_t ow_b_i = (uint32_t)(ow_b);
+                        if(ow_b_i > 1ULL) {ow_b_i = 1;
+                        }
+                        data |= ((ow_b_i) & 0x1ULL) << 10;
+            
             uint64_t data_bigendian = __builtin_bswap64(data);
             memcpy(msg.data, &data_bigendian, 8);
 
@@ -651,7 +666,7 @@ uint8_t send_alpha_cell_data_debug
 }
 
 uint8_t send_beta_cell_data_debug
-(float therm,float voltage_a,float voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b,bool discharging_a,bool discharging_b,bool cvs_a,bool cvs_b)
+(float therm,float voltage_a,float voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b,bool discharging_a,bool discharging_b,bool cvs_a,bool cvs_b,bool ow_a,bool ow_b)
 {
     can_msg_t msg;
     msg.id = 0x6FB;
@@ -708,6 +723,16 @@ uint8_t send_beta_cell_data_debug
                         if(cvs_b_i > 1ULL) {cvs_b_i = 1;
                         }
                         data |= ((cvs_b_i) & 0x1ULL) << 12;
+            
+                        uint32_t ow_a_i = (uint32_t)(ow_a);
+                        if(ow_a_i > 1ULL) {ow_a_i = 1;
+                        }
+                        data |= ((ow_a_i) & 0x1ULL) << 11;
+            
+                        uint32_t ow_b_i = (uint32_t)(ow_b);
+                        if(ow_b_i > 1ULL) {ow_b_i = 1;
+                        }
+                        data |= ((ow_b_i) & 0x1ULL) << 10;
             
             uint64_t data_bigendian = __builtin_bswap64(data);
             memcpy(msg.data, &data_bigendian, 8);
