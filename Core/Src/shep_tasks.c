@@ -411,6 +411,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	static acc_data_args_t acc_data_args = { 0 };
 	acc_data_args.acc_data = &acc_data;
 	acc_data_args.state_machine = &state_machine;
+	acc_data_args.analyzer = &analyzer;
 
 	static state_machine_args_t state_machine_args = { 0 };
 	state_machine_args.acc_data = &acc_data;

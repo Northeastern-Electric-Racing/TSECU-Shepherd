@@ -46,6 +46,8 @@ typedef struct {
 	float cell_resistance[NUM_CELLS_PER_CHIP];
 	float open_cell_voltage[NUM_CELLS_PER_CHIP];
 	float cell_voltages[NUM_CELLS_PER_CHIP];
+	/* S-ADC voltages */
+	float s_cell_voltages[NUM_CELLS_PER_CHIP];
 
 	/* Maximum temperature of on-board therms.*/
 	float on_board_temp[NUM_ONBOARD_THERMS_PER_CHIP];
@@ -57,6 +59,10 @@ typedef struct {
 	bool is_balancing[NUM_CELLS_PER_CHIP];
 	bool cs_fault[NUM_CELLS_PER_CHIP];
 	bool ow_fault[NUM_CELLS_PER_CHIP];	
+
+	/* Open-Wire Diagnostic Voltages */
+	float ow_even_voltage[NUM_CELLS_PER_CHIP];
+	float ow_odd_voltage[NUM_CELLS_PER_CHIP];
 
 	float vpv;
 	float vmv;
@@ -455,6 +461,7 @@ typedef struct {
 typedef struct {
 	acc_data_t *acc_data;
 	state_machine_t *state_machine;
+	analyzer_t *analyzer;
 } acc_data_args_t;
 
 /**

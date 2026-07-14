@@ -3,6 +3,7 @@
 #include "adBms6830Data.h"
 #include "adi6830_interation.h"
 #include "bms_config.h"
+#include "can_messages_tx.h"
 #include "c_utils.h"
 #include "charging.h"
 #include "datastructs.h"
@@ -12,11 +13,6 @@
 #include "state_machine.h"
 #include "app_threadx.h"
 #include "main.h"
-
-/**
- * @brief Open-wire threshold while the S-ADC switch is active.
- */
-#define CELL_OPEN_WIRE_MAX_DROP_PERCENT 15.0f
 
 /**
  * @brief Initialize a chip with our default values.
@@ -299,9 +295,11 @@ void segment_set_dcto(cell_asic chips[NUM_CHIPS], uint8_t dcto,
  * @brief Run cell open-wire and S-vs-C diagnostics.
  *
  * @param chips Array of chips.
+ * @param analyzer Analyzer data to update.
  * @param hspi SPI handle.
  */
 static void segment_run_cell_open_wire_test(cell_asic chips[NUM_CHIPS],
+					    analyzer_t *analyzer,
 					    SPI_HandleTypeDef *hspi)
 {
 	/*
@@ -316,9 +314,16 @@ static void segment_run_cell_open_wire_test(cell_asic chips[NUM_CHIPS],
 	tx_thread_sleep(16);
 
 	segment_snap(chips, hspi);
-	read_c_voltage_registers(chips, hspi);
+	// read_c_voltage_registers(chips, hspi);
 	read_s_voltage_registers(chips, hspi);
 	segment_unsnap(chips, hspi);
+
+	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			analyzer->chip_data[chip].s_cell_voltages[cell] =
+				getVoltage(chips[chip].scell.sc_codes[cell]);
+		}
+	}
 
 	read_status_register_c(chips, hspi);
 
@@ -335,32 +340,31 @@ static void segment_run_cell_open_wire_test(cell_asic chips[NUM_CHIPS],
 
 	for (uint8_t ic = 0; ic < NUM_CHIPS; ic++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			const int16_t odd_code = chips[ic].scell.sc_codes[cell];
-			const float even_voltage = getVoltage(
-				chips[ic].owcell.cell_ow_even[cell]);
-			const float odd_voltage = getVoltage(odd_code);
-			const bool even_cell = ((cell + 1U) % 2U) == 0U;
-			const float excited_voltage =
-				even_cell ? even_voltage : odd_voltage;
-			const float baseline_voltage =
-				even_cell ? odd_voltage : even_voltage;
-			const float drop_voltage = baseline_voltage - excited_voltage;
-			float drop_percent = 0.0f;
+			chips[ic].owcell.cell_ow_odd[cell] =
+				chips[ic].scell.sc_codes[cell];
+		}
+	}
+}
 
-			if (baseline_voltage > 0.0f) {
-				drop_percent =
-					(drop_voltage / baseline_voltage) * 100.0f;
-			}
+static void segment_send_s_adc_cell_data(const analyzer_t *analyzer)
+{
+	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+		const chipdata_t *chip_data = &analyzer->chip_data[chip];
 
-			chips[ic].owcell.cell_ow_odd[cell] = odd_code;
-			chips[ic].diag_result.cell_ow[cell] =
-				(drop_percent > CELL_OPEN_WIRE_MAX_DROP_PERCENT);
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell += 2) {
+			const bool has_cell_b = cell + 1U < NUM_CELLS_PER_CHIP;
+			const float s_voltage_b = has_cell_b ?
+				chip_data->s_cell_voltages[cell + 1U] :
+				0.0f;
 
-			if (chips[ic].diag_result.cell_ow[cell]) {
-				PRINTLN_WARNING(
-					"[OW] Open wire IC%u C%02u: even=%.3f V, odd=%.3f V, drop=%.3f V (%.1f%%)",
-					ic + 1U, cell + 1U, even_voltage,
-					odd_voltage, drop_voltage, drop_percent);
+			if ((chip % 2U) == 0U) {
+				send_alpha_cell_s_adc_data(
+					chip_data->s_cell_voltages[cell], s_voltage_b,
+					chip / 2U, cell, cell + 1U);
+			} else {
+				send_beta_cell_s_adc_data(
+					chip_data->s_cell_voltages[cell], s_voltage_b,
+					chip / 2U, cell, cell + 1U);
 			}
 		}
 	}
@@ -375,6 +379,7 @@ void vGetSegmentData(ULONG thread_input)
 
 	acc_data_t *acc_data = acc_data_args->acc_data;
 	state_machine_t *state_machine = acc_data_args->state_machine;
+	analyzer_t *analyzer = acc_data_args->analyzer;
 
 	HAL_NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
 	segment_init(acc_data->chips, &hspi2);
@@ -386,7 +391,8 @@ void vGetSegmentData(ULONG thread_input)
 
 	// Run after the monitor ADC has initialized, before normal acquisition
 	HAL_NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
-	segment_run_cell_open_wire_test(acc_data->chips, &hspi2);
+	segment_run_cell_open_wire_test(acc_data->chips, analyzer, &hspi2);
+	segment_send_s_adc_cell_data(analyzer);
 	HAL_NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
 
 	state_t prev_state = BOOT;
@@ -438,7 +444,9 @@ void vGetSegmentData(ULONG thread_input)
 		}
 
 		if (is_timer_expired(&open_wire_timer)) {
-			segment_run_cell_open_wire_test(acc_data->chips, &hspi2);
+			segment_run_cell_open_wire_test(acc_data->chips, analyzer,
+						    &hspi2);
+			segment_send_s_adc_cell_data(analyzer);
 			start_timer(&open_wire_timer, open_wire_test_frequency);
 		}
 

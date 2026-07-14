@@ -7,12 +7,18 @@
 #include "serialPrintResult.h"
 #include "timer.h"
 #include "state_machine.h"
+#include "u_tx_debug.h"
 #include "u_tx_flags.h"
 #include "can_messages_tx.h"
 #include "shep_mutexes.h"
 #include "soc.h"
 
 #define OCV_TIMER_DURATION 750 // in ticks
+
+/**
+ * @brief Open-wire threshold while the S-ADC switch is active.
+ */
+#define CELL_OPEN_WIRE_MAX_DROP_PERCENT 15.0f
 
 /**
  * @brief Map cells to therms (ra codes).  Note beta has only 6 therms.
@@ -190,6 +196,20 @@ void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
 
 }
 
+void calc_cell_open_wire_voltages(analyzer_t *analyzer, acc_data_t *acc_data)
+{
+	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+		chipdata_t *chip_data = get_chip_data(analyzer, chip);
+
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			chip_data->ow_even_voltage[cell] = getVoltage(
+				acc_data->chips[chip].owcell.cell_ow_even[cell]);
+			chip_data->ow_odd_voltage[cell] = getVoltage(
+				acc_data->chips[chip].owcell.cell_ow_odd[cell]);
+		}
+	}
+}
+
 void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data)
 {
 	analyzer->max_voltage.val = FLT_MIN;
@@ -356,6 +376,44 @@ void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data,
 	}
 }
 
+void detect_cell_open_wire(analyzer_t *analyzer)
+{
+	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+		chipdata_t *chip_data = get_chip_data(analyzer, chip);
+
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			const float even_voltage =
+				chip_data->ow_even_voltage[cell];
+			const float odd_voltage = chip_data->ow_odd_voltage[cell];
+			const bool even_cell = ((cell + 1U) % 2U) == 0U;
+			const float excited_voltage =
+				even_cell ? even_voltage : odd_voltage;
+			const float baseline_voltage =
+				even_cell ? odd_voltage : even_voltage;
+			const float drop_voltage = baseline_voltage - excited_voltage;
+			float drop_percent = 0.0f;
+
+			if (baseline_voltage > 0.0f) {
+				drop_percent =
+					(drop_voltage / baseline_voltage) * 100.0f;
+			}
+
+			const bool was_open = chip_data->ow_fault[cell];
+			const bool is_open =
+				drop_percent > CELL_OPEN_WIRE_MAX_DROP_PERCENT;
+
+			chip_data->ow_fault[cell] = is_open;
+
+			if (is_open && !was_open) {
+				PRINTLN_WARNING(
+					"[OW] Open wire IC%u C%02u: even=%.3f V, odd=%.3f V, drop=%.3f V (%.1f%%)",
+					chip + 1U, cell + 1U, even_voltage,
+					odd_voltage, drop_voltage, drop_percent);
+			}
+		}
+	}
+}
+
 void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 {
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
@@ -373,9 +431,6 @@ void update_chip_status(analyzer_t *analyzer, acc_data_t *acc_data)
 			chip_data->cs_fault[cell] =
 				(acc_data->chips[chip].statc.cs_flt >> cell) &
 				1;
-			// OW fault status
-			chip_data->ow_fault[cell] =
-				(acc_data->chips[chip].diag_result.cell_ow[cell] != 0U);
 		}
 
 		// Chip Diagnotics
@@ -421,9 +476,11 @@ void vAnalyzer(ULONG thread_input)
 		calc_cell_temps(analyzer, acc_data);
 		calc_pack_temps(analyzer, acc_data);
 		calc_cell_voltages(analyzer, acc_data, state_machine);
+		calc_cell_open_wire_voltages(analyzer, acc_data);
 		calc_open_cell_voltage(analyzer, acc_data, hv_plate);
 		calc_pack_voltage_stats(analyzer, acc_data);
 		calc_cell_resistances(analyzer, acc_data, hv_plate);
+		detect_cell_open_wire(analyzer);
 		update_chip_status(analyzer, acc_data);
 
 		mutex_put(&analyzer_mutex);
