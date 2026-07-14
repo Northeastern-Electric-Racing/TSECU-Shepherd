@@ -196,6 +196,22 @@ uint8_t send_beta_cell_data_debug
 
 /**
 * Contents of this message:
+* BMS/PerCell/Alpha/{3}/SADCVolts/{4} - S ADC cell voltage
+* BMS/PerCell/Alpha/{3}/SADCVolts/{5} - S ADC cell voltage
+*/
+uint8_t send_alpha_cell_s_adc_data
+(float s_voltage_a,float s_voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b);
+
+/**
+* Contents of this message:
+* BMS/PerCell/Beta/{3}/SADCVolts/{4} - S ADC cell voltage
+* BMS/PerCell/Beta/{3}/SADCVolts/{5} - S ADC cell voltage
+*/
+uint8_t send_beta_cell_s_adc_data
+(float s_voltage_a,float s_voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b);
+
+/**
+* Contents of this message:
 * BMS/PerCell/Alpha/{1}/DieTemp - Temperatue of ADBMS die
 * BMS/PerCell/Alpha/{1}/VPV - Positive ADBMS voltage
 * BMS/PerCell/Alpha/{1}/VMV - Voltage of S1N to V- of ADBMS

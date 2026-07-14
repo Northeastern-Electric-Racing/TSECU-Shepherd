@@ -398,7 +398,7 @@ void vGetSegmentData(ULONG thread_input)
 	// assumes a DCTO of 1 minute for PWM balancing in extended balancing mode
 	const uint32_t pwm_update_frequency = 55000;
 	// Required fault-tolerant time interval
-	const uint32_t open_wire_test_frequency = 60000;
+	const uint32_t open_wire_test_frequency = 30000;
 
 	start_timer(&pwm_timer, 0); // start timer immeditately on first run
 	start_timer(&open_wire_timer, open_wire_test_frequency);

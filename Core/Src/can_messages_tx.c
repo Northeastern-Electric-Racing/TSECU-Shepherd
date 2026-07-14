@@ -740,6 +740,86 @@ uint8_t send_beta_cell_data_debug
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
 
+uint8_t send_alpha_cell_s_adc_data
+(float s_voltage_a,float s_voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b)
+{
+    can_msg_t msg;
+    msg.id = 0x6F4;
+    msg.id_is_extended = false;
+    
+            uint64_t data = 0;
+            msg.len = 8;
+                        uint32_t s_voltage_a_i = (uint32_t)(s_voltage_a*1000);
+                        if(s_voltage_a_i > 8191ULL) {s_voltage_a_i = 8191;
+                        }
+                        data |= ((s_voltage_a_i) & 0x1FFFULL) << 51;
+            
+                        uint32_t s_voltage_b_i = (uint32_t)(s_voltage_b*1000);
+                        if(s_voltage_b_i > 8191ULL) {s_voltage_b_i = 8191;
+                        }
+                        data |= ((s_voltage_b_i) & 0x1FFFULL) << 38;
+            
+                        uint32_t chip_id_i = (uint32_t)(chip_id);
+                        if(chip_id_i > 15ULL) {chip_id_i = 15;
+                        }
+                        data |= ((chip_id_i) & 0xFULL) << 34;
+            
+                        uint32_t cell_a_i = (uint32_t)(cell_a);
+                        if(cell_a_i > 15ULL) {cell_a_i = 15;
+                        }
+                        data |= ((cell_a_i) & 0xFULL) << 30;
+            
+                        uint32_t cell_b_i = (uint32_t)(cell_b);
+                        if(cell_b_i > 15ULL) {cell_b_i = 15;
+                        }
+                        data |= ((cell_b_i) & 0xFULL) << 26;
+            
+            uint64_t data_bigendian = __builtin_bswap64(data);
+            memcpy(msg.data, &data_bigendian, 8);
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
+uint8_t send_beta_cell_s_adc_data
+(float s_voltage_a,float s_voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b)
+{
+    can_msg_t msg;
+    msg.id = 0x6F5;
+    msg.id_is_extended = false;
+    
+            uint64_t data = 0;
+            msg.len = 8;
+                        uint32_t s_voltage_a_i = (uint32_t)(s_voltage_a*1000);
+                        if(s_voltage_a_i > 8191ULL) {s_voltage_a_i = 8191;
+                        }
+                        data |= ((s_voltage_a_i) & 0x1FFFULL) << 51;
+            
+                        uint32_t s_voltage_b_i = (uint32_t)(s_voltage_b*1000);
+                        if(s_voltage_b_i > 8191ULL) {s_voltage_b_i = 8191;
+                        }
+                        data |= ((s_voltage_b_i) & 0x1FFFULL) << 38;
+            
+                        uint32_t chip_id_i = (uint32_t)(chip_id);
+                        if(chip_id_i > 15ULL) {chip_id_i = 15;
+                        }
+                        data |= ((chip_id_i) & 0xFULL) << 34;
+            
+                        uint32_t cell_a_i = (uint32_t)(cell_a);
+                        if(cell_a_i > 15ULL) {cell_a_i = 15;
+                        }
+                        data |= ((cell_a_i) & 0xFULL) << 30;
+            
+                        uint32_t cell_b_i = (uint32_t)(cell_b);
+                        if(cell_b_i > 15ULL) {cell_b_i = 15;
+                        }
+                        data |= ((cell_b_i) & 0xFULL) << 26;
+            
+            uint64_t data_bigendian = __builtin_bswap64(data);
+            memcpy(msg.data, &data_bigendian, 8);
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
 uint8_t send_alpha_chip_a_debug
 (uint8_t chip_id,float die_temp,float vpv,float vmv,bool va_ov,bool va_uv,bool vd_ov,bool vd_uv,bool vde,bool vdel,bool spiflt,bool sleep,bool thsd,bool tmodchk,bool oscchk)
 {
