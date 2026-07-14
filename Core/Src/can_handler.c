@@ -182,7 +182,9 @@ void vCanReceive(ULONG thread_input) {
         }
         break;
       case DTI_DC_CURRENT_CANID:
-        hv_plate->pack_current = parse_dti_current(message);
+        if (!state_machine->is_charger_connected) {
+          hv_plate->pack_current = parse_dti_current(message);
+        }
         break;
       default:
         break;
