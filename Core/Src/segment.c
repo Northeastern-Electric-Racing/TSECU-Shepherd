@@ -161,9 +161,8 @@ void segment_retrieve_charging_data(cell_asic chips[NUM_CHIPS],
 	// poll stuff like vref, etc.
 	adc_and_read_aux_registers(chips, hspi);
 
-	segment_snap(chips, hspi);
-	read_c_voltage_registers(chips, hspi);
-	segment_unsnap(chips, hspi);
+	// run a clean single-shot conversion
+	get_c_adc_voltages(chips, hspi);
 
 	read_status_registers(chips, hspi);
 
@@ -292,31 +291,33 @@ void segment_set_dcto(cell_asic chips[NUM_CHIPS], uint8_t dcto,
 }
 
 /**
- * @brief Run cell open-wire and S-vs-C diagnostics.
+ * @brief Run the cell open-wire diagnostic.
  *
  * @param chips Array of chips.
  * @param analyzer Analyzer data to update.
+ * @param charging True when charging.
  * @param hspi SPI handle.
  */
 static void segment_run_cell_open_wire_test(cell_asic chips[NUM_CHIPS],
 					    analyzer_t *analyzer,
+					    bool charging,
 					    SPI_HandleTypeDef *hspi)
 {
 	/*
-	 * Open-wire and S-vs-C diagnostic sequence:
-	 * 1. Start continuous S-ADC redundancy with discharge paused.
-	 * 2. Wait for S-ADC synchronization and one synchronous conversion.
-	 * 3. Read C, S, and Status C.
-	 * 4. Run even and odd single-shot open-wire conversions.
-	 * The final odd single-shot automatically allows discharge to resume.
+	 * Open-wire sequence:
+	 * 1. Read and store the normal S values.
+	 * 2. Run and store the even-cell open-wire conversion.
+	 * 3. Run and store the odd-cell open-wire conversion.
+	 * 4. Restart continuous S outside charging.
 	 */
-	start_s_adc_conv(chips, hspi);
-	tx_thread_sleep(16);
 
-	segment_snap(chips, hspi);
-	// read_c_voltage_registers(chips, hspi);
-	read_s_voltage_registers(chips, hspi);
-	segment_unsnap(chips, hspi);
+	if (charging) {
+		get_s_adc_voltages(chips, hspi);
+	} else {
+		segment_snap(chips, hspi);
+		read_s_voltage_registers(chips, hspi);
+		segment_unsnap(chips, hspi);
+	}
 
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
@@ -325,24 +326,26 @@ static void segment_run_cell_open_wire_test(cell_asic chips[NUM_CHIPS],
 		}
 	}
 
-	read_status_register_c(chips, hspi);
-
 	get_s_adc_open_wire_voltages(chips, hspi, OW_ON_EVEN_CH);
 
-	for (uint8_t ic = 0; ic < NUM_CHIPS; ic++) {
+	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			chips[ic].owcell.cell_ow_even[cell] =
-				chips[ic].scell.sc_codes[cell];
+			chips[chip].owcell.cell_ow_even[cell] =
+				chips[chip].scell.sc_codes[cell];
 		}
 	}
 
 	get_s_adc_open_wire_voltages(chips, hspi, OW_ON_ODD_CH);
 
-	for (uint8_t ic = 0; ic < NUM_CHIPS; ic++) {
+	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			chips[ic].owcell.cell_ow_odd[cell] =
-				chips[ic].scell.sc_codes[cell];
+			chips[chip].owcell.cell_ow_odd[cell] =
+				chips[chip].scell.sc_codes[cell];
 		}
+	}
+
+	if (!charging) {
+		start_s_adc_conv(chips, hspi);
 	}
 }
 
@@ -391,7 +394,8 @@ void vGetSegmentData(ULONG thread_input)
 
 	// Run after the monitor ADC has initialized, before normal acquisition
 	HAL_NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
-	segment_run_cell_open_wire_test(acc_data->chips, analyzer, &hspi2);
+	segment_run_cell_open_wire_test(acc_data->chips, analyzer, false,
+					&hspi2);
 	segment_send_s_adc_cell_data(analyzer);
 	HAL_NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
 
@@ -412,16 +416,17 @@ void vGetSegmentData(ULONG thread_input)
 	for (;;) {
 		prev_state = current_state;
 		current_state = state_machine->bms_state;
-		bool balancing_active = state_machine->balancing_active;
+		const bool charging = (current_state == CHARGING);
+		const bool balancing_active = state_machine->balancing_active;
 
 		HAL_NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
 
-		if ((prev_state != current_state && current_state != CHARGING) ||
+		if ((prev_state != current_state && !charging) ||
 		    (prev_balancing_active && !balancing_active)) {
 			segment_mute(acc_data->chips, &hspi2);
 		}
 
-		if (current_state == CHARGING) {
+		if (charging) {
 			// in charging, debug data is required to get things like die temp
 			segment_retrieve_charging_data(acc_data->chips, &hspi2);
 			send_segment_pec_errors_message();
@@ -445,12 +450,12 @@ void vGetSegmentData(ULONG thread_input)
 
 		if (is_timer_expired(&open_wire_timer)) {
 			segment_run_cell_open_wire_test(acc_data->chips, analyzer,
-						    &hspi2);
+						    charging, &hspi2);
 			segment_send_s_adc_cell_data(analyzer);
 			start_timer(&open_wire_timer, open_wire_test_frequency);
 		}
 
-		if (current_state == CHARGING && balancing_active &&
+		if (charging && balancing_active &&
 		    is_timer_expired(&pwm_timer) &&
 		    !is_timer_active(&pwm_timer)) {
 			segment_mute(acc_data->chips, &hspi2);

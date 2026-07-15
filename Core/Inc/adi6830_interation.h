@@ -244,15 +244,6 @@ void write_clear_flags(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
 // --- BEGIN READ COMMANDS ---
 
 /**
- * @brief Read all C-ADC voltage registers.
- *
- * @param chips Array of chips.
- * @param hspi SPI handle.
- */
-void read_c_voltage_registers(cell_asic chips[NUM_CHIPS],
-			      SPI_HandleTypeDef *hspi);
-
-/**
  * @brief Read all filtered voltage results A-E.  IIR must be on and ADC must be continous
  *
  * @param chips The chips to read voltages into
@@ -368,23 +359,23 @@ void get_s_adc_open_wire_voltages(cell_asic chips[NUM_CHIPS],
 				  OW_C_S open_wire_mode);
 
 /**
- * @brief Trigger, poll, and fetch the c and s adc voltages, using instaneous redundancy.
+ * @brief Trigger, poll, and fetch normal S-ADC voltages.
  *
- * @param chips Array of chips to get voltage readings of.
+ * @param chips Array of chips to get voltage readings from.
  */
-void get_c_and_s_adc_voltages(cell_asic chips[NUM_CHIPS],
-			      SPI_HandleTypeDef *hspi);
+void get_s_adc_voltages(cell_asic chips[NUM_CHIPS],
+			SPI_HandleTypeDef *hspi);
 
 /**
- * @brief Start continuous C-ADC conversions.
+ * @brief Starts a continous c ADC conversion with S redundancy
  *
  */
 void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
 
 /**
- * @brief Start continuous S-ADC conversion.
- * @param chips Array of chips.
- * @param hspi SPI handle.
+ * @brief Start continuous S-ADC redundancy without restarting the C-ADC.
+ * @param chips ADBMS6830 daisy-chain devices.
+ * @param hspi SPI peripheral used by the daisy chain.
  */
 void start_s_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
 
