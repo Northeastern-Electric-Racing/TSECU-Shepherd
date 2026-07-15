@@ -94,10 +94,10 @@ void handle_charging(state_machine_args_t *state_machine_args)
 	/* Check if we should charge */
 	if (sm_charging_check(state_machine_args)) {
 		/* Send CAN message, but not too often */
-		if (!is_timer_active(&state_machine_args->state_machine
-					      ->charger_message_timer) ||
-		    is_timer_expired(&state_machine_args->state_machine
-					      ->charger_message_timer)) {
+		if (is_timer_expired(&state_machine_args->state_machine
+					     ->charger_message_timer) ||
+		    !is_timer_active(&state_machine_args->state_machine
+					     ->charger_message_timer)) {
 			send_bms_charge_message_send((MAX_CHARGE_VOLT *
 						      (NUM_CELLS_PER_CHIP * 2) *
 						      NUM_SEGMENTS),
@@ -408,26 +408,33 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 
 	/* if not charging stage, dont charge
 	 * (LONG_SETTLE, SHORT_SETTLE, DONE, FAULT) */
-	// return state_machine->charging_stage == LONG_CHARGE_UP ||
-	//        state_machine->charging_stage == SHORT_CHARGE_UP;
-	return true;
+	return state_machine->charging_stage == LONG_CHARGE_UP ||
+	       state_machine->charging_stage == SHORT_CHARGE_UP;
 }
 
 // check if balancing is allowed
 bool sm_balancing_check(state_machine_args_t *state_machine_args)
 {
 	analyzer_t *analyzer = state_machine_args->analyzer;
+	state_machine_t *state_machine = state_machine_args->state_machine;
 	bool balancing_allowed = false;
 	bool shutdown_active = true;
 	float max_voltage = 0.0f;
 	float delta_voltage = 0.0f;
+	charge_stage_t charging_stage = FAULT;
 
 	mutex_get(&analyzer_mutex);
 	max_voltage = analyzer->max_voltage.val;
 	delta_voltage = analyzer->delta_voltage;
 	mutex_put(&analyzer_mutex);
 
-	if ((max_voltage <= BAL_MIN_V) || (delta_voltage <= MAX_DELTA_V)) {
+	mutex_get(&state_mutex);
+	charging_stage = state_machine->charging_stage;
+	mutex_put(&state_mutex);
+
+	if ((max_voltage <= BAL_MIN_V) || (delta_voltage <= MAX_DELTA_V) ||
+	    (charging_stage == LONG_SETTLE) ||
+	    (charging_stage == SHORT_SETTLE)) {
 		balancing_allowed = false;
 	} else {
 		// Do not balance if the shutdown circuit is open.
@@ -436,9 +443,7 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 			state_machine_args->peripherals->shutdown_active;
 		mutex_put(&shutdown_mutex);
 
-		balancing_allowed = !shutdown_active;
-
-		/** @todo Prevent balancing during settling charging stages. */
+		balancing_allowed = shutdown_active;
 	}
 
 	return balancing_allowed;

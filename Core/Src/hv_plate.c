@@ -181,6 +181,9 @@ void vHvPlateData(ULONG thread_input)
 	analyzer_t *analyzer = hv_plate_args->analyzer;
 	bms_algos_t *bms_algos = hv_plate_args->bms_algos;
 	state_machine_t *state_machine = hv_plate_args->state_machine;
+	float max_dc_current = 0.0f;
+	float max_dc_brake_current = 0.0f;
+	state_t bms_state = BOOT;
 
 	dcl_init(COOLDOWN_ALWAYS);
 	ccl_init(COOLDOWN_ALWAYS);
@@ -203,10 +206,6 @@ void vHvPlateData(ULONG thread_input)
 	set_gpo(&hv_plate->ic, HV_ENABLE_GPO);
 
 	for (;;) {
-		float max_dc_current = 0.0f;
-		float max_dc_brake_current = 0.0f;
-		state_t bms_state = BOOT;
-
 		// get the current reading from the pack
 		get_pack_current_and_batt_voltage(hv_plate);
 
@@ -282,6 +281,9 @@ void vHvPlateData(ULONG thread_input)
 			// DTI expects regen/brake current limit to be negative
 			max_dc_brake_current = (-1.0f * bms_algos->cont_CCL);
 			mutex_put(&bms_algos_mutex);
+		} else {
+			max_dc_current = 0.0f;
+			max_dc_brake_current = 0.0f;
 		}
 
 		send_max_dc_current_command(max_dc_current);
