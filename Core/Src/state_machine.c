@@ -112,6 +112,10 @@ void handle_charging(state_machine_args_t *state_machine_args)
 		send_bms_charge_message_send(0, 0, 0xFF);
 	}
 
+	// disable discharge and charge from the MC
+	send_max_dc_current_command(0);
+	send_max_dc_brake_current_command(0);
+
 	/* Check if we should balance */
 	if (sm_balancing_check(state_machine_args)) {
 		handle_balance_cells(state_machine_args->analyzer,
