@@ -326,53 +326,49 @@ void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
 	}
 }
 
-void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data,
-			    hv_plate_t *hv_plate)
+void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate)
 {
 	static bool is_first_reading = true;
-	/* if there is no previous data point, set inital open cell voltage to current reading */
+	bool valid_cell_reading = !is_first_reading;
 
 	if (is_first_reading) {
-		// sanity check the last cell that the reading is good, oftentimes the first
-		// readings are bad
 		float last_cell =
 			analyzer->chip_data[NUM_CHIPS - 1]
 				.cell_voltages[NUM_CELLS_PER_CHIP - 1];
+
 		if (last_cell > 1 && last_cell < 5) {
 			is_first_reading = false;
-			start_timer(&analyzer->ocvTimer, OCV_TIMER_DURATION);
-		}
+			valid_cell_reading = true;
 
-		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-			for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP;
-			     cell++) {
-				analyzer->chip_data[chip]
-					.open_cell_voltage[cell] =
-					analyzer->chip_data[chip]
-						.cell_voltages[cell];
-			}
-		}
-	}
-
-	// If we are within the current threshold for open voltage measurments (1.5 mA)
-	if (hv_plate->pack_current < OCV_CURR_THRESH &&
-	    hv_plate->pack_current > -1 * OCV_CURR_THRESH) {
-		// Timer expired or not active
-		if (is_timer_expired(&analyzer->ocvTimer) ||
-		    !is_timer_active(&analyzer->ocvTimer)) {
 			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 				for (uint8_t cell = 0;
 				     cell < NUM_CELLS_PER_CHIP; cell++) {
-					// Set current OCV value, ensure value is true OCV
 					analyzer->chip_data[chip]
 						.open_cell_voltage[cell] =
 						analyzer->chip_data[chip]
 							.cell_voltages[cell];
 				}
 			}
-		} else {
+		}
+	}
+
+	if (valid_cell_reading &&
+	    fabsf(hv_plate->pack_current) < OCV_CURR_THRESH) {
+		if (is_timer_expired(&analyzer->ocvTimer)) {
+			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+				for (uint8_t cell = 0;
+				     cell < NUM_CELLS_PER_CHIP; cell++) {
+					analyzer->chip_data[chip]
+						.open_cell_voltage[cell] =
+						analyzer->chip_data[chip]
+							.cell_voltages[cell];
+				}
+			}
+		} else if (!is_timer_active(&analyzer->ocvTimer)) {
 			start_timer(&analyzer->ocvTimer, OCV_TIMER_DURATION);
 		}
+	} else {
+		cancel_timer(&analyzer->ocvTimer);
 	}
 }
 
@@ -477,7 +473,7 @@ void vAnalyzer(ULONG thread_input)
 		calc_pack_temps(analyzer, acc_data);
 		calc_cell_voltages(analyzer, acc_data, state_machine);
 		calc_cell_open_wire_voltages(analyzer, acc_data);
-		calc_open_cell_voltage(analyzer, acc_data, hv_plate);
+		calc_open_cell_voltage(analyzer, hv_plate);
 		calc_pack_voltage_stats(analyzer, acc_data);
 		calc_cell_resistances(analyzer, acc_data, hv_plate);
 		detect_cell_open_wire(analyzer);
