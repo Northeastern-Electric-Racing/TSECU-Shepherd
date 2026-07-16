@@ -427,7 +427,6 @@ typedef struct {
  bool RTDS_FAULT;
  bool LV_LOW_VOLTAGE_FAULT;
  bool PRECHARGE_FLOATING_FAULT;
- bool LATCHING_ACTIVE_FAULT;
 } faults_t;
 
 void receive_faults(const can_msg_t *message, faults_t *faults);
