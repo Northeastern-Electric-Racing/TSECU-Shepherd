@@ -281,13 +281,10 @@ void vHvPlateData(ULONG thread_input)
 			// DTI expects regen/brake current limit to be negative
 			max_dc_brake_current = (-1.0f * bms_algos->cont_CCL);
 			mutex_put(&bms_algos_mutex);
-		} else {
-			max_dc_current = 0.0f;
-			max_dc_brake_current = 0.0f;
-		}
 
-		send_max_dc_current_command(max_dc_current);
-		send_max_dc_brake_current_command(max_dc_brake_current);
+			send_max_dc_current_command(max_dc_current);
+			send_max_dc_brake_current_command(max_dc_brake_current);
+		}
 
 		tx_thread_sleep(50);
 	}
