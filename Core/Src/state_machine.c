@@ -19,6 +19,10 @@ static fault_eval_t fault_eval_table[NUM_FAULTS];
 static _Atomic uint32_t severity_mask = 0;
 static _Atomic uint32_t fault_flags = 0;
 
+#define LONG_CHARGE_DURATION_MS  (15U * 60U * 1000U)
+#define SHORT_CHARGE_DURATION_MS (20U * 1000U)
+#define CHARGE_SETTLE_DURATION_MS (60U * 1000U)
+
 const bool valid_transition_from_to[NUM_STATES][NUM_STATES] = {
 	/*   BOOT, READY, CHARGING, FAULTED */
 	{ true, true, true, true }, /* BOOT */
@@ -32,6 +36,9 @@ void update_eval_table(state_machine_args_t *state_machine_args);
 
 static bool is_open_wire_fault_active(const analyzer_t *analyzer);
 
+static void set_charging_stage(state_machine_t *state_machine,
+			       charge_stage_t stage);
+
 void request_transition(state_machine_args_t *state_machine_args,
 			state_t next_state);
 
@@ -44,6 +51,31 @@ const InitFunction_t init_LUT[NUM_STATES] = { &init_boot, &init_ready,
 const HandlerFunction_t handler_LUT[NUM_STATES] = { &handle_boot, &handle_ready,
 						    &handle_charging,
 						    &handle_faulted };
+
+static void set_charging_stage(state_machine_t *state_machine,
+			       charge_stage_t stage)
+{
+	state_machine->charging_stage = stage;
+
+	switch (stage) {
+		case LONG_CHARGE_UP:
+			start_timer(&state_machine->charging_stage_timer,
+				    LONG_CHARGE_DURATION_MS);
+			break;
+		case SHORT_CHARGE_UP:
+			start_timer(&state_machine->charging_stage_timer,
+				    SHORT_CHARGE_DURATION_MS);
+			break;
+		case LONG_SETTLE:
+		case SHORT_SETTLE:
+			start_timer(&state_machine->charging_stage_timer,
+				    CHARGE_SETTLE_DURATION_MS);
+			break;
+		case DONE:
+		case FAULT:
+			break;
+	}
+}
 
 void init_boot(state_machine_args_t *state_machine_args)
 {
@@ -83,9 +115,7 @@ void handle_ready(state_machine_args_t *state_machine_args)
 
 void init_charging(state_machine_args_t *state_machine_args)
 {
-	state_machine_args->state_machine->charging_stage = LONG_CHARGE_UP;
-	start_timer(&state_machine_args->state_machine->charging_stage_timer,
-		    15 * 60 * 1000); // 15 minutes
+	set_charging_stage(state_machine_args->state_machine, LONG_CHARGE_UP);
 
 	send_max_dc_current_command(0);
 	send_max_dc_brake_current_command(0);
@@ -328,94 +358,75 @@ fault_state_t sm_fault_eval(fault_eval_t *item, fault_code_t fault_code)
 }
 
 /* This charging algorithm has 3 stages
-* 1. Charge up until the high cell non OCV max voltage is > 4.19, pause for 1 minute every 15 minutes, repeat
-* 2. Charge up until the high cell     OCV max voltage is > 4.19, pause for 1 minute every 20 seconds, repeat
-* 3. Stop charging :)
-*/
+ * 1. Charge for up to 15 minutes, pause for 1 minute, and repeat.
+ * 2. Once loaded max cell voltage reaches 4.19 V, charge for up to 20 seconds,
+ *    pause for 1 minute, and repeat while settled max OCV is below 4.19 V.
+ * 3. Stop charging when settled max OCV reaches 4.19 V.
+ */
 bool sm_charging_check(state_machine_args_t *state_machine_args)
 {
 	state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
-
-	nertimer_t *state_timer =
-		&state_machine_args->state_machine->charging_stage_timer;
-
+	nertimer_t *state_timer = &state_machine->charging_stage_timer;
 	charge_stage_t next_stage = state_machine->charging_stage;
+	bool charging_allowed = false;
+	float max_ocv = 0.0f;
+	float max_voltage = 0.0f;
 
-	// TODO: MUTEX GET
-	if (analyzer->max_ocv.val > MAX_CHARGE_VOLT_FLT ||
-	    analyzer->max_voltage.val > MAX_CHARGE_VOLT_FLT) {
-		state_machine->charging_stage = FAULT;
-		PRINTLN_INFO("Max OCV: %f", analyzer->max_ocv.val);
-		PRINTLN_INFO("Max Volts: %f", analyzer->max_voltage.val);
-		return false;
-	}
+	mutex_get(&analyzer_mutex);
+	max_ocv = analyzer->max_ocv.val;
+	max_voltage = analyzer->max_voltage.val;
+	mutex_put(&analyzer_mutex);
 
-	switch (state_machine->charging_stage) {
-		case LONG_CHARGE_UP:
-			if (analyzer->max_voltage.val > MAX_CHARGE_VOLT ||
-			    is_timer_expired(state_timer)) {
-				next_stage = LONG_SETTLE;
-			}
-			break;
-		case LONG_SETTLE:
-			if (is_timer_expired(state_timer)) {
-				next_stage = SHORT_CHARGE_UP;
-			}
-			break;
-		case SHORT_CHARGE_UP:
-			if (analyzer->max_ocv.val > MAX_CHARGE_VOLT ||
-			    is_timer_expired(state_timer)) {
-				next_stage = SHORT_SETTLE;
-			}
-			break;
-		case SHORT_SETTLE:
-			if (is_timer_expired(state_timer)) {
-				if (analyzer->max_ocv.val < MAX_CHARGE_VOLT) {
-					next_stage =
-						SHORT_CHARGE_UP; // continue charging
-				} else {
-					next_stage = DONE;
-				}
-			}
-			break;
-		case DONE:
-			return false; // done charging
-		case FAULT:
-			return false; // stuck faulting until restart
-	}
-	// TODO: MUTEX RELEASE
-
-	// Transitioning stages, start the corresponding timer lengths
-	if (next_stage != state_machine->charging_stage) {
-		switch (next_stage) {
+	if (max_ocv >= MAX_CHARGE_VOLT_FLT ||
+	    max_voltage >= MAX_CHARGE_VOLT_FLT) {
+		set_charging_stage(state_machine, FAULT);
+		PRINTLN_INFO("Max OCV: %f", (double)max_ocv);
+		PRINTLN_INFO("Max Volts: %f", (double)max_voltage);
+	} else {
+		switch (state_machine->charging_stage) {
 			case LONG_CHARGE_UP:
-				start_timer(state_timer,
-					    15 * 60 * 1000); // 15 minutes
+				if (max_voltage >= MAX_CHARGE_VOLT) {
+					next_stage = SHORT_SETTLE;
+				} else if (is_timer_expired(state_timer)) {
+					next_stage = LONG_SETTLE;
+				}
+				break;
+			case LONG_SETTLE:
+				if (is_timer_expired(state_timer)) {
+					next_stage =
+						(max_ocv >= MAX_CHARGE_VOLT) ?
+							DONE : LONG_CHARGE_UP;
+				}
 				break;
 			case SHORT_CHARGE_UP:
-				start_timer(state_timer,
-					    20 * 1000); // 20 seconds
+				if (max_voltage >= MAX_CHARGE_VOLT ||
+				    is_timer_expired(state_timer)) {
+					next_stage = SHORT_SETTLE;
+				}
 				break;
-
-			case LONG_SETTLE:
 			case SHORT_SETTLE:
-				start_timer(state_timer, 60 * 1000); // 1 minute
+				if (is_timer_expired(state_timer)) {
+					next_stage =
+						(max_ocv >= MAX_CHARGE_VOLT) ?
+							DONE : SHORT_CHARGE_UP;
+				}
 				break;
-
-			// cases return earlier or arent possible
 			case DONE:
 			case FAULT:
 				break;
 		}
 
-		state_machine->charging_stage = next_stage;
+		if (next_stage != state_machine->charging_stage) {
+			set_charging_stage(state_machine, next_stage);
+		}
+
+		charging_allowed =
+			state_machine->charging_stage == LONG_CHARGE_UP ||
+			state_machine->charging_stage == SHORT_CHARGE_UP;
 	}
 
-	/* if not charging stage, dont charge
-	 * (LONG_SETTLE, SHORT_SETTLE, DONE, FAULT) */
-	return state_machine->charging_stage == LONG_CHARGE_UP ||
-	       state_machine->charging_stage == SHORT_CHARGE_UP;
+	return charging_allowed;
 }
 
 // check if balancing is allowed
@@ -434,9 +445,7 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 	delta_voltage = analyzer->delta_voltage;
 	mutex_put(&analyzer_mutex);
 
-	mutex_get(&state_mutex);
 	charging_stage = state_machine->charging_stage;
-	mutex_put(&state_mutex);
 
 	if ((max_voltage <= BAL_MIN_V) || (delta_voltage <= MAX_DELTA_V) ||
 	    (charging_stage == LONG_SETTLE) ||
