@@ -196,16 +196,16 @@ uint8_t send_beta_cell_data_debug
 
 /**
 * Contents of this message:
-* BMS/PerCell/Alpha/{3}/SADCVolts/{4} - S ADC cell voltage
-* BMS/PerCell/Alpha/{3}/SADCVolts/{5} - S ADC cell voltage
+* BMS/PerCell/Alpha/{3}/S_Volts/{4} - S ADC cell voltage
+* BMS/PerCell/Alpha/{3}/S_Volts/{5} - S ADC cell voltage
 */
 uint8_t send_alpha_cell_s_adc_data
 (float s_voltage_a,float s_voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b);
 
 /**
 * Contents of this message:
-* BMS/PerCell/Beta/{3}/SADCVolts/{4} - S ADC cell voltage
-* BMS/PerCell/Beta/{3}/SADCVolts/{5} - S ADC cell voltage
+* BMS/PerCell/Beta/{3}/S_Volts/{4} - S ADC cell voltage
+* BMS/PerCell/Beta/{3}/S_Volts/{5} - S ADC cell voltage
 */
 uint8_t send_beta_cell_s_adc_data
 (float s_voltage_a,float s_voltage_b,uint8_t chip_id,uint8_t cell_a,uint8_t cell_b);
@@ -422,6 +422,13 @@ uint8_t send_hv_plate_voltages_adbms
 */
 uint8_t send_pack_current_and_shunt_temp_adbms
 (float pack_current,float shunt_temp);
+
+/**
+* Contents of this message:
+* BMS/Control/CellBalancing/PWMDutyCycle - Current cell balancing PWM duty cycle
+*/
+uint8_t send_current_cell_balancing_pwm_duty_cycle
+(uint8_t balancing_pwm_duty_cycle);
 
 /**
 * Contents of this message:

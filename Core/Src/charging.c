@@ -19,6 +19,10 @@ void pwm_duty_cycle_set(uint8_t duty_cycle_req_get) {
     duty_cycle_req = duty_cycle_req_get;
 }
 
+uint8_t pwm_duty_cycle_setting_get(void) {
+    return duty_cycle_req;
+}
+
 PWM_DUTY pwm_duty_cycle_get() {
     switch (duty_cycle_req) {
         case 1 ... 6:

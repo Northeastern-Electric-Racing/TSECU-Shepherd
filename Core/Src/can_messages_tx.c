@@ -1607,6 +1607,25 @@ uint8_t send_pack_current_and_shunt_temp_adbms
     return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
 }
 
+uint8_t send_current_cell_balancing_pwm_duty_cycle
+(uint8_t balancing_pwm_duty_cycle)
+{
+    can_msg_t msg;
+    msg.id = 0x97;
+    msg.id_is_extended = false;
+    
+            uint8_t data = 0;
+            msg.len = 1;
+                        uint32_t balancing_pwm_duty_cycle_i = (uint32_t)(balancing_pwm_duty_cycle);
+                        if(balancing_pwm_duty_cycle_i > 255ULL) {balancing_pwm_duty_cycle_i = 255;
+                        }
+                        data |= ((balancing_pwm_duty_cycle_i) & 0xFFULL) << 0;
+            
+            msg.data[0] = data;
+
+    return queue_send(&can_outgoing, &msg, TX_NO_WAIT);
+}
+
 uint8_t send_max_ac_current_command
 (float max_current_ac_target)
 {
