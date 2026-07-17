@@ -440,7 +440,9 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 	delta_voltage = analyzer->delta_voltage;
 	mutex_put(&analyzer_mutex);
 
+	mutex_get(&state_mutex);
 	charging_stage = state_machine->charging_stage;
+	mutex_put(&state_mutex);
 
 	if ((max_voltage <= BAL_MIN_V) || (delta_voltage <= MAX_DELTA_V) ||
 	    (charging_stage == LONG_SETTLE) ||
