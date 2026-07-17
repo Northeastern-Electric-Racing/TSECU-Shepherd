@@ -27,6 +27,7 @@ mutex_t shutdown_mutex = {
 	.priority_inherit = TX_INHERIT /* Priority inheritance setting. */
 };
 
+
 /* Initializes all ThreadX mutexes. 
 *  Calls to _create_mutex() should go in here
 */
