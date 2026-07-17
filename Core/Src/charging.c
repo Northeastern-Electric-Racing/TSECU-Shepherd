@@ -4,7 +4,6 @@
 #include "bms_config.h"
 #include "c_utils.h"
 #include "analyzer.h"
-#include "shep_mutexes.h"
 
 /// @brief A struct to hold the original float value and the index originally,
 /// as that holds meaning
@@ -112,22 +111,17 @@ void handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
 	static const int MAX_BAL_CHIP = 7;
 
 	// the low cell, eventually they all must get there
-	float low = 0.0f;
+	float low = analyzer->min_ocv.val;
 	// the margin above the low cell to ignore, which is usually X% of the delta, gate at 0
 	//float min_thresh = //fmaxf(analyzer->delt_ocv * 0.4f, 0.0f);
 	float min_thresh = 0.02f;
 
 	val_idexed_t new_ocv_map[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
 
-	mutex_get(&analyzer_mutex);
-	low = analyzer->min_ocv.val;
 	// first, sort and cleanup everything
 	chipsSelectionSort(analyzer, new_ocv_map);
-	mutex_put(&analyzer_mutex);
 
 	PWM_DUTY duty_cycle = pwm_duty_cycle_get();
-
-	mutex_get(&balancing_mutex);
 
 	/* Balance all cells above the threshold, using the sorted ocv map values but
    * preserve the indexes*/
@@ -151,6 +145,4 @@ void handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
 			}
 		}
 	}
-
-	mutex_put(&balancing_mutex);
 }

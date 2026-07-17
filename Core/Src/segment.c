@@ -13,7 +13,6 @@
 #include "state_machine.h"
 #include "app_threadx.h"
 #include "main.h"
-#include "shep_mutexes.h"
 
 /**
  * @brief Initialize a chip with our default values.
@@ -462,11 +461,9 @@ void vGetSegmentData(ULONG thread_input)
 			segment_mute(acc_data->chips, &hspi2);
 			segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR,
 					&hspi2);
-			mutex_get(&balancing_mutex);
 			segment_configure_balancing(acc_data->chips,
 						    acc_data->discharge_config,
 						    &hspi2);
-			mutex_put(&balancing_mutex);
 			read_pwm_registers(acc_data->chips, &hspi2);
 			segment_unmute(acc_data->chips, &hspi2);
 			start_timer(&pwm_timer, pwm_update_frequency);

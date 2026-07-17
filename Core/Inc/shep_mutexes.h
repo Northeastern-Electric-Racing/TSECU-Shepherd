@@ -13,7 +13,6 @@ extern mutex_t state_mutex;
 extern mutex_t bms_algos_mutex;
 extern mutex_t peripherals_mutex; 
 extern mutex_t shutdown_mutex; 
-extern mutex_t balancing_mutex;
 // add more as necessary...
 
 /* API */

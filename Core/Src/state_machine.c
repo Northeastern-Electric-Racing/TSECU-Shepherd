@@ -370,13 +370,8 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 	nertimer_t *state_timer = &state_machine->charging_stage_timer;
 	charge_stage_t next_stage = state_machine->charging_stage;
 	bool charging_allowed = false;
-	float max_ocv = 0.0f;
-	float max_voltage = 0.0f;
-
-	mutex_get(&analyzer_mutex);
-	max_ocv = analyzer->max_ocv.val;
-	max_voltage = analyzer->max_voltage.val;
-	mutex_put(&analyzer_mutex);
+	float max_ocv = analyzer->max_ocv.val;
+	float max_voltage = analyzer->max_voltage.val;
 
 	if (max_ocv >= MAX_CHARGE_VOLT_FLT ||
 	    max_voltage >= MAX_CHARGE_VOLT_FLT) {
@@ -506,8 +501,6 @@ static bool is_open_wire_fault_active(const analyzer_t *analyzer)
 {
 	bool open_wire_fault_active = false;
 
-	mutex_get(&analyzer_mutex);
-
 	for (uint8_t chip = 0U; chip < NUM_CHIPS; chip++) {
 		for (uint8_t cell = 0U; cell < NUM_CELLS_PER_CHIP; cell++) {
 			if (analyzer->chip_data[chip].ow_fault[cell]) {
@@ -515,9 +508,6 @@ static bool is_open_wire_fault_active(const analyzer_t *analyzer)
 			}
 		}
 	}
-
-	mutex_put(&analyzer_mutex);
-
 	return open_wire_fault_active;
 }
 
