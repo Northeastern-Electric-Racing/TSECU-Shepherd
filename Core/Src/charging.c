@@ -18,8 +18,64 @@ void pwm_duty_cycle_set(uint8_t duty_cycle_req_get) {
     duty_cycle_req = duty_cycle_req_get;
 }
 
-uint8_t pwm_duty_cycle_setting_get(void) {
-    return duty_cycle_req;
+float pwm_duty_cycle_setting_get(void) {
+	float duty_cycle = 0.0f;
+
+	switch (pwm_duty_cycle_get()) {
+		case PWM_0_0_PCT:
+			duty_cycle = 0.0f;
+			break;
+		case PWM_6_6_PCT:
+			duty_cycle = 6.6f;
+			break;
+		case PWM_13_2_PCT:
+			duty_cycle = 13.2f;
+			break;
+		case PWM_19_8_PCT:
+			duty_cycle = 19.8f;
+			break;
+		case PWM_26_4_PCT:
+			duty_cycle = 26.4f;
+			break;
+		case PWM_33_0_PCT:
+			duty_cycle = 33.0f;
+			break;
+		case PWM_39_6_PCT:
+			duty_cycle = 39.6f;
+			break;
+		case PWM_46_2_PCT:
+			duty_cycle = 46.2f;
+			break;
+		case PWM_52_8_PCT:
+			duty_cycle = 52.8f;
+			break;
+		case PWM_59_4_PCT:
+			duty_cycle = 59.4f;
+			break;
+		case PWM_66_0_PCT:
+			duty_cycle = 66.0f;
+			break;
+		case PWM_72_6_PCT:
+			duty_cycle = 72.6f;
+			break;
+		case PWM_79_2_PCT:
+			duty_cycle = 79.2f;
+			break;
+		case PWM_85_8_PCT:
+			duty_cycle = 85.8f;
+			break;
+		case PWM_92_4_PCT:
+			duty_cycle = 92.4f;
+			break;
+		case PWM_100_0_PCT:
+			duty_cycle = 100.0f;
+			break;
+		default:
+			duty_cycle = 0.0f;
+			break;
+	}
+
+	return duty_cycle;
 }
 
 PWM_DUTY pwm_duty_cycle_get() {

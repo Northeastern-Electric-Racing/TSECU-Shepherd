@@ -428,7 +428,7 @@ uint8_t send_pack_current_and_shunt_temp_adbms
 * BMS/Control/CellBalancing/PWMDutyCycle - Current cell balancing PWM duty cycle
 */
 uint8_t send_current_cell_balancing_pwm_duty_cycle
-(uint8_t balancing_pwm_duty_cycle);
+(float balancing_pwm_duty_cycle);
 
 /**
 * Contents of this message:

@@ -13,11 +13,11 @@
 void pwm_duty_cycle_set(uint8_t duty_cycle_req_get);
 
 /**
- * @brief get the stored duty cycle
+ * @brief get the selected ADBMS duty cycle
  *
- * @returns the stored duty cycle percentage
+ * @returns the selected duty cycle percentage
  */
-uint8_t pwm_duty_cycle_setting_get(void);
+float pwm_duty_cycle_setting_get(void);
 
 /**
  * @brief get the duty cycle (atomic)
