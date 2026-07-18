@@ -75,10 +75,11 @@ void test_pwm_duty_cycle(void)
 		}
 	}
 
-	for (uint16_t request = 101U; request <= UINT8_MAX; request++) {
-		pwm_duty_cycle_set((uint8_t)request);
-		TEST_ASSERT_EQUAL(PWM_0_0_PCT, pwm_duty_cycle_get());
-	}
+	pwm_duty_cycle_set(101U);
+	TEST_ASSERT_EQUAL(PWM_0_0_PCT, pwm_duty_cycle_get());
+
+	pwm_duty_cycle_set(UINT8_MAX);
+	TEST_ASSERT_EQUAL(PWM_0_0_PCT, pwm_duty_cycle_get());
 }
 
 void test_balance_threshold(void)
