@@ -1617,9 +1617,9 @@ uint8_t send_current_cell_balancing_pwm_duty_cycle
             uint16_t data = 0;
             msg.len = 2;
                         uint32_t balancing_pwm_duty_cycle_i = (uint32_t)(balancing_pwm_duty_cycle*10);
-                        if(balancing_pwm_duty_cycle_i > 1023ULL) {balancing_pwm_duty_cycle_i = 1023;
+                        if(balancing_pwm_duty_cycle_i > 65535ULL) {balancing_pwm_duty_cycle_i = 65535;
                         }
-                        data |= ((balancing_pwm_duty_cycle_i) & 0x3FFULL) << 6;
+                        data |= ((balancing_pwm_duty_cycle_i) & 0xFFFFULL) << 0;
             
             uint16_t data_bigendian = __builtin_bswap16(data);
             memcpy(msg.data, &data_bigendian, 2);
