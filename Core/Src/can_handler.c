@@ -208,7 +208,13 @@ void vCanDispatch(ULONG thread_input) {
     /* Process incoming messages */
     while (queue_receive(&can_outgoing, &message, TX_WAIT_FOREVER) ==
            U_SUCCESS) {
-      status = can_send_msg(&can1, &message);
+      do {
+        status = can_send_msg(&can1, &message);
+        if (status == HAL_BUSY) {
+          tx_thread_sleep(1U);
+        }
+      } while (status == HAL_BUSY);
+
       if (status != U_SUCCESS) {
         PRINTLN_WARNING("Failed to send message (on can1) after removing from "
                         "outgoing queue (Message ID: %ld) - Status %d",
