@@ -281,8 +281,14 @@ void segment_configure_balancing(
 	write_pwm_regs(chips, hspi);
 }
 
+void segment_read_pwm_registers(cell_asic chips[NUM_CHIPS],
+				SPI_HandleTypeDef *hspi)
+{
+	read_pwm_registers(chips, hspi);
+}
+
 void segment_set_dcto(cell_asic chips[NUM_CHIPS], uint8_t dcto,
-		      SPI_HandleTypeDef *hspi)
+			      SPI_HandleTypeDef *hspi)
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		set_discharge_timeout(&chips[chip], dcto);
@@ -464,7 +470,7 @@ void vGetSegmentData(ULONG thread_input)
 			segment_configure_balancing(acc_data->chips,
 						    acc_data->discharge_config,
 						    &hspi2);
-			read_pwm_registers(acc_data->chips, &hspi2);
+			segment_read_pwm_registers(acc_data->chips, &hspi2);
 			segment_unmute(acc_data->chips, &hspi2);
 			start_timer(&pwm_timer, pwm_update_frequency);
 		}
