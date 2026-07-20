@@ -523,7 +523,6 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 	state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
 	sanitizer_t *sanitizer = state_machine_args->sanitizer;
-	bool open_wire_fault_active = false;
 
 	static nertimer_t ovr_curr_timer = { 0 };
 	static nertimer_t ovr_chgcurr_timer = { 0 };
@@ -535,10 +534,6 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 	static nertimer_t segment_comms_timer = { 0 };
 	static nertimer_t hv_plate_comms_timer = { 0 };
 	static nertimer_t open_wire_timer = { 0 };
-
-	mutex_get(&state_mutex);
-	open_wire_fault_active = state_machine->cell_open_wire_fault_flag;
-	mutex_put(&state_mutex);
 
 	if (initialized) {
 		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT].data_1 =
@@ -566,7 +561,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		fault_eval_table[HV_PLATE_COMMS_FAULT].data_1 =
 			state_machine->hv_plate_comms_fault_flag;
 		fault_eval_table[CELL_OPEN_WIRE_FAULT].data_1 =
-			open_wire_fault_active;
+			state_machine->cell_open_wire_fault_flag;
 	} else {
 		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT] =
 			(fault_eval_t){ .id = "Discharge Current Limit",
@@ -667,7 +662,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		fault_eval_table[CELL_OPEN_WIRE_FAULT] = (fault_eval_t){
 			.id = "Cell Open Wire Fault",
 			.timer = open_wire_timer,
-			.data_1 = open_wire_fault_active,
+			.data_1 = state_machine->cell_open_wire_fault_flag,
 			.optype_1 = EQ,
 			.lim_1 = true,
 			.timeout = OW_FAULT_TIME,
