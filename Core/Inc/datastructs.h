@@ -222,6 +222,7 @@ typedef struct {
  */
 typedef enum {
 	SOC_STATE_INIT_FROM_OCV,
+	SOC_STATE_OCV_ESTIMATION,
 	SOC_STATE_COULOMB_COUNTING
 } soc_state_t;
 

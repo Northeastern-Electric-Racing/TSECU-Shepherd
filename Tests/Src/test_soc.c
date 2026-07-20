@@ -23,6 +23,8 @@ ULONG _tx_time_get(VOID)
 static analyzer_t analyzer;
 static hv_plate_t hv_plate;
 
+extern soc_data_t soc_data;
+
 /* -------------------------------------------------
  * Setup / Teardown
  * ------------------------------------------------- */
@@ -56,12 +58,31 @@ void test_soc_initializes_from_ocv(void)
 }
 
 /* -------------------------------------------------
+ * Test: SOC remains unchanged without a new OCV
+ * ------------------------------------------------- */
+
+void test_soc_ocv_holds_without_update(void)
+{
+	analyzer.min_ocv.val = 3.8f;
+
+	soc_handle_state(&analyzer, &hv_plate);
+
+	hv_plate.pack_current = 100.0f;
+	test_tx_ticks += 100U;
+
+	soc_handle_state(&analyzer, &hv_plate);
+
+	TEST_ASSERT_EQUAL_FLOAT(0.615728f, analyzer.soc);
+}
+
+/* -------------------------------------------------
  * Test: SOC decreases during discharge
  * ------------------------------------------------- */
 
 void test_soc_coulomb_discharge(void)
 {
 	analyzer.min_ocv.val = 3.8f;
+	soc_data.soc_state = SOC_STATE_INIT_FROM_OCV;
 
 	/* Initial OCV init */
 	soc_handle_state(&analyzer, &hv_plate);
@@ -81,6 +102,7 @@ void test_soc_coulomb_discharge(void)
 void test_soc_coulomb_charge(void)
 {
 	analyzer.min_ocv.val = 3.8f;
+	soc_data.soc_state = SOC_STATE_INIT_FROM_OCV;
 
 	/* Initial OCV init */
 	soc_handle_state(&analyzer, &hv_plate);
@@ -91,6 +113,42 @@ void test_soc_coulomb_charge(void)
 	soc_handle_state(&analyzer, &hv_plate);
 
 	TEST_ASSERT_EQUAL_FLOAT(0.615784f, analyzer.soc);
+}
+
+/* -------------------------------------------------
+ * Test: Reinitialization keeps OCV estimation active
+ * ------------------------------------------------- */
+
+void test_soc_reinit_stays_ocv(void)
+{
+	analyzer.min_ocv.val = 3.8f;
+
+	soc_handle_state(&analyzer, &hv_plate);
+	soc_request_reinit_from_ocv();
+	soc_handle_state(&analyzer, &hv_plate);
+
+	hv_plate.pack_current = 100.0f;
+	test_tx_ticks += 100U;
+	soc_handle_state(&analyzer, &hv_plate);
+
+	TEST_ASSERT_EQUAL_FLOAT(0.615728f, analyzer.soc);
+}
+
+/* -------------------------------------------------
+ * Test: SOC updates from a new OCV
+ * ------------------------------------------------- */
+
+void test_soc_updates_from_ocv(void)
+{
+	analyzer.min_ocv.val = 3.8f;
+
+	soc_handle_state(&analyzer, &hv_plate);
+
+	analyzer.min_ocv.val = 4.0f;
+
+	soc_handle_state(&analyzer, &hv_plate);
+
+	TEST_ASSERT_EQUAL_FLOAT(0.819626f, analyzer.soc);
 }
 
 /* -------------------------------------------------
@@ -126,6 +184,9 @@ int main(void)
 	RUN_TEST(test_soc_initializes_from_ocv);
 	RUN_TEST(test_soc_coulomb_discharge);
 	RUN_TEST(test_soc_coulomb_charge);
+	RUN_TEST(test_soc_ocv_holds_without_update);
+	RUN_TEST(test_soc_reinit_stays_ocv);
+	RUN_TEST(test_soc_updates_from_ocv);
 	RUN_TEST(test_soc_invalid_ocv_then_valid);
 
 	return UNITY_END();

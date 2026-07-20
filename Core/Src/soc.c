@@ -4,6 +4,10 @@
 #include "c_utils.h"
 #include "datastructs.h"
 
+#ifndef ENABLE_COULOMB_COUNTING
+#define ENABLE_COULOMB_COUNTING false
+#endif /* ENABLE_COULOMB_COUNTING */
+
 /**
  * @brief Nominal pack capacity used for coulomb counting integration.
  *
@@ -63,6 +67,31 @@ static float get_soc_from_ocv(float ocv)
 }
 
 /**
+ * @brief Update SoC from the minimum cell OCV.
+ *
+ * @param analyzer Analyzer containing pack SoC and OCV data.
+ * @return true when the OCV is valid.
+ */
+static bool update_soc_from_ocv(analyzer_t *const analyzer)
+{
+	const float min_ocv = analyzer->min_ocv.val;
+	const bool is_ocv_valid = (min_ocv >= MIN_VOLT) &&
+				  (min_ocv <= MAX_VOLT);
+
+	if (is_ocv_valid) {
+		float soc = get_soc_from_ocv(min_ocv);
+
+		if (soc > 1.0f) {
+			soc = 1.0f;
+		}
+
+		analyzer->soc = soc;
+	}
+
+	return is_ocv_valid;
+}
+
+/**
  * @brief Compute pack SoC drift from OCV-based estimate.
  *
  * @param analyzer Analyzer containing pack SoC and OCV data.
@@ -82,7 +111,11 @@ void soc_init(void)
 	soc_data.soc_reinit_request = false;
 	soc_data.soc_drift = 0.0f;
 	soc_data.prev_time = 0U;
+#if ENABLE_COULOMB_COUNTING
 	soc_data.soc_state = SOC_STATE_INIT_FROM_OCV;
+#else
+	soc_data.soc_state = SOC_STATE_OCV_ESTIMATION;
+#endif
 }
 
 void soc_request_reinit_from_ocv(void)
@@ -93,9 +126,9 @@ void soc_request_reinit_from_ocv(void)
 void soc_handle_state(analyzer_t *const analyzer,
 		      const hv_plate_t *const hv_plate)
 {
-	const float min_ocv = analyzer->min_ocv.val;
 	const float pack_current = hv_plate->pack_current;
 
+#if ENABLE_COULOMB_COUNTING
 	/**
 	 * Initialize or reinitialize SoC from OCV
 	 * Used when current data is unreliable/unavailable
@@ -104,21 +137,16 @@ void soc_handle_state(analyzer_t *const analyzer,
 	if (soc_data.soc_reinit_request == true) {
 		soc_data.soc_state = SOC_STATE_INIT_FROM_OCV;
 	}
+#endif
 
 	switch (soc_data.soc_state) {
+		case SOC_STATE_OCV_ESTIMATION: {
+			(void)update_soc_from_ocv(analyzer);
+			break;
+		}
+
 		case SOC_STATE_INIT_FROM_OCV: {
-			const bool is_ocv_valid = (min_ocv >= MIN_VOLT) &&
-						  (min_ocv <= MAX_VOLT);
-
-			if (is_ocv_valid) {
-				float soc_from_ocv = get_soc_from_ocv(min_ocv);
-
-				if (soc_from_ocv > 1.0f) {
-					soc_from_ocv = 1.0f;
-				}
-
-				analyzer->soc = soc_from_ocv;
-
+			if (update_soc_from_ocv(analyzer)) {
 				soc_data.prev_time = tx_time_get();
 
 				soc_data.soc_reinit_request = false;
