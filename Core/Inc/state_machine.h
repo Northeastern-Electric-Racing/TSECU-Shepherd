@@ -84,6 +84,20 @@ void set_hv_plate_comms_fault(state_machine_t *state_mach);
 void clear_hv_plate_comms_fault(state_machine_t *state_mach);
 
 /**
+ * @brief Sets the cell open-wire fault flag.
+ *
+ * @param state_mach Pointer to the state machine data structure.
+ */
+void set_cell_open_wire_fault(state_machine_t *state_mach);
+
+/**
+ * @brief Clears the cell open-wire fault flag.
+ *
+ * @param state_mach Pointer to the state machine data structure.
+ */
+void clear_cell_open_wire_fault(state_machine_t *state_mach);
+
+/**
  * @brief Determines if there is a critical fault that is active.
  *
  * @return true if critical faults are active, false otherwise

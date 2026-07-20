@@ -34,8 +34,6 @@ const bool valid_transition_from_to[NUM_STATES][NUM_STATES] = {
 /* private function prototypes */
 void update_eval_table(state_machine_args_t *state_machine_args);
 
-static bool is_open_wire_fault_active(const analyzer_t *analyzer);
-
 static void set_charging_stage(state_machine_t *state_machine,
 			       charge_stage_t stage);
 
@@ -492,6 +490,20 @@ void clear_hv_plate_comms_fault(state_machine_t *state_mach)
 	mutex_put(&state_mutex);
 }
 
+void set_cell_open_wire_fault(state_machine_t *state_mach)
+{
+	mutex_get(&state_mutex);
+	state_mach->cell_open_wire_fault_flag = true;
+	mutex_put(&state_mutex);
+}
+
+void clear_cell_open_wire_fault(state_machine_t *state_mach)
+{
+	mutex_get(&state_mutex);
+	state_mach->cell_open_wire_fault_flag = false;
+	mutex_put(&state_mutex);
+}
+
 bool get_fault(fault_code_t fault)
 {
 	return (fault_flags & (1 << fault)) != 0;
@@ -500,20 +512,6 @@ bool get_fault(fault_code_t fault)
 bool are_critical_faults_active(void)
 {
 	return (fault_flags & severity_mask) != 0;
-}
-
-static bool is_open_wire_fault_active(const analyzer_t *analyzer)
-{
-	bool open_wire_fault_active = false;
-
-	for (uint8_t chip = 0U; chip < NUM_CHIPS; chip++) {
-		for (uint8_t cell = 0U; cell < NUM_CELLS_PER_CHIP; cell++) {
-			if (analyzer->chip_data[chip].ow_fault[cell]) {
-				open_wire_fault_active = true;
-			}
-		}
-	}
-	return open_wire_fault_active;
 }
 
 void update_eval_table(state_machine_args_t *state_machine_args)
@@ -525,6 +523,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 	state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
 	sanitizer_t *sanitizer = state_machine_args->sanitizer;
+	bool open_wire_fault_active = false;
 
 	static nertimer_t ovr_curr_timer = { 0 };
 	static nertimer_t ovr_chgcurr_timer = { 0 };
@@ -537,8 +536,9 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 	static nertimer_t hv_plate_comms_timer = { 0 };
 	static nertimer_t open_wire_timer = { 0 };
 
-	const bool open_wire_fault_active =
-		is_open_wire_fault_active(analyzer);
+	mutex_get(&state_mutex);
+	open_wire_fault_active = state_machine->cell_open_wire_fault_flag;
+	mutex_put(&state_mutex);
 
 	if (initialized) {
 		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT].data_1 =

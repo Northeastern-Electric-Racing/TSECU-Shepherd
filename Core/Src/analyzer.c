@@ -358,8 +358,11 @@ void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate)
 	}
 }
 
-void detect_cell_open_wire(analyzer_t *analyzer, acc_data_t *acc_data)
+void detect_cell_open_wire(analyzer_t *analyzer, acc_data_t *acc_data,
+			   state_machine_t *state_machine)
 {
+	bool open_wire_fault_active = false;
+
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		chipdata_t *chip_data = get_chip_data(analyzer, chip);
 
@@ -387,6 +390,8 @@ void detect_cell_open_wire(analyzer_t *analyzer, acc_data_t *acc_data)
 				drop_percent > CELL_OPEN_WIRE_MAX_DROP_PERCENT;
 
 			chip_data->ow_fault[cell] = is_open;
+			open_wire_fault_active =
+				open_wire_fault_active || is_open;
 
 			if (is_open && !was_open) {
 				PRINTLN_WARNING(
@@ -395,6 +400,12 @@ void detect_cell_open_wire(analyzer_t *analyzer, acc_data_t *acc_data)
 					odd_voltage, drop_voltage, drop_percent);
 			}
 		}
+	}
+
+	if (open_wire_fault_active) {
+		set_cell_open_wire_fault(state_machine);
+	} else {
+		clear_cell_open_wire_fault(state_machine);
 	}
 }
 
@@ -463,7 +474,7 @@ void vAnalyzer(ULONG thread_input)
 		calc_open_cell_voltage(analyzer, hv_plate);
 		calc_pack_voltage_stats(analyzer, acc_data);
 		calc_cell_resistances(analyzer, acc_data, hv_plate);
-		detect_cell_open_wire(analyzer, acc_data);
+		detect_cell_open_wire(analyzer, acc_data, state_machine);
 		update_chip_status(analyzer, acc_data);
 
 		mutex_put(&analyzer_mutex);

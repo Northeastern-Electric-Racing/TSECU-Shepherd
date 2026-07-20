@@ -50,7 +50,8 @@ void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
 /**
  * @brief Calculate voltage drop percentages and detect open wires.
  */
-void detect_cell_open_wire(analyzer_t *analyzer, acc_data_t *acc_data);
+void detect_cell_open_wire(analyzer_t *analyzer, acc_data_t *acc_data,
+			   state_machine_t *state_machine);
 
 /**
  * @brief Updates the cell status of balancing and S_C_faults based on raw cell

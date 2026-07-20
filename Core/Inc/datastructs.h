@@ -384,6 +384,7 @@ typedef struct {
 
 	bool segment_comms_fault_flag;
 	bool hv_plate_comms_fault_flag;
+	bool cell_open_wire_fault_flag;
 
 	bool balancing_active;
 	bool is_charger_connected;
