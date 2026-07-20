@@ -43,7 +43,7 @@ void sm_fault_return(state_machine_args_t *state_machine_args);
  *
  * @param fault_item fault data
  * @param fault_code fault code
- * @return true if fault is present, false otherwise
+ * @return Current fault evaluation state
  */
 fault_state_t sm_fault_eval(fault_eval_t *fault_item, fault_code_t fault_code);
 
