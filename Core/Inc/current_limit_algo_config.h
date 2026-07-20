@@ -16,7 +16,7 @@
 #define DCL_TEMP_RAMP_DOWN_START_C       (50.0f)
 #define DCL_TEMP_MAX_C                   (60.0f)
 #define DCL_OCV_MIN_V                    (3.0f)
-#define DCL_OCV_DERATE_THRESH            (3.7f)
+#define DCL_OCV_DERATE_THRESH            (3.2f)
 #define DCL_MAX_CURRENT_A                (180.0f)
 #define DCL_MIN_CURRENT_A                (30.0f)
 #define DCL_PULSE_PERCENT                (1.1f)
