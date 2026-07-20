@@ -535,6 +535,14 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 	static nertimer_t hv_plate_comms_timer = { 0 };
 	static nertimer_t open_wire_timer = { 0 };
 
+	mutex_get(&state_mutex);
+	const bool segment_comms_fault =
+		state_machine->segment_comms_fault_flag;
+	const bool hv_plate_comms_fault =
+		state_machine->hv_plate_comms_fault_flag;
+	const bool ow_fault = state_machine->cell_open_wire_fault_flag;
+	mutex_put(&state_mutex);
+
 	if (initialized) {
 		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT].data_1 =
 			hv_plate->pack_current;
@@ -557,11 +565,11 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		fault_eval_table[DIE_TEMP_MAXIMUM_FAULT].data_1 =
 			analyzer->max_chiptemp.val;
 		fault_eval_table[SEGMENT_COMMS_FAULT].data_1 =
-			state_machine->segment_comms_fault_flag;
+			segment_comms_fault;
 		fault_eval_table[HV_PLATE_COMMS_FAULT].data_1 =
-			state_machine->hv_plate_comms_fault_flag;
+			hv_plate_comms_fault;
 		fault_eval_table[CELL_OPEN_WIRE_FAULT].data_1 =
-			state_machine->cell_open_wire_fault_flag;
+			ow_fault;
 	} else {
 		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT] =
 			(fault_eval_t){ .id = "Discharge Current Limit",
@@ -640,8 +648,8 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		fault_eval_table[SEGMENT_COMMS_FAULT] = (fault_eval_t){
 			.id = "Segment Comms Fault",
 			.timer = segment_comms_timer,
-			.data_1 = state_machine->segment_comms_fault_flag,
-			.optype_1 = GE,
+			.data_1 = segment_comms_fault,
+			.optype_1 = EQ,
 			.lim_1 = true,
 			.timeout = COMMS_FAULT_TIME,
 			.optype_2 = NOP, // UNUSED
@@ -651,8 +659,8 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		fault_eval_table[HV_PLATE_COMMS_FAULT] = (fault_eval_t){
 			.id = "HV Plate Comms Fault",
 			.timer = hv_plate_comms_timer,
-			.data_1 = state_machine->hv_plate_comms_fault_flag,
-			.optype_1 = GE,
+			.data_1 = hv_plate_comms_fault,
+			.optype_1 = EQ,
 			.lim_1 = true,
 			.timeout = COMMS_FAULT_TIME,
 			.optype_2 = NOP, // UNUSED
@@ -662,7 +670,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 		fault_eval_table[CELL_OPEN_WIRE_FAULT] = (fault_eval_t){
 			.id = "Cell Open Wire Fault",
 			.timer = open_wire_timer,
-			.data_1 = state_machine->cell_open_wire_fault_flag,
+			.data_1 = ow_fault,
 			.optype_1 = EQ,
 			.lim_1 = true,
 			.timeout = OW_FAULT_TIME,
