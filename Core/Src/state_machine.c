@@ -669,7 +669,7 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 			.lim_1 = true,
 			.timeout = OW_FAULT_TIME,
 			.optype_2 = NOP, // UNUSED
-			.is_critical = false
+			.is_critical = true
 		};
 		initialized = true;
 	}
