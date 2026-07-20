@@ -196,20 +196,6 @@ void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
 
 }
 
-void calc_cell_open_wire_voltages(analyzer_t *analyzer, acc_data_t *acc_data)
-{
-	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-		chipdata_t *chip_data = get_chip_data(analyzer, chip);
-
-		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			chip_data->ow_even_voltage[cell] = getVoltage(
-				acc_data->chips[chip].owcell.cell_ow_even[cell]);
-			chip_data->ow_odd_voltage[cell] = getVoltage(
-				acc_data->chips[chip].owcell.cell_ow_odd[cell]);
-		}
-	}
-}
-
 void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data)
 {
 	analyzer->max_voltage.val = FLT_MIN;
@@ -372,21 +358,23 @@ void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate)
 	}
 }
 
-void detect_cell_open_wire(analyzer_t *analyzer)
+void detect_cell_open_wire(analyzer_t *analyzer, acc_data_t *acc_data)
 {
 	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 		chipdata_t *chip_data = get_chip_data(analyzer, chip);
 
 		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			const float even_voltage =
-				chip_data->ow_even_voltage[cell];
-			const float odd_voltage = chip_data->ow_odd_voltage[cell];
+			const float even_voltage = getVoltage(
+				acc_data->chips[chip].owcell.cell_ow_even[cell]);
+			const float odd_voltage = getVoltage(
+				acc_data->chips[chip].owcell.cell_ow_odd[cell]);
 			const bool even_cell = ((cell + 1U) % 2U) == 0U;
 			const float excited_voltage =
 				even_cell ? even_voltage : odd_voltage;
 			const float baseline_voltage =
 				even_cell ? odd_voltage : even_voltage;
-			const float drop_voltage = baseline_voltage - excited_voltage;
+			const float drop_voltage =
+				baseline_voltage - excited_voltage;
 			float drop_percent = 0.0f;
 
 			if (baseline_voltage > 0.0f) {
@@ -472,11 +460,10 @@ void vAnalyzer(ULONG thread_input)
 		calc_cell_temps(analyzer, acc_data);
 		calc_pack_temps(analyzer, acc_data);
 		calc_cell_voltages(analyzer, acc_data, state_machine);
-		calc_cell_open_wire_voltages(analyzer, acc_data);
 		calc_open_cell_voltage(analyzer, hv_plate);
 		calc_pack_voltage_stats(analyzer, acc_data);
 		calc_cell_resistances(analyzer, acc_data, hv_plate);
-		detect_cell_open_wire(analyzer);
+		detect_cell_open_wire(analyzer, acc_data);
 		update_chip_status(analyzer, acc_data);
 
 		mutex_put(&analyzer_mutex);

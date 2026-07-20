@@ -28,11 +28,6 @@ void calc_cell_voltages(analyzer_t *analyzer, acc_data_t *acc_data,
                         state_machine_t *state_machine);
 
 /**
- * @brief Convert the raw even and odd open-wire readings to voltages.
- */
-void calc_cell_open_wire_voltages(analyzer_t *analyzer, acc_data_t *acc_data);
-
-/**
  * @brief Calculate statistics about pack voltage, such as min and max cell
  * volt, pack and avg voltage, pack and avg OCV, and deltas.
  *
@@ -53,9 +48,9 @@ void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
                            hv_plate_t *hv_plate);
 
 /**
- * @brief Detect open wires using the calculated even and odd voltages.
+ * @brief Calculate voltage drop percentages and detect open wires.
  */
-void detect_cell_open_wire(analyzer_t *analyzer);
+void detect_cell_open_wire(analyzer_t *analyzer, acc_data_t *acc_data);
 
 /**
  * @brief Updates the cell status of balancing and S_C_faults based on raw cell

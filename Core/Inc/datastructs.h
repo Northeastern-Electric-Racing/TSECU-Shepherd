@@ -60,10 +60,6 @@ typedef struct {
 	bool cs_fault[NUM_CELLS_PER_CHIP];
 	bool ow_fault[NUM_CELLS_PER_CHIP];	
 
-	/* Open-Wire Diagnostic Voltages */
-	float ow_even_voltage[NUM_CELLS_PER_CHIP];
-	float ow_odd_voltage[NUM_CELLS_PER_CHIP];
-
 	float vpv;
 	float vmv;
 	float v_res;
