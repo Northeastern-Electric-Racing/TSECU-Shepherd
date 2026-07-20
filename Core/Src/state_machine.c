@@ -79,6 +79,9 @@ static void set_charging_stage(state_machine_t *state_machine,
 
 void init_boot(state_machine_args_t *state_machine_args)
 {
+	state_machine_args->state_machine->bms_state = BOOT;
+	state_machine_args->state_machine->balancing_active = false;
+	state_machine_args->state_machine->is_charger_connected = false;
 	cancel_timer(&state_machine_args->state_machine->charger_message_timer);
 
 	update_eval_table(
@@ -686,10 +689,7 @@ void vStateMachine(ULONG thread_input)
 	state_machine_t *state_machine = state_machine_args->state_machine;
 	analyzer_t *analyzer = state_machine_args->analyzer;
 
-	state_machine->bms_state = BOOT;
 	init_boot(state_machine_args);
-	state_machine->balancing_active = false;
-	state_machine->is_charger_connected = false;
 
 	nertimer_t telem_timer;
 	// sends unimportant telemetry messages every 500ms
