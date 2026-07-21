@@ -176,8 +176,6 @@ void vCanReceive(ULONG thread_input) {
         break;
       case CALYPSO_PWM_BAL_CANID:
         pwm_duty_cycle_set(message.data[0]);
-        send_current_cell_balancing_pwm_duty_cycle(
-            pwm_duty_cycle_setting_get());
         break;
       case DTI_INPUT_VOLTAGE_CANID:
         if (!state_machine->is_charger_connected) {
