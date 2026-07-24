@@ -25,6 +25,8 @@
 /* USER CODE END Includes */
 extern DMA_HandleTypeDef handle_GPDMA1_Channel4;
 
+extern DMA_HandleTypeDef handle_GPDMA1_Channel5;
+
 extern DMA_HandleTypeDef handle_GPDMA1_Channel0;
 
 extern DMA_HandleTypeDef handle_GPDMA1_Channel1;
@@ -496,16 +498,16 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
     /* UART4 DMA Init */
-    /* GPDMA1_REQUEST_UART4_TX Init */
+    /* GPDMA1_REQUEST_UART4_RX Init */
     handle_GPDMA1_Channel4.Instance = GPDMA1_Channel4;
-    handle_GPDMA1_Channel4.Init.Request = GPDMA1_REQUEST_UART4_TX;
+    handle_GPDMA1_Channel4.Init.Request = GPDMA1_REQUEST_UART4_RX;
     handle_GPDMA1_Channel4.Init.BlkHWRequest = DMA_BREQ_SINGLE_BURST;
-    handle_GPDMA1_Channel4.Init.Direction = DMA_MEMORY_TO_PERIPH;
-    handle_GPDMA1_Channel4.Init.SrcInc = DMA_SINC_INCREMENTED;
-    handle_GPDMA1_Channel4.Init.DestInc = DMA_DINC_FIXED;
+    handle_GPDMA1_Channel4.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    handle_GPDMA1_Channel4.Init.SrcInc = DMA_SINC_FIXED;
+    handle_GPDMA1_Channel4.Init.DestInc = DMA_DINC_INCREMENTED;
     handle_GPDMA1_Channel4.Init.SrcDataWidth = DMA_SRC_DATAWIDTH_BYTE;
     handle_GPDMA1_Channel4.Init.DestDataWidth = DMA_DEST_DATAWIDTH_BYTE;
-    handle_GPDMA1_Channel4.Init.Priority = DMA_LOW_PRIORITY_MID_WEIGHT;
+    handle_GPDMA1_Channel4.Init.Priority = DMA_LOW_PRIORITY_HIGH_WEIGHT;
     handle_GPDMA1_Channel4.Init.SrcBurstLength = 1;
     handle_GPDMA1_Channel4.Init.DestBurstLength = 1;
     handle_GPDMA1_Channel4.Init.TransferAllocatedPort = DMA_SRC_ALLOCATED_PORT0|DMA_DEST_ALLOCATED_PORT0;
@@ -516,7 +518,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
       Error_Handler();
     }
 
-    __HAL_LINKDMA(huart, hdmatx, handle_GPDMA1_Channel4);
+    __HAL_LINKDMA(huart, hdmarx, handle_GPDMA1_Channel4);
 
     if (HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel4, DMA_CHANNEL_NPRIV) != HAL_OK)
     {
@@ -529,6 +531,71 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     /* USER CODE BEGIN UART4_MspInit 1 */
 
     /* USER CODE END UART4_MspInit 1 */
+  }
+  else if(huart->Instance==UART9)
+  {
+    /* USER CODE BEGIN UART9_MspInit 0 */
+
+    /* USER CODE END UART9_MspInit 0 */
+
+  /** Initializes the peripherals clock
+  */
+    PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_UART9;
+    PeriphClkInitStruct.Uart9ClockSelection = RCC_UART9CLKSOURCE_PCLK1;
+    if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    /* Peripheral clock enable */
+    __HAL_RCC_UART9_CLK_ENABLE();
+
+    __HAL_RCC_GPIOD_CLK_ENABLE();
+    /**UART9 GPIO Configuration
+    PD14     ------> UART9_RX
+    PD15     ------> UART9_TX
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_15;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF11_UART9;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+    /* UART9 DMA Init */
+    /* GPDMA1_REQUEST_UART9_RX Init */
+    handle_GPDMA1_Channel5.Instance = GPDMA1_Channel5;
+    handle_GPDMA1_Channel5.Init.Request = GPDMA1_REQUEST_UART9_RX;
+    handle_GPDMA1_Channel5.Init.BlkHWRequest = DMA_BREQ_SINGLE_BURST;
+    handle_GPDMA1_Channel5.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    handle_GPDMA1_Channel5.Init.SrcInc = DMA_SINC_FIXED;
+    handle_GPDMA1_Channel5.Init.DestInc = DMA_DINC_INCREMENTED;
+    handle_GPDMA1_Channel5.Init.SrcDataWidth = DMA_SRC_DATAWIDTH_BYTE;
+    handle_GPDMA1_Channel5.Init.DestDataWidth = DMA_DEST_DATAWIDTH_BYTE;
+    handle_GPDMA1_Channel5.Init.Priority = DMA_LOW_PRIORITY_HIGH_WEIGHT;
+    handle_GPDMA1_Channel5.Init.SrcBurstLength = 1;
+    handle_GPDMA1_Channel5.Init.DestBurstLength = 1;
+    handle_GPDMA1_Channel5.Init.TransferAllocatedPort = DMA_SRC_ALLOCATED_PORT0|DMA_DEST_ALLOCATED_PORT0;
+    handle_GPDMA1_Channel5.Init.TransferEventMode = DMA_TCEM_BLOCK_TRANSFER;
+    handle_GPDMA1_Channel5.Init.Mode = DMA_NORMAL;
+    if (HAL_DMA_Init(&handle_GPDMA1_Channel5) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(huart, hdmarx, handle_GPDMA1_Channel5);
+
+    if (HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel5, DMA_CHANNEL_NPRIV) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    /* UART9 interrupt Init */
+    HAL_NVIC_SetPriority(UART9_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(UART9_IRQn);
+    /* USER CODE BEGIN UART9_MspInit 1 */
+
+    /* USER CODE END UART9_MspInit 1 */
   }
 
 }
@@ -574,13 +641,36 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     HAL_GPIO_DeInit(GPIOD, GPIO_PIN_11|GPIO_PIN_12);
 
     /* UART4 DMA DeInit */
-    HAL_DMA_DeInit(huart->hdmatx);
+    HAL_DMA_DeInit(huart->hdmarx);
 
     /* UART4 interrupt DeInit */
     HAL_NVIC_DisableIRQ(UART4_IRQn);
     /* USER CODE BEGIN UART4_MspDeInit 1 */
 
     /* USER CODE END UART4_MspDeInit 1 */
+  }
+  else if(huart->Instance==UART9)
+  {
+    /* USER CODE BEGIN UART9_MspDeInit 0 */
+
+    /* USER CODE END UART9_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_UART9_CLK_DISABLE();
+
+    /**UART9 GPIO Configuration
+    PD14     ------> UART9_RX
+    PD15     ------> UART9_TX
+    */
+    HAL_GPIO_DeInit(GPIOD, GPIO_PIN_14|GPIO_PIN_15);
+
+    /* UART9 DMA DeInit */
+    HAL_DMA_DeInit(huart->hdmarx);
+
+    /* UART9 interrupt DeInit */
+    HAL_NVIC_DisableIRQ(UART9_IRQn);
+    /* USER CODE BEGIN UART9_MspDeInit 1 */
+
+    /* USER CODE END UART9_MspDeInit 1 */
   }
 
 }

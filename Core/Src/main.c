@@ -60,7 +60,9 @@ IWDG_HandleTypeDef hiwdg;
 
 UART_HandleTypeDef hlpuart1;
 UART_HandleTypeDef huart4;
+UART_HandleTypeDef huart9;
 DMA_HandleTypeDef handle_GPDMA1_Channel4;
+DMA_HandleTypeDef handle_GPDMA1_Channel5;
 
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
@@ -105,6 +107,7 @@ static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM6_Init(void);
 static void MX_IWDG_Init(void);
+static void MX_UART9_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -191,6 +194,7 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM6_Init();
   MX_IWDG_Init();
+  MX_UART9_Init();
   /* USER CODE BEGIN 2 */
   init_can1(&hfdcan2);
   /* USER CODE END 2 */
@@ -415,6 +419,8 @@ static void MX_GPDMA1_Init(void)
     HAL_NVIC_EnableIRQ(GPDMA1_Channel3_IRQn);
     HAL_NVIC_SetPriority(GPDMA1_Channel4_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(GPDMA1_Channel4_IRQn);
+    HAL_NVIC_SetPriority(GPDMA1_Channel5_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(GPDMA1_Channel5_IRQn);
 
   /* USER CODE BEGIN GPDMA1_Init 1 */
 
@@ -636,11 +642,11 @@ static void MX_UART4_Init(void)
 
   /* USER CODE END UART4_Init 1 */
   huart4.Instance = UART4;
-  huart4.Init.BaudRate = 230400;
+  huart4.Init.BaudRate = 115200;
   huart4.Init.WordLength = UART_WORDLENGTH_8B;
   huart4.Init.StopBits = UART_STOPBITS_1;
   huart4.Init.Parity = UART_PARITY_NONE;
-  huart4.Init.Mode = UART_MODE_TX;
+  huart4.Init.Mode = UART_MODE_TX_RX;
   huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart4.Init.OverSampling = UART_OVERSAMPLING_16;
   huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
@@ -665,6 +671,54 @@ static void MX_UART4_Init(void)
   /* USER CODE BEGIN UART4_Init 2 */
 
   /* USER CODE END UART4_Init 2 */
+
+}
+
+/**
+  * @brief UART9 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART9_Init(void)
+{
+
+  /* USER CODE BEGIN UART9_Init 0 */
+
+  /* USER CODE END UART9_Init 0 */
+
+  /* USER CODE BEGIN UART9_Init 1 */
+
+  /* USER CODE END UART9_Init 1 */
+  huart9.Instance = UART9;
+  huart9.Init.BaudRate = 115200;
+  huart9.Init.WordLength = UART_WORDLENGTH_8B;
+  huart9.Init.StopBits = UART_STOPBITS_1;
+  huart9.Init.Parity = UART_PARITY_NONE;
+  huart9.Init.Mode = UART_MODE_TX_RX;
+  huart9.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart9.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart9.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart9.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart9.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart9) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart9, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart9, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart9) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART9_Init 2 */
+
+  /* USER CODE END UART9_Init 2 */
 
 }
 
@@ -1224,8 +1278,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD13 PD14 PD15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
+  /*Configure GPIO pin : PD13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
