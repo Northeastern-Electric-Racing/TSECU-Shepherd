@@ -2,6 +2,8 @@
 #include "state_machine.h"
 #include "ccl.h"
 #include "dcl.h"
+#include "u_tx_mutex.h"
+#include "shep_mutexes.h"
 
 bool disable_pulse(state_machine_t *const state_machine)
 {
@@ -30,12 +32,14 @@ void vBMSAlgorithms(ULONG thread_input)
 	analyzer_t *analyzer = bms_algos_args->analyzer;
 
 	for (;;) {
+		mutex_get(&analyzer_mutex);
 		current_limit_algo_inputs_t algo_inputs = {
 			.max_ocv = analyzer->max_ocv.val,
 			.min_ocv = analyzer->min_ocv.val,
 			.max_temp = sanitizer->max_sanitized_temp.val,
 			.min_temp = sanitizer->min_sanitized_temp.val
 		};
+		mutex_put(&analyzer_mutex);
 
 		dcl_calc_inst_limit(algo_inputs, bms_algos);
 		ccl_calc_inst_limit(algo_inputs, bms_algos);

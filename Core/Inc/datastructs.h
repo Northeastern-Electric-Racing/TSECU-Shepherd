@@ -50,6 +50,8 @@ typedef struct {
 	float cell_resistance[NUM_CELLS_PER_CHIP];
 	float open_cell_voltage[NUM_CELLS_PER_CHIP];
 	float cell_voltages[NUM_CELLS_PER_CHIP];
+	/* S-ADC voltages */
+	float s_cell_voltages[NUM_CELLS_PER_CHIP];
 
 	/* Maximum temperature of on-board therms.*/
 	float on_board_temp[NUM_ONBOARD_THERMS_PER_CHIP];
@@ -60,6 +62,7 @@ typedef struct {
 	/* Chip and Cell Diagnostic Data */
 	bool is_balancing[NUM_CELLS_PER_CHIP];
 	bool cs_fault[NUM_CELLS_PER_CHIP];
+	bool ow_fault[NUM_CELLS_PER_CHIP];	
 
 	float vpv;
 	float vmv;
@@ -89,6 +92,8 @@ typedef struct {
 typedef struct {
 	float last_temp;
 	bool valid;
+	bool initialized;
+	uint8_t fault_count;
 } therm_state_t;
 
 /**
@@ -107,6 +112,12 @@ typedef enum {
 	FAULT_TIMER_STARTED,
 	FAULT_TIMER_EXPIRED,
 } fault_timer_status_t;
+
+typedef enum {
+	FAULT_NONE,
+	FAULT_ONGOING,
+	FAULT_TRIGGERED,
+} fault_state_t;
 
 /**
  * @brief Data needed for the therm temp sanitizer
@@ -215,6 +226,7 @@ typedef struct {
  */
 typedef enum {
 	SOC_STATE_INIT_FROM_OCV,
+	SOC_STATE_OCV_ESTIMATION,
 	SOC_STATE_COULOMB_COUNTING
 } soc_state_t;
 
@@ -244,7 +256,7 @@ typedef struct {
 	crit_cellval_t max_voltage;
 	crit_cellval_t min_voltage;
 	float avg_voltage;
-	float delt_voltage;
+	float delta_voltage;
 
 	// OCV timer
 	nertimer_t ocvTimer;
@@ -377,6 +389,7 @@ typedef struct {
 
 	bool segment_comms_fault_flag;
 	bool hv_plate_comms_fault_flag;
+	bool cell_open_wire_fault_flag;
 
 	bool balancing_active;
 	bool is_charger_connected;
@@ -427,6 +440,14 @@ typedef struct {
 } state_machine_args_t;
 
 /**
+ * @brief args for vCanReceive
+ */
+typedef struct {
+	state_machine_args_t *state_machine_args;
+	hv_plate_t *hv_plate;
+} can_receive_args_t;
+
+/**
  * @brief args for vAnalyzer
  */
 typedef struct {
@@ -442,6 +463,7 @@ typedef struct {
 typedef struct {
 	acc_data_t *acc_data;
 	state_machine_t *state_machine;
+	analyzer_t *analyzer;
 } acc_data_args_t;
 
 /**
@@ -496,6 +518,7 @@ typedef enum {
 
 	HV_PLATE_COMMS_FAULT,
 	SEGMENT_COMMS_FAULT,
+	CELL_OPEN_WIRE_FAULT,
 
 	NUM_FAULTS, /* NUM_REACTIONARY_FAULTS = NUM_FAULTS - NUM_CONDITIONAL_FAULTS - 1 */
 

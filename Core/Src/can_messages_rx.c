@@ -757,6 +757,9 @@ void receive_car_state(const can_msg_t *message, car_state_t *car_state) {
     uint64_t traction_control_mask = (1ULL << 1) - 1ULL;
     uint64_t traction_control_raw = (data >> 16) & traction_control_mask;
     car_state->traction_control = (bool)traction_control_raw;
+    uint64_t state_transition_error_mask = (1ULL << 8) - 1ULL;
+    uint64_t state_transition_error_raw = (data >> 8) & state_transition_error_mask;
+    car_state->state_transition_error = (uint8_t)state_transition_error_raw;
 }
 
 void receive_pedal_percent_pressed_values(const can_msg_t *message, pedal_percent_pressed_values_t *pedal_percent_pressed_values) {

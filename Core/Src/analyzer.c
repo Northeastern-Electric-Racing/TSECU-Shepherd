@@ -7,12 +7,18 @@
 #include "serialPrintResult.h"
 #include "timer.h"
 #include "state_machine.h"
+#include "u_tx_debug.h"
 #include "u_tx_flags.h"
 #include "can_messages_tx.h"
 #include "shep_mutexes.h"
 #include "soc.h"
 
 #define OCV_TIMER_DURATION 750 // in ticks
+
+/**
+ * @brief Open-wire threshold while the S-ADC switch is active.
+ */
+#define CELL_OPEN_WIRE_MAX_DROP_PERCENT 15.0f
 
 /**
  * @brief Map cells to therms (ra codes).  Note beta has only 6 therms.
@@ -277,7 +283,7 @@ void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data)
 
 	analyzer->pack_voltage = total_volt;
 
-	analyzer->delt_voltage =
+	analyzer->delta_voltage =
 		analyzer->max_voltage.val - analyzer->min_voltage.val;
 
 	analyzer->avg_ocv = total_ocv / NUM_CELLS;
@@ -306,53 +312,100 @@ void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
 	}
 }
 
-void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data,
-			    hv_plate_t *hv_plate)
+void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate)
 {
 	static bool is_first_reading = true;
-	/* if there is no previous data point, set inital open cell voltage to current reading */
+	bool valid_cell_reading = !is_first_reading;
 
 	if (is_first_reading) {
-		// sanity check the last cell that the reading is good, oftentimes the first
-		// readings are bad
 		float last_cell =
 			analyzer->chip_data[NUM_CHIPS - 1]
 				.cell_voltages[NUM_CELLS_PER_CHIP - 1];
+
 		if (last_cell > 1 && last_cell < 5) {
 			is_first_reading = false;
-			start_timer(&analyzer->ocvTimer, OCV_TIMER_DURATION);
-		}
+			valid_cell_reading = true;
 
-		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-			for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP;
-			     cell++) {
-				analyzer->chip_data[chip]
-					.open_cell_voltage[cell] =
-					analyzer->chip_data[chip]
-						.cell_voltages[cell];
-			}
-		}
-	}
-
-	// If we are within the current threshold for open voltage measurments (1.5 mA)
-	if (hv_plate->pack_current < OCV_CURR_THRESH &&
-	    hv_plate->pack_current > -1 * OCV_CURR_THRESH) {
-		// Timer expired or not active
-		if (is_timer_expired(&analyzer->ocvTimer) ||
-		    !is_timer_active(&analyzer->ocvTimer)) {
 			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 				for (uint8_t cell = 0;
 				     cell < NUM_CELLS_PER_CHIP; cell++) {
-					// Set current OCV value, ensure value is true OCV
 					analyzer->chip_data[chip]
 						.open_cell_voltage[cell] =
 						analyzer->chip_data[chip]
 							.cell_voltages[cell];
 				}
 			}
-		} else {
+		}
+	}
+
+	if (valid_cell_reading &&
+	    fabsf(hv_plate->pack_current) < OCV_CURR_THRESH) {
+		if (is_timer_expired(&analyzer->ocvTimer)) {
+			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+				for (uint8_t cell = 0;
+				     cell < NUM_CELLS_PER_CHIP; cell++) {
+					analyzer->chip_data[chip]
+						.open_cell_voltage[cell] =
+						analyzer->chip_data[chip]
+							.cell_voltages[cell];
+				}
+			}
+		} else if (!is_timer_active(&analyzer->ocvTimer)) {
 			start_timer(&analyzer->ocvTimer, OCV_TIMER_DURATION);
 		}
+	} else {
+		cancel_timer(&analyzer->ocvTimer);
+	}
+}
+
+void detect_cell_open_wire(analyzer_t *analyzer, acc_data_t *acc_data,
+			   state_machine_t *state_machine)
+{
+	bool open_wire_fault_active = false;
+
+	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+		chipdata_t *chip_data = get_chip_data(analyzer, chip);
+
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			const float even_voltage = getVoltage(
+				acc_data->chips[chip].owcell.cell_ow_even[cell]);
+			const float odd_voltage = getVoltage(
+				acc_data->chips[chip].owcell.cell_ow_odd[cell]);
+			const bool even_cell = ((cell + 1U) % 2U) == 0U;
+			const float excited_voltage =
+				even_cell ? even_voltage : odd_voltage;
+			const float baseline_voltage =
+				even_cell ? odd_voltage : even_voltage;
+			const float drop_voltage =
+				baseline_voltage - excited_voltage;
+			float drop_percent = 0.0f;
+
+			if (baseline_voltage > 0.0f) {
+				drop_percent =
+					(drop_voltage / baseline_voltage) * 100.0f;
+			}
+
+			const bool was_open = chip_data->ow_fault[cell];
+			const bool is_open =
+				drop_percent > CELL_OPEN_WIRE_MAX_DROP_PERCENT;
+
+			chip_data->ow_fault[cell] = is_open;
+			open_wire_fault_active =
+				open_wire_fault_active || is_open;
+
+			if (is_open && !was_open) {
+				PRINTLN_WARNING(
+					"[OW] Open wire IC%u C%02u: even=%.3f V, odd=%.3f V, drop=%.3f V (%.1f%%)",
+					chip + 1U, cell + 1U, even_voltage,
+					odd_voltage, drop_voltage, drop_percent);
+			}
+		}
+	}
+
+	if (open_wire_fault_active) {
+		set_cell_open_wire_fault(state_machine);
+	} else {
+		clear_cell_open_wire_fault(state_machine);
 	}
 }
 
@@ -418,9 +471,10 @@ void vAnalyzer(ULONG thread_input)
 		calc_cell_temps(analyzer, acc_data);
 		calc_pack_temps(analyzer, acc_data);
 		calc_cell_voltages(analyzer, acc_data, state_machine);
-		calc_open_cell_voltage(analyzer, acc_data, hv_plate);
+		calc_open_cell_voltage(analyzer, hv_plate);
 		calc_pack_voltage_stats(analyzer, acc_data);
 		calc_cell_resistances(analyzer, acc_data, hv_plate);
+		detect_cell_open_wire(analyzer, acc_data, state_machine);
 		update_chip_status(analyzer, acc_data);
 
 		mutex_put(&analyzer_mutex);

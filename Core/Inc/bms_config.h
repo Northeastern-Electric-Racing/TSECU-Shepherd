@@ -58,7 +58,7 @@
 #define OCV_CURR_THRESH 0.5f /* in A */
 
 // Charging settings
-#define CHARGING_CURRENT    3.5f
+#define CHARGING_CURRENT    5.0f
 #define CHARGE_SETL_TIMEOUT 30000 // 1 minute, may need adjustment
 #define CHARGE_SETL_TIMEUP  120000 // 5 minutes, may need adjustment
 
@@ -72,6 +72,8 @@
 #define LOW_CELL_TIME	   55000
 #define HIGH_TEMP_TIME	   55000
 #define MAX_CHIPTEMP_TIME  55000
+#define COMMS_FAULT_TIME   20000
+#define OW_FAULT_TIME      40000
 
 // system wide base ADBMS sample rate
 #define SAMPLE_RATE 2 /* Hz */

@@ -55,7 +55,7 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 #ifdef DEBUG_RAW_VOLTAGES
 	PRINTLN_INFO("Min, Max, Avg, Delta Voltages: %f, %f, %f, %f\n",
 		     analyzer->min_voltage.val, analyzer->max_voltage.val,
-		     analyzer->avg_voltage, analyzer->delt_voltage);
+		     analyzer->avg_voltage, analyzer->delta_voltage);
 
 	PRINTLN_INFO("Raw Cell Voltages:");
     for(uint8_t c = 0; c < NUM_CHIPS; c++) {
@@ -103,10 +103,10 @@ const void print_bms_stats(analyzer_t *analyzer, hv_plate_t *hv_plate,
 #endif
 
 #ifdef DEBUG_ALGOS
-	PRINTLN_INFO("Cont CCL: %.2f A, Const DCL: %.2f A\n",
+	PRINTLN_INFO("Cont CCL: %.2f A, Const DCL: %.2f A, ",
 		     bms_algos->cont_CCL, bms_algos->cont_DCL);
 
-	PRINTLN_INFO("Inst CCL: %.2f A, Inst DCL: %.2f A\n",
+	PRINTLN_INFO("Inst CCL: %.2f A, Inst DCL: %.2f A",
 		     bms_algos->inst_CCL, bms_algos->inst_DCL);
 #endif
 
@@ -288,6 +288,11 @@ void vDebug(ULONG thread_input)
 						cell + 1 == NUM_CELLS_PER_CHIP ?
 							0 :
 							chip_data->cs_fault[cell +
+									    1],
+						chip_data->ow_fault[cell],
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->ow_fault[cell +
 									    1]);
 				} else {
 					send_beta_cell_data_debug(
@@ -309,6 +314,11 @@ void vDebug(ULONG thread_input)
 						cell + 1 == NUM_CELLS_PER_CHIP ?
 							0 :
 							chip_data->cs_fault[cell +
+									    1],
+						chip_data->ow_fault[cell],
+						cell + 1 == NUM_CELLS_PER_CHIP ?
+							0 :
+							chip_data->ow_fault[cell +
 									    1]);
 				}
 
@@ -401,6 +411,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	static acc_data_args_t acc_data_args = { 0 };
 	acc_data_args.acc_data = &acc_data;
 	acc_data_args.state_machine = &state_machine;
+	acc_data_args.analyzer = &analyzer;
 
 	static state_machine_args_t state_machine_args = { 0 };
 	state_machine_args.acc_data = &acc_data;
@@ -410,6 +421,10 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	state_machine_args.bms_algos = &bms_algos;
 	state_machine_args.sanitizer = &sanitizer;
 	state_machine_args.peripherals = &peripherals;
+
+	static can_receive_args_t can_receive_args = { 0 };
+	can_receive_args.state_machine_args = &state_machine_args;
+	can_receive_args.hv_plate = &hv_plate;
 
 	static hv_plate_args_t hv_plate_args = { 0 };
 	hv_plate_args.hv_plate = &hv_plate;
@@ -462,7 +477,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.size = 1024, /* Stack Size (in bytes) */
 		.priority = 2, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)&state_machine_args, /* Thread Args */
+		.thread_input = (ULONG)&can_receive_args, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 		.auto_start = TX_AUTO_START, /* Auto Start */
 		.function = vCanReceive /* Thread Function */
@@ -514,7 +529,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	static thread_t _sanitizer_thread = {
 		.name = "Sanitizer Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 3, /* Priority */
+		.priority = 2, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)&sanitizer_args, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
@@ -525,7 +540,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	static thread_t _bms_algorithms_thread = {
 		.name = "BMS Algorithms Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 4, /* Priority */
+		.priority = 2, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)&bms_algos_args, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
@@ -536,7 +551,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	static thread_t _control_thread = {
 		.name = "Control Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 4, /* Priority */
+		.priority = 3, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)&analyzer, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
@@ -569,7 +584,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 	static thread_t _debug_thread = {
 		.name = "BMS Debug Mode Thread", /* Name */
 		.size = 2048, /* Stack Size (in bytes) */
-		.priority = 4, /* Priority */
+		.priority = 3, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
 		.thread_input = (ULONG)&analyzer, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */

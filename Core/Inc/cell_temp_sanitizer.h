@@ -1,25 +1,25 @@
-#include <stdbool.h>
-#include "timer.h"
 #include "datastructs.h"
 
 #ifndef CELL_TEMP_SANITIZER_H
 #define CELL_TEMP_SANITIZER_H
 
-#define TOO_DIFF_THRESHOLD 0.20
-
 /**
- * @brief Creates a grid of therm_t.
- * @param sanitizer Struct containing sanitized therm data
+ * @brief Initializes the temperature sanitizer state.
+ *
+ * @param sanitizer Pointer to the sanitizer data structure.
  */
 void temp_sanitizer_init(sanitizer_t *sanitizer);
 
 /**
- * @brief Given a grid of cell temperatures, updates the given grid of sanitized cell temperatures.
- * Should be run periodically.
- * @param sanitizer Struct containing sanitized therm data
- * @param analyzer Struct containing analyzer data
+ * @brief Processes and sanitizes cell temperature readings.
+ *
+ * Valid samples update the tracked minimum and maximum temperatures while
+ * invalid samples are filtered and tracked using the fault counter.
+ *
+ * @param sanitizer Pointer to the sanitizer data structure.
+ * @param analyzer Pointer to the analyzer containing raw temperature data.
  */
-void temp_sanitizer_run(sanitizer_t *sanitizer, analyzer_t *analyzer);
+void temp_sanitizer_run(sanitizer_t *const sanitizer, const analyzer_t *const analyzer);
 
 void vSanitizer(ULONG thread_input);
 

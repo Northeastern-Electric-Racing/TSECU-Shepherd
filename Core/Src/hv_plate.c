@@ -13,6 +13,10 @@
 #include "hv_plate_isospi_recovery.h"
 #include <math.h>
 
+static float adbms_batt_volts = 0.0f;
+static float adbms_ts_volts = 0.0f;
+static float adbms_pack_current = 0.0f;
+
 #define SHUNT_RESISTANCE 0.05 / 1000 // 0.05 mOhms
 #define THERM_B_VAL	 3380
 
@@ -82,12 +86,12 @@ void get_pack_current_and_batt_voltage(hv_plate_t *hv_plate)
 
 	// Equation is based on resistances of voltage divider:
 	// R1: 3.6 MOhms, R2: 9.1 kOhms
-	hv_plate->batt_volts =
+	adbms_batt_volts =
 		(3600000 + 9100) *
 			get_voltage_conversion(hv_plate->ic.ivbat.vbat1) /
 			9100;
 
-	hv_plate->pack_current = get_current_conversion(hv_plate->ic.ivbat.i1);
+	adbms_pack_current = get_current_conversion(hv_plate->ic.ivbat.i1);
 
 	unsnap_2950(&hv_plate->ic);
 }
@@ -100,7 +104,7 @@ void get_ts_voltage(hv_plate_t *hv_plate)
 
 	// Equation is based on resistances of voltage divider:
 	// R1: 3.6 MOhms, R2: 4.53 kOhms (+ V1P25 reference)
-	hv_plate->ts_volts = ((3600000 + 4530) * volts) / 4530 + 1.25;
+	adbms_ts_volts = ((3600000 + 4530) * volts) / 4530 + 1.25;
 }
 
 void get_shunt_temp(hv_plate_t *hv_plate)
@@ -169,7 +173,7 @@ void vHvPlateData(ULONG thread_input)
 {
 	PRINTLN_INFO("Starting HV Plate thread...");
 
-	const uint16_t diagnostic_read_frequency = 1000; // 2s
+	const uint16_t diagnostic_read_frequency = 1000; // 1s
 	nertimer_t diagnostic_read_timer;
 
 	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
@@ -178,6 +182,9 @@ void vHvPlateData(ULONG thread_input)
 	analyzer_t *analyzer = hv_plate_args->analyzer;
 	bms_algos_t *bms_algos = hv_plate_args->bms_algos;
 	state_machine_t *state_machine = hv_plate_args->state_machine;
+	float max_dc_current = 0.0f;
+	float max_dc_brake_current = 0.0f;
+	state_t bms_state = BOOT;
 
 	dcl_init(COOLDOWN_ALWAYS);
 	ccl_init(COOLDOWN_ALWAYS);
@@ -195,15 +202,17 @@ void vHvPlateData(ULONG thread_input)
 	// initialize precharge relay open
 	reset_gpo(&hv_plate->ic, HV_CTRL_GPO); 
 
+	soc_init();
+
 	// enable reading HV
 	set_gpo(&hv_plate->ic, HV_ENABLE_GPO);
 #endif // HIL_TEST_MODE_ENABLED
 
-	soc_init();
-
 	for (;;) {
 		// get the current reading from the pack
 		get_pack_current_and_batt_voltage(hv_plate);
+
+		hv_plate->batt_volts = analyzer->pack_voltage;
 
 		// updates the SoC value in the analyzer struct based on the pack current
 		// received
@@ -241,6 +250,12 @@ void vHvPlateData(ULONG thread_input)
 			send_hv_plate_voltages(hv_plate->batt_volts,
 					   hv_plate->ts_volts);
 
+			send_hv_plate_voltages_adbms(adbms_batt_volts,
+						adbms_ts_volts);
+
+			send_pack_current_and_shunt_temp_adbms(
+				adbms_pack_current, hv_plate->shunt_temp);
+
 			send_pack_current_and_shunt_temp(hv_plate->pack_current, 
 				hv_plate->shunt_temp);
 
@@ -264,8 +279,21 @@ void vHvPlateData(ULONG thread_input)
 
 		send_hv_plate_pec_errors_message();
 		hv_plate_isospi_handle_state(hv_plate, state_machine);
-		send_max_dc_current_command(bms_algos->cont_DCL);
-		send_max_dc_brake_current_command(bms_algos->cont_CCL);
+
+		mutex_get(&state_mutex);
+		bms_state = state_machine->bms_state;
+		mutex_put(&state_mutex);
+
+		if (bms_state == READY) {
+			mutex_get(&bms_algos_mutex);
+			max_dc_current = bms_algos->cont_DCL;
+			// DTI expects regen/brake current limit to be negative
+			max_dc_brake_current = (-1.0f * bms_algos->cont_CCL);
+			mutex_put(&bms_algos_mutex);
+
+			send_max_dc_current_command(max_dc_current);
+			send_max_dc_brake_current_command(max_dc_brake_current);
+		}
 
 		tx_thread_sleep(50);
 	}

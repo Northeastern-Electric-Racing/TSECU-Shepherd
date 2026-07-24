@@ -13,6 +13,13 @@
 void pwm_duty_cycle_set(uint8_t duty_cycle_req_get);
 
 /**
+ * @brief get the selected ADBMS duty cycle
+ *
+ * @returns the selected duty cycle percentage
+ */
+float pwm_duty_cycle_setting_get(void);
+
+/**
  * @brief get the duty cycle (atomic)
  *
  * @returns the duty cycle enum for the driver (PWM_DUTY)

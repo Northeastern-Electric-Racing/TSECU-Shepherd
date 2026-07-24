@@ -358,6 +358,7 @@ typedef struct {
  bool launch_control;
  uint8_t functional_state;
  bool traction_control;
+ uint8_t state_transition_error;
 } car_state_t;
 
 void receive_car_state(const can_msg_t *message, car_state_t *car_state);

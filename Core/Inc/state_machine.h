@@ -43,9 +43,9 @@ void sm_fault_return(state_machine_args_t *state_machine_args);
  *
  * @param fault_item fault data
  * @param fault_code fault code
- * @return true if fault is present, false otherwise
+ * @return Current fault evaluation state
  */
-bool sm_fault_eval(fault_eval_t *fault_item, fault_code_t fault_code);
+fault_state_t sm_fault_eval(fault_eval_t *fault_item, fault_code_t fault_code);
 
 /**
  * @brief handles the state machine, calls the appropriate handler function and
@@ -82,6 +82,20 @@ void set_hv_plate_comms_fault(state_machine_t *state_mach);
  * @param state_mach Pointer to the state machine data structure.
  */
 void clear_hv_plate_comms_fault(state_machine_t *state_mach);
+
+/**
+ * @brief Sets the cell open-wire fault flag.
+ *
+ * @param state_mach Pointer to the state machine data structure.
+ */
+void set_cell_open_wire_fault(state_machine_t *state_mach);
+
+/**
+ * @brief Clears the cell open-wire fault flag.
+ *
+ * @param state_mach Pointer to the state machine data structure.
+ */
+void clear_cell_open_wire_fault(state_machine_t *state_mach);
 
 /**
  * @brief Determines if there is a critical fault that is active.

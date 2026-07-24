@@ -72,6 +72,9 @@ void segment_configure_balancing(
 	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP],
 	SPI_HandleTypeDef *hspi);
 
+void segment_read_pwm_registers(cell_asic chips[NUM_CHIPS],
+				SPI_HandleTypeDef *hspi);
+
 /**
  * @brief Returns if any cells are balancing. Must read back config register B and PWM registers.
  *
