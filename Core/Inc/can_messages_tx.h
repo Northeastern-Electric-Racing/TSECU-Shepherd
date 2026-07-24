@@ -85,7 +85,7 @@ uint8_t send_segment_isospi_communication_status
 * BMS/Faults/Critical/High_die_temp - Die temp ts too high
 * BMS/Faults/Non-Critical/Segment_Comms_fault - Lost communications with segments
 * BMS/Faults/Non-Critical/HV_Plate_Comms_Fault - Lost communications with HV Plate
-* BMS/Faults/Non-Critical/Cell_open_wire - Open wire detected on one or more cells
+* BMS/Faults/Critical/Cell_open_wire - Open wire detected on one or more cells
 * BMS/Faults/Non-Critical/Extra - Reserved
 */
 uint8_t send_fault_status
