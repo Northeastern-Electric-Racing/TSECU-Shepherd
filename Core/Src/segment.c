@@ -3,6 +3,7 @@
 #include "adBms6830Data.h"
 #include "adi6830_interation.h"
 #include "bms_config.h"
+#include "can_messages_tx.h"
 #include "c_utils.h"
 #include "charging.h"
 #include "datastructs.h"
@@ -160,7 +161,7 @@ void segment_retrieve_charging_data(cell_asic chips[NUM_CHIPS],
 	// poll stuff like vref, etc.
 	adc_and_read_aux_registers(chips, hspi);
 
-	// read from ADC convs
+	// run a clean single-shot conversion
 	get_c_adc_voltages(chips, hspi);
 
 	read_status_registers(chips, hspi);
@@ -191,7 +192,6 @@ void segment_retrieve_debug_data(cell_asic chips[NUM_CHIPS],
 	// check our fault flags
 	segment_monitor_flts(chips, hspi);
 
-	read_s_voltage_registers(chips, hspi);
 }
 
 void segment_restart(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
@@ -281,13 +281,102 @@ void segment_configure_balancing(
 	write_pwm_regs(chips, hspi);
 }
 
+void segment_read_pwm_registers(cell_asic chips[NUM_CHIPS],
+				SPI_HandleTypeDef *hspi)
+{
+	read_pwm_registers(chips, hspi);
+}
+
 void segment_set_dcto(cell_asic chips[NUM_CHIPS], uint8_t dcto,
-		      SPI_HandleTypeDef *hspi)
+			      SPI_HandleTypeDef *hspi)
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		set_discharge_timeout(&chips[chip], dcto);
 	}
 	write_config_regs(chips, hspi);
+}
+
+/**
+ * @brief Run the cell open-wire diagnostic.
+ *
+ * @param chips Array of chips.
+ * @param analyzer Analyzer data to update.
+ * @param charging True when charging.
+ * @param hspi SPI handle.
+ */
+static void segment_run_cell_open_wire_test(cell_asic chips[NUM_CHIPS],
+					    analyzer_t *analyzer,
+					    bool charging,
+					    SPI_HandleTypeDef *hspi)
+{
+	/*
+	 * Open-wire sequence:
+	 * 1. Read and store the normal S values.
+	 * 2. Run and store the even-cell open-wire conversion.
+	 * 3. Run and store the odd-cell open-wire conversion.
+	 * 4. Restart continuous S outside charging.
+	 */
+
+	if (charging) {
+		get_s_adc_voltages(chips, hspi);
+	} else {
+		segment_snap(chips, hspi);
+		read_s_voltage_registers(chips, hspi);
+		segment_unsnap(chips, hspi);
+	}
+
+	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			analyzer->chip_data[chip].s_cell_voltages[cell] =
+				getVoltage(chips[chip].scell.sc_codes[cell]);
+		}
+	}
+
+	get_s_adc_open_wire_voltages(chips, hspi, OW_ON_EVEN_CH);
+
+	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			chips[chip].owcell.cell_ow_even[cell] =
+				chips[chip].scell.sc_codes[cell];
+		}
+	}
+
+	get_s_adc_open_wire_voltages(chips, hspi, OW_ON_ODD_CH);
+
+	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
+			chips[chip].owcell.cell_ow_odd[cell] =
+				chips[chip].scell.sc_codes[cell];
+		}
+	}
+
+	if (!charging) {
+		start_s_adc_conv(chips, hspi);
+	}
+}
+
+static void segment_send_s_adc_cell_data(const analyzer_t *analyzer)
+{
+	for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+		const chipdata_t *chip_data = &analyzer->chip_data[chip];
+
+		for (uint8_t cell = 0; cell < NUM_CELLS_PER_CHIP; cell += 2) {
+			const bool has_cell_b = cell + 1U < NUM_CELLS_PER_CHIP;
+			const float s_voltage_b = has_cell_b ?
+				chip_data->s_cell_voltages[cell + 1U] :
+				0.0f;
+
+			if ((chip % 2U) == 0U) {
+				send_alpha_cell_s_adc_data(
+					chip_data->s_cell_voltages[cell], s_voltage_b,
+					chip / 2U, cell, cell + 1U);
+			} else {
+				send_beta_cell_s_adc_data(
+					chip_data->s_cell_voltages[cell], s_voltage_b,
+					chip / 2U, cell, cell + 1U);
+			}
+		}
+	}
 }
 
 // GET SEGEMENT DATA THREAD
@@ -299,35 +388,51 @@ void vGetSegmentData(ULONG thread_input)
 
 	acc_data_t *acc_data = acc_data_args->acc_data;
 	state_machine_t *state_machine = acc_data_args->state_machine;
+	analyzer_t *analyzer = acc_data_args->analyzer;
 
+	HAL_NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
 	segment_init(acc_data->chips, &hspi2);
-
 	segment_isospi_break_detection_init(acc_data->chips);
+	HAL_NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
 
 	// must delay after init for ADC to start up
 	tx_thread_sleep(500);
 
+	// Run after the monitor ADC has initialized, before normal acquisition
+	HAL_NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
+	segment_run_cell_open_wire_test(acc_data->chips, analyzer, false,
+					&hspi2);
+	segment_send_s_adc_cell_data(analyzer);
+	HAL_NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
+
 	state_t prev_state = BOOT;
 	state_t current_state = BOOT;
+	bool prev_balancing_active = false;
 
 	nertimer_t pwm_timer;
+	nertimer_t open_wire_timer;
 	// assumes a DCTO of 1 minute for PWM balancing in extended balancing mode
 	const uint32_t pwm_update_frequency = 55000;
+	// Required fault-tolerant time interval
+	const uint32_t open_wire_test_frequency = 30000;
 
 	start_timer(&pwm_timer, 0); // start timer immeditately on first run
+	start_timer(&open_wire_timer, open_wire_test_frequency);
 
 	for (;;) {
 		prev_state = current_state;
 		current_state = state_machine->bms_state;
+		const bool charging = (current_state == CHARGING);
+		const bool balancing_active = state_machine->balancing_active;
 
 		HAL_NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
 
-		// mute when entering any state other than balancing or charging
-		if (prev_state != current_state && current_state != CHARGING) {
+		if ((prev_state != current_state && !charging) ||
+		    (prev_balancing_active && !balancing_active)) {
 			segment_mute(acc_data->chips, &hspi2);
 		}
 
-		if (current_state == CHARGING) {
+		if (charging) {
 			// in charging, debug data is required to get things like die temp
 			segment_retrieve_charging_data(acc_data->chips, &hspi2);
 			send_segment_pec_errors_message();
@@ -349,26 +454,30 @@ void vGetSegmentData(ULONG thread_input)
 			}
 		}
 
-		if (current_state == CHARGING &&
-		    state_machine->balancing_active &&
+		if (is_timer_expired(&open_wire_timer)) {
+			segment_run_cell_open_wire_test(acc_data->chips, analyzer,
+						    charging, &hspi2);
+			segment_send_s_adc_cell_data(analyzer);
+			start_timer(&open_wire_timer, open_wire_test_frequency);
+		}
+
+		if (charging && balancing_active &&
 		    is_timer_expired(&pwm_timer) &&
 		    !is_timer_active(&pwm_timer)) {
-			segment_unmute(acc_data->chips, &hspi2);
-
-			// single shot SADC conversion to halt an SADC continuous conversion inhibiting PWM Balancing
-			get_s_adc_voltages(acc_data->chips, &hspi2);
-
+			segment_mute(acc_data->chips, &hspi2);
 			segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR,
-					 &hspi2);
-			tx_thread_sleep(16);
+					&hspi2);
 			segment_configure_balancing(acc_data->chips,
 						    acc_data->discharge_config,
 						    &hspi2);
+			segment_read_pwm_registers(acc_data->chips, &hspi2);
+			segment_unmute(acc_data->chips, &hspi2);
 			start_timer(&pwm_timer, pwm_update_frequency);
 		}
 
 		HAL_NVIC_EnableIRQ(FDCAN2_IT0_IRQn);
 
+		prev_balancing_active = balancing_active;
 		set_flag(ANALYZER_FLAG);
 		tx_thread_sleep(300);
 	}

@@ -553,7 +553,7 @@ void read_serial_id(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 
 void get_c_adc_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, SINGLE, DCP_OFF, RSTF_ON,
+	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, SINGLE, DCP_OFF, RSTF_OFF,
 		       OW_OFF_ALL_CH);
 	adBmsPollAdc_indicator(chips, PLCADC);
 
@@ -576,7 +576,17 @@ void get_avgd_cell_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 // 	read_adbms_data(chips, RDFCALL, Rdfcall, ALL_GRP);
 // }
 
-void get_s_adc_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
+void get_s_adc_open_wire_voltages(cell_asic chips[NUM_CHIPS],
+				  SPI_HandleTypeDef *hspi,
+				  OW_C_S open_wire_mode)
+{
+	adBms6830_Adsv(NUM_CHIPS, chips, SINGLE, DCP_OFF, open_wire_mode);
+	adBmsPollAdc_indicator(chips, PLSADC);
+	read_s_voltage_registers(chips, hspi);
+}
+
+void get_s_adc_voltages(cell_asic chips[NUM_CHIPS],
+			SPI_HandleTypeDef *hspi)
 {
 	adBms6830_Adsv(NUM_CHIPS, chips, SINGLE, DCP_OFF, OW_OFF_ALL_CH);
 	adBmsPollAdc_indicator(chips, PLSADC);
@@ -584,21 +594,16 @@ void get_s_adc_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 	read_s_voltage_registers(chips, hspi);
 }
 
-void get_c_and_s_adc_voltages(cell_asic chips[NUM_CHIPS],
-			      SPI_HandleTypeDef *hspi)
-{
-	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, SINGLE, DCP_OFF, RSTF_OFF,
-		       OW_OFF_ALL_CH);
-	adBmsPollAdc_indicator(chips, PLSADC);
-
-	read_c_voltage_registers(chips, hspi);
-	read_s_voltage_registers(chips, hspi);
-}
-
 void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, CONTINUOUS, DCP_OFF, RSTF_ON,
 		       OW_OFF_ALL_CH);
+}
+
+void start_s_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
+{
+	adBms6830_Adsv(NUM_CHIPS, chips, CONTINUOUS, DCP_OFF,
+			 OW_OFF_ALL_CH);
 }
 
 // --- END ADC POLL ---

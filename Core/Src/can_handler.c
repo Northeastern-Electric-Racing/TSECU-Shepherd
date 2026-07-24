@@ -1,4 +1,5 @@
 #include "can_handler.h"
+#include "can_messages_tx.h"
 #include "control.h"
 #include "datastructs.h"
 #include "state_machine.h"
@@ -36,7 +37,7 @@ uint8_t init_can1(FDCAN_HandleTypeDef *hcan) {
     return U_ERROR;
   }
 
-  uint16_t standard2[] = {CALYPSO_PWM_BAL_CANID, 0x01};
+  uint16_t standard2[] = {CALYPSO_PWM_BAL_CANID, DTI_INPUT_VOLTAGE_CANID};
   status = can_add_filter_standard(&can1, standard2);
   if (status != HAL_OK) {
     PRINTLN_ERROR("Failed to add standard filter to can1 (Status: %d/%s, ID1: "
@@ -46,8 +47,18 @@ uint8_t init_can1(FDCAN_HandleTypeDef *hcan) {
     return U_ERROR;
   }
 
+  uint16_t standard3[] = {DTI_DC_CURRENT_CANID, 0x0};
+  status = can_add_filter_standard(&can1, standard3);
+  if (status != HAL_OK) {
+    PRINTLN_ERROR("Failed to add standard filter to can1 (Status: %d/%s, ID1: "
+                  "%d, ID2: %d).",
+                  status, hal_status_toString(status), standard3[0],
+                  standard3[1]);
+    return U_ERROR;
+  }
+
   /* Add fitlers for extended IDs */
-  uint32_t extended1[] = {CHARGERBOX_CANID, 0x00};
+  uint32_t extended1[] = {CHARGERBOX_CANID, 0x0};
   status = can_add_filter_extended(&can1, extended1);
   if (status != HAL_OK) {
     PRINTLN_ERROR("Failed to add extended filter to can1 (Status: %d/%s, ID1: "
@@ -96,23 +107,56 @@ uint8_t queue_can_msg(can_msg_t can_msg) {
 }
 
 /**
- * @brief Parses the DTI can message for pack current
+ * @brief Parse the DTI CAN message for pack current.
  *
- * @param msg
- * @return float
+ * @param msg CAN message.
+ * @return Pack current in amps.
  */
-float parse_dti_current(can_msg_t msg) {
-  int16_t curr = msg.data[2] << 8 | msg.data[3];
-  return ((float)curr) / 10;
-}
-float parse_charger_current(can_msg_t msg) {
+static float parse_dti_current(can_msg_t msg) {
   int16_t curr = msg.data[2] << 8 | msg.data[3];
   return ((float)curr) / 10;
 }
 
+/**
+ * @brief Parse the DTI CAN message for input voltage.
+ *
+ * @param msg CAN message.
+ * @return Input voltage in volts.
+ */
+static float parse_dti_input_voltage(can_msg_t msg) {
+  int16_t voltage = msg.data[6] << 8 | msg.data[7];
+  return (float)voltage;
+}
+
+/**
+ * @brief Parse the charger CAN message for output current.
+ *
+ * @param msg CAN message.
+ * @return Charger current in amps.
+ */
+static float parse_charger_current(can_msg_t msg) {
+  int16_t curr = msg.data[2] << 8 | msg.data[3];
+  return ((float)curr) / 10;
+}
+
+/**
+ * @brief Parse the charger CAN message for output voltage.
+ *
+ * @param msg CAN message.
+ * @return Charger voltage in volts.
+ */
+static float parse_charger_voltage(can_msg_t msg) {
+  int16_t voltage = msg.data[0] << 8 | msg.data[1];
+  return ((float)voltage) / 10;
+}
+
 // CAN RECIEVE THREAD
 void vCanReceive(ULONG thread_input) {
-  state_machine_args_t *state_machine_args = (state_machine_args_t *)thread_input;
+  can_receive_args_t *can_receive_args = (can_receive_args_t *)thread_input;
+  state_machine_args_t *state_machine_args = can_receive_args->state_machine_args;
+  hv_plate_t *hv_plate = can_receive_args->hv_plate;
+  state_machine_t *state_machine = state_machine_args->state_machine;
+
   can_msg_t message;
   for (;;) {
     /* Process incoming messages */
@@ -121,6 +165,8 @@ void vCanReceive(ULONG thread_input) {
       switch (message.id) {
       case CHARGERBOX_CANID:
         charger_message_recieved(state_machine_args);
+        hv_plate->ts_volts = parse_charger_voltage(message);
+        hv_plate->pack_current = parse_charger_current(message);
         break;
       case CALYPSO_CONTROL_CANID:
         control_message_fans(message);
@@ -130,6 +176,16 @@ void vCanReceive(ULONG thread_input) {
         break;
       case CALYPSO_PWM_BAL_CANID:
         pwm_duty_cycle_set(message.data[0]);
+        break;
+      case DTI_INPUT_VOLTAGE_CANID:
+        if (!state_machine->is_charger_connected) {
+            hv_plate->ts_volts = parse_dti_input_voltage(message);
+        }
+        break;
+      case DTI_DC_CURRENT_CANID:
+        if (!state_machine->is_charger_connected) {
+          hv_plate->pack_current = parse_dti_current(message);
+        }
         break;
       default:
         break;
@@ -150,7 +206,13 @@ void vCanDispatch(ULONG thread_input) {
     /* Process incoming messages */
     while (queue_receive(&can_outgoing, &message, TX_WAIT_FOREVER) ==
            U_SUCCESS) {
-      status = can_send_msg(&can1, &message);
+      do {
+        status = can_send_msg(&can1, &message);
+        if (status == HAL_BUSY) {
+          tx_thread_sleep(1U);
+        }
+      } while (status == HAL_BUSY);
+
       if (status != U_SUCCESS) {
         PRINTLN_WARNING("Failed to send message (on can1) after removing from "
                         "outgoing queue (Message ID: %ld) - Status %d",

@@ -1,6 +1,7 @@
 
 #include "control.h"
 #include "can_messages_tx.h"
+#include "charging.h"
 #include "datastructs.h"
 #include "main.h"
 #include "shep_mutexes.h"
@@ -146,6 +147,8 @@ void vControl(ULONG thread_input)
 				(uint8_t)(device_fan0.current_duty >> 8));
 			send_fan_duty_cycle_percentage(
 				(uint8_t)(device_fan0.current_duty >> 8));
+			send_current_cell_balancing_pwm_duty_cycle(
+				pwm_duty_cycle_setting_get());
 
 			start_timer(&update_loop_timer, TELEMETRY_LOOP_TIMEOUT);
 		}

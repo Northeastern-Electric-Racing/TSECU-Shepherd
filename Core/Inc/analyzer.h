@@ -39,14 +39,19 @@ void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data);
  * cell voltages.
  *
  */
-void calc_open_cell_voltage(analyzer_t *analyzer, acc_data_t *acc_data,
-                            hv_plate_t *hv_plate);
+void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate);
 
 /**
  * @brief Calculate cell resistances using Rin = ( Voc - V )/I
  */
 void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
                            hv_plate_t *hv_plate);
+
+/**
+ * @brief Calculate voltage drop percentages and detect open wires.
+ */
+void detect_cell_open_wire(analyzer_t *analyzer, acc_data_t *acc_data,
+			   state_machine_t *state_machine);
 
 /**
  * @brief Updates the cell status of balancing and S_C_faults based on raw cell

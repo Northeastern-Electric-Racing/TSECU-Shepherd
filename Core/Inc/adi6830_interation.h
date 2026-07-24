@@ -348,25 +348,36 @@ void get_avgd_cell_voltages(cell_asic chips[NUM_CHIPS],
 			    SPI_HandleTypeDef *hspi);
 
 /**
- * @brief Trigger, poll, and fetch voltages from the S-ADCs.
+ * @brief Trigger, poll, and fetch S-ADC voltages using an open-wire mode.
  *
- * @param chip Array of chips to get voltage readings from.
+ * @param chips Array of chips.
+ * @param hspi SPI handle.
+ * @param open_wire_mode Cell inputs on which to enable open-wire excitation.
  */
-void get_s_adc_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
+void get_s_adc_open_wire_voltages(cell_asic chips[NUM_CHIPS],
+				  SPI_HandleTypeDef *hspi,
+				  OW_C_S open_wire_mode);
 
 /**
- * @brief Trigger, poll, and fetch the c and s adc voltages, using instaneous redundancy.
+ * @brief Trigger, poll, and fetch normal S-ADC voltages.
  *
- * @param chips Array of chips to get voltage readings of.
+ * @param chips Array of chips to get voltage readings from.
  */
-void get_c_and_s_adc_voltages(cell_asic chips[NUM_CHIPS],
-			      SPI_HandleTypeDef *hspi);
+void get_s_adc_voltages(cell_asic chips[NUM_CHIPS],
+			SPI_HandleTypeDef *hspi);
 
 /**
  * @brief Starts a continous c ADC conversion with S redundancy
  *
  */
 void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
+
+/**
+ * @brief Start continuous S-ADC redundancy without restarting the C-ADC.
+ * @param chips ADBMS6830 daisy-chain devices.
+ * @param hspi SPI peripheral used by the daisy chain.
+ */
+void start_s_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi);
 
 // --- END ADC POLL ---
 
