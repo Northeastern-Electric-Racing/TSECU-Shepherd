@@ -315,7 +315,6 @@ void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
 void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate)
 {
 	static bool is_first_reading = true;
-	bool valid_cell_reading = !is_first_reading;
 
 	if (is_first_reading) {
 		float last_cell =
@@ -324,7 +323,6 @@ void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate)
 
 		if (last_cell > 1 && last_cell < 5) {
 			is_first_reading = false;
-			valid_cell_reading = true;
 
 			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 				for (uint8_t cell = 0;
@@ -338,9 +336,11 @@ void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate)
 		}
 	}
 
-	if (valid_cell_reading &&
+	if (!is_first_reading &&
 	    fabsf(hv_plate->pack_current) < OCV_CURR_THRESH) {
-		if (is_timer_expired(&analyzer->ocvTimer)) {
+		if (!is_timer_active(&analyzer->ocvTimer)) {
+			start_timer(&analyzer->ocvTimer, OCV_TIMER_DURATION);
+		} else if (is_timer_expired(&analyzer->ocvTimer)) {
 			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
 				for (uint8_t cell = 0;
 				     cell < NUM_CELLS_PER_CHIP; cell++) {
@@ -350,8 +350,6 @@ void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate)
 							.cell_voltages[cell];
 				}
 			}
-		} else if (!is_timer_active(&analyzer->ocvTimer)) {
-			start_timer(&analyzer->ocvTimer, OCV_TIMER_DURATION);
 		}
 	} else {
 		cancel_timer(&analyzer->ocvTimer);
