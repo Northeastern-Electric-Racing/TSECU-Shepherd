@@ -336,8 +336,7 @@ void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate)
 		}
 	}
 
-	if (!is_first_reading &&
-	    fabsf(hv_plate->pack_current) < OCV_CURR_THRESH) {
+	if (fabsf(hv_plate->pack_current) < OCV_CURR_THRESH) {
 		if (!is_timer_active(&analyzer->ocvTimer)) {
 			start_timer(&analyzer->ocvTimer, OCV_TIMER_DURATION);
 		} else if (is_timer_expired(&analyzer->ocvTimer)) {
