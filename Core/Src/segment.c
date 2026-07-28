@@ -223,12 +223,12 @@ bool segment_is_balancing(cell_asic chips[NUM_CHIPS])
 void segment_disable_balancing(cell_asic chips[NUM_CHIPS],
 			       SPI_HandleTypeDef *hspi)
 {
+	// Stop balancing before clearing the PWM configuration.
+	mute_chips(chips, hspi);
+
 	// Initializes all array elements to zero
 	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
 	segment_configure_balancing(chips, discharge_config, hspi);
-
-	// force balancing muted
-	mute_chips(chips, hspi);
 }
 
 void segment_enable_balancing(cell_asic chips[NUM_CHIPS],
@@ -429,7 +429,7 @@ void vGetSegmentData(ULONG thread_input)
 
 		if ((prev_state != current_state && !charging) ||
 		    (prev_balancing_active && !balancing_active)) {
-			segment_mute(acc_data->chips, &hspi2);
+			segment_disable_balancing(acc_data->chips, &hspi2);
 		}
 
 		if (charging) {

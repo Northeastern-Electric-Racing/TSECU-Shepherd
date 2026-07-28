@@ -101,6 +101,7 @@ void handle_boot(state_machine_args_t *state_machine_args)
 
 void init_ready(state_machine_args_t *state_machine_args)
 {
+	state_machine_args->state_machine->charger_output_disabled = true;
 	compute_set_fault(false);
 	return;
 }
@@ -117,6 +118,7 @@ void handle_ready(state_machine_args_t *state_machine_args)
 void init_charging(state_machine_args_t *state_machine_args)
 {
 	set_charging_stage(state_machine_args->state_machine, LONG_CHARGE_UP);
+	state_machine_args->state_machine->charger_output_disabled = false;
 
 	send_max_dc_current_command(0);
 	send_max_dc_brake_current_command(0);
@@ -126,6 +128,8 @@ void handle_charging(state_machine_args_t *state_machine_args)
 {
 	/* Check if we should charge */
 	if (sm_charging_check(state_machine_args)) {
+		state_machine_args->state_machine->charger_output_disabled = false;
+
 		/* Send CAN message, but not too often */
 		if (is_timer_expired(&state_machine_args->state_machine
 					     ->charger_message_timer) ||
@@ -140,6 +144,7 @@ void handle_charging(state_machine_args_t *state_machine_args)
 				    1000);
 		}
 	} else {
+		state_machine_args->state_machine->charger_output_disabled = true;
 		send_bms_charge_message_send(0, 0, 0xFF);
 	}
 
@@ -166,6 +171,7 @@ void charger_message_recieved(state_machine_args_t *state_machine_args)
 
 void init_faulted(state_machine_args_t *state_machine_args)
 {
+	state_machine_args->state_machine->charger_output_disabled = true;
 	send_max_dc_current_command(0);
 	send_max_dc_brake_current_command(0);
 	send_bms_charge_message_send(0, 0, 0xFF);

@@ -1,4 +1,5 @@
 #include "can_handler.h"
+#include "bms_config.h"
 #include "can_messages_tx.h"
 #include "control.h"
 #include "datastructs.h"
@@ -8,6 +9,7 @@
 #include "u_tx_general.h"
 #include "charging.h"
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -167,6 +169,8 @@ void vCanReceive(ULONG thread_input) {
         charger_message_recieved(state_machine_args);
         hv_plate->ts_volts = parse_charger_voltage(message);
         hv_plate->pack_current = parse_charger_current(message);
+        hv_plate->current_below_ocv_threshold =
+            fabsf(hv_plate->pack_current) < OCV_CURR_THRESH;
         break;
       case CALYPSO_CONTROL_CANID:
         control_message_fans(message);
@@ -185,6 +189,8 @@ void vCanReceive(ULONG thread_input) {
       case DTI_DC_CURRENT_CANID:
         if (!state_machine->is_charger_connected) {
           hv_plate->pack_current = parse_dti_current(message);
+          hv_plate->current_below_ocv_threshold =
+              fabsf(hv_plate->pack_current) < OCV_CURR_THRESH;
         }
         break;
       default:

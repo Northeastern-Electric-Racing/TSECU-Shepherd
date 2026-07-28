@@ -312,9 +312,13 @@ void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
 	}
 }
 
-void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate)
+void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate,
+			    state_machine_t *state_machine)
 {
 	static bool is_first_reading = true;
+	const bool ocv_update_allowed =
+		hv_plate->current_below_ocv_threshold &&
+		state_machine->charger_output_disabled;
 
 	if (is_first_reading) {
 		float last_cell =
@@ -336,7 +340,7 @@ void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate)
 		}
 	}
 
-	if (fabsf(hv_plate->pack_current) < OCV_CURR_THRESH) {
+	if (ocv_update_allowed) {
 		if (!is_timer_active(&analyzer->ocvTimer)) {
 			start_timer(&analyzer->ocvTimer, OCV_TIMER_DURATION);
 		} else if (is_timer_expired(&analyzer->ocvTimer)) {
@@ -468,7 +472,7 @@ void vAnalyzer(ULONG thread_input)
 		calc_cell_temps(analyzer, acc_data);
 		calc_pack_temps(analyzer, acc_data);
 		calc_cell_voltages(analyzer, acc_data, state_machine);
-		calc_open_cell_voltage(analyzer, hv_plate);
+		calc_open_cell_voltage(analyzer, hv_plate, state_machine);
 		calc_pack_voltage_stats(analyzer, acc_data);
 		calc_cell_resistances(analyzer, acc_data, hv_plate);
 		detect_cell_open_wire(analyzer, acc_data, state_machine);
