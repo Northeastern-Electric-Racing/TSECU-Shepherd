@@ -312,10 +312,13 @@ void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
 	}
 }
 
-void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate,
+void calc_open_cell_voltage(analyzer_t *analyzer,
+			    hv_plate_t *hv_plate,
 			    state_machine_t *state_machine)
 {
 	static bool is_first_reading = true;
+	bool update_ocv = false;
+
 	const bool ocv_update_allowed =
 		hv_plate->current_below_ocv_threshold &&
 		state_machine->charger_output_disabled;
@@ -325,37 +328,33 @@ void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate,
 			analyzer->chip_data[NUM_CHIPS - 1]
 				.cell_voltages[NUM_CELLS_PER_CHIP - 1];
 
-		if (last_cell > 1 && last_cell < 5) {
+		if (last_cell > 1.0f && last_cell < 5.0f) {
 			is_first_reading = false;
-
-			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-				for (uint8_t cell = 0;
-				     cell < NUM_CELLS_PER_CHIP; cell++) {
-					analyzer->chip_data[chip]
-						.open_cell_voltage[cell] =
-						analyzer->chip_data[chip]
-							.cell_voltages[cell];
-				}
-			}
+			update_ocv = true;
 		}
 	}
 
 	if (ocv_update_allowed) {
-		if (!is_timer_active(&analyzer->ocvTimer)) {
-			start_timer(&analyzer->ocvTimer, OCV_TIMER_DURATION);
-		} else if (is_timer_expired(&analyzer->ocvTimer)) {
-			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-				for (uint8_t cell = 0;
-				     cell < NUM_CELLS_PER_CHIP; cell++) {
-					analyzer->chip_data[chip]
-						.open_cell_voltage[cell] =
-						analyzer->chip_data[chip]
-							.cell_voltages[cell];
-				}
-			}
+		if (is_timer_expired(&analyzer->ocvTimer)) {
+			update_ocv = true;
+		} else if (!is_timer_active(&analyzer->ocvTimer)) {
+			start_timer(&analyzer->ocvTimer,
+				    OCV_TIMER_DURATION);
 		}
 	} else {
 		cancel_timer(&analyzer->ocvTimer);
+	}
+
+	if (update_ocv) {
+		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+			for (uint8_t cell = 0;
+			     cell < NUM_CELLS_PER_CHIP; cell++) {
+				analyzer->chip_data[chip]
+					.open_cell_voltage[cell] =
+					analyzer->chip_data[chip]
+						.cell_voltages[cell];
+			}
+		}
 	}
 }
 
