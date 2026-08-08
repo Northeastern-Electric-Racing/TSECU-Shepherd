@@ -69,10 +69,10 @@ static float dcl_from_cell_volt(float cell_voltage)
 	if (cell_voltage <= DCL_CELL_MIN_V) {
 		dcl = DCL_MIN_CURRENT_A;
 	} else if (cell_voltage <
-		   DCL_CELL_DERATE_THRESH_V) { // Ramp down discharge current below cell-voltage derate threshold
+		   DCL_DERATE_START_V) { // Ramp down discharge current below cell-voltage derate threshold
 		dcl = linear_interpolate(cell_voltage, DCL_CELL_MIN_V,
-					 DCL_CELL_DERATE_THRESH_V,
-					 DCL_MIN_CURRENT_A, DCL_MAX_CURRENT_A);
+					 DCL_DERATE_START_V, DCL_MIN_CURRENT_A,
+					 DCL_MAX_CURRENT_A);
 	} else { // Above cell-voltage derate threshold -> maximum discharge current
 		dcl = DCL_MAX_CURRENT_A;
 	}
@@ -108,7 +108,8 @@ void dcl_calc_inst_limit(current_limit_algo_inputs_t curr_lim_inputs,
 	float dcl_max_temp = dcl_from_temp(curr_lim_inputs.max_temp);
 	float dcl_temp = fminf(dcl_min_temp, dcl_max_temp);
 
-	float dcl_cell_voltage = dcl_from_cell_volt(curr_lim_inputs.min_cell_volt);
+	float dcl_cell_voltage =
+		dcl_from_cell_volt(curr_lim_inputs.min_cell_volt);
 
 	float dcl = fminf(dcl_temp, dcl_cell_voltage);
 

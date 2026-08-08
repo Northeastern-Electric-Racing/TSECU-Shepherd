@@ -69,8 +69,8 @@ static float ccl_from_cell_volt(float cell_voltage)
 	if (cell_voltage >= CCL_CELL_MAX_V) {
 		ccl = CCL_MIN_CURRENT_A;
 	} else if (cell_voltage >
-		   CCL_CELL_DERATE_THRESH_V) { // Ramp down charge current above cell-voltage derate threshold
-		ccl = linear_interpolate(cell_voltage, CCL_CELL_DERATE_THRESH_V,
+		   CCL_DERATE_START_V) { // Ramp down charge current above cell-voltage derate threshold
+		ccl = linear_interpolate(cell_voltage, CCL_DERATE_START_V,
 					 CCL_CELL_MAX_V, CCL_MAX_CURRENT_A,
 					 CCL_MIN_CURRENT_A);
 	} else { // Below and at cell-voltage derate threshold -> maximum charge current
@@ -108,7 +108,8 @@ void ccl_calc_inst_limit(current_limit_algo_inputs_t curr_lim_inputs,
 	float ccl_max_temp = ccl_from_temp(curr_lim_inputs.max_temp);
 	float ccl_temp = fminf(ccl_min_temp, ccl_max_temp);
 
-	float ccl_cell_voltage = ccl_from_cell_volt(curr_lim_inputs.max_cell_volt);
+	float ccl_cell_voltage =
+		ccl_from_cell_volt(curr_lim_inputs.max_cell_volt);
 
 	float ccl = fminf(ccl_temp, ccl_cell_voltage);
 
