@@ -53,27 +53,27 @@ static float ccl_from_temp(float temperature_c)
 }
 
 /**
- * @brief Compute charge current limit based on cell open-circuit voltage.
+ * @brief Compute charge current limit based on cell voltage.
  *
- * Applies a linear derating of charge current using the maximum cell OCV.
+ * Applies a linear derating of charge current using the maximum cell voltage.
  *
- * @param ocv  Minimum cell open-circuit voltage (V)
+ * @param cell_voltage Maximum cell voltage (V)
  *
  * @return Charge current limit (A)
  */
-static float ccl_from_cell_volt(float ocv)
+static float ccl_from_cell_volt(float cell_voltage)
 {
 	float ccl = 0.0f;
 
-	// Above maximum OCV -> minimum charge current
-	if (ocv >= CCL_OCV_MAX_V) {
+	// Above maximum cell voltage -> minimum charge current
+	if (cell_voltage >= CCL_CELL_MAX_V) {
 		ccl = CCL_MIN_CURRENT_A;
-	} else if (ocv >
-		   CCL_OCV_DERATE_THRESH) { // Ramp down charge current above OCV derate threshold
-		ccl = linear_interpolate(ocv, CCL_OCV_DERATE_THRESH,
-					 CCL_OCV_MAX_V, CCL_MAX_CURRENT_A,
+	} else if (cell_voltage >
+		   CCL_CELL_DERATE_THRESH_V) { // Ramp down charge current above cell-voltage derate threshold
+		ccl = linear_interpolate(cell_voltage, CCL_CELL_DERATE_THRESH_V,
+					 CCL_CELL_MAX_V, CCL_MAX_CURRENT_A,
 					 CCL_MIN_CURRENT_A);
-	} else { // Below and at OCV derate threshold -> maximum charge current
+	} else { // Below and at cell-voltage derate threshold -> maximum charge current
 		ccl = CCL_MAX_CURRENT_A;
 	}
 
@@ -108,9 +108,9 @@ void ccl_calc_inst_limit(current_limit_algo_inputs_t curr_lim_inputs,
 	float ccl_max_temp = ccl_from_temp(curr_lim_inputs.max_temp);
 	float ccl_temp = fminf(ccl_min_temp, ccl_max_temp);
 
-	float ccl_ocv = ccl_from_cell_volt(curr_lim_inputs.max_ocv);
+	float ccl_cell_voltage = ccl_from_cell_volt(curr_lim_inputs.max_cell_volt);
 
-	float ccl = fminf(ccl_temp, ccl_ocv);
+	float ccl = fminf(ccl_temp, ccl_cell_voltage);
 
 	if (ccl < 0.0f) {
 		ccl = 0.0f;

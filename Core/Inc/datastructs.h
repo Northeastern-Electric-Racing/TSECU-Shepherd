@@ -327,8 +327,8 @@ typedef enum {
 typedef struct {
 	float min_temp;
 	float max_temp;
-	float min_ocv;
-	float max_ocv;
+	float min_cell_volt;
+	float max_cell_volt;
 } current_limit_algo_inputs_t;
 
 /**

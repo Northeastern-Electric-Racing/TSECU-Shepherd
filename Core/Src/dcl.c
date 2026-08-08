@@ -53,27 +53,27 @@ static float dcl_from_temp(float temperature_c)
 }
 
 /**
- * @brief Compute discharge current limit based on cell open-circuit voltage.
+ * @brief Compute discharge current limit based on cell voltage.
  *
- * Applies a linear derating of discharge current using the minimum cell OCV.
+ * Applies a linear derating of discharge current using the minimum cell voltage.
  *
- * @param ocv  Minimum cell open-circuit voltage (V)
+ * @param cell_voltage Minimum cell voltage (V)
  *
  * @return Discharge current limit (A)
  */
-static float dcl_from_cell_volt(float ocv)
+static float dcl_from_cell_volt(float cell_voltage)
 {
 	float dcl = 0.0f;
 
-	// Below minimum OCV -> minimum discharge current
-	if (ocv <= DCL_OCV_MIN_V) {
+	// Below minimum cell voltage -> minimum discharge current
+	if (cell_voltage <= DCL_CELL_MIN_V) {
 		dcl = DCL_MIN_CURRENT_A;
-	} else if (ocv <
-		   DCL_OCV_DERATE_THRESH) { // Ramp down discharge current below OCV derate threshold
-		dcl = linear_interpolate(ocv, DCL_OCV_MIN_V,
-					 DCL_OCV_DERATE_THRESH,
+	} else if (cell_voltage <
+		   DCL_CELL_DERATE_THRESH_V) { // Ramp down discharge current below cell-voltage derate threshold
+		dcl = linear_interpolate(cell_voltage, DCL_CELL_MIN_V,
+					 DCL_CELL_DERATE_THRESH_V,
 					 DCL_MIN_CURRENT_A, DCL_MAX_CURRENT_A);
-	} else { // Above OCV derate threshold -> maximum discharge current
+	} else { // Above cell-voltage derate threshold -> maximum discharge current
 		dcl = DCL_MAX_CURRENT_A;
 	}
 
@@ -108,9 +108,9 @@ void dcl_calc_inst_limit(current_limit_algo_inputs_t curr_lim_inputs,
 	float dcl_max_temp = dcl_from_temp(curr_lim_inputs.max_temp);
 	float dcl_temp = fminf(dcl_min_temp, dcl_max_temp);
 
-	float dcl_ocv = dcl_from_cell_volt(curr_lim_inputs.min_ocv);
+	float dcl_cell_voltage = dcl_from_cell_volt(curr_lim_inputs.min_cell_volt);
 
-	float dcl = fminf(dcl_temp, dcl_ocv);
+	float dcl = fminf(dcl_temp, dcl_cell_voltage);
 
 	if (dcl < 0.0f) {
 		dcl = 0.0f;
