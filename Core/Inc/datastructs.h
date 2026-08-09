@@ -155,8 +155,6 @@ typedef struct {
 	float batt_volts; // BATT Voltage (V)
 	float shunt_temp; // Temperature of shunt resistor (C)
 	float pack_current; // Current read through the shunt (A)
-	// True when the measured current is below the OCV threshold.
-	bool current_below_ocv_threshold;
 	uint16_t conversion_count; // Number of conversions taken for each voltage and current measurement
 	uint16_t last_total_converion_count; // previously read total conversion count
 	adbms_2950_flags_t adbms_flags; // Relevant flags from flag register

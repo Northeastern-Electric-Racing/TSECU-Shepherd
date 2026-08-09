@@ -320,7 +320,7 @@ void calc_open_cell_voltage(analyzer_t *analyzer,
 	bool update_ocv = false;
 
 	const bool ocv_update_allowed =
-		hv_plate->current_below_ocv_threshold &&
+		(fabsf(hv_plate->pack_current) < OCV_CURR_THRESH) &&
 		state_machine->charger_output_disabled;
 
 	if (is_first_reading) {
