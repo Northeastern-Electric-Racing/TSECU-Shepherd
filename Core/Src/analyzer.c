@@ -13,7 +13,7 @@
 #include "shep_mutexes.h"
 #include "soc.h"
 
-#define OCV_TIMER_DURATION 5000 // in ms
+#define OCV_TIMER_DURATION 1500 // in ms
 
 /**
  * @brief Open-wire threshold while the S-ADC switch is active.
