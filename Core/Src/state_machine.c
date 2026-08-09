@@ -80,6 +80,7 @@ void init_boot(state_machine_args_t *state_machine_args)
 	state_machine_args->state_machine->bms_state = BOOT;
 	state_machine_args->state_machine->balancing_active = false;
 	state_machine_args->state_machine->is_charger_connected = false;
+	state_machine_args->state_machine->charger_output_disabled = true;
 	cancel_timer(&state_machine_args->state_machine->charger_message_timer);
 
 	update_eval_table(
