@@ -288,6 +288,8 @@ void vHvPlateData(ULONG thread_input)
 			max_dc_brake_current = (-1.0f * bms_algos->cont_CCL);
 			mutex_put(&bms_algos_mutex);
 
+			// The max DC current command is used by the DTI to limit discharge current and
+			// by the VCU to reset the BMS CAN-monitor watchdog.
 			send_max_dc_current_command(max_dc_current);
 			send_max_dc_brake_current_command(max_dc_brake_current);
 		}
