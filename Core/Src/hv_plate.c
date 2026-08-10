@@ -189,7 +189,9 @@ void vHvPlateData(ULONG thread_input)
 	ccl_init(COOLDOWN_ALWAYS);
 
 	// initialize HV Plate struct and start conversions
+	mutex_get(&hv_plate_comms_mutex);
 	init_hv_plate(hv_plate, ACCI_8);
+	mutex_put(&hv_plate_comms_mutex);
 
 	hv_plate_isospi_break_detection_init(&hv_plate->ic);
 
@@ -197,17 +199,35 @@ void vHvPlateData(ULONG thread_input)
 
 	start_timer(&diagnostic_read_timer, diagnostic_read_frequency);
 
+	mutex_get(&hv_plate_comms_mutex);
 	// initialize precharge relay open
-	reset_gpo(&hv_plate->ic, HV_CTRL_GPO); 
-
-	soc_init();
+	reset_gpo(&hv_plate->ic, HV_CTRL_GPO);
 
 	// enable reading HV
 	set_gpo(&hv_plate->ic, HV_ENABLE_GPO);
+	mutex_put(&hv_plate_comms_mutex);
+
+	soc_init();
 
 	for (;;) {
-		// get the current reading from the pack
+		const bool diagnostic_read_required =
+			is_timer_expired(&diagnostic_read_timer) &&
+			!is_timer_active(&diagnostic_read_timer);
+
+		// Keep all HV plate communication in one protected window.
+		mutex_get(&hv_plate_comms_mutex);
 		get_pack_current_and_batt_voltage(hv_plate);
+		get_ts_voltage(hv_plate);
+		get_shunt_temp(hv_plate);
+
+		if (diagnostic_read_required) {
+			get_aux_adc_data(hv_plate);
+			get_flags(hv_plate);
+		}
+
+		send_hv_plate_pec_errors_message();
+		hv_plate_isospi_handle_state(hv_plate, state_machine);
+		mutex_put(&hv_plate_comms_mutex);
 
 		hv_plate->batt_volts = analyzer->pack_voltage;
 
@@ -228,16 +248,7 @@ void vHvPlateData(ULONG thread_input)
 			ccl_calc_cont_limit(hv_plate->pack_current, bms_algos);
 		}
 
-		// read ts voltage
-		get_ts_voltage(hv_plate);
-
-		// read shunt temperature
-		get_shunt_temp(hv_plate);
-
-		if (is_timer_expired(&diagnostic_read_timer) &&
-		    !is_timer_active(&diagnostic_read_timer)) {
-			get_aux_adc_data(hv_plate);
-
+		if (diagnostic_read_required) {
 			// send hv plate data for telemetry
 			PRINTLN_INFO("Sending HV Plate Data...");
 			send_hv_plate_voltages(hv_plate->batt_volts,
@@ -252,8 +263,6 @@ void vHvPlateData(ULONG thread_input)
 			send_pack_current_and_shunt_temp(hv_plate->pack_current, 
 				hv_plate->shunt_temp);
 
-			// read flags
-			get_flags(hv_plate);
 			start_timer(&diagnostic_read_timer,
 				    diagnostic_read_frequency);
 
@@ -267,9 +276,6 @@ void vHvPlateData(ULONG thread_input)
 				hv_plate->epad, hv_plate->vdig, hv_plate->vdd,
 				hv_plate->tmp2, hv_plate->vdiv);
 		}
-
-		send_hv_plate_pec_errors_message();
-		hv_plate_isospi_handle_state(hv_plate, state_machine);
 
 		mutex_get(&state_mutex);
 		bms_state = state_machine->bms_state;
