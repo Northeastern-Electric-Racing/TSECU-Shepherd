@@ -27,6 +27,11 @@ mutex_t shutdown_mutex = {
 	.priority_inherit = TX_INHERIT /* Priority inheritance setting. */
 };
 
+mutex_t hv_plate_comms_mutex = {
+	.name = "HV Plate Comms Mutex", /* Name of the mutex. */
+	.priority_inherit = TX_INHERIT /* Priority inheritance setting. */
+};
+
 
 /* Initializes all ThreadX mutexes. 
 *  Calls to _create_mutex() should go in here
@@ -39,6 +44,7 @@ uint8_t mutexes_init()
 	CATCH_ERROR(create_mutex(&bms_algos_mutex), U_SUCCESS);
 	CATCH_ERROR(create_mutex(&peripherals_mutex), U_SUCCESS);
 	CATCH_ERROR(create_mutex(&shutdown_mutex), U_SUCCESS);
+	CATCH_ERROR(create_mutex(&hv_plate_comms_mutex), U_SUCCESS);
 
 	// add more as necessary.
 

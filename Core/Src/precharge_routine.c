@@ -1,6 +1,7 @@
 #include "precharge_routine.h"
 #include <assert.h>
 #include "debounce.h"
+#include "shep_mutexes.h"
 
 #define MINIMUM_PACK_VOLTAGE 200.0f
 
@@ -24,11 +25,15 @@ static sample_buffer_t batt_volts_sample_buffer = { 0 };
 
 static void set_precharge_relay(cell_asic_2950 *ic, bool state)
 {
+	mutex_get(&hv_plate_comms_mutex);
+
 	if (state) {
 		set_gpo(ic, HV_CTRL_GPO);
 	} else {
 		reset_gpo(ic, HV_CTRL_GPO);
 	}
+
+	mutex_put(&hv_plate_comms_mutex);
 }
 
 static void close_relay(void *args)
