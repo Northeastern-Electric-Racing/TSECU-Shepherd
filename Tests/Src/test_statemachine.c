@@ -146,6 +146,7 @@ void test_handle_faulted_sends_zero_current_limits(void)
 	send_max_dc_brake_current_command_ExpectAndReturn(0.0f, 0U);
 
 	handle_faulted(&args);
+	mock_can_messages_tx_Verify();
 }
 
 void test_handle_charging_sends_zero_current_limits(void)
@@ -160,6 +161,7 @@ void test_handle_charging_sends_zero_current_limits(void)
 	send_max_dc_brake_current_command_ExpectAndReturn(0.0f, 0U);
 
 	handle_charging(&args);
+	mock_can_messages_tx_Verify();
 }
 
 void test_balancing(void)
