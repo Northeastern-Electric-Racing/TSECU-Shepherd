@@ -536,147 +536,44 @@ void update_eval_table(state_machine_args_t *state_machine_args)
 	static nertimer_t open_wire_timer = { 0 };
 
 	mutex_get(&state_mutex);
-	const bool segment_comms_fault =
-		state_machine->segment_comms_fault_flag;
-	const bool hv_plate_comms_fault =
-		state_machine->hv_plate_comms_fault_flag;
-	const bool ow_fault = state_machine->cell_open_wire_fault_flag;
+	// clang-format off
+	const bool segment_comms_fault  = state_machine->segment_comms_fault_flag;
+	const bool hv_plate_comms_fault = state_machine->hv_plate_comms_fault_flag;
+	const bool ow_fault             = state_machine->cell_open_wire_fault_flag;
+	// clang-format on
 	mutex_put(&state_mutex);
 
 	if (initialized) {
-		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT].data_1 =
-			hv_plate->pack_current;
-		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT].lim_1 =
-			bms_algos->cont_DCL;
-		fault_eval_table[CHARGE_LIMIT_ENFORCEMENT_FAULT].data_1 =
-			hv_plate->pack_current;
-		fault_eval_table[CHARGE_LIMIT_ENFORCEMENT_FAULT].lim_1 =
-			(-1.0f * bms_algos->cont_CCL);
-		fault_eval_table[CELL_VOLTAGE_TOO_LOW].data_1 =
-			analyzer->min_ocv.val;
-		fault_eval_table[CELL_VOLTAGE_TOO_HIGH].data_1 =
-			analyzer->max_ocv.val;
-		fault_eval_table[CELL_CHARGE_VOLTAGE_TOO_HIGH].data_1 =
-			analyzer->max_ocv.val;
-		fault_eval_table[CELL_CHARGE_VOLTAGE_TOO_HIGH].data_2 =
-			(state_machine->bms_state == CHARGING);
-		fault_eval_table[PACK_TOO_HOT].data_1 =
-			sanitizer->max_sanitized_temp.val;
-		fault_eval_table[DIE_TEMP_MAXIMUM_FAULT].data_1 =
-			analyzer->max_chiptemp.val;
-		fault_eval_table[SEGMENT_COMMS_FAULT].data_1 =
-			segment_comms_fault;
-		fault_eval_table[HV_PLATE_COMMS_FAULT].data_1 =
-			hv_plate_comms_fault;
-		fault_eval_table[CELL_OPEN_WIRE_FAULT].data_1 =
-			ow_fault;
+		// clang-format off
+		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT].data_1 = hv_plate->pack_current;
+		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT].lim_1  = bms_algos->cont_DCL;
+		fault_eval_table[CHARGE_LIMIT_ENFORCEMENT_FAULT]   .data_1 = hv_plate->pack_current;
+		fault_eval_table[CHARGE_LIMIT_ENFORCEMENT_FAULT]   .lim_1  = (-1.0f * bms_algos->cont_CCL);
+		fault_eval_table[CELL_VOLTAGE_TOO_LOW]             .data_1 = analyzer->min_ocv.val;
+		fault_eval_table[CELL_VOLTAGE_TOO_HIGH]            .data_1 = analyzer->max_ocv.val;
+		fault_eval_table[CELL_CHARGE_VOLTAGE_TOO_HIGH]     .data_1 = analyzer->max_ocv.val;
+		fault_eval_table[CELL_CHARGE_VOLTAGE_TOO_HIGH]     .data_2 = (state_machine->bms_state == CHARGING);
+		fault_eval_table[PACK_TOO_HOT]                     .data_1 = sanitizer->max_sanitized_temp.val;
+		fault_eval_table[DIE_TEMP_MAXIMUM_FAULT]           .data_1 = analyzer->max_chiptemp.val;
+		fault_eval_table[SEGMENT_COMMS_FAULT]              .data_1 = segment_comms_fault;
+		fault_eval_table[HV_PLATE_COMMS_FAULT]             .data_1 = hv_plate_comms_fault;
+		fault_eval_table[CELL_OPEN_WIRE_FAULT]             .data_1 = ow_fault;
+		// clang-format on
 	} else {
-		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT] =
-			(fault_eval_t){ .id = "Discharge Current Limit",
-					.timer = ovr_curr_timer,
-					.data_1 = hv_plate->pack_current,
-					.optype_1 = GT,
-					.lim_1 = bms_algos->cont_DCL,
-					.timeout = OVER_CURR_TIME,
-					.optype_2 = NOP, // UNUSED
-					.is_critical = true };
+		// clang-format off
+		// FAULT_CODE_________________________________________________________FAULT_ID__________________________TIMER__________________________DATA_1_________________________________________OPERATOR_1______LIMIT_1_____________________________________TIMER_LENGTH____________________OPERATOR_2_______DATA_2____________________________________________LIMIT_2________CRITICAL_______________
+		fault_eval_table[DISCHARGE_LIMIT_ENFORCEMENT_FAULT] = (fault_eval_t){ .id = "Discharge Current Limit",  .timer = ovr_curr_timer,       .data_1 = hv_plate->pack_current,              .optype_1 = GT, .lim_1 = bms_algos->cont_DCL,               .timeout = OVER_CURR_TIME,      .optype_2 = NOP,                                                                  .is_critical = true  };
+		fault_eval_table[CHARGE_LIMIT_ENFORCEMENT_FAULT]    = (fault_eval_t){ .id = "Charge Current Limit",     .timer = ovr_chgcurr_timer,    .data_1 = hv_plate->pack_current,              .optype_1 = LT, .lim_1 = (-1.0f * bms_algos->cont_CCL),     .timeout = OVER_CHG_CURR_TIME,  .optype_2 = NOP,                                                                  .is_critical = true  };
+		fault_eval_table[CELL_VOLTAGE_TOO_LOW]              = (fault_eval_t){ .id = "Low Cell Voltage",         .timer = undr_volt_timer,      .data_1 = analyzer->min_ocv.val,               .optype_1 = LT, .lim_1 = MIN_VOLT,                          .timeout = UNDER_VOLT_TIME,     .optype_2 = NOP,                                                                  .is_critical = true  };
+		fault_eval_table[CELL_VOLTAGE_TOO_HIGH]             = (fault_eval_t){ .id = "High Cell Voltage",        .timer = ovr_volt_timer,       .data_1 = analyzer->max_ocv.val,               .optype_1 = GT, .lim_1 = MAX_VOLT,                          .timeout = OVER_VOLT_TIME,      .optype_2 = NOP,                                                                  .is_critical = true  };
+		fault_eval_table[CELL_CHARGE_VOLTAGE_TOO_HIGH]      = (fault_eval_t){ .id = "High Charge Voltage",      .timer = ovr_chgvolt_timer,    .data_1 = analyzer->max_ocv.val,               .optype_1 = GT, .lim_1 = MAX_CHARGE_VOLT,                   .timeout = OVER_VOLT_TIME,      .optype_2 = EQ,  .data_2 = (state_machine->bms_state == CHARGING), .lim_2 = true, .is_critical = true  };
+		fault_eval_table[PACK_TOO_HOT]                      = (fault_eval_t){ .id = "High Cell Temp",           .timer = high_temp_timer,      .data_1 = sanitizer->max_sanitized_temp.val,   .optype_1 = GT, .lim_1 = MAX_CELL_TEMP,                     .timeout = HIGH_TEMP_TIME,      .optype_2 = NOP,                                                                  .is_critical = true  };
+		fault_eval_table[DIE_TEMP_MAXIMUM_FAULT]            = (fault_eval_t){ .id = "Die Overtemp",             .timer = die_overtemp_timer,   .data_1 = analyzer->max_chiptemp.val,          .optype_1 = GT, .lim_1 = MAX_CHIP_TEMP,                     .timeout = MAX_CHIPTEMP_TIME,   .optype_2 = NOP,                                                                  .is_critical = true  };
+		fault_eval_table[SEGMENT_COMMS_FAULT]               = (fault_eval_t){ .id = "Segment Comms Fault",      .timer = segment_comms_timer,  .data_1 = segment_comms_fault,                 .optype_1 = EQ, .lim_1 = true,                              .timeout = COMMS_FAULT_TIME,    .optype_2 = NOP,                                                                  .is_critical = false };
+		fault_eval_table[HV_PLATE_COMMS_FAULT]              = (fault_eval_t){ .id = "HV Plate Comms Fault",     .timer = hv_plate_comms_timer, .data_1 = hv_plate_comms_fault,                .optype_1 = EQ, .lim_1 = true,                              .timeout = COMMS_FAULT_TIME,    .optype_2 = NOP,                                                                  .is_critical = true  };
+		fault_eval_table[CELL_OPEN_WIRE_FAULT]              = (fault_eval_t){ .id = "Cell Open Wire Fault",     .timer = open_wire_timer,      .data_1 = ow_fault,                            .optype_1 = EQ, .lim_1 = true,                              .timeout = OW_FAULT_TIME,       .optype_2 = NOP,                                                                  .is_critical = true  };
+		// clang-format on
 
-		fault_eval_table[CHARGE_LIMIT_ENFORCEMENT_FAULT] =
-			(fault_eval_t){ .id = "Charge Current Limit",
-					.timer = ovr_chgcurr_timer,
-					.data_1 = hv_plate->pack_current,
-					.optype_1 = LT,
-					.lim_1 = (-1.0f * bms_algos->cont_CCL),
-					.timeout = OVER_CHG_CURR_TIME,
-					.optype_2 = NOP, // UNUSED
-					.is_critical = true };
-
-		fault_eval_table[CELL_VOLTAGE_TOO_LOW] =
-			(fault_eval_t){ .id = "Low Cell Voltage",
-					.timer = undr_volt_timer,
-					.data_1 = analyzer->min_ocv.val,
-					.optype_1 = LT,
-					.lim_1 = MIN_VOLT,
-					.timeout = UNDER_VOLT_TIME,
-					.optype_2 = NOP, // UNUSED
-					.is_critical = true };
-
-		fault_eval_table[CELL_VOLTAGE_TOO_HIGH] =
-			(fault_eval_t){ .id = "High Cell Voltage",
-					.timer = ovr_volt_timer,
-					.data_1 = analyzer->max_ocv.val,
-					.optype_1 = GT,
-					.lim_1 = MAX_VOLT,
-					.timeout = OVER_VOLT_TIME,
-					.optype_2 = NOP, // UNUSED
-					.is_critical = true };
-
-		fault_eval_table[CELL_CHARGE_VOLTAGE_TOO_HIGH] = (fault_eval_t){
-			.id = "High Charge Voltage",
-			.timer = ovr_chgvolt_timer,
-			.data_1 = analyzer->max_ocv.val,
-			.optype_1 = GT,
-			.lim_1 = MAX_CHARGE_VOLT,
-			.timeout = OVER_VOLT_TIME,
-			.optype_2 = EQ,
-			.data_2 = (state_machine->bms_state == CHARGING),
-			.lim_2 = true,
-			.is_critical = true
-		};
-
-		fault_eval_table[PACK_TOO_HOT] = (fault_eval_t){
-			.id = "High Cell Temp",
-			.timer = high_temp_timer,
-			.data_1 = sanitizer->max_sanitized_temp.val,
-			.optype_1 = GT,
-			.lim_1 = MAX_CELL_TEMP,
-			.timeout = HIGH_TEMP_TIME,
-			.optype_2 = NOP, // UNUSED
-			.is_critical = true
-		};
-
-		fault_eval_table[DIE_TEMP_MAXIMUM_FAULT] =
-			(fault_eval_t){ .id = "Die Overtemp",
-					.timer = die_overtemp_timer,
-					.data_1 = analyzer->max_chiptemp.val,
-					.optype_1 = GT,
-					.lim_1 = MAX_CHIP_TEMP,
-					.timeout = MAX_CHIPTEMP_TIME,
-					.optype_2 = NOP, // UNUSED
-					.is_critical = true };
-
-		fault_eval_table[SEGMENT_COMMS_FAULT] = (fault_eval_t){
-			.id = "Segment Comms Fault",
-			.timer = segment_comms_timer,
-			.data_1 = segment_comms_fault,
-			.optype_1 = EQ,
-			.lim_1 = true,
-			.timeout = COMMS_FAULT_TIME,
-			.optype_2 = NOP, // UNUSED
-			.is_critical = false
-		};
-
-		fault_eval_table[HV_PLATE_COMMS_FAULT] = (fault_eval_t){
-			.id = "HV Plate Comms Fault",
-			.timer = hv_plate_comms_timer,
-			.data_1 = hv_plate_comms_fault,
-			.optype_1 = EQ,
-			.lim_1 = true,
-			.timeout = COMMS_FAULT_TIME,
-			.optype_2 = NOP, // UNUSED
-			.is_critical = true
-		};
-
-		fault_eval_table[CELL_OPEN_WIRE_FAULT] = (fault_eval_t){
-			.id = "Cell Open Wire Fault",
-			.timer = open_wire_timer,
-			.data_1 = ow_fault,
-			.optype_1 = EQ,
-			.lim_1 = true,
-			.timeout = OW_FAULT_TIME,
-			.optype_2 = NOP, // UNUSED
-			.is_critical = true
-		};
 		initialized = true;
 	}
 }
