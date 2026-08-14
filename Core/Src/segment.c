@@ -229,6 +229,7 @@ void segment_disable_balancing(cell_asic chips[NUM_CHIPS],
 	// Initializes all array elements to zero
 	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
 	segment_configure_balancing(chips, discharge_config, hspi);
+	segment_read_pwm_registers(chips, hspi);
 }
 
 void segment_enable_balancing(cell_asic chips[NUM_CHIPS],
