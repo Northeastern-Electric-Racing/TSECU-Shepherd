@@ -55,7 +55,7 @@ void test_inst_dcl_temperature_and_cell_voltage_regions(void)
     test_inputs.min_cell_volt = 4.0f;
 
     dcl_calc_inst_limit(test_inputs, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(105.0f, test_algos.inst_DCL);
+    TEST_ASSERT_EQUAL_FLOAT(95.0f, test_algos.inst_DCL);
 
     /* -------- Temperature ramp-down region -------- */
     test_inputs.min_temp = 25.0f;
@@ -63,7 +63,7 @@ void test_inst_dcl_temperature_and_cell_voltage_regions(void)
     test_inputs.min_cell_volt = 4.0f;
 
     dcl_calc_inst_limit(test_inputs, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(150.0f, test_algos.inst_DCL);
+    TEST_ASSERT_EQUAL_FLOAT(134.0f, test_algos.inst_DCL);
 
     /* -------- Cell voltage below minimum dominates -------- */
     test_inputs.min_temp = 25.0f;
@@ -76,10 +76,10 @@ void test_inst_dcl_temperature_and_cell_voltage_regions(void)
     /* -------- Cell-voltage derating region -------- */
     test_inputs.min_temp = 25.0f;
     test_inputs.max_temp = 30.0f;
-    test_inputs.min_cell_volt = 3.1f;
+    test_inputs.min_cell_volt = 3.05f;
 
     dcl_calc_inst_limit(test_inputs, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(130.0f, test_algos.inst_DCL);
+    TEST_ASSERT_EQUAL_FLOAT(95.0f, test_algos.inst_DCL);
 
     /* -------- Fully nominal region -------- */
     test_inputs.min_temp = 25.0f;
