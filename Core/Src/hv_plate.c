@@ -229,6 +229,9 @@ void vHvPlateData(ULONG thread_input)
 		hv_plate_isospi_handle_state(hv_plate, state_machine);
 		mutex_put(&hv_plate_comms_mutex);
 
+		send_pack_current_and_shunt_temp_adbms(adbms_pack_current, 
+				hv_plate->shunt_temp);
+
 		hv_plate->batt_volts = analyzer->pack_voltage;
 
 		// updates the SoC value in the analyzer struct based on the pack current
@@ -256,9 +259,6 @@ void vHvPlateData(ULONG thread_input)
 
 			send_hv_plate_voltages_adbms(adbms_batt_volts,
 						adbms_ts_volts);
-
-			send_pack_current_and_shunt_temp_adbms(
-				adbms_pack_current, hv_plate->shunt_temp);
 
 			send_pack_current_and_shunt_temp(hv_plate->pack_current, 
 				hv_plate->shunt_temp);
