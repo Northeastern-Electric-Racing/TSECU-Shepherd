@@ -172,7 +172,7 @@ void vHvPlateData(ULONG thread_input)
 {
 	PRINTLN_INFO("Starting HV Plate thread...");
 
-	const uint16_t diagnostic_read_frequency = 1000; // 1s
+	const uint16_t diagnostic_read_frequency = 10; // 0.01s; 10ms
 	nertimer_t diagnostic_read_timer;
 
 	hv_plate_args_t *hv_plate_args = (hv_plate_args_t *)thread_input;
