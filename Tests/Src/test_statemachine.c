@@ -5,6 +5,7 @@
 #include "mock_u_tx_mutex.h"
 #include "mock_timer.h"
 #include "mock_can_messages_tx.h"
+#include "mock_compute.h"
 
 state_machine_t state_machine;
 analyzer_t analyzer;
@@ -138,6 +139,31 @@ void test_charge_fault(void)
 	TEST_ASSERT_EQUAL(CHARGING, state_machine.bms_state);
 }
 
+void test_handle_faulted_sends_zero_current_limits(void)
+{
+	compute_set_fault_Expect(true);
+	send_max_dc_current_command_ExpectAndReturn(0.0f, 0U);
+	send_max_dc_brake_current_command_ExpectAndReturn(0.0f, 0U);
+
+	handle_faulted(&args);
+	mock_can_messages_tx_Verify();
+}
+
+void test_handle_charging_sends_zero_current_limits(void)
+{
+	state_machine.bms_state = CHARGING;
+	state_machine.charging_stage = LONG_SETTLE;
+
+	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
+					false);
+	send_bms_charge_message_send_ExpectAndReturn(0.0f, 0.0f, 0xFFU, 0U);
+	send_max_dc_current_command_ExpectAndReturn(0.0f, 0U);
+	send_max_dc_brake_current_command_ExpectAndReturn(0.0f, 0U);
+
+	handle_charging(&args);
+	mock_can_messages_tx_Verify();
+}
+
 void test_balancing(void)
 {
 	// Balancing allowed
@@ -178,6 +204,8 @@ int main(void)
 	RUN_TEST(test_short_charge_cycle);
 	RUN_TEST(test_charge_done);
 	RUN_TEST(test_charge_fault);
+	RUN_TEST(test_handle_faulted_sends_zero_current_limits);
+	RUN_TEST(test_handle_charging_sends_zero_current_limits);
 	RUN_TEST(test_balancing);
 
 	return UNITY_END();
