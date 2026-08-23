@@ -291,7 +291,7 @@ void adbms_wake_core(isospi_line_6830_ line, uint8_t num_ic)
 void write_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 		      GRP group, SPI_HandleTypeDef *hspi)
 {
-	adBmsWriteData6830(NUM_CHIPS, chips, command, type, group);
+	adBmsWriteData6830(chips, command, type, group);
 }
 
 /**
@@ -305,7 +305,7 @@ void write_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 void read_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 		     GRP group, SPI_HandleTypeDef *hspi)
 {
-	adBmsReadData6830(NUM_CHIPS, chips, command, type, group);
+	adBmsReadData6830(chips, command, type, group);
 
 	update_segment_pec_errors(chips, type);
 }
@@ -313,7 +313,7 @@ void read_adbms_data(cell_asic chips[NUM_CHIPS], uint8_t command[2], TYPE type,
 uint32_t adBmsPollAdc_indicator(cell_asic chips[NUM_CHIPS],
 				uint8_t poll_type[2])
 {
-	uint32_t result = adBmsPollAdc6830(NUM_CHIPS, chips, poll_type);
+	uint32_t result = adBmsPollAdc6830(chips, poll_type);
 	return result;
 }
 
@@ -323,7 +323,7 @@ void soft_reset_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	uint8_t ic_count_a = 0U, ic_count_b = 0U;
 
-	getIsoSPILineChipCount6830(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	getIsoSPILineChipCount6830(chips, &ic_count_a, &ic_count_b);
 	if (ic_count_a > 0) {
 		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_A, ic_count_a);
 		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_A, SRST);
@@ -341,7 +341,7 @@ void mute_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	uint8_t ic_count_a = 0U, ic_count_b = 0U;
 
-	getIsoSPILineChipCount6830(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	getIsoSPILineChipCount6830(chips, &ic_count_a, &ic_count_b);
 	if (ic_count_a > 0) {
 		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_A, ic_count_a);
 		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_A, MUTE);
@@ -357,7 +357,7 @@ void unmute_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	uint8_t ic_count_a = 0U, ic_count_b = 0U;
 
-	getIsoSPILineChipCount6830(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	getIsoSPILineChipCount6830(chips, &ic_count_a, &ic_count_b);
 	if (ic_count_a > 0) {
 		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_A, ic_count_a);
 		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_A, UNMUTE);
@@ -373,7 +373,7 @@ void snap_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	uint8_t ic_count_a = 0U, ic_count_b = 0U;
 
-	getIsoSPILineChipCount6830(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	getIsoSPILineChipCount6830(chips, &ic_count_a, &ic_count_b);
 	if (ic_count_a > 0) {
 		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_A, ic_count_a);
 		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_A, SNAP);
@@ -389,7 +389,7 @@ void unsnap_chips(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
 	uint8_t ic_count_a = 0U, ic_count_b = 0U;
 
-	getIsoSPILineChipCount6830(NUM_CHIPS, chips, &ic_count_a, &ic_count_b);
+	getIsoSPILineChipCount6830(chips, &ic_count_a, &ic_count_b);
 	if (ic_count_a > 0) {
 		adBmsWakeISOSPILine6830(ADBMS6830_ISOSPI_LINE_A, ic_count_a);
 		spiSendCmd6830(ADBMS6830_ISOSPI_LINE_A, UNSNAP);
@@ -485,7 +485,7 @@ void adc_and_read_aux_registers(cell_asic chips[NUM_CHIPS],
 				SPI_HandleTypeDef *hspi)
 {
 	// TODO only poll correct GPIOs
-	adBms6830_Adax(NUM_CHIPS, chips, AUX_OW_OFF, PUP_DOWN, AUX_ALL);
+	adBms6830_Adax(chips, AUX_OW_OFF, PUP_DOWN, AUX_ALL);
 	adBmsPollAdc_indicator(chips, PLAUX1);
 
 	read_adbms_data(chips, RDAUXA, Aux, A, hspi);
@@ -497,7 +497,7 @@ void adc_and_read_aux_registers(cell_asic chips[NUM_CHIPS],
 void adc_and_read_aux2_registers(cell_asic chips[NUM_CHIPS],
 				 SPI_HandleTypeDef *hspi)
 {
-	adBms6830_Adax2(NUM_CHIPS, chips, AUX_ALL);
+	adBms6830_Adax2(chips, AUX_ALL);
 	adBmsPollAdc_indicator(chips, PLAUX2);
 
 	read_adbms_data(chips, RDRAXA, RAux, A, hspi);
@@ -553,7 +553,7 @@ void read_serial_id(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 
 void get_c_adc_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, SINGLE, DCP_OFF, RSTF_OFF,
+	adBms6830_Adcv(chips, RD_ON, SINGLE, DCP_OFF, RSTF_OFF,
 		       OW_OFF_ALL_CH);
 	adBmsPollAdc_indicator(chips, PLCADC);
 
@@ -562,7 +562,7 @@ void get_c_adc_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 
 void get_avgd_cell_voltages(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adBms6830_Adcv(NUM_CHIPS, chips, RD_OFF, SINGLE, DCP_OFF, RSTF_OFF,
+	adBms6830_Adcv(chips, RD_OFF, SINGLE, DCP_OFF, RSTF_OFF,
 		       OW_OFF_ALL_CH);
 	adBmsPollAdc_indicator(chips, PLCADC);
 
@@ -580,7 +580,7 @@ void get_s_adc_open_wire_voltages(cell_asic chips[NUM_CHIPS],
 				  SPI_HandleTypeDef *hspi,
 				  OW_C_S open_wire_mode)
 {
-	adBms6830_Adsv(NUM_CHIPS, chips, SINGLE, DCP_OFF, open_wire_mode);
+	adBms6830_Adsv(chips, SINGLE, DCP_OFF, open_wire_mode);
 	adBmsPollAdc_indicator(chips, PLSADC);
 	read_s_voltage_registers(chips, hspi);
 }
@@ -588,7 +588,7 @@ void get_s_adc_open_wire_voltages(cell_asic chips[NUM_CHIPS],
 void get_s_adc_voltages(cell_asic chips[NUM_CHIPS],
 			SPI_HandleTypeDef *hspi)
 {
-	adBms6830_Adsv(NUM_CHIPS, chips, SINGLE, DCP_OFF, OW_OFF_ALL_CH);
+	adBms6830_Adsv(chips, SINGLE, DCP_OFF, OW_OFF_ALL_CH);
 	adBmsPollAdc_indicator(chips, PLSADC);
 
 	read_s_voltage_registers(chips, hspi);
@@ -596,13 +596,13 @@ void get_s_adc_voltages(cell_asic chips[NUM_CHIPS],
 
 void start_c_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adBms6830_Adcv(NUM_CHIPS, chips, RD_ON, CONTINUOUS, DCP_OFF, RSTF_ON,
+	adBms6830_Adcv(chips, RD_ON, CONTINUOUS, DCP_OFF, RSTF_ON,
 		       OW_OFF_ALL_CH);
 }
 
 void start_s_adc_conv(cell_asic chips[NUM_CHIPS], SPI_HandleTypeDef *hspi)
 {
-	adBms6830_Adsv(NUM_CHIPS, chips, CONTINUOUS, DCP_OFF,
+	adBms6830_Adsv(chips, CONTINUOUS, DCP_OFF,
 			 OW_OFF_ALL_CH);
 }
 
