@@ -8,6 +8,7 @@
 #include "u_tx_debug.h"
 #include "can_messages_tx.h"
 #include "c_utils.h"
+#include "shep_tasks.h"
 
 static uint16_t hv_plate_pec_errors = { 0U };
 static uint16_t prev_hv_plate_pec_errors = { 0U };
@@ -29,6 +30,88 @@ static void accumulate_hv_plate_pec_errors(cell_asic_2950 *ic,
 		}
 	}
 }
+
+#ifdef DEBUG_PEC
+/**
+ * @brief Print an HV plate PEC error when PEC debugging is enabled.
+ */
+static void print_hv_plate_pec_error(const cell_asic_2950 *const ic,
+				     TYPE2950 type)
+{
+	const char *pec_name = "";
+	uint8_t pec_error = 0U;
+
+	switch (type) {
+	case GPV1:
+		pec_name = "VR";
+		pec_error = ic->cccrc.vr_pec;
+		break;
+	case GPV2:
+		pec_name = "RVR";
+		pec_error = ic->cccrc.rvr_pec;
+		break;
+	case Config2950:
+		pec_name = "CFGR";
+		pec_error = ic->cccrc.cfgr_pec;
+		break;
+	case Cr:
+		pec_name = "CR";
+		pec_error = ic->cccrc.cr_pec;
+		break;
+	case Vbat:
+		pec_name = "VBAT";
+		pec_error = ic->cccrc.vbat_pec;
+		break;
+	case Ivbat:
+		pec_name = "IVBAT";
+		pec_error = ic->cccrc.ivbat_pec;
+		break;
+	case Oc:
+		pec_name = "OC";
+		pec_error = ic->cccrc.oc_pec;
+		break;
+	case AccCr:
+		pec_name = "AVGCR";
+		pec_error = ic->cccrc.avgcr_pec;
+		break;
+	case AccVbat:
+		pec_name = "AVGVBAT";
+		pec_error = ic->cccrc.avgvbat_pec;
+		break;
+	case AccIvbat:
+		pec_name = "AVGIVBAT";
+		pec_error = ic->cccrc.avgivbat_pec;
+		break;
+	case Aux2950:
+		pec_name = "AUX";
+		pec_error = ic->cccrc.aux_pec;
+		break;
+	case Flag:
+		pec_name = "FLAG";
+		pec_error = ic->cccrc.flag_pec;
+		break;
+	case Status2950:
+		pec_name = "STAT";
+		pec_error = ic->cccrc.stat_pec;
+		break;
+	case Comm2950:
+		pec_name = "COMM";
+		pec_error = ic->cccrc.comm_pec;
+		break;
+	case SID:
+		pec_name = "SID2950";
+		pec_error = ic->cccrc.sid2950_pec;
+		break;
+	default:
+		break;
+	}
+
+	if (pec_error != 0U) {
+		PRINTLN_WARNING("[HV_PLATE] %s PEC %u", pec_name,
+				(unsigned int)pec_error);
+	}
+}
+#endif
 
 /**
  * @brief Update the PEC errors and accumulation counter for the given register read.
@@ -137,6 +220,9 @@ static void update_hv_plate_pec_errors(cell_asic_2950 *ic, TYPE2950 type)
 		default:
 			break;
 	}
+#ifdef DEBUG_PEC
+	print_hv_plate_pec_error(ic, type);
+#endif
 	// clang-format on
 }
 
