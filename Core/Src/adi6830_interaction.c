@@ -6,6 +6,7 @@
 #include "isospi_recovery_common_config.h"
 #include "can_messages_tx.h"
 #include "c_utils.h"
+#include "shep_tasks.h"
 
 static uint16_t segment_pec_errors[NUM_CHIPS] = { 0U };
 static uint16_t prev_segment_pec_errors[NUM_CHIPS] = { 0U };
@@ -28,6 +29,71 @@ static void accumulate_segment_pec_errors(cell_asic *const chip,
 	}
 }
 
+#ifdef DEBUG_PEC
+/**
+ * @brief Print a PEC error for a segment chip when PEC debugging is enabled.
+ */
+static void print_segment_pec_error(const cell_asic *const chip, TYPE type)
+{
+	const char *pec_name = "";
+	uint8_t pec_error = 0U;
+
+	switch (type) {
+	case Cell:
+		pec_name = "CELL";
+		pec_error = chip->cccrc.cell_pec;
+		break;
+	case Aux:
+		pec_name = "AUX";
+		pec_error = chip->cccrc.aux_pec;
+		break;
+	case RAux:
+		pec_name = "RAUX";
+		pec_error = chip->cccrc.raux_pec;
+		break;
+	case Status:
+		pec_name = "STAT";
+		pec_error = chip->cccrc.stat_pec;
+		break;
+	case Pwm:
+		pec_name = "PWM";
+		pec_error = chip->cccrc.pwm_pec;
+		break;
+	case AvgCell:
+		pec_name = "ACELL";
+		pec_error = chip->cccrc.acell_pec;
+		break;
+	case S_volt:
+		pec_name = "SCELL";
+		pec_error = chip->cccrc.scell_pec;
+		break;
+	case F_volt:
+		pec_name = "FCELL";
+		pec_error = chip->cccrc.fcell_pec;
+		break;
+	case Config:
+		pec_name = "CFGR";
+		pec_error = chip->cccrc.cfgr_pec;
+		break;
+	case Comm:
+		pec_name = "COMM";
+		pec_error = chip->cccrc.comm_pec;
+		break;
+	case Sid:
+		pec_name = "SID";
+		pec_error = chip->cccrc.sid_pec;
+		break;
+	default:
+		break;
+	}
+
+	if (pec_error != 0U) {
+		PRINTLN_WARNING("[SEGMENT] %s PEC %u", pec_name,
+				(unsigned int)pec_error);
+	}
+}
+#endif
+
 /**
  * @brief Update the PEC errors and accumulation counter for the given register read.
  *
@@ -46,82 +112,74 @@ static void update_segment_pec_errors(cell_asic chips[NUM_CHIPS], TYPE type)
 				if (chips[chip].cccrc.cell_pec) {
 					NER_SET_BIT(segment_pec_errors[chip], 0U);
 					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
-					PRINTLN_WARNING("[SEGMENT] CELL PEC %d", chips[chip].cccrc.cell_pec);
 				}
 				break;
 			case Aux:
 				if (chips[chip].cccrc.aux_pec) {
 					NER_SET_BIT(segment_pec_errors[chip], 1U);
 					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
-					PRINTLN_WARNING("[SEGMENT] AUX PEC %d", chips[chip].cccrc.aux_pec);
 				}
 				break;
 			case RAux:
 				if (chips[chip].cccrc.raux_pec) {
 					NER_SET_BIT(segment_pec_errors[chip], 2U);
 					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
-					PRINTLN_WARNING("[SEGMENT] RAUX PEC %d", chips[chip].cccrc.raux_pec);
 				}
 				break;
 			case Status:
 				if (chips[chip].cccrc.stat_pec) {
 					NER_SET_BIT(segment_pec_errors[chip], 3U);
 					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
-					PRINTLN_WARNING("[SEGMENT] STAT PEC %d", chips[chip].cccrc.stat_pec);
 				}
 				break;
 			case Pwm:
 				if (chips[chip].cccrc.pwm_pec) {
 					NER_SET_BIT(segment_pec_errors[chip], 4U);
 					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
-					PRINTLN_WARNING("[SEGMENT] PWM PEC %d", chips[chip].cccrc.pwm_pec);
 				}
 				break;
 			case AvgCell:
 				if (chips[chip].cccrc.acell_pec) {
 					NER_SET_BIT(segment_pec_errors[chip], 5U);
 					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
-					PRINTLN_WARNING("[SEGMENT] ACELL PEC %d", chips[chip].cccrc.acell_pec);
 				}
 				break;
 			case S_volt:
 				if (chips[chip].cccrc.scell_pec) {
 					NER_SET_BIT(segment_pec_errors[chip], 6U);
 					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
-					PRINTLN_WARNING("[SEGMENT] SCELL PEC %d", chips[chip].cccrc.scell_pec);
 				}
 				break;
 			case F_volt:
 				if (chips[chip].cccrc.fcell_pec) {
 					NER_SET_BIT(segment_pec_errors[chip], 7U);
 					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
-					PRINTLN_WARNING("[SEGMENT] FCELL PEC %d", chips[chip].cccrc.fcell_pec);
 				}
 				break;
 			case Config:
 				if (chips[chip].cccrc.cfgr_pec) {
 					NER_SET_BIT(segment_pec_errors[chip], 8U);
 					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
-					PRINTLN_WARNING("[SEGMENT] CFGR PEC %d", chips[chip].cccrc.cfgr_pec);
 				}
 				break;
 			case Comm:
 				if (chips[chip].cccrc.comm_pec) {
 					NER_SET_BIT(segment_pec_errors[chip], 9U);
 					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
-					PRINTLN_WARNING("[SEGMENT] COMM PEC %d", chips[chip].cccrc.comm_pec);
 				}
 				break;
 			case Sid:
 				if (chips[chip].cccrc.sid_pec) {
 					NER_SET_BIT(segment_pec_errors[chip], 10U);
 					accumulate_segment_pec_errors(&chips[chip], pec_mask_timer_expired);
-					PRINTLN_WARNING("[SEGMENT] SID PEC %d", chips[chip].cccrc.sid_pec);
 				}
 				break;
 			default:
 				break;
 		}
+#ifdef DEBUG_PEC
+		print_segment_pec_error(&chips[chip], type);
+#endif
 		// clang-format on
 	}
 }

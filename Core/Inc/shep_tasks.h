@@ -12,6 +12,7 @@
 // #define DEBUG_OCV_VOLTAGES
 // #define DEBUG_TEMPS
 // #define DEBUG_ALGOS
+// #define DEBUG_PEC
 
 /* Initializes all ThreadX threads.
 *  Calls to create_thread() should go in here

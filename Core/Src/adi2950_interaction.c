@@ -8,6 +8,7 @@
 #include "u_tx_debug.h"
 #include "can_messages_tx.h"
 #include "c_utils.h"
+#include "shep_tasks.h"
 
 static uint16_t hv_plate_pec_errors = { 0U };
 static uint16_t prev_hv_plate_pec_errors = { 0U };
@@ -30,6 +31,88 @@ static void accumulate_hv_plate_pec_errors(cell_asic_2950 *ic,
 	}
 }
 
+#ifdef DEBUG_PEC
+/**
+ * @brief Print an HV plate PEC error when PEC debugging is enabled.
+ */
+static void print_hv_plate_pec_error(const cell_asic_2950 *const ic,
+				     TYPE2950 type)
+{
+	const char *pec_name = "";
+	uint8_t pec_error = 0U;
+
+	switch (type) {
+	case GPV1:
+		pec_name = "VR";
+		pec_error = ic->cccrc.vr_pec;
+		break;
+	case GPV2:
+		pec_name = "RVR";
+		pec_error = ic->cccrc.rvr_pec;
+		break;
+	case Config2950:
+		pec_name = "CFGR";
+		pec_error = ic->cccrc.cfgr_pec;
+		break;
+	case Cr:
+		pec_name = "CR";
+		pec_error = ic->cccrc.cr_pec;
+		break;
+	case Vbat:
+		pec_name = "VBAT";
+		pec_error = ic->cccrc.vbat_pec;
+		break;
+	case Ivbat:
+		pec_name = "IVBAT";
+		pec_error = ic->cccrc.ivbat_pec;
+		break;
+	case Oc:
+		pec_name = "OC";
+		pec_error = ic->cccrc.oc_pec;
+		break;
+	case AccCr:
+		pec_name = "AVGCR";
+		pec_error = ic->cccrc.avgcr_pec;
+		break;
+	case AccVbat:
+		pec_name = "AVGVBAT";
+		pec_error = ic->cccrc.avgvbat_pec;
+		break;
+	case AccIvbat:
+		pec_name = "AVGIVBAT";
+		pec_error = ic->cccrc.avgivbat_pec;
+		break;
+	case Aux2950:
+		pec_name = "AUX";
+		pec_error = ic->cccrc.aux_pec;
+		break;
+	case Flag:
+		pec_name = "FLAG";
+		pec_error = ic->cccrc.flag_pec;
+		break;
+	case Status2950:
+		pec_name = "STAT";
+		pec_error = ic->cccrc.stat_pec;
+		break;
+	case Comm2950:
+		pec_name = "COMM";
+		pec_error = ic->cccrc.comm_pec;
+		break;
+	case SID:
+		pec_name = "SID2950";
+		pec_error = ic->cccrc.sid2950_pec;
+		break;
+	default:
+		break;
+	}
+
+	if (pec_error != 0U) {
+		PRINTLN_WARNING("[HV_PLATE] %s PEC %u", pec_name,
+				(unsigned int)pec_error);
+	}
+}
+#endif
+
 /**
  * @brief Update the PEC errors and accumulation counter for the given register read.
  *
@@ -48,110 +131,98 @@ static void update_hv_plate_pec_errors(cell_asic_2950 *ic, TYPE2950 type)
 			if (ic->cccrc.vr_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 0U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] VR PEC %u", ic->cccrc.vr_pec);
 			}
 			break;
 		case GPV2:
 			if (ic->cccrc.rvr_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 1U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] RVR PEC %u", ic->cccrc.rvr_pec);
 			}
 			break;
 		case Config2950:
 			if (ic->cccrc.cfgr_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 2U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] CFGR PEC %u", ic->cccrc.cfgr_pec);
 			}
 			break;
 		case Cr:
 			if (ic->cccrc.cr_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 3U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] CR PEC %u", ic->cccrc.cr_pec);
 			}
 			break;
 		case Vbat:
 			if (ic->cccrc.vbat_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 4U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] VBAT PEC %u", ic->cccrc.vbat_pec);
 			}
 			break;
 		case Ivbat:
 			if (ic->cccrc.ivbat_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 5U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] IVBAT PEC %u", ic->cccrc.ivbat_pec);
 			}
 			break;
 		case Oc:
 			if (ic->cccrc.oc_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 6U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] OC PEC %u", ic->cccrc.oc_pec);
 			}
 			break;
 		case AccCr:
 			if (ic->cccrc.avgcr_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 7U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] AVGCR PEC %u", ic->cccrc.avgcr_pec);
 			}
 			break;
 		case AccVbat:
 			if (ic->cccrc.avgvbat_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 8U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] AVGVBAT PEC %u", ic->cccrc.avgvbat_pec);
 			}
 			break;
 		case AccIvbat:
 			if (ic->cccrc.avgivbat_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 9U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] AVGIVBAT PEC %u", ic->cccrc.avgivbat_pec);
 			}
 			break;
 		case Aux2950:
 			if (ic->cccrc.aux_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 10U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] AUX PEC %u", ic->cccrc.aux_pec);
 			}
 			break;
 		case Flag:
 			if (ic->cccrc.flag_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 11U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] FLAG PEC %u", ic->cccrc.flag_pec);
 			}
 			break;
 		case Status2950:
 			if (ic->cccrc.stat_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 12U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] STAT PEC %u", ic->cccrc.stat_pec);
 			}
 			break;
 		case Comm2950:
 			if (ic->cccrc.comm_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 13U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				printf("[HV_PLATE] COMM PEC %u", ic->cccrc.comm_pec);
 			}
 			break;
 		case SID:
 			if (ic->cccrc.sid2950_pec) {
 				NER_SET_BIT(hv_plate_pec_errors, 14U);
 				accumulate_hv_plate_pec_errors(ic, pec_mask_timer_expired);
-				PRINTLN_WARNING("[HV_PLATE] SID2950 PED %u", ic->cccrc.sid2950_pec);
 			}
 			break;
 		default:
 			break;
 	}
+#ifdef DEBUG_PEC
+	print_hv_plate_pec_error(ic, type);
+#endif
 	// clang-format on
 }
 
@@ -296,9 +367,6 @@ uint16_t read_conversion_count_registers(cell_asic_2950 *ic)
 {
 	read_adbms2950_data(ic, RDFLAG, Flag, NONE2950);
 	return ic->flag.i1cnt;
-	if (ic->cccrc.flag_pec != 0) {
-		PRINTLN_ERROR("PEC Error in reading conversion count register");
-	}
 }
 
 void read_accumulated_current_vbat_registers(cell_asic_2950 *ic)
