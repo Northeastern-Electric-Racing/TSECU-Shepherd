@@ -270,8 +270,8 @@ void soft_reset_chip_2950(cell_asic_2950 *ic)
 {
 	uint8_t ic_count_a = 0U, ic_count_b = 0U;
 
-	getIsoSPILineChipCount2950(TOTAL_IC_2950, ic, &ic_count_a, &ic_count_b);
-	spiSendCmd2950(TOTAL_IC_2950, ic, SRST2950);
+	getIsoSPILineChipCount2950(ic, &ic_count_a, &ic_count_b);
+	spiSendCmd2950(ic, SRST2950);
 	if (ic_count_a > 0U) {
 		adbms_wake_core_2950(ADBMS2950_ISOSPI_LINE_A, TOTAL_IC_2950);
 	}
@@ -292,25 +292,25 @@ void soft_reset_chip_2950(cell_asic_2950 *ic)
 void read_adbms2950_data(cell_asic_2950 *ic, uint8_t command[2], TYPE2950 type,
 			 GRP2950 group)
 {
-	adBmsReadData2950(TOTAL_IC_2950, ic, command, type, group);
+	adBmsReadData2950(ic, command, type, group);
 
 	update_hv_plate_pec_errors(ic, type);
 }
 
 void snap_2950(cell_asic_2950 *ic)
 {
-	spiSendCmd2950(TOTAL_IC_2950, ic, SNAP2950);
+	spiSendCmd2950(ic, SNAP2950);
 }
 
 void unsnap_2950(cell_asic_2950 *ic)
 {
-	spiSendCmd2950(TOTAL_IC_2950, ic, UNSNAP2950);
+	spiSendCmd2950(ic, UNSNAP2950);
 }
 
 void start_adc_conversions(cell_asic_2950 *ic)
 {
 	cmd_description command;
-	adBms2950_Adi1(TOTAL_IC_2950, ic, RD_ON2950, OPT8_C, &command);
+	adBms2950_Adi1(ic, RD_ON2950, OPT8_C, &command);
 	delay_ms(ADI1_delay_ms);
 }
 
@@ -322,7 +322,7 @@ void write_config(cell_asic_2950 *ic, ACCI count)
 	ic->tx_cfga.vs7 = (VSB)VSMV_SGND;
 	ic->tx_cfga.gpo4c = PULLED_UP_TRISTATED;
 	ic->tx_cfga.gpo4od = OPEN_DRAIN;
-	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
+	adBmsWriteData2950(ic, WRCFGA2950, Config2950, A_2950);
 }
 
 void write_clear_flags_2950(cell_asic_2950 *ic)
@@ -359,7 +359,7 @@ void write_clear_flags_2950(cell_asic_2950 *ic)
 		ic[cic].clflag.tmode = CL_FLAG_SET2950;
 		ic[cic].clflag.oscflt = CL_FLAG_SET2950;
 	}
-	adBmsWriteData2950(TOTAL_IC_2950, ic, CLRFLAG2950, Clrflag2950,
+	adBmsWriteData2950(ic, CLRFLAG2950, Clrflag2950,
 			   NONE2950);
 }
 
@@ -383,7 +383,7 @@ void read_current_vbat_registers(cell_asic_2950 *ic)
 
 void read_v7_register(cell_asic_2950 *ic)
 {
-	adBms2950_Adv(1, ic, OW_OFF, SM_V7_V9);
+	adBms2950_Adv(ic, OW_OFF, SM_V7_V9);
 	delay_ms(Polling_Delay_ms2950);
 
 	read_adbms2950_data(ic, RDV1C, GPV1, C_2950);
@@ -391,7 +391,7 @@ void read_v7_register(cell_asic_2950 *ic)
 
 void read_v2_register(cell_asic_2950 *ic)
 {
-	adBms2950_Adv(1, ic, OW_OFF, SM_V2);
+	adBms2950_Adv(ic, OW_OFF, SM_V2);
 	delay_ms(Polling_Delay_ms2950);
 
 	read_adbms2950_data(ic, RDV1A, GPV1, A_2950);
@@ -404,9 +404,9 @@ void read_flag_register(cell_asic_2950 *ic)
 
 void poll_and_read_aux_registers(cell_asic_2950 *ic)
 {
-	spiSendCmd2950(TOTAL_IC_2950, ic, sADX);
+	spiSendCmd2950(ic, sADX);
 	// Poll on conversion to block thread
-	ic[0].pladc_count = adBmsPollAdc2950(TOTAL_IC_2950, ic, PLX);
+	ic[0].pladc_count = adBmsPollAdc2950(ic, PLX);
 
 	// Read all relevant register groups
 	read_adbms2950_data(ic, RDXA, Aux2950, A_2950);
@@ -415,7 +415,7 @@ void poll_and_read_aux_registers(cell_asic_2950 *ic)
 
 	read_adbms2950_data(ic, RDXC, Aux2950, C_2950);
 
-	spiSendCmd2950(TOTAL_IC_2950, ic, CLRVX);
+	spiSendCmd2950(ic, CLRVX);
 }
 
 void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
@@ -446,7 +446,7 @@ void set_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 			break;
 	}
 
-	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
+	adBmsWriteData2950(ic, WRCFGA2950, Config2950, A_2950);
 	read_adbms2950_data(ic, RDCFGA2950, Config2950, A_2950);
 }
 
@@ -478,6 +478,6 @@ void reset_gpo(cell_asic_2950 *ic, GPO_2950 gpo)
 			break;
 	}
 
-	adBmsWriteData2950(TOTAL_IC_2950, ic, WRCFGA2950, Config2950, A_2950);
+	adBmsWriteData2950(ic, WRCFGA2950, Config2950, A_2950);
 	read_adbms2950_data(ic, RDCFGA2950, Config2950, A_2950);
 }

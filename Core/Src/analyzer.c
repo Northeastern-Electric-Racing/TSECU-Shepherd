@@ -4,7 +4,7 @@
 #include <float.h>
 #include "bms_config.h"
 #include "datastructs.h"
-#include "serialPrintResult.h"
+#include "adBms6830GenericType.h"
 #include "timer.h"
 #include "state_machine.h"
 #include "u_tx_debug.h"

@@ -17,7 +17,6 @@
 #include "main.h"
 #include "precharge_routine.h"
 #include "segment.h"
-#include "serialPrintResult.h"
 #include "u_queues.h"
 #include "soc.h"
 #include "state_machine.h"

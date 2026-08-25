@@ -1,6 +1,8 @@
 
 #include "segment.h"
 #include "adBms6830Data.h"
+#include "adBms6830ParseCreate.h"
+#include "adBms6830GenericType.h"
 #include "adi6830_interation.h"
 #include "bms_config.h"
 #include "can_messages_tx.h"
@@ -8,7 +10,6 @@
 #include "charging.h"
 #include "datastructs.h"
 #include "segment_isospi_recovery.h"
-#include "serialPrintResult.h"
 #include "u_tx_flags.h"
 #include "state_machine.h"
 #include "app_threadx.h"
