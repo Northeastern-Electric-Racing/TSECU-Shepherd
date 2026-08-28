@@ -94,7 +94,7 @@ void test_balance_threshold(void)
 	analyzer.chip_data[0].open_cell_voltage[3] = threshold + 0.001f;
 	analyzer.chip_data[0].open_cell_voltage[4] = threshold;
 
-	handle_balance_cells(&analyzer, &acc_data);
+	TEST_ASSERT_TRUE(handle_balance_cells(&analyzer, &acc_data));
 
 	TEST_ASSERT_EQUAL(PWM_52_8_PCT, acc_data.discharge_config[0][3]);
 	TEST_ASSERT_EQUAL(PWM_0_0_PCT, acc_data.discharge_config[0][4]);
@@ -107,7 +107,7 @@ void test_balance_limit(void)
 			3.53f + (0.01f * cell);
 	}
 
-	handle_balance_cells(&analyzer, &acc_data);
+	TEST_ASSERT_TRUE(handle_balance_cells(&analyzer, &acc_data));
 
 	TEST_ASSERT_EQUAL(PWM_0_0_PCT, acc_data.discharge_config[0][0]);
 	for (uint8_t cell = 1U; cell < 8U; cell++) {
@@ -122,7 +122,7 @@ void test_balance_indexes(void)
 	analyzer.chip_data[0].open_cell_voltage[7] = 3.70f;
 	analyzer.chip_data[0].open_cell_voltage[12] = 3.80f;
 
-	handle_balance_cells(&analyzer, &acc_data);
+	TEST_ASSERT_TRUE(handle_balance_cells(&analyzer, &acc_data));
 
 	TEST_ASSERT_EQUAL(PWM_52_8_PCT, acc_data.discharge_config[0][2]);
 	TEST_ASSERT_EQUAL(PWM_52_8_PCT, acc_data.discharge_config[0][7]);
@@ -138,7 +138,7 @@ void test_balance_clear(void)
 		}
 	}
 
-	handle_balance_cells(&analyzer, &acc_data);
+	TEST_ASSERT_FALSE(handle_balance_cells(&analyzer, &acc_data));
 
 	for (uint8_t chip = 0U; chip < NUM_CHIPS; chip++) {
 		for (uint8_t cell = 0U; cell < NUM_CELLS_PER_CHIP; cell++) {
