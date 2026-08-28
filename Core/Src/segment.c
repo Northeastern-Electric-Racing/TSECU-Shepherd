@@ -1,8 +1,6 @@
 
 #include "segment.h"
 #include "adBms6830Data.h"
-#include "adBms6830ParseCreate.h"
-#include "adBms6830GenericType.h"
 #include "adi6830_interation.h"
 #include "bms_config.h"
 #include "can_messages_tx.h"
@@ -10,6 +8,7 @@
 #include "charging.h"
 #include "datastructs.h"
 #include "segment_isospi_recovery.h"
+#include "serialPrintResult.h"
 #include "u_tx_flags.h"
 #include "state_machine.h"
 #include "app_threadx.h"
@@ -464,8 +463,9 @@ void vGetSegmentData(ULONG thread_input)
 		}
 
 		if (charging && balancing_active &&
-		    is_timer_expired(&pwm_timer) &&
-		    !is_timer_active(&pwm_timer)) {
+		    ((!prev_balancing_active) ||
+		     (is_timer_expired(&pwm_timer) &&
+		      !is_timer_active(&pwm_timer)))) {
 			segment_mute(acc_data->chips, &hspi2);
 			segment_set_dcto(acc_data->chips, TIME_1MIN_OR_0_26HR,
 					&hspi2);

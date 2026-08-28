@@ -14,10 +14,10 @@ typedef enum {
 
 typedef struct {
 	hv_plate_t *hv_plate;
+	peripherals_t *peripherals;
 	float transition_ratio;
 	nertimer_t open_debounce_timer;
 	nertimer_t close_debounce_timer;
-	nertimer_t closed_to_floating_debounce_timer;
 	nertimer_t open_to_floating_debounce_timer;
 	precharge_state_t precharge_state;
 } prechargeconfig_t;
@@ -30,7 +30,7 @@ typedef struct {
  * @param threshold_ratio if batt volts > ts volts * threshold_ratio, close the AIR switch
  */
 void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
-		    float transition_ratio);
+		    peripherals_t *peripherals, float transition_ratio);
 /**
  * @brief Handles the precharge routine given the current BATT and TS voltages.
  * @param precharge_config the prechsarge configuration struct.

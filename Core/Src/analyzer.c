@@ -4,7 +4,7 @@
 #include <float.h>
 #include "bms_config.h"
 #include "datastructs.h"
-#include "adBms6830GenericType.h"
+#include "serialPrintResult.h"
 #include "timer.h"
 #include "state_machine.h"
 #include "u_tx_debug.h"
@@ -319,9 +319,11 @@ void calc_open_cell_voltage(analyzer_t *analyzer,
 	static bool is_first_reading = true;
 	bool update_ocv = false;
 
+	// OCV requires low current with both charging and balancing disabled.
 	const bool ocv_update_allowed =
 		(fabsf(hv_plate->pack_current) < OCV_CURR_THRESH) &&
-		state_machine->charger_output_disabled;
+		state_machine->charger_output_disabled &&
+		!state_machine->balancing_active;
 
 	if (is_first_reading) {
 		float last_cell =

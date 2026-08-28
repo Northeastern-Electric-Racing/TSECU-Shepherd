@@ -17,8 +17,9 @@
 // Firmware limits
 #define MAX_TEMP    60 /* Celsius */
 #define MIN_TEMP    -40 /* Celsius */
-#define MAX_DELTA_V 0.005f
-#define BAL_MIN_V   3.00f
+#define MAX_DELTA_V     0.005f
+#define BAL_MIN_V       4.00f
+#define BALANCE_DELTA_V 0.02f
 
 /* Molicel P50B Cell Specifications */
 #define TYP_CAPICITY_AH	    5.0f /* Amp-hours */

@@ -160,18 +160,15 @@ chipsSelectionSort(analyzer_t *analyzer,
 }
 
 /* Send cell balancing config to the segments */
-void handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
+bool handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
 {
 	// the maximum number of cells to balance per chip, usually tuned for thermal
 	// reasons
 	static const int MAX_BAL_CHIP = 7;
+	bool balancing_needed = false;
 
 	// the low cell, eventually they all must get there
 	float low = analyzer->min_ocv.val;
-	// the margin above the low cell to ignore, which is usually X% of the delta, gate at 0
-	//float min_thresh = //fmaxf(analyzer->delt_ocv * 0.4f, 0.0f);
-	float min_thresh = 0.02f;
-
 	val_idexed_t new_ocv_map[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
 
 	// first, sort and cleanup everything
@@ -190,10 +187,14 @@ void handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
 				continue;
 			}
 			/* Check if cell voltage is above (low + threshold) */
-			if (new_ocv_map[chip][cell].val > (low + min_thresh)) {
+			if (new_ocv_map[chip][cell].val >
+			    (low + BALANCE_DELTA_V)) {
 				/* Balance cell */
 				acc_data->discharge_config // TODO: Mutex
 					[chip][new_ocv_map[chip][cell].idex] = duty_cycle;
+				if (duty_cycle > PWM_0_0_PCT) {
+					balancing_needed = true;
+				}
 			} else {
 				/* Do not balance cell */
 				acc_data->discharge_config
@@ -201,4 +202,6 @@ void handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
 			}
 		}
 	}
+
+	return balancing_needed;
 }

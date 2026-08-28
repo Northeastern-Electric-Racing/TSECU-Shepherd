@@ -363,7 +363,9 @@ typedef enum {
 	SHORT_CHARGE_UP,
 	SHORT_SETTLE,
 	DONE,
-	FAULT
+	FAULT,
+	BALANCE_AND_CHARGE_UP,
+	BALANCE_ONLY
 } charge_stage_t;
 
 /**
@@ -379,6 +381,11 @@ typedef struct {
 	// charge settling timers
 	nertimer_t charging_stage_timer;
 	charge_stage_t charging_stage;
+	float charge_current_request;
+
+	// balancing cycle timers
+	nertimer_t balancing_active_timer;
+	nertimer_t balancing_cooldown_timer;
 
 	// charging message timer for telemetry
 	nertimer_t charger_message_timer;
