@@ -97,7 +97,7 @@ void test_long_charge_cycle(void)
 	start_timer_Expect(&state_machine.charging_stage_timer, 60U * 1000U);
 
 	TEST_ASSERT_FALSE(sm_charging_check(&args));
-	TEST_ASSERT_EQUAL(LONG_SETTLE, state_machine.charging_stage);
+	TEST_ASSERT_EQUAL(SETTLE, state_machine.charging_stage);
 
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
 					true);
@@ -125,7 +125,7 @@ void test_short_charge_cycle(void)
 	start_timer_Expect(&state_machine.charging_stage_timer, 60U * 1000U);
 
 	TEST_ASSERT_FALSE(sm_charging_check(&args));
-	TEST_ASSERT_EQUAL(SHORT_SETTLE, state_machine.charging_stage);
+	TEST_ASSERT_EQUAL(SETTLE, state_machine.charging_stage);
 }
 
 void test_short_charge_current_step_delay(void)
@@ -208,7 +208,7 @@ void test_short_charge_current_step_delay(void)
 
 void test_charge_done(void)
 {
-	state_machine.charging_stage = SHORT_SETTLE;
+	state_machine.charging_stage = SETTLE;
 	analyzer.max_ocv.val = MAX_CHARGE_VOLT;
 	analyzer.delta_voltage = MAX_DELTA_V;
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
@@ -225,10 +225,11 @@ void test_charge_done(void)
 
 void test_balance_only_at_charge_limit(void)
 {
-	state_machine.charging_stage = SHORT_SETTLE;
+	// Start in the long phase to verify BALANCE_ONLY advances to short settle.
+	state_machine.charging_stage = SETTLE;
 	state_machine.charge_current_request = CHARGING_CURRENT;
 	analyzer.max_ocv.val = MAX_CHARGE_VOLT;
-	analyzer.max_voltage.val = MAX_CHARGE_VOLT + 0.01f;
+	analyzer.max_voltage.val = MAX_CHARGE_VOLT - 0.01f;
 
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
 					true);
@@ -255,7 +256,7 @@ void test_balance_only_at_charge_limit(void)
 	TEST_ASSERT_FALSE(state_machine.balancing_active);
 	TEST_ASSERT_EQUAL(BALANCE_ONLY, state_machine.charging_stage);
 
-	// Finish cooldown and enter the matching short settle.
+	// Finish cooldown and enter the shared settle stage.
 	is_timer_expired_ExpectAndReturn(&state_machine.balancing_active_timer,
 					false);
 	is_timer_expired_ExpectAndReturn(&state_machine.balancing_cooldown_timer,
@@ -264,7 +265,47 @@ void test_balance_only_at_charge_limit(void)
 	start_timer_Expect(&state_machine.charging_stage_timer, 60U * 1000U);
 
 	TEST_ASSERT_FALSE(sm_charging_check(&args));
-	TEST_ASSERT_EQUAL(SHORT_SETTLE, state_machine.charging_stage);
+	TEST_ASSERT_EQUAL(SETTLE, state_machine.charging_stage);
+
+	// BALANCE_ONLY changed the resume target from long to short charging.
+	analyzer.max_ocv.val = MAX_CHARGE_VOLT - 0.01f;
+	analyzer.delta_voltage = MAX_DELTA_V;
+	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
+					true);
+	cancel_timer_Expect(&state_machine.charging_stage_timer);
+
+	TEST_ASSERT_TRUE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(SHORT_CHARGE_UP, state_machine.charging_stage);
+}
+
+void test_balance_and_charge_uses_instantaneous_limit(void)
+{
+	state_machine.charging_stage = BALANCE_AND_CHARGE_UP;
+	state_machine.charge_current_request = CHARGING_CURRENT;
+	state_machine.balancing_active = true;
+	analyzer.max_ocv.val = MAX_CHARGE_VOLT;
+	analyzer.max_voltage.val = MAX_CHARGE_VOLT - 0.01f;
+
+	// A stored OCV at the target does not stop active charging by itself.
+	is_timer_expired_ExpectAndReturn(&state_machine.balancing_active_timer,
+					false);
+	is_timer_expired_ExpectAndReturn(&state_machine.balancing_cooldown_timer,
+					false);
+	is_timer_active_ExpectAndReturn(&state_machine.balancing_active_timer,
+				       true);
+
+	TEST_ASSERT_TRUE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(BALANCE_AND_CHARGE_UP,
+			  state_machine.charging_stage);
+
+	// The live voltage reaching the target changes to balance-only.
+	analyzer.max_voltage.val = MAX_CHARGE_VOLT;
+	cancel_timer_Expect(&state_machine.charging_stage_timer);
+
+	TEST_ASSERT_FALSE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(BALANCE_ONLY, state_machine.charging_stage);
+	TEST_ASSERT_EQUAL_FLOAT(0.0f,
+				state_machine.charge_current_request);
 }
 
 void test_charge_fault(void)
@@ -293,7 +334,7 @@ void test_handle_faulted_sends_zero_current_limits(void)
 void test_handle_charging_sends_zero_current_limits(void)
 {
 	state_machine.bms_state = CHARGING;
-	state_machine.charging_stage = LONG_SETTLE;
+	state_machine.charging_stage = SETTLE;
 
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
 					false);
@@ -311,11 +352,8 @@ void test_balancing(void)
 	state_machine.charging_stage = LONG_CHARGE_UP;
 	TEST_ASSERT_TRUE(sm_balancing_check(&args));
 
-	// Settle stages can start a new balancing cycle.
-	state_machine.charging_stage = LONG_SETTLE;
-	TEST_ASSERT_TRUE(sm_balancing_check(&args));
-
-	state_machine.charging_stage = SHORT_SETTLE;
+	// The settle stage can start a new balancing cycle.
+	state_machine.charging_stage = SETTLE;
 	TEST_ASSERT_TRUE(sm_balancing_check(&args));
 
 	// Charging-stage fault
@@ -356,6 +394,7 @@ int main(void)
 	RUN_TEST(test_short_charge_current_step_delay);
 	RUN_TEST(test_charge_done);
 	RUN_TEST(test_balance_only_at_charge_limit);
+	RUN_TEST(test_balance_and_charge_uses_instantaneous_limit);
 	RUN_TEST(test_charge_fault);
 	RUN_TEST(test_handle_faulted_sends_zero_current_limits);
 	RUN_TEST(test_handle_charging_sends_zero_current_limits);

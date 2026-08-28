@@ -19,8 +19,8 @@ static fault_eval_t fault_eval_table[NUM_FAULTS];
 static _Atomic uint32_t severity_mask = 0;
 static _Atomic uint32_t fault_flags = 0;
 
-// Return settle stage for the shared balancing states.
-static charge_stage_t balance_settle_stage = LONG_SETTLE;
+// Charging stage to resume if the pack is below the target after settling.
+static charge_stage_t resume_charge_stage = LONG_CHARGE_UP;
 
 #define LONG_CHARGE_DURATION_MS        (15U * 60U * 1000U)
 #define CHARGE_SETTLE_DURATION_MS      (60U * 1000U)
@@ -45,10 +45,9 @@ static void set_charging_stage(state_machine_t *state_machine,
 
 static float get_charging_current(state_machine_args_t *state_machine_args);
 
-static bool start_balance_stage(state_machine_args_t *state_machine_args,
-				charge_stage_t settle_stage);
+static bool start_balance_stage(state_machine_args_t *state_machine_args);
 
-static charge_stage_t get_balance_stage(float max_ocv, float max_voltage);
+static charge_stage_t get_balance_stage(float max_cell_voltage);
 
 static void
 update_balance_stage(state_machine_args_t *state_machine_args);
@@ -73,28 +72,25 @@ static void set_charging_stage(state_machine_t *state_machine,
 
 	switch (stage) {
 		case LONG_CHARGE_UP:
+			resume_charge_stage = LONG_CHARGE_UP;
 			start_timer(&state_machine->charging_stage_timer,
 				    LONG_CHARGE_DURATION_MS);
 			break;
 		case SHORT_CHARGE_UP:
+			resume_charge_stage = SHORT_CHARGE_UP;
 			cancel_timer(&state_machine->charging_stage_timer);
 			state_machine->charge_current_request = CHARGING_CURRENT;
 			break;
 		case BALANCE_AND_CHARGE_UP:
-			if ((balance_settle_stage == SHORT_SETTLE) &&
-			    (state_machine->charge_current_request <= 0.0f)) {
-				state_machine->charge_current_request = CHARGING_CURRENT;
-				cancel_timer(&state_machine->charging_stage_timer);
-			}
 			// Uses balancing_active_timer and balancing_cooldown_timer.
 			break;
 		case BALANCE_ONLY:
+			resume_charge_stage = SHORT_CHARGE_UP;
 			state_machine->charge_current_request = 0.0f;
 			cancel_timer(&state_machine->charging_stage_timer);
 			// Uses balancing_active_timer and balancing_cooldown_timer.
 			break;
-		case LONG_SETTLE:
-		case SHORT_SETTLE:
+		case SETTLE:
 			start_timer(&state_machine->charging_stage_timer,
 				    CHARGE_SETTLE_DURATION_MS);
 			break;
@@ -136,8 +132,7 @@ static float get_charging_current(state_machine_args_t *state_machine_args)
 	return requested_current;
 }
 
-static bool start_balance_stage(state_machine_args_t *state_machine_args,
-				charge_stage_t settle_stage)
+static bool start_balance_stage(state_machine_args_t *state_machine_args)
 {
 	state_machine_t *state_machine = state_machine_args->state_machine;
 	bool started = false;
@@ -146,9 +141,6 @@ static bool start_balance_stage(state_machine_args_t *state_machine_args,
 	if (sm_balancing_check(state_machine_args) &&
 	    handle_balance_cells(state_machine_args->analyzer,
 				 state_machine_args->acc_data)) {
-		// Return to the matching long or short settle after cooldown.
-		balance_settle_stage = settle_stage;
-
 		cancel_timer(&state_machine->balancing_active_timer);
 		cancel_timer(&state_machine->balancing_cooldown_timer);
 		start_timer(&state_machine->balancing_active_timer,
@@ -160,12 +152,11 @@ static bool start_balance_stage(state_machine_args_t *state_machine_args,
 	return started;
 }
 
-static charge_stage_t get_balance_stage(float max_ocv, float max_voltage)
+static charge_stage_t get_balance_stage(float max_cell_voltage)
 {
 	charge_stage_t stage = BALANCE_AND_CHARGE_UP;
 
-	if ((max_ocv >= MAX_CHARGE_VOLT) ||
-	    (max_voltage >= MAX_CHARGE_VOLT)) {
+	if (max_cell_voltage >= MAX_CHARGE_VOLT) {
 		stage = BALANCE_ONLY;
 	}
 
@@ -183,10 +174,10 @@ static void update_balance_stage(state_machine_args_t *state_machine_args)
 			    BALANCE_COOLDOWN_DURATION_MS);
 		state_machine->balancing_active = false;
 	} else if (is_timer_expired(&state_machine->balancing_cooldown_timer)) {
-		// Enter the settle stage saved when balancing started.
+		// Enter the shared settle stage after cooldown.
 		cancel_timer(&state_machine->balancing_cooldown_timer);
 		state_machine->balancing_active = false;
-		set_charging_stage(state_machine, balance_settle_stage);
+		set_charging_stage(state_machine, SETTLE);
 	} else {
 		state_machine->balancing_active =
 			is_timer_active(&state_machine->balancing_active_timer);
@@ -195,6 +186,7 @@ static void update_balance_stage(state_machine_args_t *state_machine_args)
 
 void init_boot(state_machine_args_t *state_machine_args)
 {
+	resume_charge_stage = LONG_CHARGE_UP;
 	state_machine_args->state_machine->bms_state = BOOT;
 	state_machine_args->state_machine->balancing_active = false;
 	state_machine_args->state_machine->is_charger_connected = false;
@@ -239,7 +231,7 @@ void handle_ready(state_machine_args_t *state_machine_args)
 
 void init_charging(state_machine_args_t *state_machine_args)
 {
-	balance_settle_stage = LONG_SETTLE;
+	resume_charge_stage = LONG_CHARGE_UP;
 	set_charging_stage(state_machine_args->state_machine, LONG_CHARGE_UP);
 	state_machine_args->state_machine->charger_output_disabled = false;
 	state_machine_args->state_machine->charge_current_request = 0.0f;
@@ -530,11 +522,10 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 			case LONG_CHARGE_UP:
 				if (max_voltage >= MAX_CHARGE_VOLT) {
 					next_stage = SHORT_CHARGE_UP;
-				} else if (start_balance_stage(state_machine_args,
-							       LONG_SETTLE)) {
-					next_stage = get_balance_stage(max_ocv, max_voltage);
+				} else if (start_balance_stage(state_machine_args)) {
+					next_stage = get_balance_stage(max_voltage);
 				} else if (is_timer_expired(state_timer)) {
-					next_stage = LONG_SETTLE;
+					next_stage = SETTLE;
 				}
 				break;
 
@@ -544,16 +535,14 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 				     SHORT_CHARGE_CURRENT_STEP) &&
 				    (!is_timer_active(state_timer) ||
 				     is_timer_expired(state_timer))) {
-					next_stage = SHORT_SETTLE;
-				} else if (start_balance_stage(state_machine_args,
-							       SHORT_SETTLE)) {
-					next_stage = get_balance_stage(max_ocv, max_voltage);
+					next_stage = SETTLE;
+				} else if (start_balance_stage(state_machine_args)) {
+					next_stage = get_balance_stage(max_voltage);
 				}
 				break;
 
 			case BALANCE_AND_CHARGE_UP:
-				if ((max_ocv >= MAX_CHARGE_VOLT) ||
-				    (max_voltage >= MAX_CHARGE_VOLT)) {
+				if (max_voltage >= MAX_CHARGE_VOLT) {
 					next_stage = BALANCE_ONLY;
 				} else {
 					update_balance_stage(state_machine_args);
@@ -566,32 +555,16 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 				next_stage = state_machine->charging_stage;
 				break;
 
-			case LONG_SETTLE:
+			case SETTLE:
 				// Recalculate balancing before resuming or completing charge.
 				state_machine->balancing_active = false;
 				if (is_timer_expired(state_timer)) {
-					if (start_balance_stage(
-							   state_machine_args, LONG_SETTLE)) {
-						next_stage = get_balance_stage(max_ocv, max_voltage);
+					if (start_balance_stage(state_machine_args)) {
+						next_stage = get_balance_stage(max_ocv);
 					} else if (max_ocv >= MAX_CHARGE_VOLT) {
 						next_stage = DONE;
 					} else {
-						next_stage = LONG_CHARGE_UP;
-					}
-				}
-				break;
-
-			case SHORT_SETTLE:
-				// Recalculate balancing before resuming or completing charge.
-				state_machine->balancing_active = false;
-				if (is_timer_expired(state_timer)) {
-					if (start_balance_stage(
-							   state_machine_args, SHORT_SETTLE)) {
-						next_stage = get_balance_stage(max_ocv, max_voltage);
-					} else if (max_ocv >= MAX_CHARGE_VOLT) {
-						next_stage = DONE;
-					} else {
-						next_stage = SHORT_CHARGE_UP;
+						next_stage = resume_charge_stage;
 					}
 				}
 				break;

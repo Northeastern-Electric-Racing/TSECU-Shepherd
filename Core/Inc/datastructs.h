@@ -359,9 +359,8 @@ typedef struct {
 
 typedef enum {
 	LONG_CHARGE_UP,
-	LONG_SETTLE,
 	SHORT_CHARGE_UP,
-	SHORT_SETTLE,
+	SETTLE,
 	DONE,
 	FAULT,
 	BALANCE_AND_CHARGE_UP,
