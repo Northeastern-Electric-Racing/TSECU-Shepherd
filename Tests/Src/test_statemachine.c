@@ -38,7 +38,6 @@ void setUp(void)
 	analyzer.min_ocv.val = 2.6f;
 	analyzer.max_ocv.val = 4.0f;
 	analyzer.max_voltage.val = 4.0f;
-	analyzer.delta_voltage = MAX_DELTA_V + 0.01f;
 	peripherals.shutdown_active = true;
 	mutex_get_IgnoreAndReturn(0);
 	mutex_put_IgnoreAndReturn(0);
@@ -91,7 +90,6 @@ void test_eval_table(void)
 void test_long_charge_cycle(void)
 {
 	state_machine.charging_stage = LONG_CHARGE_UP;
-	analyzer.delta_voltage = MAX_DELTA_V;
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
 					true);
 	start_timer_Expect(&state_machine.charging_stage_timer, 60U * 1000U);
@@ -138,7 +136,6 @@ void test_short_charge_current_step_delay(void)
 	state_machine.charge_current_request = CHARGING_CURRENT;
 	analyzer.max_ocv.val = MAX_CHARGE_VOLT - 0.01f;
 	analyzer.max_voltage.val = MAX_CHARGE_VOLT;
-	analyzer.delta_voltage = MAX_DELTA_V;
 
 	// The first step from 5 A to 4 A is immediate because the step timer is inactive.
 	is_timer_active_ExpectAndReturn(&state_machine.charging_stage_timer,
@@ -210,7 +207,6 @@ void test_charge_done(void)
 {
 	state_machine.charging_stage = SETTLE;
 	analyzer.max_ocv.val = MAX_CHARGE_VOLT;
-	analyzer.delta_voltage = MAX_DELTA_V;
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
 					true);
 
@@ -218,7 +214,6 @@ void test_charge_done(void)
 	TEST_ASSERT_EQUAL(DONE, state_machine.charging_stage);
 
 	// DONE is terminal even if imbalance is detected later.
-	analyzer.delta_voltage = MAX_DELTA_V + 0.01f;
 	TEST_ASSERT_FALSE(sm_charging_check(&args));
 	TEST_ASSERT_EQUAL(DONE, state_machine.charging_stage);
 }
@@ -269,7 +264,6 @@ void test_balance_only_at_charge_limit(void)
 
 	// BALANCE_ONLY changed the resume target from long to short charging.
 	analyzer.max_ocv.val = MAX_CHARGE_VOLT - 0.01f;
-	analyzer.delta_voltage = MAX_DELTA_V;
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
 					true);
 	cancel_timer_Expect(&state_machine.charging_stage_timer);
@@ -362,9 +356,9 @@ void test_balancing(void)
 
 	// Low voltage
 	state_machine.charging_stage = LONG_CHARGE_UP;
-	analyzer.max_voltage.val = BAL_MIN_V - 0.01f;
+	analyzer.max_ocv.val = BAL_MIN_V - 0.01f;
 	TEST_ASSERT_FALSE(sm_balancing_check(&args));
-	analyzer.max_voltage.val = BAL_MIN_V;
+	analyzer.max_ocv.val = BAL_MIN_V;
 
 	// Balancing remains available above the charge limit until hard fault.
 	analyzer.max_voltage.val = MAX_CHARGE_VOLT + 0.01f;
@@ -372,11 +366,6 @@ void test_balancing(void)
 	analyzer.max_voltage.val = MAX_CHARGE_VOLT_FLT;
 	TEST_ASSERT_FALSE(sm_balancing_check(&args));
 	analyzer.max_voltage.val = BAL_MIN_V;
-
-	// Low voltage delta
-	analyzer.delta_voltage = MAX_DELTA_V;
-	TEST_ASSERT_FALSE(sm_balancing_check(&args));
-	analyzer.delta_voltage = MAX_DELTA_V + 0.01f;
 
 	// Shutdown inactive
 	peripherals.shutdown_active = false;

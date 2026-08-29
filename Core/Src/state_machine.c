@@ -598,24 +598,23 @@ bool sm_balancing_check(state_machine_args_t *state_machine_args)
 	state_machine_t *state_machine = state_machine_args->state_machine;
 	bool balancing_allowed = false;
 	bool shutdown_active = true;
+	float max_ocv = 0.0f;
 	float max_voltage = 0.0f;
-	float delta_voltage = 0.0f;
 	charge_stage_t charging_stage = FAULT;
 
 	mutex_get(&analyzer_mutex);
+	max_ocv = analyzer->max_ocv.val;
 	max_voltage = analyzer->max_voltage.val;
-	delta_voltage = analyzer->delta_voltage;
 	mutex_put(&analyzer_mutex);
 
 	mutex_get(&state_mutex);
 	charging_stage = state_machine->charging_stage;
 	mutex_put(&state_mutex);
 
-	// Use instantaneous pack limits; cell selection still uses stored OCV.
+	// Use OCV for balancing eligibility and instantaneous voltage for safety.
 	if ((charging_stage != FAULT) &&
-	    (max_voltage >= BAL_MIN_V) &&
-	    (max_voltage < MAX_CHARGE_VOLT_FLT) &&
-	    (delta_voltage > MAX_DELTA_V)) {
+	    (max_ocv >= BAL_MIN_V) &&
+	    (max_voltage < MAX_CHARGE_VOLT_FLT)) {
 		mutex_get(&shutdown_mutex);
 		shutdown_active =
 			state_machine_args->peripherals->shutdown_active;
