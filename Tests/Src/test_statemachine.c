@@ -90,6 +90,7 @@ void test_eval_table(void)
 void test_long_charge_cycle(void)
 {
 	state_machine.charging_stage = LONG_CHARGE_UP;
+	handle_balance_cells_ExpectAndReturn(&analyzer, &acc_data, false);
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
 					true);
 	start_timer_Expect(&state_machine.charging_stage_timer, 60U * 1000U);
@@ -99,6 +100,7 @@ void test_long_charge_cycle(void)
 
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
 					true);
+	handle_balance_cells_ExpectAndReturn(&analyzer, &acc_data, false);
 	start_timer_Expect(&state_machine.charging_stage_timer,
 			   15U * 60U * 1000U);
 
@@ -138,6 +140,7 @@ void test_short_charge_current_step_delay(void)
 	analyzer.max_voltage.val = MAX_CHARGE_VOLT;
 
 	// The first step from 5 A to 4 A is immediate because the step timer is inactive.
+	handle_balance_cells_ExpectAndReturn(&analyzer, &acc_data, false);
 	is_timer_active_ExpectAndReturn(&state_machine.charging_stage_timer,
 				       false);
 	is_timer_expired_ExpectAndReturn(&state_machine.charger_message_timer,
@@ -158,6 +161,7 @@ void test_short_charge_current_step_delay(void)
 				state_machine.charge_current_request);
 
 	// Before five seconds expires, the requested current remains at 4 A.
+	handle_balance_cells_ExpectAndReturn(&analyzer, &acc_data, false);
 	is_timer_active_ExpectAndReturn(&state_machine.charging_stage_timer,
 				       true);
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
@@ -179,6 +183,7 @@ void test_short_charge_current_step_delay(void)
 				state_machine.charge_current_request);
 
 	// Once five seconds expires, take the next 1 A step and restart the timer.
+	handle_balance_cells_ExpectAndReturn(&analyzer, &acc_data, false);
 	is_timer_active_ExpectAndReturn(&state_machine.charging_stage_timer,
 				       true);
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
@@ -209,6 +214,7 @@ void test_charge_done(void)
 	analyzer.max_ocv.val = MAX_CHARGE_VOLT;
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
 					true);
+	handle_balance_cells_ExpectAndReturn(&analyzer, &acc_data, false);
 
 	TEST_ASSERT_FALSE(sm_charging_check(&args));
 	TEST_ASSERT_EQUAL(DONE, state_machine.charging_stage);
@@ -266,6 +272,7 @@ void test_balance_only_at_charge_limit(void)
 	analyzer.max_ocv.val = MAX_CHARGE_VOLT - 0.01f;
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
 					true);
+	handle_balance_cells_ExpectAndReturn(&analyzer, &acc_data, false);
 	cancel_timer_Expect(&state_machine.charging_stage_timer);
 
 	TEST_ASSERT_TRUE(sm_charging_check(&args));
