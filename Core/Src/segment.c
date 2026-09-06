@@ -64,19 +64,20 @@ static bool update_chip_balance_thermal_limits(
 
 		thermal_state->chip_die_too_hot[chip] =
 			update_active_high_hysteresis(
-				die_temp[chip], BALANCE_DIE_STOP_TEMP,
-				BALANCE_DIE_RESTART_TEMP,
+				die_temp[chip], BALANCE_CHIP_DIE_DISABLE_TEMP,
+				BALANCE_CHIP_DIE_ENABLE_TEMP,
 				thermal_state->chip_die_too_hot[chip]);
 		thermal_state->chip_onboard_therm_too_hot[chip] =
 			update_active_high_hysteresis(
-				chip_temp[chip], BALANCE_CHIP_STOP_TEMP,
-				BALANCE_CHIP_RESTART_TEMP,
+				chip_temp[chip],
+				BALANCE_CHIP_ONBOARD_DISABLE_TEMP,
+				BALANCE_CHIP_ONBOARD_ENABLE_TEMP,
 				thermal_state->chip_onboard_therm_too_hot[chip]);
 		thermal_state->balancing_resistor_too_hot[chip] =
 			update_active_high_hysteresis(
 				resistor_temp[chip],
-				BALANCE_RESISTOR_STOP_TEMP,
-				BALANCE_RESISTOR_RESTART_TEMP,
+				BALANCE_RESISTOR_DISABLE_TEMP,
+				BALANCE_RESISTOR_ENABLE_TEMP,
 				thermal_state
 					->balancing_resistor_too_hot[chip]);
 
