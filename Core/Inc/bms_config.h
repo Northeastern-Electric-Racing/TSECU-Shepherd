@@ -17,8 +17,15 @@
 // Firmware limits
 #define MAX_TEMP    60 /* Celsius */
 #define MIN_TEMP    -40 /* Celsius */
-#define BAL_MIN_V       4.00f
-#define BALANCE_DELTA_V 0.02f
+#define BAL_MIN_V                     4.05f
+#define BALANCE_START_DELTA_V         0.020f
+#define BALANCE_STOP_DELTA_V          0.015f
+#define BALANCE_DIE_STOP_TEMP         55.0f
+#define BALANCE_DIE_RESTART_TEMP      50.0f
+#define BALANCE_CHIP_STOP_TEMP        55.0f
+#define BALANCE_CHIP_RESTART_TEMP     50.0f
+#define BALANCE_RESISTOR_STOP_TEMP    80.0f
+#define BALANCE_RESISTOR_RESTART_TEMP 60.0f
 
 /* Molicel P50B Cell Specifications */
 #define TYP_CAPICITY_AH	    5.0f /* Amp-hours */
@@ -28,7 +35,7 @@
 #define MIN_VOLT	    2.5f
 #define NOM_VOLT	    3.6f
 #define MAX_VOLT	    4.2f
-#define MAX_CHARGE_VOLT	    4.19f
+#define MAX_CHARGE_VOLT	    4.193f
 #define MAX_CHARGE_VOLT_FLT 4.25f // LOADED FAULT
 #define MAX_CHG_CURR	    25.0f /* Amps */
 #define MAX_DISCHG_CURR	    60.0f /* Amps */

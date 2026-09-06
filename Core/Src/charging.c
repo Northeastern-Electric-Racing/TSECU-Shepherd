@@ -186,9 +186,9 @@ bool handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data)
 				acc_data->discharge_config[chip][new_ocv_map[chip][cell].idex] = PWM_0_0_PCT;
 				continue;
 			}
-			/* Check if cell voltage is above (low + threshold) */
+			/* Continue balancing cells until they reach the stop threshold. */
 			if (new_ocv_map[chip][cell].val >
-			    (low + BALANCE_DELTA_V)) {
+			    (low + BALANCE_STOP_DELTA_V)) {
 				/* Balance cell */
 				acc_data->discharge_config // TODO: Mutex
 					[chip][new_ocv_map[chip][cell].idex] = duty_cycle;

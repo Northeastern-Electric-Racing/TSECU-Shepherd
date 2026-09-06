@@ -89,7 +89,8 @@ void test_pwm_duty_cycle(void)
 
 void test_balance_threshold(void)
 {
-	const float threshold = analyzer.min_ocv.val + 0.02f;
+	const float threshold =
+		analyzer.min_ocv.val + BALANCE_STOP_DELTA_V;
 
 	analyzer.chip_data[0].open_cell_voltage[3] = threshold + 0.001f;
 	analyzer.chip_data[0].open_cell_voltage[4] = threshold;

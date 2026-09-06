@@ -171,6 +171,16 @@ typedef struct {
 } hv_plate_t;
 
 /**
+ * @brief Thermal protection state for segment balancing.
+ */
+typedef struct {
+	bool chip_die_too_hot[NUM_CHIPS];
+	bool chip_onboard_therm_too_hot[NUM_CHIPS];
+	bool balancing_resistor_too_hot[NUM_CHIPS];
+	bool balance_blocked[NUM_CHIPS];
+} balancing_thermal_state_t;
+
+/**
  * @brief data read from the ADBMS6830 chips on our segments
  */
 typedef struct {
@@ -179,6 +189,8 @@ typedef struct {
 
 	// the current discharge configuration the state machine wants
 	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+
+	balancing_thermal_state_t balancing_thermal;
 } acc_data_t;
 
 /**
@@ -367,6 +379,15 @@ typedef enum {
 	BALANCE_ONLY
 } charge_stage_t;
 
+typedef struct {
+	charge_stage_t resume_charge_stage;
+	float resume_charge_current;
+	float short_current_step;
+	bool short_retry_used;
+	bool settled_from_short_charge;
+	bool balancing_needed;
+} charge_control_state_t;
+
 /**
  * @brief data for determine the current BMS State
  */
@@ -381,6 +402,7 @@ typedef struct {
 	nertimer_t charging_stage_timer;
 	charge_stage_t charging_stage;
 	float charge_current_request;
+	charge_control_state_t charge_control;
 
 	// balancing cycle timers
 	nertimer_t balancing_active_timer;

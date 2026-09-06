@@ -13,6 +13,83 @@
 #include "state_machine.h"
 #include "app_threadx.h"
 #include "main.h"
+#include "shep_mutexes.h"
+
+enum onboard_therm_index {
+	THERM_ALPHA_BALANCING_BANK = 0,
+	THERM_CHIPS,
+	THERM_BETA_BALANCING_BANK
+};
+
+static bool update_chip_balance_thermal_limits(
+	analyzer_t *analyzer, balancing_thermal_state_t *thermal_state)
+{
+	bool state_changed = false;
+	float die_temp[NUM_CHIPS] = { 0.0f };
+	float chip_temp[NUM_CHIPS] = { 0.0f };
+	float resistor_temp[NUM_CHIPS] = { 0.0f };
+
+	mutex_get(&analyzer_mutex);
+	for (uint8_t segment = 0U; segment < NUM_SEGMENTS; segment++) {
+		uint8_t alpha_chip = segment * NUM_CHIPS_PER_SEGMENT;
+		uint8_t beta_chip = alpha_chip + 1U;
+		chipdata_t *alpha_data = &analyzer->chip_data[alpha_chip];
+		chipdata_t *beta_data = &analyzer->chip_data[beta_chip];
+		float onboard_chip_temp =
+			alpha_data->on_board_temp[THERM_CHIPS];
+
+		die_temp[alpha_chip] = alpha_data->die_temp;
+		die_temp[beta_chip] = beta_data->die_temp;
+
+		// Both RAUX4 thermistors monitor the chips.
+		if (beta_data->on_board_temp[THERM_CHIPS] >
+		    onboard_chip_temp) {
+			onboard_chip_temp =
+				beta_data->on_board_temp[THERM_CHIPS];
+		}
+		chip_temp[alpha_chip] = onboard_chip_temp;
+		chip_temp[beta_chip] = onboard_chip_temp;
+
+		// Alpha RAUX3 monitors the Alpha balancing bank.
+		// Alpha RAUX5 monitors the Beta balancing bank.
+		resistor_temp[alpha_chip] =
+			alpha_data->on_board_temp[THERM_ALPHA_BALANCING_BANK];
+		resistor_temp[beta_chip] =
+			alpha_data->on_board_temp[THERM_BETA_BALANCING_BANK];
+	}
+	mutex_put(&analyzer_mutex);
+
+	for (uint8_t chip = 0U; chip < NUM_CHIPS; chip++) {
+		bool was_blocked = thermal_state->balance_blocked[chip];
+
+		thermal_state->chip_die_too_hot[chip] =
+			update_active_high_hysteresis(
+				die_temp[chip], BALANCE_DIE_STOP_TEMP,
+				BALANCE_DIE_RESTART_TEMP,
+				thermal_state->chip_die_too_hot[chip]);
+		thermal_state->chip_onboard_therm_too_hot[chip] =
+			update_active_high_hysteresis(
+				chip_temp[chip], BALANCE_CHIP_STOP_TEMP,
+				BALANCE_CHIP_RESTART_TEMP,
+				thermal_state->chip_onboard_therm_too_hot[chip]);
+		thermal_state->balancing_resistor_too_hot[chip] =
+			update_active_high_hysteresis(
+				resistor_temp[chip],
+				BALANCE_RESISTOR_STOP_TEMP,
+				BALANCE_RESISTOR_RESTART_TEMP,
+				thermal_state
+					->balancing_resistor_too_hot[chip]);
+
+		thermal_state->balance_blocked[chip] =
+			thermal_state->chip_die_too_hot[chip] ||
+			thermal_state->chip_onboard_therm_too_hot[chip] ||
+			thermal_state->balancing_resistor_too_hot[chip];
+		state_changed |=
+			was_blocked != thermal_state->balance_blocked[chip];
+	}
+
+	return state_changed;
+}
 
 /**
  * @brief Initialize a chip with our default values.
@@ -221,6 +298,7 @@ bool segment_is_balancing(cell_asic chips[NUM_CHIPS])
 }
 
 void segment_disable_balancing(cell_asic chips[NUM_CHIPS],
+			       balancing_thermal_state_t *thermal_state,
 			       SPI_HandleTypeDef *hspi)
 {
 	// Stop balancing before clearing the PWM configuration.
@@ -228,7 +306,8 @@ void segment_disable_balancing(cell_asic chips[NUM_CHIPS],
 
 	// Initializes all array elements to zero
 	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP] = { 0 };
-	segment_configure_balancing(chips, discharge_config, hspi);
+	segment_configure_balancing(chips, discharge_config, thermal_state,
+				    hspi);
 	segment_read_pwm_registers(chips, hspi);
 }
 
@@ -239,6 +318,7 @@ void segment_enable_balancing(cell_asic chips[NUM_CHIPS],
 }
 
 void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
+			      balancing_thermal_state_t *thermal_state,
 			      SPI_HandleTypeDef *hspi)
 {
 	// clang-format off
@@ -265,18 +345,24 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 	}
 	// clang-format on
 
-	segment_configure_balancing(chips, discharge_confg, hspi);
+	segment_configure_balancing(chips, discharge_confg, thermal_state, hspi);
 }
 
 void segment_configure_balancing(
 	cell_asic chips[NUM_CHIPS],
 	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP],
+	balancing_thermal_state_t *thermal_state,
 	SPI_HandleTypeDef *hspi)
 {
 	for (int chip = 0; chip < NUM_CHIPS; chip++) {
 		for (int cell = 0; cell < NUM_CELLS_PER_CHIP; cell++) {
-			set_cell_pwm(&chips[chip], cell,
-				     discharge_config[chip][cell]);
+			PWM_DUTY duty_cycle = discharge_config[chip][cell];
+
+			if (thermal_state->balance_blocked[chip]) {
+				duty_cycle = PWM_0_0_PCT;
+			}
+
+			set_cell_pwm(&chips[chip], cell, duty_cycle);
 		}
 	}
 	write_pwm_regs(chips, hspi);
@@ -425,12 +511,17 @@ void vGetSegmentData(ULONG thread_input)
 		current_state = state_machine->bms_state;
 		const bool charging = (current_state == CHARGING);
 		const bool balancing_active = state_machine->balancing_active;
+		const bool thermal_state_changed =
+			update_chip_balance_thermal_limits(
+				analyzer, &acc_data->balancing_thermal);
 
 		HAL_NVIC_DisableIRQ(FDCAN2_IT0_IRQn);
 
 		if ((prev_state != current_state && !charging) ||
 		    (prev_balancing_active && !balancing_active)) {
-			segment_disable_balancing(acc_data->chips, &hspi2);
+			segment_disable_balancing(
+				acc_data->chips, &acc_data->balancing_thermal,
+				&hspi2);
 		}
 
 		if (charging) {
@@ -464,6 +555,7 @@ void vGetSegmentData(ULONG thread_input)
 
 		if (charging && balancing_active &&
 		    ((!prev_balancing_active) ||
+		     thermal_state_changed ||
 		     (is_timer_expired(&pwm_timer) &&
 		      !is_timer_active(&pwm_timer)))) {
 			segment_mute(acc_data->chips, &hspi2);
@@ -471,6 +563,7 @@ void vGetSegmentData(ULONG thread_input)
 					&hspi2);
 			segment_configure_balancing(acc_data->chips,
 						    acc_data->discharge_config,
+						    &acc_data->balancing_thermal,
 						    &hspi2);
 			segment_read_pwm_registers(acc_data->chips, &hspi2);
 			segment_unmute(acc_data->chips, &hspi2);

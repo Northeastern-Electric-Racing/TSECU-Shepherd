@@ -38,6 +38,7 @@ void setUp(void)
 	analyzer.min_ocv.val = 2.6f;
 	analyzer.max_ocv.val = 4.0f;
 	analyzer.max_voltage.val = 4.0f;
+	analyzer.delt_ocv = BALANCE_START_DELTA_V + 0.01f;
 	peripherals.shutdown_active = true;
 	mutex_get_IgnoreAndReturn(0);
 	mutex_put_IgnoreAndReturn(0);
@@ -90,6 +91,7 @@ void test_eval_table(void)
 void test_long_charge_cycle(void)
 {
 	state_machine.charging_stage = LONG_CHARGE_UP;
+	analyzer.max_ocv.val = BAL_MIN_V;
 	handle_balance_cells_ExpectAndReturn(&analyzer, &acc_data, false);
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
 					true);
@@ -208,6 +210,46 @@ void test_short_charge_current_step_delay(void)
 				state_machine.charge_current_request);
 }
 
+void test_short_charge_retries_once(void)
+{
+	state_machine.charging_stage = SHORT_CHARGE_UP;
+	state_machine.charge_current_request = 1.0f;
+	analyzer.max_voltage.val = MAX_CHARGE_VOLT;
+
+	// Finish the initial taper and settle.
+	is_timer_active_ExpectAndReturn(&state_machine.charging_stage_timer,
+				       false);
+	start_timer_Expect(&state_machine.charging_stage_timer, 60U * 1000U);
+	TEST_ASSERT_FALSE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(SETTLE, state_machine.charging_stage);
+
+	// An incomplete settle starts one finer taper from the saved 1 A.
+	analyzer.max_voltage.val = MAX_CHARGE_VOLT - 0.01f;
+	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
+					true);
+	cancel_timer_Expect(&state_machine.charging_stage_timer);
+	TEST_ASSERT_TRUE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(SHORT_CHARGE_UP, state_machine.charging_stage);
+	TEST_ASSERT_EQUAL_FLOAT(1.0f,
+				state_machine.charge_current_request);
+
+	// Finish the retry at its final 0.2 A step.
+	state_machine.charge_current_request = 0.2f;
+	analyzer.max_voltage.val = MAX_CHARGE_VOLT;
+	is_timer_active_ExpectAndReturn(&state_machine.charging_stage_timer,
+				       false);
+	start_timer_Expect(&state_machine.charging_stage_timer, 60U * 1000U);
+	TEST_ASSERT_FALSE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(SETTLE, state_machine.charging_stage);
+
+	// A second incomplete settle remains stopped instead of retrying again.
+	analyzer.max_voltage.val = MAX_CHARGE_VOLT - 0.01f;
+	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
+					true);
+	TEST_ASSERT_FALSE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(SETTLE, state_machine.charging_stage);
+}
+
 void test_charge_done(void)
 {
 	state_machine.charging_stage = SETTLE;
@@ -251,7 +293,7 @@ void test_balance_only_at_charge_limit(void)
 					true);
 	cancel_timer_Expect(&state_machine.balancing_active_timer);
 	start_timer_Expect(&state_machine.balancing_cooldown_timer,
-			  3U * 60U * 1000U);
+			  2U * 60U * 1000U);
 
 	TEST_ASSERT_FALSE(sm_charging_check(&args));
 	TEST_ASSERT_FALSE(state_machine.balancing_active);
@@ -277,6 +319,109 @@ void test_balance_only_at_charge_limit(void)
 
 	TEST_ASSERT_TRUE(sm_charging_check(&args));
 	TEST_ASSERT_EQUAL(SHORT_CHARGE_UP, state_machine.charging_stage);
+	TEST_ASSERT_EQUAL_FLOAT(0.5f,
+				state_machine.charge_current_request);
+}
+
+void test_balance_charge_current(void)
+{
+	const float pack_voltage =
+		MAX_CHARGE_VOLT * (NUM_CELLS_PER_CHIP * 2) * NUM_SEGMENTS;
+
+	state_machine.bms_state = CHARGING;
+	state_machine.charging_stage = BALANCE_AND_CHARGE_UP;
+	state_machine.charge_current_request = CHARGING_CURRENT;
+	state_machine.balancing_active = true;
+
+	is_timer_expired_ExpectAndReturn(&state_machine.balancing_active_timer,
+					false);
+	is_timer_expired_ExpectAndReturn(&state_machine.balancing_cooldown_timer,
+					false);
+	is_timer_active_ExpectAndReturn(&state_machine.balancing_active_timer,
+				       true);
+	is_timer_expired_ExpectAndReturn(&state_machine.charger_message_timer,
+					false);
+	is_timer_active_ExpectAndReturn(&state_machine.charger_message_timer,
+				       false);
+	send_bms_charge_message_send_ExpectAndReturn(pack_voltage, 0.5f, 0x0U,
+					     0U);
+	start_timer_Expect(&state_machine.charger_message_timer, 1000U);
+	send_max_dc_current_command_ExpectAndReturn(0.0f, 0U);
+	send_max_dc_brake_current_command_ExpectAndReturn(0.0f, 0U);
+
+	handle_charging(&args);
+
+	TEST_ASSERT_EQUAL_FLOAT(0.5f,
+				state_machine.charge_current_request);
+
+	// Stop charging as soon as the active balancing window ends.
+	is_timer_expired_ExpectAndReturn(&state_machine.balancing_active_timer,
+					true);
+	cancel_timer_Expect(&state_machine.balancing_active_timer);
+	start_timer_Expect(&state_machine.balancing_cooldown_timer,
+			  2U * 60U * 1000U);
+	cancel_timer_Expect(&state_machine.charger_message_timer);
+	is_timer_expired_ExpectAndReturn(&state_machine.charger_message_timer,
+					false);
+	is_timer_active_ExpectAndReturn(&state_machine.charger_message_timer,
+				       false);
+	send_bms_charge_message_send_ExpectAndReturn(pack_voltage, 0.0f, 0x0U,
+					     0U);
+	start_timer_Expect(&state_machine.charger_message_timer, 1000U);
+	send_max_dc_current_command_ExpectAndReturn(0.0f, 0U);
+	send_max_dc_brake_current_command_ExpectAndReturn(0.0f, 0U);
+
+	handle_charging(&args);
+
+	TEST_ASSERT_EQUAL_FLOAT(0.0f,
+				state_machine.charge_current_request);
+	TEST_ASSERT_TRUE(state_machine.charger_output_disabled);
+}
+
+void test_balance_restores_short_charge_current(void)
+{
+	state_machine.charging_stage = SHORT_CHARGE_UP;
+	state_machine.charge_current_request = 3.0f;
+	analyzer.max_ocv.val = BAL_MIN_V;
+
+	handle_balance_cells_ExpectAndReturn(&analyzer, &acc_data, true);
+	cancel_timer_Expect(&state_machine.balancing_active_timer);
+	cancel_timer_Expect(&state_machine.balancing_cooldown_timer);
+	start_timer_Expect(&state_machine.balancing_active_timer, 60U * 1000U);
+	cancel_timer_Expect(&state_machine.charger_message_timer);
+
+	TEST_ASSERT_TRUE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(BALANCE_AND_CHARGE_UP,
+			  state_machine.charging_stage);
+	TEST_ASSERT_EQUAL_FLOAT(0.5f,
+				state_machine.charge_current_request);
+
+	is_timer_expired_ExpectAndReturn(&state_machine.balancing_active_timer,
+					true);
+	cancel_timer_Expect(&state_machine.balancing_active_timer);
+	start_timer_Expect(&state_machine.balancing_cooldown_timer,
+			  2U * 60U * 1000U);
+	cancel_timer_Expect(&state_machine.charger_message_timer);
+	TEST_ASSERT_TRUE(sm_charging_check(&args));
+
+	is_timer_expired_ExpectAndReturn(&state_machine.balancing_active_timer,
+					false);
+	is_timer_expired_ExpectAndReturn(&state_machine.balancing_cooldown_timer,
+					true);
+	cancel_timer_Expect(&state_machine.balancing_cooldown_timer);
+	start_timer_Expect(&state_machine.charging_stage_timer, 60U * 1000U);
+	TEST_ASSERT_FALSE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(SETTLE, state_machine.charging_stage);
+
+	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
+					true);
+	handle_balance_cells_ExpectAndReturn(&analyzer, &acc_data, false);
+	cancel_timer_Expect(&state_machine.charging_stage_timer);
+
+	TEST_ASSERT_TRUE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(SHORT_CHARGE_UP, state_machine.charging_stage);
+	TEST_ASSERT_EQUAL_FLOAT(3.0f,
+				state_machine.charge_current_request);
 }
 
 void test_balance_and_charge_uses_instantaneous_limit(void)
@@ -351,6 +496,7 @@ void test_balancing(void)
 {
 	// Balancing allowed
 	state_machine.charging_stage = LONG_CHARGE_UP;
+	analyzer.max_ocv.val = BAL_MIN_V;
 	TEST_ASSERT_TRUE(sm_balancing_check(&args));
 
 	// The settle stage can start a new balancing cycle.
@@ -379,6 +525,58 @@ void test_balancing(void)
 	TEST_ASSERT_FALSE(sm_balancing_check(&args));
 }
 
+void test_balance_hysteresis(void)
+{
+	state_machine.charging_stage = LONG_CHARGE_UP;
+	analyzer.max_ocv.val = BAL_MIN_V;
+	analyzer.delt_ocv = BALANCE_START_DELTA_V;
+	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
+					false);
+
+	TEST_ASSERT_TRUE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(LONG_CHARGE_UP, state_machine.charging_stage);
+
+	// Crossing 20 mV starts balancing.
+	analyzer.delt_ocv = BALANCE_START_DELTA_V + 0.001f;
+	handle_balance_cells_ExpectAndReturn(&analyzer, &acc_data, true);
+	cancel_timer_Expect(&state_machine.balancing_active_timer);
+	cancel_timer_Expect(&state_machine.balancing_cooldown_timer);
+	start_timer_Expect(&state_machine.balancing_active_timer, 60U * 1000U);
+	cancel_timer_Expect(&state_machine.charger_message_timer);
+
+	TEST_ASSERT_TRUE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(BALANCE_AND_CHARGE_UP,
+			  state_machine.charging_stage);
+
+	// Once started, balancing continues below 20 mV.
+	state_machine.charging_stage = SETTLE;
+	state_machine.balancing_active = false;
+	analyzer.delt_ocv = 0.018f;
+	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
+					true);
+	handle_balance_cells_ExpectAndReturn(&analyzer, &acc_data, true);
+	cancel_timer_Expect(&state_machine.balancing_active_timer);
+	cancel_timer_Expect(&state_machine.balancing_cooldown_timer);
+	start_timer_Expect(&state_machine.balancing_active_timer, 60U * 1000U);
+	cancel_timer_Expect(&state_machine.charger_message_timer);
+
+	TEST_ASSERT_TRUE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(BALANCE_AND_CHARGE_UP,
+			  state_machine.charging_stage);
+
+	// Reaching 15 mV clears the latch and resumes charging.
+	state_machine.charging_stage = SETTLE;
+	state_machine.balancing_active = false;
+	analyzer.delt_ocv = BALANCE_STOP_DELTA_V;
+	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
+					true);
+	start_timer_Expect(&state_machine.charging_stage_timer,
+			   15U * 60U * 1000U);
+
+	TEST_ASSERT_TRUE(sm_charging_check(&args));
+	TEST_ASSERT_EQUAL(LONG_CHARGE_UP, state_machine.charging_stage);
+}
+
 int main(void)
 {
 	UNITY_BEGIN();
@@ -388,13 +586,17 @@ int main(void)
 	RUN_TEST(test_long_charge_cycle);
 	RUN_TEST(test_short_charge_cycle);
 	RUN_TEST(test_short_charge_current_step_delay);
+	RUN_TEST(test_short_charge_retries_once);
 	RUN_TEST(test_charge_done);
 	RUN_TEST(test_balance_only_at_charge_limit);
+	RUN_TEST(test_balance_charge_current);
+	RUN_TEST(test_balance_restores_short_charge_current);
 	RUN_TEST(test_balance_and_charge_uses_instantaneous_limit);
 	RUN_TEST(test_charge_fault);
 	RUN_TEST(test_handle_faulted_sends_zero_current_limits);
 	RUN_TEST(test_handle_charging_sends_zero_current_limits);
 	RUN_TEST(test_balancing);
+	RUN_TEST(test_balance_hysteresis);
 
 	return UNITY_END();
 }
