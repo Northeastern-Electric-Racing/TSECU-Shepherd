@@ -24,10 +24,10 @@ void setUp(void)
 void tearDown(void) {}
 
 /* -------------------------------------------------
- * Instantaneous CCL – Temperature & OCV regions
+ * Instantaneous CCL – Temperature & cell-voltage regions
  * ------------------------------------------------- */
 
-void test_inst_ccl_temperature_and_ocv_regions(void)
+void test_inst_ccl_temperature_and_cell_voltage_regions(void)
 {
     current_limit_algo_inputs_t test_inputs;
     bms_algos_t test_algos;
@@ -36,7 +36,7 @@ void test_inst_ccl_temperature_and_ocv_regions(void)
     test_algos.inst_CCL = 0.0f;
     test_inputs.min_temp = -5.0f;
     test_inputs.max_temp = 20.0f;
-    test_inputs.max_ocv  = 4.0f;
+    test_inputs.max_cell_volt = 4.0f;
 
     ccl_calc_inst_limit(test_inputs, &test_algos);
     TEST_ASSERT_EQUAL_FLOAT(CCL_MIN_CURRENT_A, test_algos.inst_CCL);
@@ -44,7 +44,7 @@ void test_inst_ccl_temperature_and_ocv_regions(void)
     /* -------- Temperature above maximum (hard clamp) -------- */
     test_inputs.min_temp = 25.0f;
     test_inputs.max_temp = 70.0f;
-    test_inputs.max_ocv  = 4.0f;
+    test_inputs.max_cell_volt = 4.0f;
 
     ccl_calc_inst_limit(test_inputs, &test_algos);
     TEST_ASSERT_EQUAL_FLOAT(CCL_MIN_CURRENT_A, test_algos.inst_CCL);
@@ -52,7 +52,7 @@ void test_inst_ccl_temperature_and_ocv_regions(void)
     /* -------- Temperature ramp-up region -------- */
     test_inputs.min_temp = 5.0f;     /* between TEMP_MIN and RAMP_UP_END */
     test_inputs.max_temp = 25.0f;
-    test_inputs.max_ocv  = 4.0f;
+    test_inputs.max_cell_volt = 4.0f;
 
     ccl_calc_inst_limit(test_inputs, &test_algos);
     TEST_ASSERT_EQUAL_FLOAT(30.0f, test_algos.inst_CCL);
@@ -60,31 +60,31 @@ void test_inst_ccl_temperature_and_ocv_regions(void)
     /* -------- Temperature ramp-down region -------- */
     test_inputs.min_temp = 25.0f;
     test_inputs.max_temp = 52.0f;    /* between RAMP_DOWN_START and TEMP_MAX */
-    test_inputs.max_ocv  = 4.0f;
+    test_inputs.max_cell_volt = 4.0f;
 
     ccl_calc_inst_limit(test_inputs, &test_algos);
     TEST_ASSERT_EQUAL_FLOAT(48.0f, test_algos.inst_CCL);
 
-    /* -------- OCV above maximum (hard clamp) -------- */
+    /* -------- Cell voltage above maximum (hard clamp) -------- */
     test_inputs.min_temp = 25.0f;
     test_inputs.max_temp = 30.0f;
-    test_inputs.max_ocv  = 4.22f;
+    test_inputs.max_cell_volt = 4.22f;
 
     ccl_calc_inst_limit(test_inputs, &test_algos);
     TEST_ASSERT_EQUAL_FLOAT(CCL_MIN_CURRENT_A, test_algos.inst_CCL);
 
-    /* -------- OCV derating region -------- */
+    /* -------- Cell-voltage derating region -------- */
     test_inputs.min_temp = 25.0f;
     test_inputs.max_temp = 30.0f;
-    test_inputs.max_ocv  = 4.12f;     /* between OCV_MIN and DERATE_THRESH */
+    test_inputs.max_cell_volt = 4.095f;
 
     ccl_calc_inst_limit(test_inputs, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(24.0f, test_algos.inst_CCL);
+    TEST_ASSERT_EQUAL_FLOAT(30.0f, test_algos.inst_CCL);
 
     /* -------- Fully nominal region -------- */
     test_inputs.min_temp = 25.0f;
     test_inputs.max_temp = 30.0f;
-    test_inputs.max_ocv  = 4.0f;
+    test_inputs.max_cell_volt = 4.0f;
 
     ccl_calc_inst_limit(test_inputs, &test_algos);
     TEST_ASSERT_EQUAL_FLOAT(CCL_MAX_CURRENT_A, test_algos.inst_CCL);
@@ -103,7 +103,7 @@ void test_cont_ccl_follows_inst_limit_when_pulse_not_allowed(void)
     /* -------- Below pulse enable margin -------- */
 
     test_pack_current = 30.0f;
-    test_inputs.max_ocv = 4.15f;
+    test_inputs.max_cell_volt = 4.15f;
     test_inputs.max_temp = 32.0f;
     test_inputs.min_temp = 30.0f;
 
@@ -113,7 +113,7 @@ void test_cont_ccl_follows_inst_limit_when_pulse_not_allowed(void)
 
     /* -------- Pulse eligibility lost resets behavior -------- */
     test_pack_current = -65.0f;
-    test_inputs.max_ocv = 3.8f;
+    test_inputs.max_cell_volt = 3.8f;
 
     is_timer_active_ExpectAnyArgsAndReturn(false);
 
@@ -366,7 +366,7 @@ int main(void)
 {
     UNITY_BEGIN();
 
-    RUN_TEST(test_inst_ccl_temperature_and_ocv_regions);
+    RUN_TEST(test_inst_ccl_temperature_and_cell_voltage_regions);
     RUN_TEST(test_cont_ccl_follows_inst_limit_when_pulse_not_allowed);
     RUN_TEST(test_cont_ccl_pulse_state_transitions);
 

@@ -34,8 +34,8 @@ void vBMSAlgorithms(ULONG thread_input)
 	for (;;) {
 		mutex_get(&analyzer_mutex);
 		current_limit_algo_inputs_t algo_inputs = {
-			.max_ocv = analyzer->max_ocv.val,
-			.min_ocv = analyzer->min_ocv.val,
+			.max_cell_volt = analyzer->max_ocv.val,
+			.min_cell_volt = analyzer->min_ocv.val,
 			.max_temp = sanitizer->max_sanitized_temp.val,
 			.min_temp = sanitizer->min_sanitized_temp.val
 		};

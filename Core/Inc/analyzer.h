@@ -39,7 +39,8 @@ void calc_pack_voltage_stats(analyzer_t *analyzer, acc_data_t *acc_data);
  * cell voltages.
  *
  */
-void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate);
+void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate,
+			    state_machine_t *state_machine);
 
 /**
  * @brief Calculate cell resistances using Rin = ( Voc - V )/I

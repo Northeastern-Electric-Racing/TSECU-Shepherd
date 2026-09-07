@@ -13,7 +13,7 @@
 #include "shep_mutexes.h"
 #include "soc.h"
 
-#define OCV_TIMER_DURATION 750 // in ticks
+#define OCV_TIMER_DURATION 1500 // in ms
 
 /**
  * @brief Open-wire threshold while the S-ADC switch is active.
@@ -312,49 +312,51 @@ void calc_cell_resistances(analyzer_t *analyzer, acc_data_t *acc_data,
 	}
 }
 
-void calc_open_cell_voltage(analyzer_t *analyzer, hv_plate_t *hv_plate)
+void calc_open_cell_voltage(analyzer_t *analyzer,
+			    hv_plate_t *hv_plate,
+			    state_machine_t *state_machine)
 {
 	static bool is_first_reading = true;
-	bool valid_cell_reading = !is_first_reading;
+	bool update_ocv = false;
+
+	// OCV requires low current with both charging and balancing disabled.
+	const bool ocv_update_allowed =
+		(fabsf(hv_plate->pack_current) < OCV_CURR_THRESH) &&
+		state_machine->charger_output_disabled &&
+		!state_machine->balancing_active;
 
 	if (is_first_reading) {
 		float last_cell =
 			analyzer->chip_data[NUM_CHIPS - 1]
 				.cell_voltages[NUM_CELLS_PER_CHIP - 1];
 
-		if (last_cell > 1 && last_cell < 5) {
+		if (last_cell > 1.0f && last_cell < 5.0f) {
 			is_first_reading = false;
-			valid_cell_reading = true;
-
-			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-				for (uint8_t cell = 0;
-				     cell < NUM_CELLS_PER_CHIP; cell++) {
-					analyzer->chip_data[chip]
-						.open_cell_voltage[cell] =
-						analyzer->chip_data[chip]
-							.cell_voltages[cell];
-				}
-			}
+			update_ocv = true;
 		}
 	}
 
-	if (valid_cell_reading &&
-	    fabsf(hv_plate->pack_current) < OCV_CURR_THRESH) {
+	if (ocv_update_allowed) {
 		if (is_timer_expired(&analyzer->ocvTimer)) {
-			for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
-				for (uint8_t cell = 0;
-				     cell < NUM_CELLS_PER_CHIP; cell++) {
-					analyzer->chip_data[chip]
-						.open_cell_voltage[cell] =
-						analyzer->chip_data[chip]
-							.cell_voltages[cell];
-				}
-			}
+			update_ocv = true;
 		} else if (!is_timer_active(&analyzer->ocvTimer)) {
-			start_timer(&analyzer->ocvTimer, OCV_TIMER_DURATION);
+			start_timer(&analyzer->ocvTimer,
+				    OCV_TIMER_DURATION);
 		}
 	} else {
 		cancel_timer(&analyzer->ocvTimer);
+	}
+
+	if (update_ocv) {
+		for (uint8_t chip = 0; chip < NUM_CHIPS; chip++) {
+			for (uint8_t cell = 0;
+			     cell < NUM_CELLS_PER_CHIP; cell++) {
+				analyzer->chip_data[chip]
+					.open_cell_voltage[cell] =
+					analyzer->chip_data[chip]
+						.cell_voltages[cell];
+			}
+		}
 	}
 }
 
@@ -471,7 +473,7 @@ void vAnalyzer(ULONG thread_input)
 		calc_cell_temps(analyzer, acc_data);
 		calc_pack_temps(analyzer, acc_data);
 		calc_cell_voltages(analyzer, acc_data, state_machine);
-		calc_open_cell_voltage(analyzer, hv_plate);
+		calc_open_cell_voltage(analyzer, hv_plate, state_machine);
 		calc_pack_voltage_stats(analyzer, acc_data);
 		calc_cell_resistances(analyzer, acc_data, hv_plate);
 		detect_cell_open_wire(analyzer, acc_data, state_machine);

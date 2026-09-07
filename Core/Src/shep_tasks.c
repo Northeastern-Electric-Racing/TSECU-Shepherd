@@ -575,7 +575,7 @@ uint8_t shep_threads_init(TX_BYTE_POOL *byte_pool)
 		.size = 2048, /* Stack Size (in bytes) */
 		.priority = 1, /* Priority */
 		.threshold = 0, /* Preemption Threshold */
-		.thread_input = (ULONG)&hv_plate, /* Thread Args */
+		.thread_input = (ULONG)&state_machine_args, /* Thread Args */
 		.time_slice = TX_NO_TIME_SLICE, /* Time Slice */
 		.auto_start = TX_AUTO_START, /* Auto Start */
 		.function = vPrecharge, /* Thread Function */

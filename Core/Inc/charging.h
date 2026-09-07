@@ -31,7 +31,8 @@ PWM_DUTY pwm_duty_cycle_get();
  *
  * @param analyzer general Analyzer struct for processed cell data
  * @param acc_data segment data
+ * @return true if at least one cell needs balancing, otherwise false
  */
-void handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data);
+bool handle_balance_cells(analyzer_t *analyzer, acc_data_t *acc_data);
 
 #endif

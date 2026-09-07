@@ -171,6 +171,16 @@ typedef struct {
 } hv_plate_t;
 
 /**
+ * @brief Thermal protection state for segment balancing.
+ */
+typedef struct {
+	bool chip_die_too_hot[NUM_CHIPS];
+	bool chip_onboard_therm_too_hot[NUM_CHIPS];
+	bool balancing_resistor_too_hot[NUM_CHIPS];
+	bool balance_blocked[NUM_CHIPS];
+} balancing_thermal_state_t;
+
+/**
  * @brief data read from the ADBMS6830 chips on our segments
  */
 typedef struct {
@@ -179,6 +189,8 @@ typedef struct {
 
 	// the current discharge configuration the state machine wants
 	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP];
+
+	balancing_thermal_state_t balancing_thermal;
 } acc_data_t;
 
 /**
@@ -325,8 +337,8 @@ typedef enum {
 typedef struct {
 	float min_temp;
 	float max_temp;
-	float min_ocv;
-	float max_ocv;
+	float min_cell_volt;
+	float max_cell_volt;
 } current_limit_algo_inputs_t;
 
 /**
@@ -359,12 +371,20 @@ typedef struct {
 
 typedef enum {
 	LONG_CHARGE_UP,
-	LONG_SETTLE,
 	SHORT_CHARGE_UP,
-	SHORT_SETTLE,
+	SETTLE,
 	DONE,
-	FAULT
+	FAULT,
+	BALANCE_AND_CHARGE_UP,
+	BALANCE_ONLY
 } charge_stage_t;
+
+typedef struct {
+	charge_stage_t resume_charge_stage;
+	float resume_charge_current;
+	float short_current_step;
+	bool balancing_needed;
+} charge_control_state_t;
 
 /**
  * @brief data for determine the current BMS State
@@ -379,9 +399,17 @@ typedef struct {
 	// charge settling timers
 	nertimer_t charging_stage_timer;
 	charge_stage_t charging_stage;
+	float charge_current_request;
+	charge_control_state_t charge_control;
+
+	// balancing cycle timers
+	nertimer_t balancing_active_timer;
+	nertimer_t balancing_cooldown_timer;
 
 	// charging message timer for telemetry
 	nertimer_t charger_message_timer;
+	// True when the BMS is commanding no charger output.
+	bool charger_output_disabled;
 
 	bool segment_comms_fault_flag;
 	bool hv_plate_comms_fault_flag;

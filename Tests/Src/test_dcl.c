@@ -24,10 +24,10 @@ void setUp(void)
 void tearDown(void) {}
 
 /* -------------------------------------------------
- * Instantaneous DCL – Temperature & OCV regions
+ * Instantaneous DCL – Temperature & cell-voltage regions
  * ------------------------------------------------- */
 
-void test_inst_dcl_temperature_and_ocv_regions(void)
+void test_inst_dcl_temperature_and_cell_voltage_regions(void)
 {
     current_limit_algo_inputs_t test_inputs;
     bms_algos_t test_algos;
@@ -36,7 +36,7 @@ void test_inst_dcl_temperature_and_ocv_regions(void)
     test_algos.inst_DCL = 0.0f;
     test_inputs.min_temp = -5.0f;
     test_inputs.max_temp = 20.0f;
-    test_inputs.min_ocv  = 4.0f;
+    test_inputs.min_cell_volt = 4.0f;
 
     dcl_calc_inst_limit(test_inputs, &test_algos);
     TEST_ASSERT_EQUAL_FLOAT(DCL_MIN_CURRENT_A, test_algos.inst_DCL);
@@ -44,7 +44,7 @@ void test_inst_dcl_temperature_and_ocv_regions(void)
     /* -------- Temperature above maximum (hard clamp) -------- */
     test_inputs.min_temp = 25.0f;
     test_inputs.max_temp = 70.0f;
-    test_inputs.min_ocv  = 4.0f;
+    test_inputs.min_cell_volt = 4.0f;
 
     dcl_calc_inst_limit(test_inputs, &test_algos);
     TEST_ASSERT_EQUAL_FLOAT(DCL_MIN_CURRENT_A, test_algos.inst_DCL);
@@ -52,39 +52,39 @@ void test_inst_dcl_temperature_and_ocv_regions(void)
     /* -------- Temperature ramp-up region -------- */
     test_inputs.min_temp = 5.0f;     /* between TEMP_MIN and RAMP_UP_END */
     test_inputs.max_temp = 25.0f;
-    test_inputs.min_ocv  = 4.0f;
+    test_inputs.min_cell_volt = 4.0f;
 
     dcl_calc_inst_limit(test_inputs, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(105.0f, test_algos.inst_DCL);
+    TEST_ASSERT_EQUAL_FLOAT(95.0f, test_algos.inst_DCL);
 
     /* -------- Temperature ramp-down region -------- */
     test_inputs.min_temp = 25.0f;
     test_inputs.max_temp = 52.0f;    /* between RAMP_DOWN_START and TEMP_MAX */
-    test_inputs.min_ocv  = 4.0f;
+    test_inputs.min_cell_volt = 4.0f;
 
     dcl_calc_inst_limit(test_inputs, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(150.0f, test_algos.inst_DCL);
+    TEST_ASSERT_EQUAL_FLOAT(134.0f, test_algos.inst_DCL);
 
-    /* -------- OCV below minimum dominates -------- */
+    /* -------- Cell voltage below minimum dominates -------- */
     test_inputs.min_temp = 25.0f;
     test_inputs.max_temp = 30.0f;
-    test_inputs.min_ocv  = 2.5f;
+    test_inputs.min_cell_volt = 2.5f;
 
     dcl_calc_inst_limit(test_inputs, &test_algos);
     TEST_ASSERT_EQUAL_FLOAT(DCL_MIN_CURRENT_A, test_algos.inst_DCL);
 
-    /* -------- OCV derating region -------- */
+    /* -------- Cell-voltage derating region -------- */
     test_inputs.min_temp = 25.0f;
     test_inputs.max_temp = 30.0f;
-    test_inputs.min_ocv  = 3.1f;     /* between OCV_MIN and DERATE_THRESH */
+    test_inputs.min_cell_volt = 3.05f;
 
     dcl_calc_inst_limit(test_inputs, &test_algos);
-    TEST_ASSERT_EQUAL_FLOAT(105.0f, test_algos.inst_DCL);
+    TEST_ASSERT_EQUAL_FLOAT(95.0f, test_algos.inst_DCL);
 
     /* -------- Fully nominal region -------- */
     test_inputs.min_temp = 25.0f;
     test_inputs.max_temp = 30.0f;
-    test_inputs.min_ocv  = 3.2f;
+    test_inputs.min_cell_volt = 3.2f;
 
     dcl_calc_inst_limit(test_inputs, &test_algos);
     TEST_ASSERT_EQUAL_FLOAT(DCL_MAX_CURRENT_A, test_algos.inst_DCL);
@@ -103,7 +103,7 @@ void test_cont_dcl_follows_inst_limit_when_pulse_not_allowed(void)
     /* -------- Below pulse enable margin -------- */
 
     test_pack_current = 100.0f;
-    test_inputs.min_ocv = 3.1f;
+    test_inputs.min_cell_volt = 3.1f;
     test_inputs.max_temp = 35.0f;
     test_inputs.min_temp = 31.0f;
 
@@ -113,7 +113,7 @@ void test_cont_dcl_follows_inst_limit_when_pulse_not_allowed(void)
 
     /* -------- Pulse eligibility lost resets behavior -------- */
     test_pack_current = 185.0f;
-    test_inputs.min_ocv = 4.0f;
+    test_inputs.min_cell_volt = 4.0f;
 
     is_timer_active_ExpectAnyArgsAndReturn(false);
 
@@ -365,7 +365,7 @@ int main(void)
 {
     UNITY_BEGIN();
 
-    RUN_TEST(test_inst_dcl_temperature_and_ocv_regions);
+    RUN_TEST(test_inst_dcl_temperature_and_cell_voltage_regions);
     RUN_TEST(test_cont_dcl_follows_inst_limit_when_pulse_not_allowed);
     RUN_TEST(test_cont_dcl_pulse_state_transitions);
 

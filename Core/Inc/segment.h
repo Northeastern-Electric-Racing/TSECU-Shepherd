@@ -6,6 +6,7 @@
 #include "adBms6830Data.h"
 #include <stdbool.h>
 #include "app_threadx.h"
+#include "datastructs.h"
 
 /**
  * @brief Initialize chips with default values.
@@ -51,6 +52,7 @@ void segment_retrieve_debug_data(cell_asic chips[NUM_CHIPS],
  * @brief Disables balancing for all cells.  Will also clear balancing setting.
  */
 void segment_disable_balancing(cell_asic chips[NUM_CHIPS],
+			       balancing_thermal_state_t *thermal_state,
 			       SPI_HandleTypeDef *hspi);
 
 /**
@@ -60,6 +62,7 @@ void segment_enable_balancing(cell_asic chips[NUM_CHIPS],
 			      SPI_HandleTypeDef *hspi);
 
 void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
+			      balancing_thermal_state_t *thermal_state,
 			      SPI_HandleTypeDef *hspi);
 
 /**
@@ -70,6 +73,7 @@ void segment_manual_balancing(cell_asic chips[NUM_CHIPS],
 void segment_configure_balancing(
 	cell_asic chips[NUM_CHIPS],
 	PWM_DUTY discharge_config[NUM_CHIPS][NUM_CELLS_PER_CHIP],
+	balancing_thermal_state_t *thermal_state,
 	SPI_HandleTypeDef *hspi);
 
 void segment_read_pwm_registers(cell_asic chips[NUM_CHIPS],

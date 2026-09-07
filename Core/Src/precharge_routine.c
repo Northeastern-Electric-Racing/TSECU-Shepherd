@@ -125,21 +125,21 @@ static precharge_state_t get_precharge_state(float ts_volts_avg, float batt_volt
 }
 
 void precharge_init(prechargeconfig_t *precharge_config, hv_plate_t *hv_plate,
-		    float transition_ratio)
+		    peripherals_t *peripherals, float transition_ratio)
 {
 	assert(precharge_config != NULL);
 	assert(hv_plate != NULL);
+	assert(peripherals != NULL);
 	assert(transition_ratio > 0 && transition_ratio < 1);
 
 	precharge_config->precharge_state = PRECHARGE_OPEN;
 
 	precharge_config->hv_plate = hv_plate;
+	precharge_config->peripherals = peripherals;
 	precharge_config->transition_ratio = transition_ratio;
 	precharge_config->open_debounce_timer =
 		(nertimer_t){ 0, 0, false, false };
 	precharge_config->close_debounce_timer =
-		(nertimer_t){ 0, 0, false, false };
-	precharge_config->closed_to_floating_debounce_timer =
 		(nertimer_t){ 0, 0, false, false };
 	precharge_config->open_to_floating_debounce_timer =
 		(nertimer_t){ 0, 0, false, false };
@@ -153,22 +153,50 @@ void handle_precharge(prechargeconfig_t *precharge_config)
 
 	float ts_volts_avg = get_average_sample(&ts_volts_sample_buffer);
 	float batt_volts_avg = get_average_sample(&batt_volts_sample_buffer);
+	bool shutdown_active = false;
 
-	precharge_state_t precharge_state = get_precharge_state(ts_volts_avg, batt_volts_avg,
-					    precharge_config->transition_ratio, hv_plate->pack_current);
+	mutex_get(&shutdown_mutex);
+	shutdown_active = precharge_config->peripherals->shutdown_active;
+	mutex_put(&shutdown_mutex);
 
-	debounce(precharge_state == PRECHARGE_CLOSED, &precharge_config->open_debounce_timer,
-		 PRECHARGE_TOGGLE_TIME, close_relay,
-		 precharge_config);
+	if (precharge_config->precharge_state == PRECHARGE_CLOSED) {
+		// Once closed, only an open shutdown loop can open the AIR.
+		if (!shutdown_active) {
+			open_relay(precharge_config);
+		}
+	} else {
+		precharge_state_t precharge_state = get_precharge_state(
+			ts_volts_avg, batt_volts_avg,
+			precharge_config->transition_ratio,
+			hv_plate->pack_current);
 
-	debounce(precharge_state == PRECHARGE_OPEN, &precharge_config->close_debounce_timer,
-		 PRECHARGE_TOGGLE_TIME, open_relay, precharge_config);
+		// Shutdown and the voltage ratio must both be valid before closing.
+		debounce(shutdown_active &&
+				 (precharge_state == PRECHARGE_CLOSED),
+			 &precharge_config->open_debounce_timer,
+			 PRECHARGE_TOGGLE_TIME, close_relay, precharge_config);
 
-	debounce((precharge_config->precharge_state == PRECHARGE_OPEN || precharge_config->precharge_state == PRECHARGE_FLOATING)
-		&& precharge_state == PRECHARGE_FLOATING, &precharge_config->open_to_floating_debounce_timer, PRECHARGE_FLOATING_FAULT_TIME, send_floating_precharge_fault, precharge_config);
+		if (!shutdown_active) {
+			if (precharge_config->precharge_state != PRECHARGE_OPEN) {
+				open_relay(precharge_config);
+			}
+		} else {
+			debounce(precharge_state == PRECHARGE_OPEN,
+				 &precharge_config->close_debounce_timer,
+				 PRECHARGE_TOGGLE_TIME, open_relay,
+				 precharge_config);
 
-	debounce(precharge_config->precharge_state == PRECHARGE_CLOSED && (precharge_state == PRECHARGE_FLOATING || precharge_state == PRECHARGE_OPEN),
-		 &precharge_config->closed_to_floating_debounce_timer, PRECHARGE_TOGGLE_TIME, open_relay, precharge_config);
+			debounce((precharge_config->precharge_state ==
+					  PRECHARGE_OPEN ||
+				  precharge_config->precharge_state ==
+					  PRECHARGE_FLOATING) &&
+					 (precharge_state == PRECHARGE_FLOATING),
+				 &precharge_config->open_to_floating_debounce_timer,
+				 PRECHARGE_FLOATING_FAULT_TIME,
+				 send_floating_precharge_fault,
+				 precharge_config);
+		}
+	}
 }
 
 // PRECHARGE THREAD
@@ -176,12 +204,16 @@ void vPrecharge(ULONG args)
 {
 	PRINTLN_INFO("Starting Precharge thread...");
 
-	hv_plate_t *hv_plate = (hv_plate_t *)args;
+	state_machine_args_t *state_machine_args =
+		(state_machine_args_t *)args;
+	hv_plate_t *hv_plate = state_machine_args->hv_plate;
 	nertimer_t update_loop_timer = { 0 };
 	static const uint16_t TELEMETRY_LOOP_TIMEOUT = 2000;
 
 	prechargeconfig_t precharge_config;
-	precharge_init(&precharge_config, hv_plate, PRRECHARGE_TRIGGER_THRESHOLD);
+	precharge_init(&precharge_config, hv_plate,
+		       state_machine_args->peripherals,
+		       PRRECHARGE_TRIGGER_THRESHOLD);
 
 	init_sample_buffer(&ts_volts_sample_buffer);
 	init_sample_buffer(&batt_volts_sample_buffer);
