@@ -210,7 +210,7 @@ void test_short_charge_current_step_delay(void)
 				state_machine.charge_current_request);
 }
 
-void test_short_charge_retries_once(void)
+void test_short_charge_resumes_without_rederating(void)
 {
 	state_machine.charging_stage = SHORT_CHARGE_UP;
 	state_machine.charge_current_request = 1.0f;
@@ -223,7 +223,7 @@ void test_short_charge_retries_once(void)
 	TEST_ASSERT_FALSE(sm_charging_check(&args));
 	TEST_ASSERT_EQUAL(SETTLE, state_machine.charging_stage);
 
-	// An incomplete settle starts one finer taper from the saved 1 A.
+	// An incomplete settle resumes at the saved 1 A ceiling.
 	analyzer.max_voltage.val = MAX_CHARGE_VOLT - 0.01f;
 	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
 					true);
@@ -233,21 +233,15 @@ void test_short_charge_retries_once(void)
 	TEST_ASSERT_EQUAL_FLOAT(1.0f,
 				state_machine.charge_current_request);
 
-	// Finish the retry at its final 0.2 A step.
-	state_machine.charge_current_request = 0.2f;
+	// Reaching the limit again settles directly without a 1 A to 0.8 A derate.
 	analyzer.max_voltage.val = MAX_CHARGE_VOLT;
 	is_timer_active_ExpectAndReturn(&state_machine.charging_stage_timer,
 				       false);
 	start_timer_Expect(&state_machine.charging_stage_timer, 60U * 1000U);
 	TEST_ASSERT_FALSE(sm_charging_check(&args));
 	TEST_ASSERT_EQUAL(SETTLE, state_machine.charging_stage);
-
-	// A second incomplete settle remains stopped instead of retrying again.
-	analyzer.max_voltage.val = MAX_CHARGE_VOLT - 0.01f;
-	is_timer_expired_ExpectAndReturn(&state_machine.charging_stage_timer,
-					true);
-	TEST_ASSERT_FALSE(sm_charging_check(&args));
-	TEST_ASSERT_EQUAL(SETTLE, state_machine.charging_stage);
+	TEST_ASSERT_EQUAL_FLOAT(1.0f,
+				state_machine.charge_control.resume_charge_current);
 }
 
 void test_charge_done(void)
@@ -586,7 +580,7 @@ int main(void)
 	RUN_TEST(test_long_charge_cycle);
 	RUN_TEST(test_short_charge_cycle);
 	RUN_TEST(test_short_charge_current_step_delay);
-	RUN_TEST(test_short_charge_retries_once);
+	RUN_TEST(test_short_charge_resumes_without_rederating);
 	RUN_TEST(test_charge_done);
 	RUN_TEST(test_balance_only_at_charge_limit);
 	RUN_TEST(test_balance_charge_current);

@@ -22,6 +22,7 @@ static _Atomic uint32_t fault_flags = 0;
 #define LONG_CHARGE_DURATION_MS        (15U * 60U * 1000U)
 #define CHARGE_SETTLE_DURATION_MS      (60U * 1000U)
 #define SHORT_CHARGE_STEP_DELAY_MS     5000U
+#define SHORT_CHARGE_CURRENT_STEP      1.0f
 #define BALANCE_CHARGE_CURRENT         0.5f
 #define BALANCE_ACTIVE_DURATION_MS     (60U * 1000U)
 #define BALANCE_COOLDOWN_DURATION_MS   (2U * 60U * 1000U)
@@ -73,10 +74,7 @@ static void set_charging_stage(state_machine_t *state_machine,
 		case LONG_CHARGE_UP:
 			charge_control->resume_charge_stage = LONG_CHARGE_UP;
 			charge_control->resume_charge_current = CHARGING_CURRENT;
-			charge_control->short_current_step =
-				CHARGING_CURRENT * 0.20f;
-			charge_control->short_retry_used = false;
-			charge_control->settled_from_short_charge = false;
+			charge_control->short_current_step = SHORT_CHARGE_CURRENT_STEP;
 			start_timer(&state_machine->charging_stage_timer,
 				    LONG_CHARGE_DURATION_MS);
 			break;
@@ -115,8 +113,6 @@ static void set_charging_stage(state_machine_t *state_machine,
 			// Uses balancing_active_timer and balancing_cooldown_timer.
 			break;
 		case SETTLE:
-			charge_control->settled_from_short_charge =
-				previous_stage == SHORT_CHARGE_UP;
 			if (previous_stage == SHORT_CHARGE_UP) {
 				charge_control->resume_charge_stage = SHORT_CHARGE_UP;
 				charge_control->resume_charge_current =
@@ -249,9 +245,7 @@ void init_boot(state_machine_args_t *state_machine_args)
 
 	charge_control->resume_charge_stage = LONG_CHARGE_UP;
 	charge_control->resume_charge_current = CHARGING_CURRENT;
-	charge_control->short_current_step = CHARGING_CURRENT * 0.20f;
-	charge_control->short_retry_used = false;
-	charge_control->settled_from_short_charge = false;
+	charge_control->short_current_step = SHORT_CHARGE_CURRENT_STEP;
 	charge_control->balancing_needed = false;
 	state_machine->bms_state = BOOT;
 	state_machine->balancing_active = false;
@@ -633,18 +627,8 @@ bool sm_charging_check(state_machine_args_t *state_machine_args)
 						next_stage = get_balance_stage(max_ocv);
 					} else if (max_ocv >= MAX_CHARGE_VOLT) {
 						next_stage = DONE;
-					} else if (charge_control->settled_from_short_charge &&
-						   !charge_control->short_retry_used &&
-						   (charge_control->resume_charge_current >
-						    0.0f)) {
-						charge_control->short_current_step =
-							charge_control->resume_charge_current *
-							0.20f;
-						charge_control->short_retry_used = true;
-						next_stage = SHORT_CHARGE_UP;
-					} else if (!charge_control->settled_from_short_charge) {
-						next_stage =
-							charge_control->resume_charge_stage;
+					} else {
+						next_stage = charge_control->resume_charge_stage;
 					}
 				}
 				break;

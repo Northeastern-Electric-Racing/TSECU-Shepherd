@@ -383,8 +383,6 @@ typedef struct {
 	charge_stage_t resume_charge_stage;
 	float resume_charge_current;
 	float short_current_step;
-	bool short_retry_used;
-	bool settled_from_short_charge;
 	bool balancing_needed;
 } charge_control_state_t;
 
